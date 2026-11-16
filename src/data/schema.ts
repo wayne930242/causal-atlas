@@ -134,6 +134,12 @@ export const showcaseSchema = z.strictObject({
   interventions: assignmentSchema,
 })
 
+/**
+ * Graph positions as `[column, row]` in grid units (fractions allowed). When present, only the
+ * listed variables are drawn; without it the UI picks the variables and lays them out in layers.
+ */
+export const layoutSchema = z.record(identifier, z.tuple([z.number(), z.number()]))
+
 export const caseSchema = z
   .strictObject({
     id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'must be kebab-case'),
@@ -154,8 +160,15 @@ export const caseSchema = z
     decision: decisionSchema.optional(),
     verdicts: z.array(verdictSchema).min(1),
     showcase: z.array(showcaseSchema),
+    layout: layoutSchema.optional(),
   })
   .superRefine((c, ctx) => {
+    if (c.layout !== undefined) {
+      const ids = new Set(c.model.variables.map((v) => v.id))
+      for (const id of Object.keys(c.layout)) {
+        if (!ids.has(id)) ctx.addIssue({ code: 'custom', path: ['layout', id], message: `unknown variable ${id}` })
+      }
+    }
     if (!c.sources.some((s) => s.role === 'origin')) {
       ctx.addIssue({ code: 'custom', path: ['sources'], message: 'needs at least one source with role origin' })
     }

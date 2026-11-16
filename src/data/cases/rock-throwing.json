@@ -56,5 +56,6 @@
   "showcase": [
     { "label": { "zh": "Suzy 沒丟", "en": "Suzy does not throw" }, "interventions": { "ST": 0 } },
     { "label": { "zh": "Suzy 沒丟，Billy 也沒打中", "en": "Suzy does not throw; Billy's rock is stopped" }, "interventions": { "ST": 0, "BH": 0 } }
-  ]
+  ],
+  "layout": { "ST": [0, 0], "SH": [1, 0], "BT": [0, 1], "BH": [1, 1], "BS": [2, 0.5] }
 }

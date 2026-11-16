@@ -38,5 +38,6 @@
   ],
   "showcase": [
     { "label": { "zh": "沒有雷擊", "en": "No lightning" }, "interventions": { "L": 0 } }
-  ]
+  ],
+  "layout": { "L": [0, 0], "MD": [0, 1], "FF": [1, 0.5] }
 }

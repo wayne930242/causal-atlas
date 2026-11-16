@@ -76,5 +76,6 @@
   "showcase": [
     { "label": { "zh": "強制吸菸", "en": "Force smoking" }, "interventions": { "S": 1 } },
     { "label": { "zh": "強制不吸菸", "en": "Prevent smoking" }, "interventions": { "S": 0 } }
-  ]
+  ],
+  "layout": { "L": [1, 0], "S": [0, 1], "C": [2, 1] }
 }

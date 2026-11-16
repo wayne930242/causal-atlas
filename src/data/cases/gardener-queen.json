@@ -47,5 +47,6 @@
   "showcase": [
     { "label": { "zh": "園丁澆了花", "en": "The gardener waters" }, "interventions": { "GW": 1 } },
     { "label": { "zh": "女王澆了花", "en": "The Queen waters" }, "interventions": { "QW": 1 } }
-  ]
+  ],
+  "layout": { "GW": [0, 0], "QW": [0, 1], "D": [1, 0.5] }
 }

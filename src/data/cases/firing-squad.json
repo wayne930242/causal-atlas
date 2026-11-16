@@ -46,5 +46,6 @@
   "showcase": [
     { "label": { "zh": "A 沒開槍", "en": "A does not shoot" }, "interventions": { "A": 0 } },
     { "label": { "zh": "隊長沒發令", "en": "Captain gives no signal" }, "interventions": { "C": 0 } }
-  ]
+  ],
+  "layout": { "U": [0, 0.5], "C": [1, 0.5], "A": [2, 0], "B": [2, 1], "D": [3, 0.5] }
 }

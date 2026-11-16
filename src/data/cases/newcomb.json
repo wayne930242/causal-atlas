@@ -70,5 +70,6 @@
   "showcase": [
     { "label": { "zh": "只拿一盒", "en": "Take one box" }, "interventions": { "A": "one" } },
     { "label": { "zh": "兩盒都拿", "en": "Take both boxes" }, "interventions": { "A": "two" } }
-  ]
+  ],
+  "layout": { "D": [0, 0.5], "A": [1, 0], "P": [1, 1], "M": [2, 1] }
 }

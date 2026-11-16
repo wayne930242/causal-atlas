@@ -66,6 +66,15 @@ describe('case schema', () => {
     expect(issues(badTheory)).not.toEqual([])
   })
 
+  it('checks layout variables', () => {
+    const badLayout = seed('rock-throwing')
+    badLayout.layout = { ST: [0, 0], XX: [1, 0] }
+    expect(issues(badLayout)).toContain('layout.XX: unknown variable XX')
+    const badCell = seed('rock-throwing')
+    badCell.layout = { ST: [0] }
+    expect(issues(badCell).join()).toMatch(/layout\.ST/)
+  })
+
   it('loader rejects bad tables and priors', () => {
     const badRow = seed('newcomb')
     const model = badRow.model as { equations: Record<string, unknown> }
