@@ -2,7 +2,7 @@ import type { Expr } from './expr.ts'
 import { containsDo, freeVariables } from './expr.ts'
 import { parseExpr } from './parse.ts'
 import type { Edge, Value, Variable } from './types.ts'
-import { ModelError, coerceToDomain } from './values.ts'
+import { ModelError, coerceToDomain, isReservedName } from './values.ts'
 
 export interface ModelSpec {
   readonly variables: readonly Variable[]
@@ -42,6 +42,7 @@ export function getVariable(model: CausalModel, id: string): Variable {
 export function buildModel(spec: ModelSpec): CausalModel {
   const byId = new Map<string, Variable>()
   for (const variable of spec.variables) {
+    if (isReservedName(variable.id)) throw new ModelError(`${variable.id} is a reserved name and cannot be a variable`)
     if (byId.has(variable.id)) throw new ModelError(`duplicate variable ${variable.id}`)
     if (variable.domain.kind === 'finite' && variable.domain.values.length === 0) {
       throw new ModelError(`variable ${variable.id} has an empty domain`)

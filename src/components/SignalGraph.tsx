@@ -4,6 +4,8 @@ import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, Edge } from '../engine/index.ts'
 import { getVariable } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
+import type { Anchor, Box, Placed } from './graph-labels.ts'
+import { around, firstClear, rectBox, shifted, textBox } from './graph-labels.ts'
 import { assignmentText, edgeLive, edgePolarity, gridLayout, label, probText, shownEdges, textWidth } from './view-model.ts'
 
 export interface SignalGraphProps {
@@ -131,6 +133,43 @@ export function SignalGraph(props: SignalGraphProps) {
   const cut = new Set(removedEdges.map((e) => `${e.from}>${e.to}`))
   const edges = shownEdges(c.model.edges, shown)
 
+  // What a floating edge label must stay clear of: every node, its labels, its do tag; and the
+  // edge labels already placed.
+  const obstacles: Box[] = []
+  for (const id of shown) {
+    const p = pos.get(id)
+    if (p === undefined) continue
+    const above = labelAbove(id)
+    const labelY = above ? -R - 16 : R + 24
+    const name = label(c.model, id)
+    const local: Box[] = [around(0, 0, R + 6), textBox(0, labelY, 'middle', textWidth(`${id} ${name}`, 14), 14)]
+    if (prob) {
+      const note = probNotes?.[id]
+      if (above) {
+        local.push(textBox(R + 12, -2, 'start', 80, 16))
+        if (note !== undefined) local.push(textBox(R + 12, 16, 'start', textWidth(note, 12), 12))
+      } else {
+        local.push(textBox(0, labelY + 22, 'middle', 80, 16))
+        if (note !== undefined) local.push(textBox(0, labelY + 41, 'middle', textWidth(note, 12), 12))
+      }
+    }
+    if (interventions[id] !== undefined && !(witness !== undefined && id in witness)) {
+      const w = textWidth(`${id}←${formatValue(interventions[id])}`, 12) + 18
+      const left = (grid.get(id)?.col ?? 0) === maxCol
+      local.push(rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22))
+    }
+    const before = original?.[id]
+    const now = values?.[id]
+    if (!prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
+      local.push(textBox(R + 14, R + 14, 'start', textWidth(`原本 ${formatValue(before)}`, 12), 12))
+    }
+    for (const b of local) obstacles.push(shifted(b, p.x, p.y))
+  }
+  const claim = (placed: Placed): Placed => {
+    obstacles.push(placed.box)
+    return placed
+  }
+
   const edgeEls = edges.map((e) => {
     const a = pos.get(e.from)
     const b = pos.get(e.to)
@@ -149,17 +188,23 @@ export function SignalGraph(props: SignalGraphProps) {
       const ny = ux
       const slash = (cx: number, cy: number): string =>
         `M${cx - 10 * nx - 3 * ux} ${cy - 10 * ny - 3 * uy}L${cx + 10 * nx + 3 * ux} ${cy + 10 * ny + 3 * uy}`
+      // 切斷 goes beside the gap, on the side (and distance) where nothing else is.
+      const cutCandidates: Placed[] = []
+      for (const dist of [18, 28]) {
+        for (const side of [1, -1]) {
+          const x = mx + side * dist * uy
+          const y = my - side * dist * ux + 4
+          const anchor: Anchor = side * uy > 0.3 ? 'start' : side * uy < -0.3 ? 'end' : 'middle'
+          cutCandidates.push({ x, y, anchor, box: textBox(x, y, anchor, 24, 12) })
+        }
+      }
+      const cutLabel = claim(firstClear(cutCandidates, obstacles))
       return (
         <g key={key} className="ca-edge ca-edge-cut" data-edge={key} data-state="cut">
           <line x1={x1} y1={y1} x2={mx - 10 * ux} y2={my - 10 * uy} className="ca-stroke-cut" />
           <line x1={mx + 10 * ux} y1={my + 10 * uy} x2={x2} y2={y2} className="ca-stroke-cut" />
           <path d={slash(mx - 4 * ux, my - 4 * uy) + slash(mx + 4 * ux, my + 4 * uy)} className="ca-stroke-slash" />
-          <text
-            x={mx + 18 * uy}
-            y={my - 18 * ux + 4}
-            className="ca-svg-small ca-svg-bold"
-            textAnchor={uy > 0.3 ? 'start' : uy < -0.3 ? 'end' : 'middle'}
-          >
+          <text x={cutLabel.x} y={cutLabel.y} className="ca-svg-small ca-svg-bold" textAnchor={cutLabel.anchor}>
             切斷
           </text>
         </g>
@@ -170,14 +215,34 @@ export function SignalGraph(props: SignalGraphProps) {
     if (polarity === 'inhibit') {
       const x2 = b.x - (R + 7) * ux
       const y2 = b.y - (R + 7) * uy
-      const lx = a.x + (b.x - a.x) * 0.55 + 14 * Math.abs(uy) + 4
-      const ly = a.y + (b.y - a.y) * 0.55 - 12 * Math.abs(ux)
+      // ¬X sits by the line; when that spot is taken it slides along the edge or switches sides.
+      const text = `¬${e.from}`
+      const width = textWidth(text, 12)
+      const inhibitCandidates: Placed[] = []
+      {
+        const x = a.x + (b.x - a.x) * 0.55 + 14 * Math.abs(uy) + 4
+        const y = a.y + (b.y - a.y) * 0.55 - 12 * Math.abs(ux)
+        inhibitCandidates.push({ x, y, anchor: 'start', box: textBox(x, y, 'start', width, 12) })
+      }
+      for (const t of [0.55, 0.45, 0.65, 0.35, 0.72, 0.28]) {
+        for (const side of [1, -1]) {
+          const nx = -uy * side
+          const ny = ux * side
+          const away = 8 + Math.abs(nx) * (width / 2) + Math.abs(ny) * 7
+          const cx = a.x + (b.x - a.x) * t + nx * away
+          const cy = a.y + (b.y - a.y) * t + ny * away
+          const x = cx - width / 2
+          const y = cy + 4
+          inhibitCandidates.push({ x, y, anchor: 'start', box: textBox(x, y, 'start', width, 12) })
+        }
+      }
+      const inhibitLabel = claim(firstClear(inhibitCandidates, obstacles))
       return (
         <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'}>
           <line x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />
           <circle cx={x2 + 5 * ux} cy={y2 + 5 * uy} r={5} className={`ca-inhibit ${live ? 'is-live' : ''}`} />
-          <text x={lx} y={ly} className={`ca-svg-small ca-svg-bold ca-mono ${live ? '' : 'ca-fill-muted'}`}>
-            ¬{e.from}
+          <text x={inhibitLabel.x} y={inhibitLabel.y} className={`ca-svg-small ca-svg-bold ca-mono ${live ? '' : 'ca-fill-muted'}`}>
+            {text}
           </text>
         </g>
       )

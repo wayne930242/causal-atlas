@@ -1,11 +1,12 @@
 import type { Expr } from './expr.ts'
 import { containsDo } from './expr.ts'
+import type { Evaluation, Interventions } from './evaluate.ts'
 import { evaluate } from './evaluate.ts'
 import { holdsIn, toFormula } from './formula.ts'
 import type { CausalModel } from './model.ts'
 import { getVariable } from './model.ts'
 import type { Assignment, Value } from './types.ts'
-import { ModelError, coerceToDomain, enumerateAssignments, requireValue, subsetsBySize, valuesEqual } from './values.ts'
+import { ModelError, coerceToDomain, domainValues, enumerateAssignments, requireValue, subsetsBySize, valuesEqual } from './values.ts'
 
 /**
  * Actual causation in a deterministic context (M, u).
@@ -33,6 +34,16 @@ import { ModelError, coerceToDomain, enumerateAssignments, requireValue, subsets
  *
  * Causes are conjunctions of primitive events over endogenous variables; the effect φ is an
  * intervention-free boolean combination of primitive events.
+ *
+ * Cost: the search tries subsets W⃗ of the other endogenous variables, and under hp-original and
+ * hp-updated also every setting w⃗ of W⃗ and every subset inside AC2(b), so it grows faster than
+ * 5^n in the number n of other endogenous variables (hp-modified and but-for stay near 2^n). A
+ * search may therefore make at most MAX_EVALUATIONS model evaluations, counting each enumerated
+ * subset or setting as one; past that it throws a ModelError after about a second instead of
+ * running on. On a chain of boolean variables where every candidate fails (the worst case) that
+ * leaves room for about six endogenous variables under hp-original and hp-updated and about nine
+ * under hp-modified and hp-normality; models that find a witness early get further. MAX_ENDOGENOUS
+ * is a hard ceiling on top of the budget.
  */
 
 export type CausalTheory = 'butfor' | 'hp-original' | 'hp-updated' | 'hp-modified' | 'hp-normality'
@@ -87,6 +98,9 @@ export interface ActualCauseQuery {
 
 const MAX_ENDOGENOUS = 16
 
+/** The work one `actualCause` call may do, counted in model evaluations and enumerated subsets or settings. */
+export const MAX_EVALUATIONS = 1_000_000
+
 /** Parse `X1=x1 and X2=x2 …` into an assignment over endogenous variables. */
 export function parseCause(model: CausalModel, cause: Assignment | string): Record<string, Value> {
   const raw: Record<string, Value> = {}
@@ -105,7 +119,7 @@ export function parseCause(model: CausalModel, cause: Assignment | string): Reco
       } else {
         throw new ModelError(`cause ${JSON.stringify(cause)} must be a conjunction of events X=x`)
       }
-      if (id in raw) throw new ModelError(`cause mentions ${id} twice`)
+      if (Object.hasOwn(raw, id)) throw new ModelError(`cause mentions ${id} twice`)
       raw[id] = value
     }
   } else {
@@ -155,12 +169,43 @@ interface Setup {
   readonly admissible: (world: Assignment) => boolean
   /** AC2 variant: `m` = AC2(a^m); `o`/`u` = AC2(a) with AC2(b^o)/AC2(b^u). */
   readonly ac2: 'm' | 'o' | 'u'
+  readonly theory: CausalTheory
+  /** Work left, in evaluations; see MAX_EVALUATIONS. */
+  readonly budget: { left: number }
+}
+
+function charge(setup: Setup, units: number): void {
+  setup.budget.left -= units
+  if (setup.budget.left < 0) {
+    throw new ModelError(
+      `${setup.theory} search needs more than ${MAX_EVALUATIONS.toLocaleString('en-US')} evaluations; the model has too many endogenous variables for this theory`,
+    )
+  }
+}
+
+/** One counted evaluation. */
+function run(setup: Setup, interventions: Interventions): Evaluation {
+  charge(setup, 1)
+  return evaluate(setup.model, setup.context, interventions)
+}
+
+/** Subsets of `items`, charged before they are built. */
+function subsets<T>(setup: Setup, items: readonly T[]): T[][] {
+  charge(setup, 2 ** items.length)
+  return subsetsBySize(items)
+}
+
+/** Every setting of the given variables, charged before they are built. */
+function settings(setup: Setup, ids: readonly string[]): Record<string, Value>[] {
+  const variables = ids.map((id) => getVariable(setup.model, id))
+  charge(setup, variables.reduce((n, v) => n * domainValues(v.domain).length, 1))
+  return [...enumerateAssignments(variables)]
 }
 
 /** All settings x⃗' of the variables in `cause` other than the actual x⃗. */
-function alternatives(model: CausalModel, cause: Assignment): Record<string, Value>[] {
+function alternatives(setup: Setup, cause: Assignment): Record<string, Value>[] {
   const ids = Object.keys(cause)
-  return [...enumerateAssignments(ids.map((id) => getVariable(model, id)))].filter(
+  return settings(setup, ids).filter(
     (alt) => !ids.every((id) => valuesEqual(requireValue(alt, id), requireValue(cause, id))),
   )
 }
@@ -180,12 +225,12 @@ function ac1(setup: Setup, cause: Assignment): boolean {
 
 /** AC2(b^o) / AC2(b^u): φ survives X⃗←x⃗ with (subsets of) W⃗←w⃗ and any Z⃗'⊆Z⃗−X⃗ at actual values. */
 function sufficient(setup: Setup, cause: Assignment, W: readonly string[], w: Assignment): boolean {
-  const { model, context, actual, effect } = setup
-  const zRest = model.endogenous.filter((id) => !(id in cause) && !W.includes(id))
-  const wSubsets = setup.ac2 === 'u' ? subsetsBySize(W) : [W]
+  const { model, actual, effect } = setup
+  const zRest = model.endogenous.filter((id) => !Object.hasOwn(cause, id) && !W.includes(id))
+  const wSubsets = setup.ac2 === 'u' ? subsets(setup, W) : [W]
   for (const Wp of wSubsets) {
-    for (const Zp of subsetsBySize(zRest)) {
-      const world = evaluate(model, context, { ...restrict(actual, Zp), ...restrict(w, Wp), ...cause }).values
+    for (const Zp of subsets(setup, zRest)) {
+      const world = run(setup, { ...restrict(actual, Zp), ...restrict(w, Wp), ...cause }).values
       if (!holdsIn(world, effect)) return false
     }
   }
@@ -194,19 +239,16 @@ function sufficient(setup: Setup, cause: Assignment, W: readonly string[], w: As
 
 /** AC2(a^m) or AC2(a)+AC2(b), optionally with W⃗ forced empty (but-for). */
 function findWitness(setup: Setup, cause: Assignment, allowW: boolean): Witness | undefined {
-  const { model, context } = setup
-  const others = model.endogenous.filter((id) => !(id in cause))
-  const candidates = allowW ? subsetsBySize(others) : [[]]
-  const alts = alternatives(model, cause)
+  const { model } = setup
+  const others = model.endogenous.filter((id) => !Object.hasOwn(cause, id))
+  const candidates = allowW ? subsets(setup, others) : [[]]
+  const alts = alternatives(setup, cause)
   for (const W of candidates) {
-    const settings =
-      setup.ac2 === 'm'
-        ? [restrict(setup.actual, W)]
-        : [...enumerateAssignments(W.map((id) => getVariable(model, id)))]
-    for (const w of settings) {
+    const choices = setup.ac2 === 'm' ? [restrict(setup.actual, W)] : settings(setup, W)
+    for (const w of choices) {
       if (setup.ac2 !== 'm' && !sufficient(setup, cause, W, w)) continue
       for (const xPrime of alts) {
-        const world = evaluate(model, context, { ...w, ...xPrime }).values
+        const world = run(setup, { ...w, ...xPrime }).values
         if (!holdsIn(world, setup.effect) && setup.admissible(world)) return { W, w, xPrime, world }
       }
     }
@@ -220,7 +262,7 @@ function checkHp(setup: Setup, cause: Assignment): CauseCheck {
   if (witness === undefined) return { cause, ac1: true, isCause: false }
   // AC3: no strict, non-empty sub-conjunction satisfies AC1 and AC2 (AC1 is inherited).
   const ids = Object.keys(cause)
-  for (const subset of subsetsBySize(ids)) {
+  for (const subset of subsets(setup, ids)) {
     if (subset.length === 0 || subset.length === ids.length) continue
     const sub = restrict(cause, subset)
     const subWitness = findWitness(setup, sub, true)
@@ -265,7 +307,7 @@ export function actualCause(
     admissible = (world) => atLeastAsNormal(world, actual, normality)
   }
   const ac2 = theory === 'hp-original' ? 'o' : theory === 'hp-updated' ? 'u' : 'm'
-  const setup: Setup = { model, context, effect, actual, admissible, ac2 }
+  const setup: Setup = { model, context, effect, actual, admissible, ac2, theory, budget: { left: MAX_EVALUATIONS } }
 
   if (theory === 'butfor') {
     const check = checkButFor(setup, cause)
@@ -277,8 +319,8 @@ export function actualCause(
   if (!check.ac1 || check.smallerCause !== undefined) return { theory, verdict: 'not-cause', actual, check }
 
   // Part of a cause: some cause X⃗=x⃗ ∧ Y⃗=y⃗* extends it (Y⃗ held at actual values).
-  const rest = model.endogenous.filter((id) => !(id in cause))
-  for (const extra of subsetsBySize(rest)) {
+  const rest = model.endogenous.filter((id) => !Object.hasOwn(cause, id))
+  for (const extra of subsets(setup, rest)) {
     if (extra.length === 0) continue
     const larger = checkHp(setup, { ...cause, ...restrict(actual, extra) })
     if (larger.isCause) return { theory, verdict: 'part-of-cause', actual, check, containedIn: larger }

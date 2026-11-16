@@ -7,6 +7,17 @@ export class ModelError extends Error {
   }
 }
 
+/** Words the equation syntax uses: a variable cannot be called any of them. */
+export const RESERVED_WORDS: ReadonlySet<string> = new Set(['and', 'or', 'not', 'implies', 'iff', 'if', 'then', 'else', 'true', 'false'])
+
+/**
+ * Names a variable cannot have: the equation keywords, and anything `{}` already has
+ * (`toString`, `constructor`, `__proto__`, …), which would read as an assigned value.
+ */
+export function isReservedName(name: string): boolean {
+  return RESERVED_WORDS.has(name) || name in Object.prototype
+}
+
 /** All values of a domain, in declaration order (`false` before `true` for booleans). */
 export function domainValues(domain: Domain): readonly Value[] {
   return domain.kind === 'boolean' ? [false, true] : domain.values

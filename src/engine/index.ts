@@ -1,5 +1,5 @@
 export type { Assignment, Domain, BooleanDomain, FiniteDomain, Edge, LocalizedText, Value, Variable, VariableKind } from './types.ts'
-export { ModelError, asBool, coerceToDomain, domainValues, formatValue, valuesEqual } from './values.ts'
+export { ModelError, asBool, coerceToDomain, domainValues, formatValue, isReservedName, valuesEqual } from './values.ts'
 export type { Expr, InterventionItem, LookupExpr, LookupRow } from './expr.ts'
 export { evalExpr, freeVariables } from './expr.ts'
 export { ParseError, parseExpr, parseFormula } from './parse.ts'
@@ -20,7 +20,7 @@ export type {
   ProbabilityResult,
   WeightedContext,
 } from './probability.ts'
-export { enumerateContexts, pointMass, probability } from './probability.ts'
+export { MAX_CONTEXTS, checkContextBudget, contextCount, enumerateContexts, pointMass, probability } from './probability.ts'
 export type { CounterfactualQuery, CounterfactualResult, TwinWorld } from './counterfactual.ts'
 export { counterfactual } from './counterfactual.ts'
 export type {
@@ -33,7 +33,7 @@ export type {
   Normality,
   Witness,
 } from './actual.ts'
-export { actualCause, atLeastAsNormal, parseCause } from './actual.ts'
+export { MAX_EVALUATIONS, actualCause, atLeastAsNormal, parseCause } from './actual.ts'
 export type {
   ActEvaluation,
   DecisionProblem,

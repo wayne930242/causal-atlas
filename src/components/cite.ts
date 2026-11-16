@@ -3,8 +3,12 @@
 export const AUTHOR_ZH = '洪偉'
 export const AUTHOR_EN = 'Wei Hung'
 export const PROJECT = 'causal-atlas'
-export const VERSION = '0.1.0'
-export const YEAR = 2026
+/** Replaced at build time (vite `define`, see vite.define.ts) from package.json and CITATION.cff. */
+declare const __CA_VERSION__: string
+declare const __CA_YEAR__: number
+
+export const VERSION: string = __CA_VERSION__
+export const YEAR: number = __CA_YEAR__
 export const DEFAULT_URL = 'https://wayneh.tw/causal/'
 export const DATA_LICENSE = 'CC BY 4.0'
 

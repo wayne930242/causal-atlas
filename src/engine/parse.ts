@@ -1,5 +1,6 @@
 import type { Expr, InterventionItem } from './expr.ts'
 import type { Value } from './types.ts'
+import { RESERVED_WORDS } from './values.ts'
 
 /**
  * Compact authoring syntax for equations and causal formulas.
@@ -66,7 +67,7 @@ const SYMBOLS = [
   '|',
 ]
 
-const KEYWORDS = new Set(['and', 'or', 'not', 'implies', 'iff', 'if', 'then', 'else', 'true', 'false'])
+const KEYWORDS = RESERVED_WORDS
 
 function tokenize(source: string): Token[] {
   const tokens: Token[] = []

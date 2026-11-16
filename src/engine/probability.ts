@@ -50,8 +50,33 @@ function checkSum(total: number, where: string): void {
   if (Math.abs(total - 1) > 1e-6) throw new ModelError(`${where}: probabilities sum to ${total}, not 1`)
 }
 
-/** Contexts with positive probability, validated against the model. */
+/** The most contexts a prior may spread over: the queries enumerate every one of them. */
+export const MAX_CONTEXTS = 4096
+
+/** How many contexts have positive probability: the product of the supports, or the listed rows. */
+export function contextCount(model: CausalModel, prior: Prior): number {
+  if (prior.kind === 'joint') return prior.rows.filter((r) => r.p > 0).length
+  let count = 1
+  for (const id of model.exogenous) {
+    const outcomes = prior.marginals[id]
+    if (outcomes !== undefined) count *= Math.max(1, outcomes.filter((o) => o.p > 0).length)
+  }
+  return count
+}
+
+/** Throws a ModelError when enumerating the prior's contexts would be too much work. */
+export function checkContextBudget(model: CausalModel, prior: Prior): void {
+  const count = contextCount(model, prior)
+  if (count > MAX_CONTEXTS) {
+    throw new ModelError(
+      `too many contexts to enumerate: ${count.toLocaleString('en-US')} (limit ${MAX_CONTEXTS.toLocaleString('en-US')}); use fewer exogenous variables or smaller supports`,
+    )
+  }
+}
+
+/** Contexts with positive probability, validated against the model. Throws past MAX_CONTEXTS. */
 export function enumerateContexts(model: CausalModel, prior: Prior): WeightedContext[] {
+  checkContextBudget(model, prior)
   if (prior.kind === 'joint') {
     const seen = new Set<string>()
     let total = 0

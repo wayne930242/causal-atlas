@@ -1,10 +1,12 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { buildDefines } from './vite.define.ts'
 
 // Library build: ESM entries for components, engine and data, plus one CSS file.
 // Declarations come from `tsc -p tsconfig.lib.json`.
 export default defineConfig({
   plugins: [react()],
+  define: buildDefines,
   publicDir: false,
   build: {
     outDir: 'dist',

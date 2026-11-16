@@ -8,7 +8,7 @@ import type { Assignment, Value } from '../engine/index.ts'
 import { coerceToDomain } from '../engine/index.ts'
 import { saveFile } from './download.ts'
 import type { Draft, DraftMode, DraftVariable } from './editor/draft.ts'
-import { blankDraft, compileDraft, draftFromCase, draftFromDoc, freeCell, newKey, valueTexts } from './editor/draft.ts'
+import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './editor/draft.ts'
 import type { ModelWorld } from './model-state.ts'
 import { solve } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
@@ -75,30 +75,37 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
   const shown = compiled.loaded ?? (draft.variables.length === 0 ? undefined : lastGood)
   const uid = useId()
 
-  let world: ModelWorld | undefined
-  let runtimeError: string | undefined
-  let active: Assignment = {}
-  if (shown !== undefined) {
-    active = validInterventions(shown, interventions)
+  // Solving enumerates contexts: do it once per model and intervention, not on every render.
+  const { world, runtimeError, active } = useMemo((): {
+    readonly world?: ModelWorld
+    readonly runtimeError?: string
+    readonly active: Assignment
+  } => {
+    if (shown === undefined) return { active: {} }
+    const valid = validInterventions(shown, interventions)
     try {
-      world = solve(shown, active)
+      return { world: solve(shown, valid), active: valid }
     } catch (error) {
-      runtimeError = `算不出來：${(error as Error).message}`
+      return { runtimeError: `算不出來：${(error as Error).message}`, active: valid }
     }
-  }
+  }, [shown, interventions])
 
   useEffect(() => {
     const value = shareFromHash(hash ?? (typeof window === 'undefined' ? '' : window.location.hash))
     if (value === undefined) return
     let live = true
-    void decodeShare(value).then((result) => {
-      if (!live) return
-      if (result.ok) {
-        setDraft(draftFromDoc(result.doc))
-        setInterventions({})
-        setLoadErrors([])
-      } else setLoadErrors(result.errors)
-    })
+    decodeShare(value)
+      .then((result) => {
+        if (!live) return
+        if (result.ok) {
+          setDraft(draftFromImport(result.doc))
+          setInterventions({})
+          setLoadErrors([])
+        } else setLoadErrors(result.errors)
+      })
+      .catch((error: unknown) => {
+        if (live) setLoadErrors([error instanceof Error ? error.message : String(error)])
+      })
     return () => {
       live = false
     }
@@ -453,7 +460,7 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
           <SaveShare
             doc={compiled.doc}
             shareHref={shareHref}
-            onImport={(doc) => replace(draftFromDoc(doc))}
+            onImport={(doc) => replace(draftFromImport(doc))}
           />
         </Disclosure>
       </div>
@@ -484,15 +491,26 @@ function SaveShare({
   const share = (): void => {
     if (doc === undefined) return
     setCopied(false)
-    void encodeShare(doc).then((value) => setLink((shareHref ?? defaultHref)(value)))
+    setErrors([])
+    encodeShare(doc)
+      .then((value) => setLink((shareHref ?? defaultHref)(value)))
+      .catch((error: unknown) => {
+        setLink(undefined)
+        setErrors([error instanceof Error ? error.message : String(error)])
+      })
   }
   const importText = (text: string): void => {
-    const result = parseModelJson(text)
-    setImported(result.ok)
-    if (result.ok) {
-      setErrors([])
-      onImport(result.doc)
-    } else setErrors(result.errors)
+    try {
+      const result = parseModelJson(text)
+      setImported(result.ok)
+      if (result.ok) {
+        setErrors([])
+        onImport(result.doc)
+      } else setErrors(result.errors)
+    } catch (error) {
+      setImported(false)
+      setErrors([error instanceof Error ? error.message : String(error)])
+    }
   }
 
   return (
@@ -545,7 +563,7 @@ function SaveShare({
               aria-label="選擇 JSON 檔"
               onChange={(e) => {
                 const file = e.currentTarget.files?.[0]
-                if (file !== undefined) void file.text().then(importText)
+                if (file !== undefined) void file.text().then(importText, (error: unknown) => setErrors([error instanceof Error ? error.message : String(error)]))
               }}
             />
           </label>

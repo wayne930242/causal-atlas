@@ -23,4 +23,14 @@ describe('server rendering', () => {
       expect(renderToString(createElement(WorldLanes, { caseId: id, initialStep: 2 }))).toContain('data-lane="cf"')
     }
   })
+
+  it.each(['rock-throwing', 'newcomb', 'blank'])('renders ModelEditor from %s on the server', async (initial) => {
+    expect(typeof globalThis.window).toBe('undefined')
+    const { ModelEditor } = await import('./index.ts')
+    const html = renderToString(createElement(ModelEditor, { initial }))
+    expect(html).toContain('ca-editor')
+    expect(html).toContain('存檔與分享')
+    // A share hash is read in an effect, so the server render must not touch it.
+    expect(renderToString(createElement(ModelEditor, { initial, hash: '#model=1.abc' }))).toContain('ca-editor')
+  })
 })

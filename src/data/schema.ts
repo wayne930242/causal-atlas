@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isReservedName } from '../engine/values.ts'
 
 /**
  * JSON schema for case files in src/data/cases/. Values for boolean variables may be written
@@ -6,7 +7,17 @@ import { z } from 'zod'
  * table `{ "table": { "inputs": [...], "rows": [[...inputs, value]], "default"?: value } }`.
  */
 
-const identifier = z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/, 'must be an identifier')
+/** The most variables a model may have; the engine's searches grow exponentially in it. */
+export const MAX_VARIABLES = 40
+
+/** The most values a finite domain may list. */
+export const MAX_DOMAIN_VALUES = 32
+
+/** An identifier that is neither an equation keyword nor a name `{}` already has (`toString`, `__proto__`, …). */
+const identifier = z
+  .string()
+  .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, 'must be an identifier')
+  .refine((id) => !isReservedName(id), { message: 'is a reserved name' })
 
 export const localizedSchema = z.strictObject({
   zh: z.string().min(1),
@@ -20,7 +31,7 @@ export const variableSchema = z.strictObject({
   label: localizedSchema,
   kind: z.enum(['exogenous', 'endogenous']),
   /** `"boolean"` or the finite list of values. */
-  domain: z.union([z.literal('boolean'), z.array(z.union([z.number(), z.string()])).min(1)]),
+  domain: z.union([z.literal('boolean'), z.array(z.union([z.number(), z.string()])).min(1).max(MAX_DOMAIN_VALUES)]),
 })
 
 export const tableEquationSchema = z.strictObject({
@@ -33,7 +44,7 @@ export const tableEquationSchema = z.strictObject({
 })
 
 export const modelSchema = z.strictObject({
-  variables: z.array(variableSchema).min(1),
+  variables: z.array(variableSchema).min(1).max(MAX_VARIABLES),
   equations: z.record(identifier, z.union([z.string().min(1), tableEquationSchema])),
 })
 

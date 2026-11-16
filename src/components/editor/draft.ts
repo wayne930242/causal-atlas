@@ -3,7 +3,7 @@ import { caseToDoc, docToCase } from '../../data/model-doc.ts'
 import type { CaseFile, ModelDoc } from '../../data/schema.ts'
 import { MODEL_DOC_FORMAT, modelDocSchema } from '../../data/schema.ts'
 import type { Value, Variable } from '../../engine/index.ts'
-import { CyclicModelError, ParseError, parseExpr } from '../../engine/index.ts'
+import { CyclicModelError, ParseError, isReservedName, parseExpr } from '../../engine/index.ts'
 import { checkExpr } from '../../engine/model.ts'
 import { gridLayout, shownVariables } from '../view-model.ts'
 
@@ -43,7 +43,6 @@ export interface Draft {
   readonly layout: Readonly<Record<string, readonly [number, number]>>
 }
 
-export const RESERVED = new Set(['and', 'or', 'not', 'if', 'then', 'else', 'true', 'false', 'iff', 'implies'])
 const IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/
 
 let counter = 0
@@ -133,6 +132,14 @@ export function draftFromDoc(doc: ModelDoc, layoutFrom?: LoadedCase): Draft {
   }
 }
 
+/**
+ * A draft from a document someone else wrote (a pasted file or a share link). The document's
+ * `from` is not trusted: only a draft this editor started from a bundled case credits it.
+ */
+export function draftFromImport(doc: ModelDoc): Draft {
+  return draftFromDoc({ ...doc, from: undefined })
+}
+
 export function draftFromCase(c: LoadedCase): Draft {
   return draftFromDoc(caseToDoc(c), c)
 }
@@ -171,7 +178,7 @@ export function compileDraft(draft: Draft, origin?: CaseFile['sources']): Compil
   for (const v of draft.variables) seen.set(v.id, (seen.get(v.id) ?? 0) + 1)
   for (const v of draft.variables) {
     if (!IDENT.test(v.id)) variableErrors[v.key] = '代號要用英文字母開頭，只能有英文字母、數字和底線'
-    else if (RESERVED.has(v.id)) variableErrors[v.key] = `${v.id} 是式子裡的保留字`
+    else if (isReservedName(v.id)) variableErrors[v.key] = `${v.id} 是保留字，不能當代號`
     else if ((seen.get(v.id) ?? 0) > 1) variableErrors[v.key] = `代號 ${v.id} 重複了`
     else if (v.domain === 'list') {
       const values = parseValues(v.values)

@@ -3,6 +3,7 @@ import {
   ModelError,
   actualCause,
   buildModel,
+  checkContextBudget,
   counterfactual,
   evaluateDecision,
   getVariable,
@@ -126,11 +127,13 @@ export function loadCase(raw: unknown): LoadedCase {
 /** Build the engine objects from already-validated case data (or a model document turned into one). */
 export function buildCase(data: CaseFile): LoadedCase {
   const model = toModel(data)
+  const prior = toPrior(data, model)
+  if (prior !== undefined) checkContextBudget(model, prior)
   return {
     data,
     model,
     context: data.context === undefined ? undefined : normalizeAssignment(model, data.context),
-    prior: toPrior(data, model),
+    prior,
     normality: data.normality === undefined ? undefined : normalizeAssignment(model, data.normality),
     decision: toDecision(data),
   }

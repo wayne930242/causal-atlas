@@ -85,4 +85,5 @@ BibTeX：
 ## 授權
 
 - 程式碼：MIT（`LICENSE`），著作權人 洪偉 Wei Hung。
-- 案例資料（`src/data/cases/`）與教學文字：CC BY 4.0（`LICENSE-DATA`）。轉用請標示「洪偉（Wei Hung）」與出處。
+- 案例資料（`src/data/cases/`）與教學文字：CC BY 4.0（`LICENSE-DATA`）。這兩者打包進 `dist/*.js` 之後仍是 CC BY 4.0；轉用請標示「洪偉（Wei Hung）」與出處。
+- `package.json` 的 `license` 欄位因此寫 `MIT AND CC-BY-4.0`。
