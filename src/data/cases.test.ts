@@ -104,7 +104,7 @@ describe('case sources', () => {
     if (!existsSync(bibPath)) {
       throw new Error(`bibliography not found at ${bibPath}; set CA_BIB to bibliography.bib (this check must run, not skip)`)
     }
-    const bib = new Set([...readFileSync(bibPath, 'utf8').matchAll(/^@\w+\{([^,\s]+),/gm)].map((m) => m[1]))
+    const bib = new Set<string>([...readFileSync(bibPath, 'utf8').matchAll(/^@\w+\{([^,\s]+),/gm)].map((m) => m[1]))
     const missing: string[] = []
     for (const [path, raw] of entries) {
       for (const s of loadCase(raw).data.sources) {
