@@ -73,7 +73,8 @@ export function SignalGraph(props: SignalGraphProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
   const [drag, setDrag] = useState<Drag | undefined>(undefined)
-  const suppressClick = useRef(false)
+  // After a drag, the browser may still send a click to the node: ignore clicks until this time.
+  const suppressUntil = useRef(0)
   const prob = probs !== undefined
   const R = prob ? 34 : 30
   const COL = props.compact === true ? 132 : 220
@@ -105,7 +106,6 @@ export function SignalGraph(props: SignalGraphProps) {
   const startDrag = (id: string, e: PointerEvent<SVGGElement>): void => {
     if (onMove === undefined || e.button !== 0) return
     const at = toSvg(e)
-    svgRef.current?.setPointerCapture?.(e.pointerId)
     setDrag({ id, pointer: e.pointerId, x0: at.x, y0: at.y, dx: 0, dy: 0, moved: false })
   }
   const moveDrag = (e: PointerEvent<SVGSVGElement>): void => {
@@ -113,13 +113,16 @@ export function SignalGraph(props: SignalGraphProps) {
     const at = toSvg(e)
     const dx = at.x - drag.x0
     const dy = at.y - drag.y0
-    setDrag({ ...drag, dx, dy, moved: drag.moved || Math.hypot(dx, dy) > 4 })
+    const moved = drag.moved || Math.hypot(dx, dy) > 4
+    // Capture only once it is a drag, so a plain press-release stays a click on the node.
+    if (moved && !drag.moved) svgRef.current?.setPointerCapture?.(e.pointerId)
+    setDrag({ ...drag, dx, dy, moved })
   }
   const endDrag = (e: PointerEvent<SVGSVGElement>): void => {
     if (drag === undefined || e.pointerId !== drag.pointer) return
     setDrag(undefined)
     if (!drag.moved) return
-    suppressClick.current = true
+    suppressUntil.current = Date.now() + 400
     const dCol = snap(drag.dx / COL)
     const dRow = snap(drag.dy / ROW)
     if (dCol !== 0 || dRow !== 0) onMove?.(drag.id, dCol, dRow)
@@ -250,10 +253,7 @@ export function SignalGraph(props: SignalGraphProps) {
       }
     }
     const onClick = (): void => {
-      if (suppressClick.current) {
-        suppressClick.current = false
-        return
-      }
+      if (Date.now() < suppressUntil.current) return
       onToggle?.(id)
     }
     const hint = [onToggle !== undefined ? `按一下${intervened ? '取消干預' : '套上干預'}` : '', onMove !== undefined ? '拖曳或用方向鍵移動' : '']

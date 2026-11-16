@@ -107,7 +107,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
     if (step === 3) {
       return [
         '外生變項原本只取 0 或 1。這一步把它們改成機率 p。',
-        '節點裡黑色的高度，是這個變項等於 1 的機率。',
+        '節點裡填色的高度，是這個變項等於 1 的機率。',
         '拉滑桿，圖上的數字會跟著變。',
       ]
     }

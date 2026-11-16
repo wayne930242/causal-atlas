@@ -1,6 +1,6 @@
 import type { LoadedCase } from '../../data/load.ts'
 import { caseToDoc, docToCase } from '../../data/model-doc.ts'
-import type { ModelDoc } from '../../data/schema.ts'
+import type { CaseFile, ModelDoc } from '../../data/schema.ts'
 import { MODEL_DOC_FORMAT, modelDocSchema } from '../../data/schema.ts'
 import type { Value, Variable } from '../../engine/index.ts'
 import { CyclicModelError, ParseError, parseExpr } from '../../engine/index.ts'
@@ -159,8 +159,11 @@ function domainOf(v: DraftVariable): Variable['domain'] {
   return v.domain === 'boolean' ? { kind: 'boolean' } : { kind: 'finite', values: parseValues(v.values) }
 }
 
-/** Check the draft and build the model; every problem is reported where the user typed it. */
-export function compileDraft(draft: Draft): Compiled {
+/**
+ * Check the draft and build the model; every problem is reported where the user typed it.
+ * `origin`: the starting case's sources, so exported images keep 「案例出處」.
+ */
+export function compileDraft(draft: Draft, origin?: CaseFile['sources']): Compiled {
   const variableErrors: Record<string, string> = {}
   const equationErrors: Record<string, string> = {}
   const valueErrors: Record<string, string> = {}
@@ -261,7 +264,7 @@ export function compileDraft(draft: Draft): Compiled {
     return { errors: { ...errors, model: parsed.error.issues.map((i) => `${i.path.join('.')}：${i.message}`).join('；') }, count: 1 }
   }
   try {
-    return { doc: parsed.data, loaded: docToCase(parsed.data), errors, count: 0 }
+    return { doc: parsed.data, loaded: docToCase(parsed.data, origin), errors, count: 0 }
   } catch (error) {
     if (error instanceof CyclicModelError) {
       return { errors: { ...errors, cycle: error.cycle, model: `式子繞成一圈：${error.cycle.join(' → ')}` }, count: 1 }
@@ -272,9 +275,10 @@ export function compileDraft(draft: Draft): Compiled {
 
 /** A free grid cell for a newly shown variable: the first gap, row by row. */
 export function freeCell(layout: Readonly<Record<string, readonly [number, number]>>): [number, number] {
-  const taken = new Set(Object.values(layout).map(([c, r]) => `${Math.round(c)},${Math.round(r)}`))
-  const cols = Math.max(2, ...Object.values(layout).map(([c]) => Math.round(c) + 2))
+  const cells = Object.values(layout)
+  const near = (col: number, row: number): boolean => cells.some(([c, r]) => Math.abs(c - col) < 1 && Math.abs(r - row) < 1)
+  const cols = Math.max(2, ...cells.map(([c]) => Math.ceil(c) + 2))
   for (let row = 0; ; row += 1) {
-    for (let col = 0; col < cols; col += 1) if (!taken.has(`${col},${row}`)) return [col, row]
+    for (let col = 0; col < cols; col += 1) if (!near(col, row)) return [col, row]
   }
 }

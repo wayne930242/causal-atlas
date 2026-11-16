@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCase } from '../data/index.ts'
 import { modelDocSchema } from '../data/schema.ts'
 import { saveFile } from './download.ts'
+import { freeCell } from './editor/draft.ts'
 import { ModelEditor } from './index.ts'
 
 vi.mock('./download.ts', () => ({ saveFile: vi.fn() }))
@@ -95,6 +96,42 @@ describe('ModelEditor', () => {
     const before = node(container, 'M').getAttribute('transform')
     fireEvent.keyDown(node(container, 'M'), { key: 'ArrowDown' })
     expect(node(container, 'M').getAttribute('transform')).not.toBe(before)
+  })
+
+  it('drags a node to a new place, then a plain click still sets do()', () => {
+    const { container } = render(<ModelEditor initial="rock-throwing" />)
+    const svg = container.querySelector('.ca-graph') as SVGSVGElement
+    const before = node(container, 'BS').getAttribute('transform')
+    fireEvent.pointerDown(node(container, 'BS'), { pointerId: 1, button: 0, clientX: 100, clientY: 100 })
+    fireEvent.pointerMove(svg, { pointerId: 1, clientX: 160, clientY: 220 })
+    fireEvent.pointerUp(svg, { pointerId: 1, clientX: 160, clientY: 220 })
+    expect(node(container, 'BS').getAttribute('transform')).not.toBe(before)
+    expect(node(container, 'BS').getAttribute('data-intervened')).toBe('false')
+    // A click that trails the drag is ignored; a press-release without movement is a click.
+    fireEvent.click(node(container, 'BS'))
+    expect(node(container, 'BS').getAttribute('data-intervened')).toBe('false')
+    const later = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000)
+    fireEvent.pointerDown(node(container, 'SH'), { pointerId: 2, button: 0, clientX: 10, clientY: 10 })
+    fireEvent.pointerUp(node(container, 'SH'), { pointerId: 2, clientX: 10, clientY: 10 })
+    fireEvent.click(node(container, 'SH'))
+    expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')
+    later.mockRestore()
+  })
+
+  it('places a new variable clear of nodes on half rows', () => {
+    expect(freeCell({ a: [0, 0], b: [0, 1], c: [1, 0.5] })).toEqual([2, 0])
+  })
+
+  it('exports an image of the edited model crediting the starting case', () => {
+    const { container } = render(<ModelEditor initial="rock-throwing" />)
+    fireEvent.click(within(container).getByRole('button', { name: '下載圖片' }))
+    const menu = within(container).getByRole('group', { name: '圖片設定' })
+    fireEvent.click(within(menu).getByRole('button', { name: 'SVG' }))
+    fireEvent.click(within(menu).getByRole('button', { name: '下載' }))
+    const [name, svg] = saved.mock.calls[0]
+    expect(name).toBe('my-model-graph-light.svg')
+    expect(String(svg)).toContain('案例出處：Hall 2004')
+    expect(String(svg)).toContain('實心＝發生（1）')
   })
 
   it('exports JSON that the schema accepts and rejects invalid JSON on import', () => {

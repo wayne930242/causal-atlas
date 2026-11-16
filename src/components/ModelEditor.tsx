@@ -65,7 +65,10 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
   const [interventions, setInterventions] = useState<Assignment>({})
   const [notation, setNotation] = useState<UiNotation>('propositional')
   const [loadErrors, setLoadErrors] = useState<readonly string[]>([])
-  const compiled = useMemo(() => compileDraft(draft), [draft])
+  const compiled = useMemo(
+    () => compileDraft(draft, draft.from !== undefined && caseIds.includes(draft.from) ? getCase(draft.from).data.sources : undefined),
+    [draft],
+  )
   // The last model that built: the graph keeps showing it while the draft has errors.
   const [lastGood, setLastGood] = useState<LoadedCase | undefined>(compiled.loaded)
   if (compiled.loaded !== undefined && compiled.loaded !== lastGood) setLastGood(compiled.loaded)
@@ -363,7 +366,7 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
         <Disclosure kicker="" title="外生變項的值">
           <Segmented label="外生變項" options={MODES} value={draft.mode} onChange={(mode) => update({ mode })} />
           <p className="ca-muted ca-small">
-            {draft.mode === 'value' ? '每個外生變項取一個值，圖上畫出實際世界。' : '每個外生變項給機率，節點裡黑色的高度是等於 1 的機率。'}
+            {draft.mode === 'value' ? '每個外生變項取一個值，圖上畫出實際世界。' : '每個外生變項給機率，節點裡填色的高度是等於 1 的機率。'}
           </p>
           <ul className="ca-editor-values">
             {exogenous.map((v) => {

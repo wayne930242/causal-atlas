@@ -12,7 +12,7 @@ import { NOTATIONS } from './notation.ts'
 import { Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
 import { originSources } from './verdict-rows.ts'
-import { doText, probLegend } from './view-model.ts'
+import { VALUE_LEGEND, doText, probLegend } from './view-model.ts'
 
 export interface GraphBoxProps {
   readonly c: LoadedCase
@@ -33,7 +33,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
   const hasDo = Object.keys(interventions).length > 0
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
-  const legendText = world.probs !== undefined ? probLegend(c.model, world.shown) : '黑＝發生（1）　白＝沒發生（0）'
+  const legendText = world.probs !== undefined ? probLegend(c.model, world.shown) : VALUE_LEGEND
   const exportSource = () => {
     const svg = wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph')
     if (svg === null || svg === undefined) return undefined

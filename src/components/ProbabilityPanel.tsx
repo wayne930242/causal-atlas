@@ -24,6 +24,7 @@ import {
   probText,
   shownVariables,
   sliderVariables,
+  VALUE_LEGEND,
   targetText,
 } from './view-model.ts'
 
@@ -156,7 +157,7 @@ export function ProbabilityPanelFor({
       name: `${c.data.id}-probability`,
       title: c.data.title.zh,
       panels: [{ svg, tags: [{ text: showValues ? '實際世界' : '機率', tone: 'fg' as const }] }],
-      legend: showValues ? '黑＝發生（1）　白＝沒發生（0）' : legend,
+      legend: showValues ? VALUE_LEGEND : legend,
       origin: originSources(c),
     }
   }
