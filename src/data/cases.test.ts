@@ -108,12 +108,14 @@ describe('case sources', () => {
     const missing: string[] = []
     for (const [path, raw] of entries) {
       for (const s of loadCase(raw).data.sources) {
-        if (bib.has(s.key)) {
-          expect(NOT_IN_BIB.has(s.key), `${path}: ${s.key} is in the bibliography now; drop it from NOT_IN_BIB`).toBe(false)
+        expect(s.key, `${path}: every source needs a key`).toBeDefined()
+        const key = s.key as string
+        if (bib.has(key)) {
+          expect(NOT_IN_BIB.has(key), `${path}: ${key} is in the bibliography now; drop it from NOT_IN_BIB`).toBe(false)
         } else {
-          missing.push(s.key)
-          expect(NOT_IN_BIB.has(s.key), `${path}: source key ${s.key} is not a bibliography key`).toBe(true)
-          expect(s.verified, `${path}: ${s.key} is not in the bibliography, so it stays unverified`).toBe(false)
+          missing.push(key)
+          expect(NOT_IN_BIB.has(key), `${path}: source key ${key} is not a bibliography key`).toBe(true)
+          expect(s.verified, `${path}: ${key} is not in the bibliography, so it stays unverified`).toBe(false)
         }
       }
     }
