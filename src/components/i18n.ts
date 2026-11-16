@@ -83,6 +83,7 @@ const ZH_PROBLEMS: ProblemWording = {
     'not-json': (p) => `不是 JSON：${p.detail}`,
     'share-version': (p) => `分享連結的版本 ${p.version === '' ? '（無）' : p.version} 不支援`,
     'share-damaged': () => '分享連結的資料損壞',
+    'story-sentence-missing': (p) => `story_tags 的句子在故事（${p.locale}）裡找不到`,
     schema: (p) => p.message['zh-TW'],
   },
   where: (w) => {

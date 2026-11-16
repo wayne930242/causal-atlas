@@ -34,13 +34,13 @@
   "sources": [
     {
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
-      "key": "halpern-2016",
+      "key": "halpern2016actual",
       "role": "treatment",
       "verified": false
     },
     {
       "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
-      "key": "halpern-pearl-2005",
+      "key": "halpern2005causes",
       "role": "origin",
       "verified": false
     }

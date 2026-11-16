@@ -51,7 +51,7 @@ export function gridLayout(c: LoadedCase, shown: readonly string[]): Map<string,
   const depth = (id: string): number => {
     const known = layer.get(id)
     if (known !== undefined) return known
-    const parents = (c.model.parents.get(id) ?? []).filter((p) => set.has(p))
+    const parents = c.model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
     const d = parents.length === 0 ? 0 : 1 + Math.max(...parents.map(depth))
     layer.set(id, d)
     return d
@@ -162,7 +162,7 @@ export function flipValue(variable: Variable, value: Value): Value {
 export function equationIds(c: LoadedCase, shown: readonly string[], interventions: Assignment = {}): string[] {
   const set = new Set(shown)
   return c.model.endogenous.filter(
-    (id) => set.has(id) && (id in interventions || (c.model.parents.get(id) ?? []).some((p) => set.has(p))),
+    (id) => set.has(id) && (id in interventions || c.model.edges.some((e) => e.to === id && set.has(e.from))),
   )
 }
 
@@ -224,7 +224,7 @@ export function equationRows(
     const text = renderEquation(model, id, notation, 'text')
     const forced = interventions[id]
     if (forced !== undefined) {
-      const parents = (model.parents.get(id) ?? []).filter((p) => set.has(p))
+      const parents = model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
       return {
         id,
         text: `${id} = ${formatValue(forced)}`,

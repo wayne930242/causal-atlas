@@ -1,10 +1,10 @@
 import type { Where } from './errors.ts'
 import { problem } from './errors.ts'
 import type { Expr } from './expr.ts'
-import { containsDo, freeVariables } from './expr.ts'
+import { containsDo, evalExpr, freeVariables } from './expr.ts'
 import { parseExpr } from './parse.ts'
 import type { Edge, Value, Variable } from './types.ts'
-import { ModelError, coerceToDomain, isReservedName } from './values.ts'
+import { ModelError, coerceToDomain, enumerateAssignments, isReservedName, valuesEqual } from './values.ts'
 
 export interface ModelSpec {
   readonly variables: readonly Variable[]
@@ -20,9 +20,44 @@ export interface CausalModel {
   /** Endogenous variables in a topological order of the causal graph. */
   readonly endogenous: readonly string[]
   readonly equations: ReadonlyMap<string, Expr>
-  /** Direct causes of each endogenous variable, in variable-declaration order. */
+  /**
+   * Variables each endogenous equation mentions, in variable-declaration order. A variable the
+   * equation mentions without its value ever mattering (`F := L or not L`) is listed here but has
+   * no entry in `edges`.
+   */
   readonly parents: ReadonlyMap<string, readonly string[]>
+  /** X→Y only where Y's equation actually depends on X over the domains (see {@link dependsOn}). */
   readonly edges: readonly Edge[]
+}
+
+/** The most assignments of the other referenced variables checked per edge; beyond it a mention counts as a dependence. */
+const MAX_DEPENDENCE_CHECKS = 4096
+
+/**
+ * Whether the value of `expr` changes with `from` for some setting of the other variables it
+ * mentions, checked over the whole domain. Too large a check, or an equation that cannot be
+ * evaluated somewhere, counts as dependent.
+ */
+export function dependsOn(expr: Expr, from: string, mentioned: readonly Variable[]): boolean {
+  const source = mentioned.find((v) => v.id === from)
+  if (source === undefined) return false
+  const others = mentioned.filter((v) => v.id !== from)
+  const size = mentioned.reduce((n, v) => n * (v.domain.kind === 'boolean' ? 2 : v.domain.values.length), 1)
+  if (size > MAX_DEPENDENCE_CHECKS) return true
+  const own = source.domain.kind === 'boolean' ? [false, true] : source.domain.values
+  try {
+    for (const setting of enumerateAssignments(others)) {
+      let first: Value | undefined
+      for (const value of own) {
+        const out = evalExpr(expr, { values: { ...setting, [from]: value } })
+        if (first === undefined) first = out
+        else if (!valuesEqual(first, out)) return true
+      }
+    }
+  } catch {
+    return true
+  }
+  return false
 }
 
 export class CyclicModelError extends ModelError {
@@ -82,7 +117,11 @@ export function buildModel(spec: ModelSpec): CausalModel {
   )
   const edges: Edge[] = []
   for (const id of endogenous) {
-    for (const parent of parents.get(id) ?? []) edges.push({ from: parent, to: id })
+    const expr = equations.get(id)
+    const mentioned = (parents.get(id) ?? []).map((p) => byId.get(p) as Variable)
+    for (const parent of parents.get(id) ?? []) {
+      if (expr !== undefined && dependsOn(expr, parent, mentioned)) edges.push({ from: parent, to: id })
+    }
   }
 
   return {

@@ -95,6 +95,7 @@ export interface ProblemParams {
   readonly 'not-json': { readonly detail: string }
   readonly 'share-version': { readonly version: string }
   readonly 'share-damaged': Record<string, never>
+  readonly 'story-sentence-missing': { readonly locale: string }
   /** Any other schema complaint, already worded per locale. */
   readonly schema: { readonly message: LocalizedText }
 }
@@ -188,6 +189,7 @@ export const PROBLEMS_EN: ProblemWording = {
     'not-json': (p) => `not JSON: ${p.detail}`,
     'share-version': (p) => `share link version ${p.version === '' ? '(none)' : p.version} is not supported`,
     'share-damaged': () => 'the share link is damaged',
+    'story-sentence-missing': (p) => `sentence not found in story.${p.locale}`,
     schema: (p) => p.message.en,
   },
   where: (w) => {

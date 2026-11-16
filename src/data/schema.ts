@@ -245,7 +245,7 @@ export const caseSchema = z
     for (const locale of LOCALES) {
       c.story_tags?.[locale].forEach((t, i) => {
         if (!c.story[locale].includes(t.sentence)) {
-          ctx.addIssue({ code: 'custom', path: ['story_tags', locale, i, 'sentence'], message: `sentence not found in story.${locale}` })
+          addProblem(ctx, ['story_tags', locale, i, 'sentence'], problem('story-sentence-missing', { locale }))
         }
         for (const id of t.variables) {
           if (!variableIds.has(id)) {

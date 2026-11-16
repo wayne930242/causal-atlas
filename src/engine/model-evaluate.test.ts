@@ -18,6 +18,18 @@ describe('buildModel', () => {
     expect(model.parents.get('C')).toEqual(['B', 'A'])
   })
 
+  it('draws an edge only where the equation depends on the variable', () => {
+    const model = buildModel({
+      variables: [variable('U', 'exogenous'), variable('L', 'endogenous'), variable('F', 'endogenous'), variable('G', 'endogenous')],
+      equations: { L: 'U', F: 'L or not L', G: 'L and U' },
+    })
+    expect(model.parents.get('F')).toEqual(['L'])
+    expect(model.edges).toContainEqual({ from: 'U', to: 'L' })
+    expect(model.edges).not.toContainEqual({ from: 'L', to: 'F' })
+    expect(model.edges).toContainEqual({ from: 'L', to: 'G' })
+    expect(model.edges).toContainEqual({ from: 'U', to: 'G' })
+  })
+
   it('rejects cyclic models and names the cycle', () => {
     const build = () =>
       buildModel({

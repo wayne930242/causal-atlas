@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { evaluate } from '../engine/index.ts'
 import { caseFiles, fileId } from './cases.ts'
@@ -90,5 +91,40 @@ describe('case ids are unique', () => {
   it('has no duplicate ids', () => {
     const ids = entries.map(([path]) => fileId(path))
     expect(new Set(ids).size).toBe(ids.length)
+  })
+})
+
+/** Citation keys the bibliography lacks; their sources stay `verified: false` until it gains them. */
+const NOT_IN_BIB = new Set(['nozick-1969', 'eells-1982', 'skyrms-1980', 'mcgrath-2005', 'pearl-2000'])
+
+describe('case sources', () => {
+  const bibPath = process.env.CA_BIB ?? '/Users/weihung/knowledge-base/literature/references/bibliography.bib'
+
+  it('uses bibliography citation keys', () => {
+    if (!existsSync(bibPath)) {
+      throw new Error(`bibliography not found at ${bibPath}; set CA_BIB to bibliography.bib (this check must run, not skip)`)
+    }
+    const bib = new Set([...readFileSync(bibPath, 'utf8').matchAll(/^@\w+\{([^,\s]+),/gm)].map((m) => m[1]))
+    const missing: string[] = []
+    for (const [path, raw] of entries) {
+      for (const s of loadCase(raw).data.sources) {
+        if (bib.has(s.key)) {
+          expect(NOT_IN_BIB.has(s.key), `${path}: ${s.key} is in the bibliography now; drop it from NOT_IN_BIB`).toBe(false)
+        } else {
+          missing.push(s.key)
+          expect(NOT_IN_BIB.has(s.key), `${path}: source key ${s.key} is not a bibliography key`).toBe(true)
+          expect(s.verified, `${path}: ${s.key} is not in the bibliography, so it stays unverified`).toBe(false)
+        }
+      }
+    }
+    expect(new Set(missing)).toEqual(NOT_IN_BIB)
+  })
+
+  it('calls the rock-throwing case late preemption, not early', () => {
+    const c = loadCase(caseFiles['./cases/rock-throwing.json'])
+    const text = JSON.stringify(c.data)
+    expect(text).not.toMatch(/it is a case of early preemption/)
+    expect(text).toContain('late preemption')
+    expect(text).toContain('晚期先發制人')
   })
 })

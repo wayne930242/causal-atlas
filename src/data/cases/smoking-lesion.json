@@ -39,13 +39,13 @@
     },
     {
       "citation": "Egan, A. (2007). Some counterexamples to causal decision theory. Philosophical Review, 116(1), 93–114.",
-      "key": "egan-2007",
+      "key": "egan2007counterexamples",
       "role": "treatment",
       "verified": false
     },
     {
       "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.). Cambridge University Press.",
-      "key": "pearl-2009",
+      "key": "pearl2009causality",
       "role": "treatment",
       "verified": false
     },

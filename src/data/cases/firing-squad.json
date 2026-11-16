@@ -34,7 +34,7 @@
   "sources": [
     {
       "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.), §7.1.2. Cambridge University Press.",
-      "key": "pearl-2009",
+      "key": "pearl2009causality",
       "role": "treatment",
       "verified": false
     },

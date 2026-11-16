@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { Problem } from '../engine/errors.ts'
+import { messagesFor, problemMessage } from '../components/i18n.ts'
 import { caseFiles } from './cases.ts'
 import { loadCase } from './load.ts'
 import { caseSchema } from './schema.ts'
@@ -85,6 +87,21 @@ describe('case schema', () => {
     const badIntuition = seed('rock-throwing')
     badIntuition.intuition = { query: { cause: 'SH=1', effect: 'BS=1' }, expected: 'cause', text: { 'zh-TW': 'x', en: 'x' }, agree: [] }
     expect(issues(badIntuition)).toContain('intuition.query: no verdict asks this query')
+  })
+
+  it('words the missing story sentence in Chinese under its own code', () => {
+    const badTag = seed('rock-throwing')
+    badTag.story_tags = { 'zh-TW': [{ sentence: '不在故事裡的句子。', variables: ['ST'] }], en: [] }
+    const result = caseSchema.safeParse(badTag)
+    expect(result.success).toBe(false)
+    const own = result.success
+      ? undefined
+      : result.error.issues.map((i) => (i.code === 'custom' ? (i.params as { problem?: Problem } | undefined)?.problem : undefined)).find((p) => p?.code === 'story-sentence-missing')
+    expect(own).toBeDefined()
+    const text = problemMessage(own as Problem, messagesFor('zh-TW'))
+    expect(text).toContain('找不到')
+    expect(text).not.toContain('not found')
+    expect(problemMessage(own as Problem, messagesFor('en'))).toBe('sentence not found in story.zh-TW')
   })
 
   it('loader rejects bad tables and priors', () => {
