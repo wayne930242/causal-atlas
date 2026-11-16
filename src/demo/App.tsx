@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CasePage, CausalPlayground, Supplement, WorldLanes } from '../components/index.ts'
+import { CasePage, CausalPlayground, CiteBlock, Supplement, WorldLanes } from '../components/index.ts'
 import { caseIds, getCase } from '../data/index.ts'
 
 interface Route {
@@ -135,6 +135,9 @@ export function App() {
         {route.page === 'case' && <CasePage key={`${route.id}-${route.step}`} caseId={route.id} initialStep={route.step} />}
         {route.page === 'lesson' && <Lesson />}
       </main>
+      <footer className="demo-footer">
+        <CiteBlock />
+      </footer>
     </div>
   )
 }

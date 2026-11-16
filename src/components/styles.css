@@ -1200,3 +1200,25 @@
     grid-row: 2;
   }
 }
+
+/* ---- cite ---- */
+
+.ca-cite {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.ca-cite-entry {
+  overflow-wrap: anywhere;
+}
+
+.ca-cite-bib {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre;
+  overflow-x: auto;
+}

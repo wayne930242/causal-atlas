@@ -39,3 +39,31 @@ laid out in layers.
 - `pnpm typecheck`, `pnpm test`, `pnpm lint`
 - `pnpm build`: the demo site into `dist-demo/`
 - `pnpm build:lib`: the library into `dist/`
+
+## 如何引用
+
+學術或教學使用請引用。引用資訊也在 `CITATION.cff`，元件 `CiteBlock` 會顯示同樣的內容。
+
+作者—年份：
+
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.1.0 版）。https://wayneh.tw/causal/
+
+> Hung, W. (2026). causal-atlas (Version 0.1.0) [Software and dataset]. https://wayneh.tw/causal/
+
+BibTeX：
+
+```bibtex
+@software{hung_causal_atlas_2026,
+  author  = {Hung, Wei},
+  title   = {causal-atlas},
+  year    = {2026},
+  version = {0.1.0},
+  url     = {https://wayneh.tw/causal/},
+  note    = {Code: MIT; data and teaching text: CC BY 4.0}
+}
+```
+
+## 授權
+
+- 程式碼：MIT（`LICENSE`），著作權人 洪偉 Wei Hung。
+- 案例資料（`src/data/cases/`）與教學文字：CC BY 4.0（`LICENSE-DATA`）。轉用請標示「洪偉（Wei Hung）」與出處。

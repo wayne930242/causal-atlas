@@ -2,6 +2,8 @@ import './styles.css'
 
 export type { CasePageProps } from './CasePage.tsx'
 export { CasePage } from './CasePage.tsx'
+export type { CiteBlockProps } from './CiteBlock.tsx'
+export { CiteBlock } from './CiteBlock.tsx'
 export type { CausalPlaygroundProps } from './CausalPlayground.tsx'
 export { CausalPlayground } from './CausalPlayground.tsx'
 export type { ProbabilityPanelProps, ProbabilityView } from './ProbabilityPanel.tsx'
