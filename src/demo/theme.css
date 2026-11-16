@@ -1,0 +1,158 @@
+/* Blog tokens, copied from knowledge-base/blog/src/styles/theme.css; the components read only these. */
+:root,
+[data-theme="light"] {
+  --background: #f5f5f2;
+  --foreground: #111111;
+  --accent: #e3311d;
+  --accent-foreground: #ffffff;
+  --muted: #e7e7e2;
+  --muted-foreground: #686864;
+  --structure: #686864;
+  --structure-foreground: #f5f5f2;
+  --border: #c9c9c3;
+}
+
+[data-theme="dark"] {
+  --background: #111111;
+  --foreground: #f2f2ed;
+  --accent: #ff5948;
+  --accent-foreground: #111111;
+  --muted: #242421;
+  --muted-foreground: #a6a6a0;
+  --structure: #a6a6a0;
+  --structure-foreground: #111111;
+  --border: #444440;
+}
+
+html {
+  background: var(--background);
+  color: var(--foreground);
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: "Google Sans Code", "Noto Sans TC", "PingFang TC", -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.demo-shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 48px 80px;
+}
+
+.demo-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  min-height: 72px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.demo-brand {
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.demo-bar nav {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.demo-bar a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.demo-bar a[aria-current="page"] {
+  color: var(--accent);
+}
+
+.demo-spacer {
+  flex: 1;
+}
+
+.demo-bar select,
+.demo-bar button {
+  font: inherit;
+  font-size: 13px;
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid var(--border);
+  height: 32px;
+  padding: 0 10px;
+}
+
+.demo-bar button {
+  cursor: pointer;
+}
+
+.demo-index {
+  display: grid;
+  gap: 12px;
+  max-width: 704px;
+}
+
+.demo-index li {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  list-style: none;
+}
+
+.demo-index ul {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.demo-index a {
+  color: inherit;
+}
+
+.demo-muted {
+  color: var(--muted-foreground);
+}
+
+.demo-article {
+  max-width: 704px;
+  margin: 0 auto;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.demo-article h2 {
+  font-family: "Iowan Old Style", "Noto Serif TC", "Songti TC", Georgia, serif;
+  color: var(--accent);
+  font-size: 29px;
+  margin: 40px 0 16px;
+}
+
+.demo-article p {
+  margin: 0 0 24px;
+}
+
+.demo-article .ca-root {
+  margin: 0 0 24px;
+}
+
+@media (max-width: 760px) {
+  .demo-shell {
+    padding: 0 16px 40px;
+  }
+}
