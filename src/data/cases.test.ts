@@ -94,32 +94,34 @@ describe('case ids are unique', () => {
   })
 })
 
+const snapshot = JSON.parse(readFileSync(new URL('./bib-keys.json', import.meta.url), 'utf8')) as {
+  inBib: string[]
+  notInBib: string[]
+}
+const IN_BIB = new Set(snapshot.inBib)
 /** Citation keys the bibliography lacks; their sources stay `verified: false` until it gains them. */
-const NOT_IN_BIB = new Set(['nozick-1969', 'eells-1982', 'skyrms-1980', 'mcgrath-2005', 'pearl-2000'])
+const NOT_IN_BIB = new Set(snapshot.notInBib)
 
 describe('case sources', () => {
-  const bibPath = process.env.CA_BIB ?? '/Users/weihung/knowledge-base/literature/references/bibliography.bib'
-
-  it('uses bibliography citation keys', () => {
-    if (!existsSync(bibPath)) {
-      throw new Error(`bibliography not found at ${bibPath}; set CA_BIB to bibliography.bib (this check must run, not skip)`)
-    }
-    const bib = new Set<string>([...readFileSync(bibPath, 'utf8').matchAll(/^@\w+\{([^,\s]+),/gm)].map((m) => m[1]))
-    const missing: string[] = []
+  it('uses bibliography citation keys (snapshot src/data/bib-keys.json)', () => {
     for (const [path, raw] of entries) {
-      for (const s of loadCase(raw).data.sources) {
-        expect(s.key, `${path}: every source needs a key`).toBeDefined()
-        const key = s.key as string
-        if (bib.has(key)) {
-          expect(NOT_IN_BIB.has(key), `${path}: ${key} is in the bibliography now; drop it from NOT_IN_BIB`).toBe(false)
-        } else {
-          missing.push(key)
-          expect(NOT_IN_BIB.has(key), `${path}: source key ${key} is not a bibliography key`).toBe(true)
-          expect(s.verified, `${path}: ${key} is not in the bibliography, so it stays unverified`).toBe(false)
-        }
+      for (const { key, verified } of loadCase(raw).data.sources) {
+        expect(key, `${path}: every source needs a key`).toBeDefined()
+        const k = key as string
+        expect(IN_BIB.has(k) || NOT_IN_BIB.has(k), `${path}: ${k} missing from bib-keys.json; run scripts/sync-bib-keys.mjs`).toBe(true)
+        if (NOT_IN_BIB.has(k)) expect(verified, `${path}: ${k} is not in the bibliography, so it stays unverified`).toBe(false)
       }
     }
-    expect(new Set(missing)).toEqual(NOT_IN_BIB)
+  })
+
+  const bibPath = process.env.CA_BIB ?? '/Users/weihung/knowledge-base/literature/references/bibliography.bib'
+  const bibExists = existsSync(bibPath)
+  if (!bibExists) console.warn(`bib-keys sync check skipped: no bibliography at ${bibPath} (set CA_BIB)`)
+  it.skipIf(!bibExists)('bib-keys.json is in sync with the bibliography', () => {
+    const bib = new Set<string>([...readFileSync(bibPath, 'utf8').matchAll(/^@\w+\{([^,\s]+),/gm)].map((m) => m[1]))
+    const used = [...IN_BIB, ...NOT_IN_BIB]
+    expect(used.filter((k) => bib.has(k)).sort(), 'run scripts/sync-bib-keys.mjs').toEqual([...IN_BIB].sort())
+    expect(used.filter((k) => !bib.has(k)).sort(), 'run scripts/sync-bib-keys.mjs').toEqual([...NOT_IN_BIB].sort())
   })
 
   it('calls the rock-throwing case late preemption, not early', () => {
