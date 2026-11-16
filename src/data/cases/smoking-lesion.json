@@ -3,20 +3,30 @@
   "title": { "zh": "吸菸病灶", "en": "Smoking lesion" },
   "family": "decision",
   "story_zh": "假設吸菸本身不致癌，但有一種病灶同時讓人想吸菸、也讓人容易得癌症。觀察上，吸菸者得癌症的比例較高；可是若強制改變一個人吸不吸菸，他得癌症的機率不會變。那麼喜歡吸菸的人該不該吸？",
+  "explanation_zh": "病灶 L 同時影響人想不想抽菸與有沒有得癌症，抽菸本身不影響癌症。模型用 L 當共同原因，抽菸 S 與癌症 C 各自由 L 加上獨立的外生雜訊決定。這樣在 L 未知時 S 與 C 有相關，但對 S 做介入不改變 C，可用來區分證據決策論與因果決策論。",
   "sources": [
     {
       "citation": "Eells, E. (1982). Rational Decision and Causality. Cambridge University Press.",
       "key": "eells-1982",
+      "role": "origin",
       "verified": false
     },
     {
       "citation": "Egan, A. (2007). Some counterexamples to causal decision theory. Philosophical Review, 116(1), 93–114.",
       "key": "egan-2007",
+      "role": "treatment",
       "verified": false
     },
     {
       "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.). Cambridge University Press.",
       "key": "pearl-2009",
+      "role": "treatment",
+      "verified": false
+    },
+    {
+      "citation": "Skyrms, B. (1980). Causal Necessity. Yale University Press.",
+      "key": "skyrms-1980",
+      "role": "origin",
       "verified": false
     }
   ],

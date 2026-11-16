@@ -1,3 +1,5 @@
+import type { Arith } from './arithmetic.ts'
+import { toArith } from './arithmetic.ts'
 import type { Expr, LookupExpr } from './expr.ts'
 import { evalExpr } from './expr.ts'
 import type { CausalModel } from './model.ts'
@@ -8,7 +10,7 @@ import { coerceToDomain, enumerateAssignments, formatValue } from './values.ts'
 export type RenderFormat = 'text' | 'latex'
 
 /** (a) `BS := ST ∨ BT`, (b) `BS ↔ (ST ∨ BT)`, (c) `[ST←1, BT←0](BS=1) ∧ …`. */
-export type Notation = 'structural' | 'propositional' | 'causal'
+export type Notation = 'structural' | 'propositional' | 'causal' | 'arithmetic'
 
 interface Symbols {
   readonly not: string
@@ -247,6 +249,8 @@ export function renderEquation(model: CausalModel, id: string, notation: Notatio
       }
       return renderExpr(prop, format)
     }
+    case 'arithmetic':
+      return renderArithEquation(model, id, format)
     case 'causal': {
       const formulas = causalFormulas(model, id)
       return formulas.length === 1
@@ -259,4 +263,50 @@ export function renderEquation(model: CausalModel, id: string, notation: Notatio
 /** Render every equation, in topological order. */
 export function renderModel(model: CausalModel, notation: Notation, format: RenderFormat): string[] {
   return model.endogenous.map((id) => renderEquation(model, id, notation, format))
+}
+
+// Arithmetic notation: precedence 1 sum/difference, 2 product, 3 atom.
+export function renderArith(a: Arith, format: RenderFormat): string {
+  const latex = format === 'latex'
+  const go = (x: Arith, min: number): string => {
+    const [body, prec] = raw(x)
+    return prec < min ? `(${body})` : body
+  }
+  const raw = (x: Arith): [string, number] => {
+    switch (x.op) {
+      case 'num':
+        return [typeof x.value === 'string' ? (latex ? `\\text{${x.value}}` : x.value) : String(x.value), 3]
+      case 'var':
+        return [renderIdent(x.name, format), 3]
+      case 'sub':
+        return [`${go(x.left, 1)}${latex ? ' - ' : '−'}${go(x.right, 2)}`, 1]
+      case 'add':
+        return [x.args.map((y) => go(y, 1)).join(' + '), 1]
+      case 'mul':
+        return [x.args.map((y) => go(y, 2)).join(latex ? ' \\cdot ' : '·'), 2]
+      case 'max':
+        return [`${latex ? '\\max' : 'max'}(${x.args.map((y) => go(y, 0)).join(', ')})`, 3]
+      case 'abs':
+        return [latex ? `\\lvert ${go(x.arg, 0)} \\rvert` : `|${go(x.arg, 0)}|`, 3]
+      case 'ind':
+        return [`${latex ? '\\mathbb{1}' : '𝟙'}[${go(x.left, 0)}=${go(x.right, 0)}]`, 3]
+      case 'cases': {
+        const cond = (r: (typeof x.rows)[number]): string =>
+          r.when.map((w) => `${go(w.left, 0)}=${go(w.right, 0)}`).join(', ')
+        const rows = x.rows.map((r) => ({ value: go(r.value, 0), cond: cond(r) }))
+        const other = x.otherwise === undefined ? [] : [{ value: go(x.otherwise, 0), cond: '' }]
+        const all = [...rows, ...other]
+        if (!latex) {
+          return [`{ ${all.map((r) => (r.cond === '' ? `${r.value} otherwise` : `${r.value} if ${r.cond}`)).join('; ')} }`, 3]
+        }
+        const parts = all.map((r) => (r.cond === '' ? `${r.value} & \\text{otherwise}` : `${r.value} & \\text{if } ${r.cond}`))
+        return [`\\begin{cases} ${parts.join(' \\\\ ')} \\end{cases}`, 3]
+      }
+    }
+  }
+  return go(a, 0)
+}
+
+function renderArithEquation(model: CausalModel, id: string, format: RenderFormat): string {
+  return `${renderIdent(id, format)} = ${renderArith(toArith(model, equationOf(model, id)), format)}`
 }

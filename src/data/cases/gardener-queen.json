@@ -3,15 +3,24 @@
   "title": { "zh": "園丁與女王：不作為", "en": "The gardener and the Queen (omission)" },
   "family": "omission",
   "story_zh": "園丁答應幫鄰居澆花卻沒有澆，花枯死了。英國女王當然也沒有來澆這盆花。如果任何一人澆了，花都不會死。可是我們通常只說是園丁沒澆害死了花，不說女王沒澆也是原因。",
+  "explanation_zh": "園丁與女王都可以澆花，花枯死的條件是兩人都沒澆（D = ¬GW·¬QW）。模型把「沒做某事」當作事件，用來測試各種定義對缺席（omission）的處理：園丁沒澆花算不算花枯死的原因，女王沒澆花算不算。",
   "sources": [
     {
       "citation": "Beebee, H. (2004). Causing and nothingness. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
       "key": "beebee-2004",
+      "role": "origin",
       "verified": false
     },
     {
       "citation": "Halpern, J. Y., & Hitchcock, C. (2015). Graded causation and defaults. British Journal for the Philosophy of Science, 66(2), 413–457.",
       "key": "halpern-hitchcock-2015",
+      "role": "treatment",
+      "verified": false
+    },
+    {
+      "citation": "McGrath, S. (2005). Causation by omission: a dilemma. Philosophical Studies, 123(1–2), 125–148.",
+      "key": "mcgrath-2005",
+      "role": "origin",
       "verified": false
     }
   ],

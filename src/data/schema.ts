@@ -56,6 +56,9 @@ export const priorsSchema = z.union([
 export const sourceSchema = z.strictObject({
   citation: z.string().min(1),
   key: z.string().optional(),
+  /** origin: where the case comes from; treatment: a structural-model analysis of it; reference: an encyclopedia entry or survey. */
+  role: z.enum(['origin', 'treatment', 'reference']),
+  note: z.string().min(1).optional(),
   pages: z.string().optional(),
   /** True only once someone has checked the citation and pages against the source. */
   verified: z.boolean(),
@@ -138,6 +141,8 @@ export const caseSchema = z
     family: familySchema,
     /** Traditional Chinese paraphrase of the story. */
     story_zh: z.string().min(1),
+    /** What the model encodes and why these variables and equations. */
+    explanation_zh: z.string().min(1),
     sources: z.array(sourceSchema).min(1),
     model: modelSchema,
     /** The actual context u (values of exogenous variables). */
@@ -151,6 +156,9 @@ export const caseSchema = z
     showcase: z.array(showcaseSchema),
   })
   .superRefine((c, ctx) => {
+    if (!c.sources.some((s) => s.role === 'origin')) {
+      ctx.addIssue({ code: 'custom', path: ['sources'], message: 'needs at least one source with role origin' })
+    }
     c.verdicts.forEach((v, i) => {
       const path = ['verdicts', i]
       const needs = (ok: boolean, message: string): void => {

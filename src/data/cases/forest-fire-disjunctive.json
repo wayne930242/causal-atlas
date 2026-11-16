@@ -3,15 +3,24 @@
   "title": { "zh": "森林大火：析取式", "en": "Forest fire (disjunctive)" },
   "family": "actual",
   "story_zh": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。森林燒了。拿掉任何一個，森林照樣會燒。",
+  "explanation_zh": "雷擊與縱火者的火柴各由一個外生變數決定，兩者之一就足以讓森林大火發生（FF = max(L, MD)）。這是析取結構：每個原因單獨都夠用，單看「拿掉它火還會不會燒」會得到兩者都不是原因，因此需要 Halpern–Pearl 的定義。",
   "sources": [
     {
       "citation": "Halpern, J. Y. (2015). A modification of the Halpern–Pearl definition of causality. In Proceedings of the 24th International Joint Conference on Artificial Intelligence (IJCAI 2015).",
       "key": "halpern-2015",
+      "role": "treatment",
       "verified": false
     },
     {
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
       "key": "halpern-2016",
+      "role": "treatment",
+      "verified": false
+    },
+    {
+      "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
+      "key": "halpern-pearl-2005",
+      "role": "origin",
       "verified": false
     }
   ],

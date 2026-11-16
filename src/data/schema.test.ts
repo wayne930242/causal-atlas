@@ -41,6 +41,24 @@ describe('case schema', () => {
     expect(issues(noContext)).toContain('verdicts.0: butfor needs a context')
   })
 
+  it('requires story_zh, explanation_zh and an origin source', () => {
+    const noExplanation = seed('rock-throwing')
+    delete noExplanation.explanation_zh
+    expect(issues(noExplanation).join()).toMatch(/explanation_zh/)
+
+    const emptyStory = seed('rock-throwing')
+    emptyStory.story_zh = ''
+    expect(issues(emptyStory).join()).toMatch(/story_zh/)
+
+    const noOrigin = seed('rock-throwing')
+    noOrigin.sources = (noOrigin.sources as { role: string }[]).map((s) => ({ ...s, role: 'treatment' }))
+    expect(issues(noOrigin)).toContain('sources: needs at least one source with role origin')
+
+    const noRole = seed('rock-throwing')
+    noRole.sources = [{ citation: 'x', verified: false }]
+    expect(issues(noRole).join()).toMatch(/role/)
+  })
+
   it('rejects unknown keys and theories', () => {
     expect(issues({ ...seed('rock-throwing'), extra: 1 }).join()).toMatch(/extra/)
     const badTheory = seed('rock-throwing')

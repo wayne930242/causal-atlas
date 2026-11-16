@@ -3,10 +3,18 @@
   "title": { "zh": "森林大火：合取式", "en": "Forest fire (conjunctive)" },
   "family": "actual",
   "story_zh": "這次森林很潮濕，雷擊和火柴必須同時出現才燒得起來。兩者都出現了，森林燒了。拿掉任何一個，森林就不會燒。",
+  "explanation_zh": "雷擊與縱火者的火柴各由一個外生變數決定，森林大火需要兩者同時發生（FF = L·MD）。這是合取結構：少了任何一個，火都燒不起來，所以兩者各自是反事實依賴的原因。",
   "sources": [
     {
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
       "key": "halpern-2016",
+      "role": "treatment",
+      "verified": false
+    },
+    {
+      "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
+      "key": "halpern-pearl-2005",
+      "role": "origin",
       "verified": false
     }
   ],

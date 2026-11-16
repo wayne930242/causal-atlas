@@ -3,15 +3,25 @@
   "title": { "zh": "丟石頭：先發制人", "en": "Rock throwing (preemption)" },
   "family": "actual",
   "story_zh": "Suzy 和 Billy 都朝瓶子丟石頭，兩人都丟得很準。Suzy 的石頭先到，打破了瓶子；Billy 的石頭到的時候瓶子已經碎了。直覺上是 Suzy 打破了瓶子，但就算 Suzy 沒丟，Billy 的石頭也會打破它。",
+  "explanation_zh": "模型把兩人的意圖當作外生變數，丟、打中、瓶子破掉是內生變數。Billy 打中的條件是他丟了而且 Suzy 沒有先打中（BH = BT·(1−SH)），這一條讓 Billy 的石頭只能在 Suzy 落空時才起作用，正好刻畫先發制人。瓶子破掉只要任一人打中即可。",
   "sources": [
     {
       "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
       "key": "halpern-pearl-2005",
+      "role": "treatment",
       "verified": false
     },
     {
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
       "key": "halpern-2016",
+      "role": "treatment",
+      "verified": false
+    },
+    {
+      "citation": "Hall, N. (2004). Two concepts of causation. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
+      "key": "hall-2004",
+      "role": "origin",
+      "note": "Suzy 與 Billy 的丟石頭例子取自 Hall (2004)；它屬於 Lewis (1986) 討論過的早期先發制人。",
       "verified": false
     }
   ],

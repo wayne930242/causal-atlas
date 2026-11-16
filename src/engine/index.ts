@@ -9,7 +9,7 @@ export type { Evaluation, Interventions } from './evaluate.ts'
 export { evaluate, normalizeAssignment } from './evaluate.ts'
 export { evalFormula, holdsIn, satisfies, toFormula } from './formula.ts'
 export type { Notation, RenderFormat } from './render.ts'
-export { causalFormulas, renderEquation, renderExpr, renderIdent, renderModel, renderValue } from './render.ts'
+export { causalFormulas, renderEquation, renderExpr, renderIdent, renderModel, renderValue, renderArith } from './render.ts'
 export type {
   IndependentPrior,
   JointPrior,
@@ -44,3 +44,5 @@ export type {
   UtilityTable,
 } from './decision.ts'
 export { evaluateDecision } from './decision.ts'
+export type { Arith } from './arithmetic.ts'
+export { evalArith, toArith } from './arithmetic.ts'
