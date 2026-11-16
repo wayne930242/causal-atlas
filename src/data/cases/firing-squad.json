@@ -39,6 +39,8 @@
     { "theory": "butfor", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "not-cause" },
     { "theory": "butfor", "query": { "cause": "C=1", "effect": "D=1" }, "expected": "cause" },
     { "theory": "hp-modified", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "part-of-cause" },
+    { "theory": "hp-original", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "cause", "note": "Witness: set B to 0." },
+    { "theory": "hp-updated", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "cause" },
     { "theory": "hp-modified", "query": { "cause": "C=1", "effect": "D=1" }, "expected": "cause" }
   ],
   "showcase": [

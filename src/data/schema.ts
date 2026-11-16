@@ -75,7 +75,7 @@ export const decisionSchema = z.strictObject({
 })
 
 const actualVerdictSchema = z.strictObject({
-  theory: z.enum(['butfor', 'hp-modified', 'hp-normality']),
+  theory: z.enum(['butfor', 'hp-original', 'hp-updated', 'hp-modified', 'hp-normality']),
   query: z.strictObject({
     /** Conjunction of events, e.g. `L=1 and MD=1`. */
     cause: z.string().min(1),
@@ -166,6 +166,8 @@ export const caseSchema = z
       }
       switch (v.theory) {
         case 'butfor':
+        case 'hp-original':
+        case 'hp-updated':
         case 'hp-modified':
           needs(c.context !== undefined, `${v.theory} needs a context`)
           return

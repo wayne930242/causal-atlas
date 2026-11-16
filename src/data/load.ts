@@ -151,6 +151,8 @@ export function describeVerdict(verdict: CaseVerdict): string {
   const q = verdict.query
   switch (verdict.theory) {
     case 'butfor':
+    case 'hp-original':
+    case 'hp-updated':
     case 'hp-modified':
     case 'hp-normality':
       return `${verdict.theory}: ${verdict.query.cause} ⇒ ${verdict.query.effect}`
@@ -178,6 +180,8 @@ export function checkVerdict(loaded: LoadedCase, verdict: CaseVerdict): VerdictC
   })
   switch (verdict.theory) {
     case 'butfor':
+    case 'hp-original':
+    case 'hp-updated':
     case 'hp-modified':
     case 'hp-normality': {
       const result = actualCause(loaded.model, need(loaded.context, 'context'), verdict.query, verdict.theory, {

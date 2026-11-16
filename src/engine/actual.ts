@@ -15,6 +15,18 @@ import { ModelError, coerceToDomain, enumerateAssignments, requireValue, subsets
  *   with AC2(a^m)): AC1 X⃗=x⃗ and φ hold; AC2(a^m) there are W⃗ ⊆ V∖X⃗ and x⃗' such that, with W⃗
  *   held at its actual values w⃗*, (M,u) ⊨ [X⃗←x⃗', W⃗←w⃗*]¬φ; AC3 no strict subset of X⃗ satisfies
  *   AC1 and AC2(a^m).
+ * - `hp-original` / `hp-updated`: Halpern, Actual Causality (2016), §2.2, Def. 2.2.1 with AC2(a)
+ *   and AC2(b^o) (original, Halpern & Pearl 2001) or AC2(b^u) (updated, Halpern & Pearl 2005,
+ *   Def. 3.1). Quoting §2.2:
+ *     "AC2(a). There is a partition of V (the set of endogenous variables) into two disjoint
+ *      subsets Z⃗ and W⃗ (so that Z⃗ ∩ W⃗ = ∅) with X⃗ ⊆ Z⃗ and a setting x⃗' and w⃗ of the variables
+ *      in X⃗ and W⃗, respectively, such that (M,u) ⊨ [X⃗←x⃗', W⃗←w⃗]¬φ."
+ *     "AC2(b^o). If z⃗* is such that (M,u) ⊨ Z⃗=z⃗*, then for all subsets Z⃗' of Z⃗ − X⃗, we have
+ *      (M,u) ⊨ [X⃗←x⃗, W⃗←w⃗, Z⃗'←z⃗*]φ."
+ *     "AC2(b^u). If z⃗* is such that (M,u) ⊨ Z⃗=z⃗*, then for all subsets W⃗' of W⃗ and subsets Z⃗'
+ *      of Z⃗ − X⃗, we have (M,u) ⊨ [X⃗←x⃗, W⃗'←w⃗, Z⃗'←z⃗*]φ."
+ *   AC3 minimality is checked against the same AC1 + AC2 variant. Unlike AC2(a^m), w⃗ ranges over
+ *   all settings of W⃗, not only the actual ones.
  * - `hp-normality`: as `hp-modified`, but the witness world s_{X⃗←x⃗',W⃗←w⃗*,u} must be at least as
  *   normal as the actual world s_u (AC2+(a^m), Halpern & Hitchcock 2015; Actual Causality §3.2).
  *   See `atLeastAsNormal` for the ordering used here.
@@ -23,7 +35,7 @@ import { ModelError, coerceToDomain, enumerateAssignments, requireValue, subsets
  * intervention-free boolean combination of primitive events.
  */
 
-export type CausalTheory = 'butfor' | 'hp-modified' | 'hp-normality'
+export type CausalTheory = 'butfor' | 'hp-original' | 'hp-updated' | 'hp-modified' | 'hp-normality'
 
 /**
  * `cause`: X⃗=x⃗ is a cause. `part-of-cause`: not itself a cause, but its conjuncts are part of
@@ -35,7 +47,10 @@ export type CausalVerdict = 'cause' | 'part-of-cause' | 'not-cause'
 /** Default (normal) value per variable. Variables without an entry are never deviant. */
 export type Normality = Assignment
 
-/** Evidence for AC2: hold W⃗ at w⃗ (its actual values), set X⃗ to x⃗', and φ fails. */
+/**
+ * Evidence for AC2: hold W⃗ at w⃗, set X⃗ to x⃗', and φ fails. Under hp-modified and hp-normality
+ * w⃗ is W⃗'s actual value; under hp-original and hp-updated it may be any setting passing AC2(b).
+ */
 export interface Witness {
   readonly W: readonly string[]
   readonly w: Assignment
@@ -138,6 +153,8 @@ interface Setup {
   readonly actual: Assignment
   /** Extra constraint on witness worlds (normality); always true for hp-modified. */
   readonly admissible: (world: Assignment) => boolean
+  /** AC2 variant: `m` = AC2(a^m); `o`/`u` = AC2(a) with AC2(b^o)/AC2(b^u). */
+  readonly ac2: 'm' | 'o' | 'u'
 }
 
 /** All settings x⃗' of the variables in `cause` other than the actual x⃗. */
@@ -161,17 +178,37 @@ function ac1(setup: Setup, cause: Assignment): boolean {
   )
 }
 
-/** AC2(a^m), optionally with W⃗ forced empty (but-for). */
+/** AC2(b^o) / AC2(b^u): φ survives X⃗←x⃗ with (subsets of) W⃗←w⃗ and any Z⃗'⊆Z⃗−X⃗ at actual values. */
+function sufficient(setup: Setup, cause: Assignment, W: readonly string[], w: Assignment): boolean {
+  const { model, context, actual, effect } = setup
+  const zRest = model.endogenous.filter((id) => !(id in cause) && !W.includes(id))
+  const wSubsets = setup.ac2 === 'u' ? subsetsBySize(W) : [W]
+  for (const Wp of wSubsets) {
+    for (const Zp of subsetsBySize(zRest)) {
+      const world = evaluate(model, context, { ...restrict(actual, Zp), ...restrict(w, Wp), ...cause }).values
+      if (!holdsIn(world, effect)) return false
+    }
+  }
+  return true
+}
+
+/** AC2(a^m) or AC2(a)+AC2(b), optionally with W⃗ forced empty (but-for). */
 function findWitness(setup: Setup, cause: Assignment, allowW: boolean): Witness | undefined {
   const { model, context } = setup
   const others = model.endogenous.filter((id) => !(id in cause))
   const candidates = allowW ? subsetsBySize(others) : [[]]
   const alts = alternatives(model, cause)
   for (const W of candidates) {
-    const w = restrict(setup.actual, W)
-    for (const xPrime of alts) {
-      const world = evaluate(model, context, { ...w, ...xPrime }).values
-      if (!holdsIn(world, setup.effect) && setup.admissible(world)) return { W, w, xPrime, world }
+    const settings =
+      setup.ac2 === 'm'
+        ? [restrict(setup.actual, W)]
+        : [...enumerateAssignments(W.map((id) => getVariable(model, id)))]
+    for (const w of settings) {
+      if (setup.ac2 !== 'm' && !sufficient(setup, cause, W, w)) continue
+      for (const xPrime of alts) {
+        const world = evaluate(model, context, { ...w, ...xPrime }).values
+        if (!holdsIn(world, setup.effect) && setup.admissible(world)) return { W, w, xPrime, world }
+      }
     }
   }
   return undefined
@@ -227,7 +264,8 @@ export function actualCause(
     for (const [id, value] of Object.entries(normality)) coerceToDomain(getVariable(model, id), value)
     admissible = (world) => atLeastAsNormal(world, actual, normality)
   }
-  const setup: Setup = { model, context, effect, actual, admissible }
+  const ac2 = theory === 'hp-original' ? 'o' : theory === 'hp-updated' ? 'u' : 'm'
+  const setup: Setup = { model, context, effect, actual, admissible, ac2 }
 
   if (theory === 'butfor') {
     const check = checkButFor(setup, cause)

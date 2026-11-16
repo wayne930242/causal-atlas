@@ -40,7 +40,10 @@
     { "theory": "butfor", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "not-cause" },
     { "theory": "hp-modified", "query": { "cause": "L=1 and MD=1", "effect": "FF=1" }, "expected": "cause" },
     { "theory": "hp-modified", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "part-of-cause" },
-    { "theory": "hp-modified", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "part-of-cause" }
+    { "theory": "hp-modified", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "part-of-cause" },
+    { "theory": "hp-original", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "cause", "note": "Witness: set MD to 0 (a non-actual contingency)." },
+    { "theory": "hp-updated", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "L=1 and MD=1", "effect": "FF=1" }, "expected": "not-cause", "note": "Fails AC3: L=1 alone suffices." }
   ],
   "showcase": [
     { "label": { "zh": "沒有雷擊", "en": "No lightning" }, "interventions": { "L": 0 } },

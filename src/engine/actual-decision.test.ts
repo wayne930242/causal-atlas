@@ -137,3 +137,69 @@ describe('decision problems', () => {
     expect(() => evaluateDecision(model, prior, { act: 'A', utility: { variables: ['O'], rows: [] } })).toThrow(/no row/)
   })
 })
+
+describe('actual causation: original and updated HP definitions', () => {
+  const both = { U_L: 1, U_MD: 1 }
+
+  it('disjunctive forest fire (Halpern 2015, Example 3.1): L=1 alone is a cause under original and updated', () => {
+    const model = forestFire('or')
+    for (const theory of ['hp-original', 'hp-updated'] as const) {
+      const single = actualCause(model, both, { cause: 'L=1', effect: 'FF=1' }, theory)
+      expect(single.verdict).toBe('cause')
+      expect(single.check.witness).toMatchObject({ W: ['MD'], w: { MD: false }, xPrime: { L: false } })
+      expect(actualCause(model, both, { cause: 'L=1 and MD=1', effect: 'FF=1' }, theory).verdict).toBe('not-cause')
+    }
+    expect(actualCause(model, both, { cause: 'L=1', effect: 'FF=1' }, 'hp-modified').verdict).toBe('part-of-cause')
+  })
+
+  it('omission overdetermination (sharks): J=0 is a cause of DR=1 under original, only part of one under modified', () => {
+    const model = buildModel({
+      variables: [
+        variable('U_J', 'exogenous'),
+        variable('U_SK', 'exogenous'),
+        variable('J', 'endogenous'),
+        variable('SK', 'endogenous'),
+        variable('DR', 'endogenous'),
+      ],
+      equations: { J: 'U_J', SK: 'U_SK', DR: 'not J or SK' },
+    })
+    const context = { U_J: 0, U_SK: 1 }
+    const q = { cause: 'J=0', effect: 'DR=1' }
+    const original = actualCause(model, context, q, 'hp-original')
+    expect(original.verdict).toBe('cause')
+    expect(original.check.witness).toMatchObject({ W: ['SK'], w: { SK: false }, xPrime: { J: true } })
+    expect(actualCause(model, context, q, 'hp-updated').verdict).toBe('cause')
+    const modified = actualCause(model, context, q, 'hp-modified')
+    expect(modified.verdict).toBe('part-of-cause')
+    expect(modified.containedIn?.cause).toEqual({ J: false, SK: true })
+  })
+
+  it('loaded gun (Actual Causality, Example 2.8.1): A=1 is a cause under AC2(b^o) but not AC2(b^u)', () => {
+    const model = buildModel({
+      variables: [
+        variable('U_A', 'exogenous'),
+        variable('U_B', 'exogenous'),
+        variable('U_C', 'exogenous'),
+        variable('A', 'endogenous'),
+        variable('B', 'endogenous'),
+        variable('C', 'endogenous'),
+        variable('D', 'endogenous'),
+      ],
+      equations: { A: 'U_A', B: 'U_B', C: 'U_C', D: '(A and B) or C' },
+    })
+    const context = { U_A: 1, U_B: 0, U_C: 1 }
+    const q = { cause: 'A=1', effect: 'D=1' }
+    const original = actualCause(model, context, q, 'hp-original')
+    expect(original.verdict).toBe('cause')
+    expect(original.check.witness).toMatchObject({ w: { B: true, C: false } })
+    expect(actualCause(model, context, q, 'hp-updated').verdict).toBe('not-cause')
+    expect(actualCause(model, context, { cause: 'C=1', effect: 'D=1' }, 'hp-updated').verdict).toBe('cause')
+  })
+
+  it('rock throwing: Suzy is a cause and Billy is not under original and updated', () => {
+    for (const theory of ['hp-original', 'hp-updated'] as const) {
+      expect(actualCause(rockThrowing(), rockContext, { cause: 'ST=1', effect: 'BS=1' }, theory).verdict).toBe('cause')
+      expect(actualCause(rockThrowing(), rockContext, { cause: 'BT=1', effect: 'BS=1' }, theory).verdict).toBe('not-cause')
+    }
+  })
+})
