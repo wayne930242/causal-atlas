@@ -4,21 +4,21 @@ Interactive structural causal models and a dataset of philosophical causation an
 
 ## Package
 
-`@wayne930242/causal-atlas` (0.1.0, not published) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.1.0, not published) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
-| `@wayne930242/causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider` |
-| `@wayne930242/causal-atlas/engine` | The causal-model engine |
-| `@wayne930242/causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
-| `@wayne930242/causal-atlas/style.css` | Styles for the components; import it once |
+| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider` |
+| `causal-atlas/engine` | The causal-model engine |
+| `causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
+| `causal-atlas/style.css` | Styles for the components; import it once |
 
 React 19 is a peer dependency. Importing the components touches no browser globals, so they render on
 the server; interaction needs a client island, e.g. in Astro MDX:
 
 ```mdx
-import { CasePage, WorldLanes } from '@wayne930242/causal-atlas'
-import '@wayne930242/causal-atlas/style.css'
+import { CasePage, WorldLanes } from 'causal-atlas'
+import 'causal-atlas/style.css'
 
 <CasePage client:visible caseId="rock-throwing" heading={false} />
 <WorldLanes client:visible caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />
