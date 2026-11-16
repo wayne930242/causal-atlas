@@ -1,8 +1,14 @@
 {
   "id": "forest-fire-disjunctive",
   "title": { "zh": "森林大火：析取式", "en": "Forest fire (disjunctive)" },
+  "subtitle": "雷擊和火柴，任何一個都夠燒掉森林。",
   "family": "actual",
   "story_zh": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。森林燒了。拿掉任何一個，森林照樣會燒。",
+  "story_tags": [
+    { "sentence": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。", "variables": ["L", "MD"] },
+    { "sentence": "森林燒了。", "variables": ["FF"] }
+  ],
+  "intuition": {"query": {"cause": "L=1", "effect": "FF=1"}, "expected": "cause", "text": "雷擊確實點燃了森林，旁邊多一根火柴不會讓它不算數。", "agree": ["hp-original", "hp-updated"]},
   "explanation_zh": "雷擊與縱火者的火柴各由一個外生變數決定，兩者之一就足以讓森林大火發生（FF = max(L, MD)）。這是析取結構：每個原因單獨都夠用，單看「拿掉它火還會不會燒」會得到兩者都不是原因，因此需要 Halpern–Pearl 的定義。",
   "sources": [
     {

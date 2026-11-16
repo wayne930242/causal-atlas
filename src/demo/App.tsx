@@ -66,23 +66,23 @@ function Index() {
 function Lesson() {
   return (
     <article className="demo-article">
-      <h2>二、如果 Suzy 的石頭沒打中</h2>
+      <h2>二、如果小蘇的石頭沒打中</h2>
       <p>
         脈絡不變：兩個人還是都丟了。只把 SH 的式子換成 0，其餘變項照原來的式子重算。算出來的世界畫在第二條道，和實際世界對齊。
       </p>
-      <WorldLanes caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下 Suzy 的石頭" />
+      <WorldLanes caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />
       <p>
-        兩條道只有 SH 和 BH 兩格不同，最後一格 BS 都是 1。攔下 Suzy 的石頭，瓶子還是破。所以只問「少了它，結果還會不會發生」，判不出 Suzy 的石頭是原因。
+        兩條道只有 SH 和 BH 兩格不同，最後一格 BS 都是 1。攔下小蘇的石頭，瓶子還是破。所以只問「少了它，結果還會不會發生」，判不出小蘇的石頭是原因。
       </p>
       <Supplement title="反事實的三個步驟：溯因、干預、預測">
         <p>溯因：用看到的事回推外生變項的值。干預：把要改的變項換成常數。預測：用改過的模型重算其餘變項。</p>
       </Supplement>
-      <h2>三、把 Billy 的石頭固定住</h2>
+      <h2>三、把小比的石頭固定住</h2>
       <p>HP 的定義允許先把某些變項固定在實際值，再改原因。第三條道就是這樣算出來的世界。</p>
       <WorldLanes
         caseId="rock-throwing"
         interventions={{ ST: 0 }}
-        actionLabel="Suzy 沒丟"
+        actionLabel="小蘇沒丟"
         witness={{ cause: 'ST=1', effect: 'BS=1' }}
       />
     </article>

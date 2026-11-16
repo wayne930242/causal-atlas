@@ -140,13 +140,46 @@ export const showcaseSchema = z.strictObject({
  */
 export const layoutSchema = z.record(identifier, z.tuple([z.number(), z.number()]))
 
+/** A sentence of `story_zh` and the variables it introduces; the page tags the sentence with their ids. */
+export const storyTagSchema = z.strictObject({
+  sentence: z.string().min(1),
+  variables: z.array(identifier).min(1),
+})
+
+const actualTheorySchema = z.enum(['butfor', 'hp-original', 'hp-updated', 'hp-modified', 'hp-normality'])
+
+/**
+ * The everyday judgment about one query, and which theories in `verdicts` reach it. For an
+ * actual-cause query `agree` lists the theories whose verdict equals `expected`; for a decision
+ * (`{ choice }`) it lists edt and/or cdt.
+ */
+export const intuitionSchema = z.union([
+  z.strictObject({
+    query: z.strictObject({ cause: z.string().min(1), effect: z.string().min(1) }),
+    expected: z.enum(['cause', 'part-of-cause', 'not-cause']),
+    /** One short sentence: why people judge it so. */
+    text: z.string().min(1),
+    agree: z.array(actualTheorySchema),
+  }),
+  z.strictObject({
+    query: z.strictObject({ choice: identifier }),
+    expected: valueSchema,
+    text: z.string().min(1),
+    agree: z.array(z.enum(['edt', 'cdt'])),
+  }),
+])
+
 export const caseSchema = z
   .strictObject({
     id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'must be kebab-case'),
     title: localizedSchema,
+    /** One line under the title. */
+    subtitle: z.string().min(1).optional(),
     family: familySchema,
     /** Traditional Chinese paraphrase of the story. */
     story_zh: z.string().min(1),
+    story_tags: z.array(storyTagSchema).optional(),
+    intuition: intuitionSchema.optional(),
     /** What the model encodes and why these variables and equations. */
     explanation_zh: z.string().min(1),
     sources: z.array(sourceSchema).min(1),
@@ -168,6 +201,24 @@ export const caseSchema = z
       for (const id of Object.keys(c.layout)) {
         if (!ids.has(id)) ctx.addIssue({ code: 'custom', path: ['layout', id], message: `unknown variable ${id}` })
       }
+    }
+    const variableIds = new Set(c.model.variables.map((v) => v.id))
+    c.story_tags?.forEach((t, i) => {
+      if (!c.story_zh.includes(t.sentence)) {
+        ctx.addIssue({ code: 'custom', path: ['story_tags', i, 'sentence'], message: 'sentence not found in story_zh' })
+      }
+      for (const id of t.variables) {
+        if (!variableIds.has(id)) ctx.addIssue({ code: 'custom', path: ['story_tags', i, 'variables'], message: `unknown variable ${id}` })
+      }
+    })
+    if (c.intuition !== undefined) {
+      const q = c.intuition.query
+      const listed = c.verdicts.some((v) =>
+        'choice' in q
+          ? (v.theory === 'edt' || v.theory === 'cdt') && 'choice' in v.query && v.query.choice === q.choice
+          : 'cause' in v.query && v.query.cause === q.cause && v.query.effect === q.effect,
+      )
+      if (!listed) ctx.addIssue({ code: 'custom', path: ['intuition', 'query'], message: 'no verdict asks this query' })
     }
     if (!c.sources.some((s) => s.role === 'origin')) {
       ctx.addIssue({ code: 'custom', path: ['sources'], message: 'needs at least one source with role origin' })

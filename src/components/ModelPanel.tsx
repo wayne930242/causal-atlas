@@ -9,7 +9,7 @@ import type { UiNotation } from './notation.ts'
 import { NOTATIONS } from './notation.ts'
 import { Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
-import { doText } from './view-model.ts'
+import { doText, probLegend } from './view-model.ts'
 
 export interface GraphBoxProps {
   readonly c: LoadedCase
@@ -74,7 +74,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
       </div>
       {legend === true && (
         <p className="ca-legend">
-          {world.probs !== undefined ? '黑色的高度＝等於 1 的機率' : '黑＝發生（1）　白＝沒發生（0）'}
+          {world.probs !== undefined ? probLegend(c.model, world.shown) : '黑＝發生（1）　白＝沒發生（0）'}
         </p>
       )}
     </div>

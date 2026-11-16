@@ -18,6 +18,7 @@ import {
   label,
   marginals,
   priorWithSliders,
+  probLegend,
   probText,
   shownVariables,
   sliderVariables,
@@ -150,7 +151,7 @@ export function ProbabilityPanelFor({ c, view = 'sliders', pair }: { c: LoadedCa
           ) : (
             <Tag tone="fg">機率</Tag>
           )}
-          <span className="ca-muted ca-small">黑色的高度＝等於 1 的機率</span>
+          <span className="ca-muted ca-small">{probLegend(c.model, shown)}</span>
         </div>
         <div className="ca-graph-wrap" ref={wrap}>
           <SignalGraph

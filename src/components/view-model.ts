@@ -365,3 +365,9 @@ export function textWidth(s: string, size: number): number {
 export function probText(p: number): string {
   return Number.isNaN(p) ? '—' : p.toFixed(2)
 }
+
+/** Legend for probability fill; names the convention for non-boolean variables when any is drawn. */
+export function probLegend(model: CausalModel, shown: readonly string[]): string {
+  const finite = shown.some((id) => getVariable(model, id).domain.kind === 'finite')
+  return finite ? '黑色的高度＝等於 1 的機率；非 0／1 的變項，數字前標出填色代表的值' : '黑色的高度＝等於 1 的機率'
+}

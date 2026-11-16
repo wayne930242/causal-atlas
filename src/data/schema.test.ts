@@ -75,6 +75,15 @@ describe('case schema', () => {
     expect(issues(badCell).join()).toMatch(/layout\.ST/)
   })
 
+  it('checks story tags and the intuition query', () => {
+    const badTag = seed('rock-throwing')
+    badTag.story_tags = [{ sentence: '不在故事裡的句子。', variables: ['ST'] }, { sentence: '瓶子', variables: ['XX'] }]
+    expect(issues(badTag)).toEqual(['story_tags.0.sentence: sentence not found in story_zh', 'story_tags.1.variables: unknown variable XX'])
+    const badIntuition = seed('rock-throwing')
+    badIntuition.intuition = { query: { cause: 'SH=1', effect: 'BS=1' }, expected: 'cause', text: 'x', agree: [] }
+    expect(issues(badIntuition)).toContain('intuition.query: no verdict asks this query')
+  })
+
   it('loader rejects bad tables and priors', () => {
     const badRow = seed('newcomb')
     const model = badRow.model as { equations: Record<string, unknown> }

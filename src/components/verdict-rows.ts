@@ -208,6 +208,46 @@ export function seeDoPair(c: LoadedCase): SeeDoPair | undefined {
   return undefined
 }
 
+export interface Intuition {
+  /** `cause⇒effect` for an actual-cause query, `choice:<var>` for a decision. */
+  readonly key: string
+  readonly verdict?: CausalVerdict
+  /** For a decision: the expected act, e.g. `S=1`. */
+  readonly choice?: string
+  readonly text: string
+  readonly agree: ReadonlySet<string>
+}
+
+export function intuition(c: LoadedCase): Intuition | undefined {
+  const i = c.data.intuition
+  if (i === undefined) return undefined
+  if ('choice' in i.query) {
+    return { key: `choice:${i.query.choice}`, choice: `${i.query.choice}=${formatValue(i.expected as Value)}`, text: i.text, agree: new Set(i.agree) }
+  }
+  return { key: `${i.query.cause}⇒${i.query.effect}`, verdict: i.expected as CausalVerdict, text: i.text, agree: new Set(i.agree) }
+}
+
+/** 「簡單反事實和直覺不一致；HP 修正定義、HP 加上常態和直覺一致。」 for the theories the case lists on that query. */
+export function intuitionSummary(c: LoadedCase): string | undefined {
+  const i = intuition(c)
+  if (i === undefined) return undefined
+  const listed = new Set<string>()
+  for (const v of c.data.verdicts) {
+    if (i.choice !== undefined) {
+      if ((v.theory === 'edt' || v.theory === 'cdt') && 'choice' in v.query) listed.add(v.theory)
+    } else if ('cause' in v.query && `${v.query.cause}⇒${v.query.effect}` === i.key) {
+      listed.add(v.theory)
+    }
+  }
+  const name = (t: string): string => (t === 'edt' ? '證據決策論' : t === 'cdt' ? '因果決策論' : THEORY_NAME[t as CausalTheory])
+  const agree = [...listed].filter((t) => i.agree.has(t)).map(name)
+  const differ = [...listed].filter((t) => !i.agree.has(t)).map(name)
+  const parts: string[] = []
+  if (differ.length > 0) parts.push(`${differ.join('、')}和直覺不一致`)
+  if (agree.length > 0) parts.push(`${agree.join('、')}和直覺一致`)
+  return parts.length === 0 ? undefined : `${parts.join('；')}。`
+}
+
 /** Short citations: `Hall 2004；Halpern & Pearl 2005`. */
 export function shortSources(c: LoadedCase): string {
   const order = { origin: 0, treatment: 1, reference: 2 }

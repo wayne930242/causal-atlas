@@ -24,7 +24,7 @@ describe('CausalPlayground', () => {
     expect(node(container, 'BH').getAttribute('data-value')).toBe('0')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('live')
 
-    fireEvent.click(screen.getByRole('button', { name: /^SH Suzy 打中/ }))
+    fireEvent.click(screen.getByRole('button', { name: /^SH 小蘇擊中/ }))
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')
     expect(node(container, 'SH').getAttribute('data-value')).toBe('0')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('cut')
@@ -33,7 +33,7 @@ describe('CausalPlayground', () => {
     expect(screen.getAllByText('do(SH=0)').length).toBeGreaterThan(0)
 
     // Keyboard: Enter on the same node releases it.
-    fireEvent.keyDown(screen.getByRole('button', { name: /^SH Suzy 打中/ }), { key: 'Enter' })
+    fireEvent.keyDown(screen.getByRole('button', { name: /^SH 小蘇擊中/ }), { key: 'Enter' })
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('false')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('live')
     expect(node(container, 'BH').getAttribute('data-value')).toBe('0')
@@ -57,7 +57,7 @@ describe('CasePage', () => {
   it('reveals one thing per step: story, graph, do(), verdicts', () => {
     const { container } = render(<CasePage caseId="rock-throwing" />)
     const has = (selector: string): boolean => container.querySelector(selector) !== null
-    expect(screen.getByLabelText('故事').textContent).toContain('Suzy')
+    expect(screen.getByLabelText('故事').textContent).toContain('小蘇')
     expect(has('.ca-graph')).toBe(false)
     expect(has('[data-reveal="explanation"]')).toBe(false)
 
@@ -88,6 +88,34 @@ describe('CasePage', () => {
   })
 })
 
+describe('CasePage display fields', () => {
+  it('shows the subtitle and tags story sentences with variable ids', () => {
+    const { container } = render(<CasePage caseId="rock-throwing" />)
+    expect(container.querySelector('.ca-subtitle')?.textContent).toBe('兩個人都丟了石頭，只有一顆砸中瓶子。')
+    const tags = [...container.querySelectorAll('.ca-story-sentence')].map((s) =>
+      [...s.querySelectorAll('.ca-story-tag')].map((t) => t.textContent).join(','),
+    )
+    expect(tags.slice(0, 3)).toEqual(['ST,BT', 'SH,BS', 'BH'])
+  })
+
+  it('puts the intuition first and marks theories that disagree with it', () => {
+    const { container } = render(<CasePage caseId="rock-throwing" initialStep={4} />)
+    const group = container.querySelector('.ca-verdict-group') as HTMLElement
+    const rows = [...group.querySelectorAll('.ca-verdict')]
+    expect(rows[0].getAttribute('data-theory')).toBe('intuition')
+    expect(rows[0].textContent).toContain('她的石頭砸到了瓶子')
+    const mismatched = rows.filter((r) => r.getAttribute('data-mismatch') === 'true').map((r) => r.getAttribute('data-theory'))
+    expect(mismatched).toEqual(['butfor'])
+    expect(container.querySelector('[data-reveal="step-4"]')?.textContent).toContain('簡單反事實和直覺不一致')
+  })
+
+  it('labels the value a non-boolean fill stands for', () => {
+    const { container } = render(<ProbabilityPanel caseId="newcomb" />)
+    expect(container.querySelector('[data-node="A"] [data-fill-means]')?.getAttribute('data-fill-means')).toBe('A=one')
+    expect(container.textContent).toContain('數字前標出填色代表的值')
+  })
+})
+
 describe('ProbabilityPanel', () => {
   it('recomputes P(V=1) when a slider moves', () => {
     const { container } = render(<ProbabilityPanel caseId="smoking-lesion" />)
@@ -114,9 +142,9 @@ describe('ProbabilityPanel', () => {
 
 describe('WorldLanes', () => {
   it('adds the counterfactual lane and a diff strip on the second step', () => {
-    const { container } = render(<WorldLanes caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下 Suzy 的石頭" />)
+    const { container } = render(<WorldLanes caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />)
     expect(container.querySelectorAll('[data-lane]').length).toBe(1)
-    fireEvent.click(screen.getByRole('button', { name: /攔下 Suzy 的石頭/ }))
+    fireEvent.click(screen.getByRole('button', { name: /攔下小蘇的石頭/ }))
     expect(container.querySelectorAll('[data-lane]').length).toBe(2)
     expect(container.querySelector('[data-diff-cell="SH"]')?.getAttribute('data-diff-kind')).toBe('do')
     expect(container.querySelector('[data-diff-cell="BH"]')?.getAttribute('data-diff-kind')).toBe('recomputed')

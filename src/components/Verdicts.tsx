@@ -2,8 +2,8 @@ import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import { formatValue } from '../engine/values.ts'
 import { Disclosure, NoIcon, OkIcon, PartIcon, Pin, Tag } from './parts.tsx'
-import type { ActualGroup, ActualRow } from './verdict-rows.ts'
-import { THEORY_NAME, THEORY_REF, VERDICT_WORD, actualGroups, decisionRows, numberRows } from './verdict-rows.ts'
+import type { ActualGroup, ActualRow, Intuition } from './verdict-rows.ts'
+import { THEORY_NAME, THEORY_REF, VERDICT_WORD, actualGroups, decisionRows, intuition, numberRows } from './verdict-rows.ts'
 import { assignmentText, probText } from './view-model.ts'
 
 export interface VerdictsProps {
@@ -21,10 +21,51 @@ function VerdictIcon({ verdict }: { readonly verdict: ActualRow['verdict'] }) {
   return <NoIcon />
 }
 
-function ActualRowView({ row, onShow }: { readonly row: ActualRow; readonly onShow?: VerdictsProps['onShow'] }) {
+function Mismatch() {
+  return (
+    <span className="ca-mismatch">
+      <Tag tone="line">和直覺不合</Tag>
+    </span>
+  )
+}
+
+function IntuitionRow({ i }: { readonly i: Intuition }) {
+  return (
+    <li className="ca-verdict" data-theory="intuition" data-intuition="true" data-verdict={i.verdict ?? ''}>
+      <div className="ca-verdict-main">
+        <span className="ca-verdict-theory">
+          <Tag tone="chip">直覺</Tag>
+        </span>
+        <span className="ca-verdict-word">
+          {i.verdict !== undefined ? (
+            <>
+              <VerdictIcon verdict={i.verdict} />
+              <strong>{VERDICT_WORD[i.verdict]}</strong>
+            </>
+          ) : (
+            <strong>
+              選 <span className="ca-mono">{i.choice}</span>
+            </strong>
+          )}
+        </span>
+        <span className="ca-verdict-sentence">{i.text}</span>
+      </div>
+    </li>
+  )
+}
+
+function ActualRowView({
+  row,
+  onShow,
+  mismatch = false,
+}: {
+  readonly row: ActualRow
+  readonly onShow?: VerdictsProps['onShow']
+  readonly mismatch?: boolean
+}) {
   const hasWitness = row.fixed !== undefined && row.theory !== 'butfor'
   return (
-    <li className="ca-verdict" data-theory={row.theory} data-verdict={row.verdict}>
+    <li className="ca-verdict" data-theory={row.theory} data-verdict={row.verdict} data-mismatch={mismatch ? 'true' : undefined}>
       <div className="ca-verdict-main">
         <span className="ca-verdict-theory">
           <Tag tone={hasWitness ? 'amber' : 'chip'}>{THEORY_NAME[row.theory]}</Tag>
@@ -34,6 +75,7 @@ function ActualRowView({ row, onShow }: { readonly row: ActualRow; readonly onSh
           <strong>{VERDICT_WORD[row.verdict]}</strong>
         </span>
         <span className="ca-verdict-sentence">{row.sentence}</span>
+        {mismatch && <Mismatch />}
         {hasWitness && row.fixed !== undefined && (
           <span className="ca-verdict-aside">
             <Tag tone="amber">
@@ -127,14 +169,21 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
   const groups = actualGroups(c)
   const numbers = numberRows(c)
   const decisions = decisionRows(c)
+  const intu = intuition(c)
   return (
     <div className="ca-verdicts">
       {groups.map((g) => (
         <section key={`${g.cause}>${g.effect}`} className="ca-verdict-group">
           <h2 className="ca-h2">{g.heading}</h2>
           <ul className="ca-verdict-list">
+            {intu?.key === `${g.cause}⇒${g.effect}` && <IntuitionRow i={intu} />}
             {g.rows.map((r, i) => (
-              <ActualRowView key={`${r.theory}-${i}`} row={r} onShow={onShow} />
+              <ActualRowView
+                key={`${r.theory}-${i}`}
+                row={r}
+                onShow={onShow}
+                mismatch={intu?.key === `${g.cause}⇒${g.effect}` && !intu.agree.has(r.theory)}
+              />
             ))}
           </ul>
         </section>
@@ -157,8 +206,14 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
         <section className="ca-verdict-group">
           <h2 className="ca-h2">該怎麼選</h2>
           <ul className="ca-verdict-list">
+            {intu?.choice !== undefined && <IntuitionRow i={intu} />}
             {decisions.map((d) => (
-              <li key={d.theory} className="ca-verdict ca-decision-row" data-theory={d.theory}>
+              <li
+                key={d.theory}
+                className="ca-verdict ca-decision-row"
+                data-theory={d.theory}
+                data-mismatch={intu?.choice !== undefined && !intu.agree.has(d.theory) ? 'true' : undefined}
+              >
                 <Tag tone="chip">{d.name}</Tag>
                 <span>
                   選 <strong className="ca-mono">{d.choice}</strong>
@@ -168,6 +223,7 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
                     .map((u) => `${u.act}：${u.eu === undefined ? '—' : u.eu.toFixed(1)}`)
                     .join('　')}
                 </span>
+                {intu?.choice !== undefined && !intu.agree.has(d.theory) && <Mismatch />}
               </li>
             ))}
           </ul>

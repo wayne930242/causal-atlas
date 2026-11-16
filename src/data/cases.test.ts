@@ -51,6 +51,40 @@ describe('case dataset', () => {
   })
 })
 
+describe('case display fields', () => {
+  it.each(entries)('%s has a subtitle, story tags and Chinese names', (path, raw) => {
+    const c = loadCase(raw)
+    expect(c.data.subtitle, path).toBeDefined()
+    expect(c.data.story_tags?.length ?? 0, path).toBeGreaterThan(0)
+    const text = [c.data.title.zh, c.data.story_zh, c.data.explanation_zh, ...c.model.variables.map((v) => v.label.zh)]
+    expect(text.join(), path).not.toMatch(/Suzy|Billy/)
+  })
+
+  it.each(entries)('%s: intuition.agree lists exactly the theories that reach the intuition', (path, raw) => {
+    const c = loadCase(raw)
+    const intuition = c.data.intuition
+    if (intuition === undefined) return
+    const q = intuition.query
+    const agree = new Set<string>()
+    for (const v of c.data.verdicts) {
+      if ('choice' in q) {
+        if ((v.theory === 'edt' || v.theory === 'cdt') && 'choice' in v.query && v.query.choice === q.choice) {
+          const check = checkVerdict(c, { ...v, expected: intuition.expected })
+          if (check.ok) agree.add(v.theory)
+        }
+      } else if ('cause' in v.query && v.query.cause === q.cause && v.query.effect === q.effect) {
+        const check = checkVerdict(c, { ...v, expected: intuition.expected } as typeof v)
+        if (check.ok) agree.add(v.theory)
+      }
+    }
+    expect([...agree].sort(), path).toEqual([...intuition.agree].sort())
+  })
+
+  it('rock-throwing has an intuition', () => {
+    expect(loadCase(caseFiles['./cases/rock-throwing.json']).data.intuition?.expected).toBe('cause')
+  })
+})
+
 describe('case ids are unique', () => {
   it('has no duplicate ids', () => {
     const ids = entries.map(([path]) => fileId(path))

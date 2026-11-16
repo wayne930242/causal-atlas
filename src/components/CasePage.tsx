@@ -8,7 +8,7 @@ import type { UiNotation } from './notation.ts'
 import { Arrow, Progress } from './parts.tsx'
 import { ProbabilityPanelFor } from './ProbabilityPanel.tsx'
 import { Verdicts } from './Verdicts.tsx'
-import { seeDoPair, shortSources } from './verdict-rows.ts'
+import { intuitionSummary, seeDoPair, shortSources } from './verdict-rows.ts'
 import { doText, label } from './view-model.ts'
 
 export interface CasePageProps {
@@ -33,6 +33,27 @@ const FAMILY: Record<LoadedCase['data']['family'], string> = {
 }
 
 const TOTAL = 4
+
+interface StorySentence {
+  readonly text: string
+  readonly tags: readonly string[]
+}
+
+/** The story in paragraphs of two sentences; a sentence named in story_tags carries its variable ids. */
+function storyParagraphs(c: LoadedCase): StorySentence[][] {
+  const tags = c.data.story_tags ?? []
+  return c.data.story_zh
+    .split(/(?<=[。？！])/)
+    .map((s) => s.trim())
+    .filter((s) => s !== '')
+    .reduce<StorySentence[][]>((paras, text, i) => {
+      const own = tags.filter((t) => text.includes(t.sentence.trim())).flatMap((t) => t.variables)
+      const sentence = { text, tags: [...new Set(own)] }
+      if (i % 2 === 0) paras.push([sentence])
+      else paras[paras.length - 1].push(sentence)
+      return paras
+    }, [])
+}
 
 /** Each step opens on the notation that shows its point: logic, then arithmetic under do(), then [X←x]. */
 function notationFor(step: number): UiNotation {
@@ -95,7 +116,10 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
         `右邊是動手設定 ${doText(pair.intervene)} 之後的機率。`,
       ]
     }
-    if (step === 4) return ['下面列出各個標準的判定，一個標準一列。']
+    if (step === 4) {
+      const summary = intuitionSummary(c)
+      return summary === undefined ? ['下面列出各個標準的判定，一個標準一列。'] : ['下面列出各個標準的判定，一個標準一列。', summary]
+    }
     return []
   }
 
@@ -115,6 +139,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
             CASE <span aria-hidden="true">·</span> {FAMILY[c.data.family]}
           </p>
           <h1 className="ca-h1">{c.data.title.zh}</h1>
+          {c.data.subtitle !== undefined && <p className="ca-subtitle">{c.data.subtitle}</p>}
         </header>
       )}
       <p className="ca-sr" aria-live="polite">
@@ -123,18 +148,24 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
       <div className="ca-case-body">
         <div className="ca-case-left">
           <section className="ca-story" aria-label="故事">
-            {c.data.story_zh
-              .split(/(?<=[。？！])/)
-              .map((s) => s.trim())
-              .filter((s) => s !== '')
-              .reduce<string[][]>((paras, s, i) => {
-                if (i % 2 === 0) paras.push([s])
-                else paras[paras.length - 1].push(s)
-                return paras
-              }, [])
-              .map((p, i) => (
-                <p key={i}>{p.join('')}</p>
-              ))}
+            {storyParagraphs(c).map((p, i) => (
+              <p key={i}>
+                {p.map((s) => (
+                  <span key={s.text} className="ca-story-sentence">
+                    {s.text}
+                    {s.tags.length > 0 && (
+                      <span className="ca-story-tags" aria-label={`對應變項 ${s.tags.join('、')}`}>
+                        {s.tags.map((id) => (
+                          <span key={id} className="ca-story-tag ca-mono" aria-hidden="true">
+                            {id}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </p>
+            ))}
           </section>
           {step >= 2 && (
             <section className="ca-explain" aria-label="模型記了什麼" data-reveal="explanation">

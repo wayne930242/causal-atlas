@@ -191,6 +191,18 @@ export function SignalGraph(props: SignalGraphProps) {
       }
     }
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
+    // A non-boolean node's fill is P(V = its first value): say which value.
+    const fillMeans = prob && variable.domain.kind === 'finite' ? `${id}=${String(variable.domain.values[0])} ` : ''
+    const numberText = (
+      <>
+        {fillMeans !== '' && (
+          <tspan className="ca-svg-small ca-fill-muted" data-fill-means={fillMeans.trim()}>
+            {fillMeans}
+          </tspan>
+        )}
+        {probText(pv ?? Number.NaN)}
+      </>
+    )
     const labelY = above ? -R - 16 : R + 24
     const numberRight = prob && above
     const doTagLeft = (grid.get(id)?.col ?? 0) === maxCol
@@ -270,7 +282,7 @@ export function SignalGraph(props: SignalGraphProps) {
           (numberRight ? (
             <>
               <text x={R + 12} y={-2} className="ca-mono ca-svg-num">
-                {probText(pv ?? Number.NaN)}
+                {numberText}
               </text>
               {probNotes?.[id] !== undefined && (
                 <text x={R + 12} y={16} className="ca-svg-small ca-fill-muted">
@@ -281,7 +293,7 @@ export function SignalGraph(props: SignalGraphProps) {
           ) : (
             <>
               <text y={labelY + 22} textAnchor="middle" className="ca-mono ca-svg-num">
-                {probText(pv ?? Number.NaN)}
+                {numberText}
               </text>
               {probNotes?.[id] !== undefined && (
                 <text y={labelY + 41} textAnchor="middle" className="ca-svg-small ca-fill-muted">

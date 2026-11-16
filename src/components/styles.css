@@ -437,6 +437,11 @@
   fill: var(--muted-foreground);
 }
 
+.ca-graph tspan.ca-fill-muted {
+  fill: var(--muted-foreground);
+  font-weight: 400;
+}
+
 .ca-graph text.ca-fill-bg-text,
 .ca-lanes-svg text.ca-fill-bg-text {
   fill: var(--background);
@@ -770,7 +775,7 @@
 .ca-number-row,
 .ca-decision-row {
   display: grid;
-  grid-template-columns: minmax(0, 240px) 120px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 240px) 120px minmax(0, 1fr) auto;
   gap: 16px;
   align-items: center;
 }
@@ -1221,4 +1226,40 @@
   line-height: 1.6;
   white-space: pre;
   overflow-x: auto;
+}
+
+/* ---- story tags, subtitle, intuition ---- */
+
+.ca-subtitle {
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--muted-foreground);
+}
+
+.ca-story-sentence {
+  display: block;
+}
+
+.ca-story-tags {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 10px;
+  vertical-align: 2px;
+}
+
+.ca-story-tag {
+  display: inline-block;
+  padding: 0 7px;
+  background: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.ca-verdict[data-intuition="true"] .ca-verdict-theory .ca-tag {
+  background: var(--muted);
+}
+
+.ca-mismatch {
+  margin-left: auto;
 }

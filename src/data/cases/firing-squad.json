@@ -1,8 +1,14 @@
 {
   "id": "firing-squad",
   "title": { "zh": "行刑隊", "en": "Firing squad" },
+  "subtitle": "兩名槍手同時開槍，少了任何一槍，囚犯一樣會死。",
   "family": "actual",
-  "story_zh": "法院下令處決，隊長於是發令，兩名槍手 A 和 B 同時開槍，囚犯死亡。我們知道囚犯死了；如果 A 當時沒有開槍，囚犯會不會還活著？",
+  "story_zh": "法院下令處決，隊長於是發令。兩名槍手 A 和 B 同時開槍，囚犯死亡。我們知道囚犯死了；如果 A 當時沒有開槍，囚犯會不會還活著？",
+  "story_tags": [
+    { "sentence": "法院下令處決，隊長於是發令。", "variables": ["U", "C"] },
+    { "sentence": "兩名槍手 A 和 B 同時開槍，囚犯死亡。", "variables": ["A", "B", "D"] }
+  ],
+  "intuition": {"query": {"cause": "A=1", "effect": "D=1"}, "expected": "cause", "text": "A 開了槍，囚犯中槍而死。", "agree": ["hp-original", "hp-updated"]},
   "explanation_zh": "法院命令 U 讓隊長發令 C，隊長發令讓槍手 A、B 都開槍，任一人開槍囚犯 D 就死。這是一個共同原因加析取的小模型，用來示範三件事：從觀察推論、介入（讓 A 開槍）與反事實（若 A 沒開槍，D 還會死嗎）的差別。",
   "sources": [
     {

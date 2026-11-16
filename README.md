@@ -21,7 +21,7 @@ import { CasePage, WorldLanes } from '@wayne930242/causal-atlas'
 import '@wayne930242/causal-atlas/style.css'
 
 <CasePage client:visible caseId="rock-throwing" heading={false} />
-<WorldLanes client:visible caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下 Suzy 的石頭" />
+<WorldLanes client:visible caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />
 ```
 
 The components read only the host's colour tokens (`--background`, `--foreground`, `--accent`,
