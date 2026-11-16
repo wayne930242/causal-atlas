@@ -1,10 +1,9 @@
 {
   "name": "@wayne930242/causal-atlas",
-  "private": true,
   "version": "0.1.0",
   "description": "Interactive structural causal models and a dataset of philosophical causation and decision cases.",
   "license": "MIT",
-  "author": "洪偉 Wei Hung",
+  "author": "洪偉 (Wei Hung)",
   "type": "module",
   "files": [
     "dist",
@@ -37,7 +36,8 @@
     "build": "tsc -b && vite build",
     "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/fix-dts.mjs dist/types",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepack": "pnpm build:lib"
   },
   "peerDependencies": {
     "react": "^19.0.0",
@@ -60,5 +60,11 @@
     "typescript": "~7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"
-  }
+  },
+  "packageManager": "pnpm@12.21.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wayne930242/causal-atlas.git"
+  },
+  "homepage": "https://wayneh.tw/causal/"
 }
