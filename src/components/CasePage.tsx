@@ -22,6 +22,8 @@ export interface CasePageProps {
   readonly lessonLabel?: string
   /** Shown on the last step in place of the next button. */
   readonly next?: { readonly href: string; readonly label: string }
+  /** Link in exported images' watermark. Default https://wayneh.tw/causal/. */
+  readonly exportUrl?: string
 }
 
 const FAMILY: Record<LoadedCase['data']['family'], string> = {
@@ -66,7 +68,7 @@ function notationFor(step: number): UiNotation {
  * Direction 1 case page: story → graph → do (or probabilities) → verdicts.
  * Each step adds one thing; 補充 stays closed until asked.
  */
-export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next }: CasePageProps) {
+export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl }: CasePageProps) {
   const c = getCase(caseId)
   const probabilistic = c.context === undefined
   const preset = c.data.showcase[0]
@@ -209,7 +211,12 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
               <span className="ca-muted ca-small">下一步把故事畫成圖</span>
             </div>
           ) : probabilistic && step >= 3 ? (
-            <ProbabilityPanelFor c={c} view={step === 4 && pair !== undefined ? 'compare' : 'sliders'} pair={pair} />
+            <ProbabilityPanelFor
+              c={c}
+              view={step === 4 && pair !== undefined ? 'compare' : 'sliders'}
+              pair={pair}
+              exportUrl={exportUrl}
+            />
           ) : (
             <>
               <GraphBox
@@ -226,6 +233,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
                 }
                 witness={witness}
                 legend
+                exportUrl={exportUrl}
               />
               <EquationBox
                 c={c}

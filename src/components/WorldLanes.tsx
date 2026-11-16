@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
-import { useId, useMemo, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import { getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, CausalTheory, Edge, Value } from '../engine/index.ts'
 import { actualCause, evaluate } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import { Equations } from './Equations.tsx'
+import { ExportMenu } from './ExportMenu.tsx'
+import { originSources } from './verdict-rows.ts'
 import { Arrow, Progress } from './parts.tsx'
 import {
   assignmentText,
@@ -29,6 +31,8 @@ export interface WorldLanesProps {
   /** Adds a third step: the HP witness world for this cause and effect. */
   readonly witness?: { readonly cause: string; readonly effect: string; readonly theory?: CausalTheory }
   readonly initialStep?: number
+  /** Link in the exported image's watermark. */
+  readonly exportUrl?: string
 }
 
 const LEFT = 188
@@ -63,12 +67,29 @@ function tagEl(x: number, y: number, text: string, tone: 'fg' | 'slate' | 'accen
 }
 
 /** Direction 2 「世界分道」: each world is a row of cells; columns line up so changes read down a column. */
-export function WorldLanes({ caseId, interventions, actionLabel, witness, initialStep = 1 }: WorldLanesProps) {
+export function WorldLanes({ caseId, interventions, actionLabel, witness, initialStep = 1, exportUrl }: WorldLanesProps) {
   const c = getCase(caseId)
-  return <WorldLanesFor c={c} interventions={interventions} actionLabel={actionLabel} witness={witness} initialStep={initialStep} />
+  return (
+    <WorldLanesFor
+      c={c}
+      interventions={interventions}
+      actionLabel={actionLabel}
+      witness={witness}
+      initialStep={initialStep}
+      exportUrl={exportUrl}
+    />
+  )
 }
 
-function WorldLanesFor({ c, interventions, actionLabel, witness, initialStep = 1 }: Omit<WorldLanesProps, 'caseId'> & { c: LoadedCase }) {
+function WorldLanesFor({
+  c,
+  interventions,
+  actionLabel,
+  witness,
+  initialStep = 1,
+  exportUrl,
+}: Omit<WorldLanesProps, 'caseId'> & { c: LoadedCase }) {
+  const stage = useRef<HTMLDivElement>(null)
   const context = c.context
   if (context === undefined) throw new Error(`WorldLanes needs a case with an actual context; ${c.data.id} has none`)
   const preset = c.data.showcase[0]
@@ -354,7 +375,7 @@ function WorldLanesFor({ c, interventions, actionLabel, witness, initialStep = 1
   return (
     <div className="ca-root not-prose ca-lanes" data-case={c.data.id} data-step={step}>
       {/* Narrow screens scroll the lanes sideways; the region takes focus so keys can scroll it. */}
-      <div className="ca-lanes-stage" role="region" aria-label="世界分道（可左右捲動）" tabIndex={0}>
+      <div className="ca-lanes-stage" role="region" aria-label="世界分道（可左右捲動）" tabIndex={0} ref={stage}>
         <svg
           className="ca-lanes-svg"
           viewBox={`0 0 ${width} ${height}`}
@@ -402,6 +423,14 @@ function WorldLanesFor({ c, interventions, actionLabel, witness, initialStep = 1
           <button type="button" className="ca-link" aria-expanded={showEq} onClick={() => setShowEq((s) => !s)}>
             {showEq ? '收起式子' : '看式子'}
           </button>
+          <ExportMenu
+            url={exportUrl}
+            source={() => {
+              const svg = stage.current?.querySelector<SVGSVGElement>('svg.ca-lanes-svg')
+              if (svg === null || svg === undefined) return undefined
+              return { name: `${c.data.id}-lanes`, title: c.data.title.zh, panels: [{ svg }], origin: originSources(c) }
+            }}
+          />
         </div>
         <div className="ca-lanes-foot-right">
           {step > 1 && (

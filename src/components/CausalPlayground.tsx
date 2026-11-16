@@ -11,16 +11,18 @@ export interface CausalPlaygroundProps {
   readonly initialInterventions?: Assignment
   /** Show the case's preset interventions as buttons. Default true. */
   readonly presets?: boolean
+  /** Link in exported images' watermark. Default https://wayneh.tw/causal/. */
+  readonly exportUrl?: string
 }
 
 /** One case's graph and equations; click a node to set or release do() on it. */
-export function CausalPlayground({ caseId, initialInterventions, presets = true }: CausalPlaygroundProps) {
+export function CausalPlayground({ caseId, initialInterventions, presets = true, exportUrl }: CausalPlaygroundProps) {
   const c = getCase(caseId)
   const { interventions, setInterventions, notation, setNotation, world } = useModel(c, initialInterventions)
   return (
     <div className="ca-root not-prose ca-playground" data-case={c.data.id}>
       <div className="ca-panel">
-        <GraphBox c={c} world={world} interventions={interventions} onInterventions={setInterventions} legend />
+        <GraphBox c={c} world={world} interventions={interventions} onInterventions={setInterventions} legend exportUrl={exportUrl} />
         <EquationBox c={c} world={world} interventions={interventions} notation={notation} onNotation={setNotation} />
       </div>
       <div className="ca-playground-foot">

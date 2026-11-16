@@ -1,5 +1,5 @@
-import type { KeyboardEvent } from 'react'
-import { useId } from 'react'
+import type { KeyboardEvent, PointerEvent } from 'react'
+import { useId, useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, Edge } from '../engine/index.ts'
 import { getVariable } from '../engine/index.ts'
@@ -27,6 +27,24 @@ export interface SignalGraphProps {
   readonly title: string
   /** Narrower columns, for two graphs side by side. */
   readonly compact?: boolean
+  /** Lets nodes be dragged (or moved with arrow keys); reports the move in grid columns and rows. */
+  readonly onMove?: (id: string, dCol: number, dRow: number) => void
+}
+
+interface Drag {
+  readonly id: string
+  readonly pointer: number
+  readonly x0: number
+  readonly y0: number
+  readonly dx: number
+  readonly dy: number
+  readonly moved: boolean
+}
+
+const SNAP = 0.25
+
+function snap(v: number): number {
+  return Math.round(v / SNAP) * SNAP
 }
 
 
@@ -50,9 +68,12 @@ function clampPath(r: number): string {
 
 /** Direction 1 「訊號圖」: value nodes, signal edges, do() clamps and cut edges. */
 export function SignalGraph(props: SignalGraphProps) {
-  const { c, shown, values, original, probs, probNotes, observed = [], interventions, removedEdges, witness, onToggle } =
+  const { c, shown, values, original, probs, probNotes, observed = [], interventions, removedEdges, witness, onToggle, onMove } =
     props
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [drag, setDrag] = useState<Drag | undefined>(undefined)
+  const suppressClick = useRef(false)
   const prob = probs !== undefined
   const R = prob ? 34 : 30
   const COL = props.compact === true ? 132 : 220
@@ -71,7 +92,38 @@ export function SignalGraph(props: SignalGraphProps) {
   const extraBottom = (prob ? 44 : 0) + (hasWitness ? 40 : 0)
   const height = PAD_Y * 2 + (maxRow - minRow) * ROW + extraBottom
   const pos = new Map<string, Point>()
-  for (const [id, p] of grid) pos.set(id, { x: PAD_X + (p.col - minCol) * COL, y: PAD_Y + (p.row - minRow) * ROW })
+  for (const [id, p] of grid) {
+    const off = drag?.id === id ? drag : undefined
+    pos.set(id, { x: PAD_X + (p.col - minCol) * COL + (off?.dx ?? 0), y: PAD_Y + (p.row - minRow) * ROW + (off?.dy ?? 0) })
+  }
+  const toSvg = (e: PointerEvent): Point => {
+    const ctm = svgRef.current?.getScreenCTM?.()
+    if (ctm === null || ctm === undefined) return { x: e.clientX, y: e.clientY }
+    const inv = ctm.inverse()
+    return { x: inv.a * e.clientX + inv.c * e.clientY + inv.e, y: inv.b * e.clientX + inv.d * e.clientY + inv.f }
+  }
+  const startDrag = (id: string, e: PointerEvent<SVGGElement>): void => {
+    if (onMove === undefined || e.button !== 0) return
+    const at = toSvg(e)
+    svgRef.current?.setPointerCapture?.(e.pointerId)
+    setDrag({ id, pointer: e.pointerId, x0: at.x, y0: at.y, dx: 0, dy: 0, moved: false })
+  }
+  const moveDrag = (e: PointerEvent<SVGSVGElement>): void => {
+    if (drag === undefined || e.pointerId !== drag.pointer) return
+    const at = toSvg(e)
+    const dx = at.x - drag.x0
+    const dy = at.y - drag.y0
+    setDrag({ ...drag, dx, dy, moved: drag.moved || Math.hypot(dx, dy) > 4 })
+  }
+  const endDrag = (e: PointerEvent<SVGSVGElement>): void => {
+    if (drag === undefined || e.pointerId !== drag.pointer) return
+    setDrag(undefined)
+    if (!drag.moved) return
+    suppressClick.current = true
+    const dCol = snap(drag.dx / COL)
+    const dRow = snap(drag.dy / ROW)
+    if (dCol !== 0 || dRow !== 0) onMove?.(drag.id, dCol, dRow)
+  }
   const labelAbove = (id: string): boolean => multiRow && (grid.get(id)?.row ?? 0) === minRow
   const cut = new Set(removedEdges.map((e) => `${e.from}>${e.to}`))
   const edges = shownEdges(c.model.edges, shown)
@@ -183,13 +235,30 @@ export function SignalGraph(props: SignalGraphProps) {
       ? `P(${id}${boolean ? '=1' : `=${String(variable.domain.kind === 'finite' ? variable.domain.values[0] : '')}`}) ${probText(pv ?? Number.NaN)}`
       : `值 ${text}`
     const aria = `${id} ${name}，${state}${intervened ? `，已干預成 ${formatValue(forced)}` : ''}${changed ? `，原本 ${formatValue(before)}` : ''}`
-    const interactive = onToggle !== undefined
+    const interactive = onToggle !== undefined || onMove !== undefined
+    const arrows: Record<string, [number, number]> = { ArrowLeft: [-0.5, 0], ArrowRight: [0.5, 0], ArrowUp: [0, -0.5], ArrowDown: [0, 0.5] }
     const onKey = (event: KeyboardEvent<SVGGElement>): void => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
         onToggle?.(id)
+        return
+      }
+      const step = arrows[event.key]
+      if (onMove !== undefined && step !== undefined) {
+        event.preventDefault()
+        onMove(id, step[0], step[1])
       }
     }
+    const onClick = (): void => {
+      if (suppressClick.current) {
+        suppressClick.current = false
+        return
+      }
+      onToggle?.(id)
+    }
+    const hint = [onToggle !== undefined ? `按一下${intervened ? '取消干預' : '套上干預'}` : '', onMove !== undefined ? '拖曳或用方向鍵移動' : '']
+      .filter((h) => h !== '')
+      .join('；')
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
     // A non-boolean node's fill is P(V = its first value): say which value.
     const fillMeans = prob && variable.domain.kind === 'finite' ? `${id}=${String(variable.domain.values[0])} ` : ''
@@ -211,7 +280,7 @@ export function SignalGraph(props: SignalGraphProps) {
     return (
       <g
         key={id}
-        className={`ca-node${interactive ? ' is-interactive' : ''}`}
+        className={`ca-node${interactive ? ' is-interactive' : ''}${onMove !== undefined ? ' is-movable' : ''}`}
         data-node={id}
         data-value={text}
         data-intervened={intervened ? 'true' : 'false'}
@@ -220,10 +289,11 @@ export function SignalGraph(props: SignalGraphProps) {
           ? {
               role: 'button',
               tabIndex: 0,
-              'aria-pressed': intervened,
-              'aria-label': `${aria}。按一下${intervened ? '取消干預' : '套上干預'}`,
-              onClick: () => onToggle?.(id),
+              'aria-pressed': onToggle !== undefined ? intervened : undefined,
+              'aria-label': `${aria}。${hint}`,
+              onClick,
               onKeyDown: onKey,
+              onPointerDown: (e: PointerEvent<SVGGElement>) => startDrag(id, e),
             }
           : { role: 'img', 'aria-label': aria })}
       >
@@ -308,6 +378,10 @@ export function SignalGraph(props: SignalGraphProps) {
 
   return (
     <svg
+      ref={svgRef}
+      onPointerMove={onMove === undefined ? undefined : moveDrag}
+      onPointerUp={onMove === undefined ? undefined : endDrag}
+      onPointerCancel={onMove === undefined ? undefined : () => setDrag(undefined)}
       className="ca-graph"
       viewBox={`0 0 ${width} ${height}`}
       width={width}

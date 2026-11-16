@@ -248,17 +248,27 @@ export function intuitionSummary(c: LoadedCase): string | undefined {
   return parts.length === 0 ? undefined : `${parts.join('；')}。`
 }
 
+function shortCitation(citation: string): string {
+  const year = /\((\d{4}[a-z]?)\)/.exec(citation)?.[1] ?? ''
+  const head = citation.split(/\(\d{4}/)[0] ?? ''
+  const names = [...head.matchAll(/([A-Z][A-Za-z'’-]+), (?:[A-Z]\.\s?)+/g)].map((m) => m[1])
+  const who = names.length === 0 ? head.trim() : names.length <= 2 ? names.join(' & ') : `${names[0]} et al.`
+  return `${who} ${year}`.trim()
+}
+
 /** Short citations: `Hall 2004；Halpern & Pearl 2005`. */
 export function shortSources(c: LoadedCase): string {
   const order = { origin: 0, treatment: 1, reference: 2 }
   return [...c.data.sources]
     .sort((a, b) => order[a.role] - order[b.role])
-    .map((s) => {
-      const year = /\((\d{4}[a-z]?)\)/.exec(s.citation)?.[1] ?? ''
-      const head = s.citation.split(/\(\d{4}/)[0] ?? ''
-      const names = [...head.matchAll(/([A-Z][A-Za-z'’-]+), (?:[A-Z]\.\s?)+/g)].map((m) => m[1])
-      const who = names.length === 0 ? head.trim() : names.length <= 2 ? names.join(' & ') : `${names[0]} et al.`
-      return `${who} ${year}`.trim()
-    })
+    .map((s) => shortCitation(s.citation))
+    .join('；')
+}
+
+/** Where the case comes from, short form: `Hall 2004`. */
+export function originSources(c: LoadedCase): string {
+  return c.data.sources
+    .filter((s) => s.role === 'origin')
+    .map((s) => shortCitation(s.citation))
     .join('；')
 }

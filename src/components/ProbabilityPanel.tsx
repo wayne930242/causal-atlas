@@ -5,13 +5,15 @@ import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import { evaluate, getVariable, probability } from '../engine/index.ts'
 import { Equations } from './Equations.tsx'
+import type { ExportPanel } from './export-image.ts'
+import { ExportMenu } from './ExportMenu.tsx'
 import type { UiNotation } from './notation.ts'
 import { NOTATIONS } from './notation.ts'
 import { Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
 import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
-import { seeDoPair } from './verdict-rows.ts'
+import { originSources, seeDoPair } from './verdict-rows.ts'
 import {
   defaultSliders,
   doText,
@@ -33,6 +35,8 @@ export interface ProbabilityPanelProps {
   readonly view?: ProbabilityView
   /** For `compare`: the observation, the do() and the event. Defaults to the case's own pair. */
   readonly pair?: SeeDoPair
+  /** Link in the exported image's watermark. */
+  readonly exportUrl?: string
 }
 
 const SAME = 0.005
@@ -108,12 +112,22 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
 }
 
 /** Direction 1 probability mode: per-exogenous p sliders; node fill is P(V=1); observing vs do() side by side. */
-export function ProbabilityPanel({ caseId, view = 'sliders', pair }: ProbabilityPanelProps) {
+export function ProbabilityPanel({ caseId, view = 'sliders', pair, exportUrl }: ProbabilityPanelProps) {
   const c = getCase(caseId)
-  return <ProbabilityPanelFor c={c} view={view} pair={pair} />
+  return <ProbabilityPanelFor c={c} view={view} pair={pair} exportUrl={exportUrl} />
 }
 
-export function ProbabilityPanelFor({ c, view = 'sliders', pair }: { c: LoadedCase; view?: ProbabilityView; pair?: SeeDoPair }) {
+export function ProbabilityPanelFor({
+  c,
+  view = 'sliders',
+  pair,
+  exportUrl,
+}: {
+  c: LoadedCase
+  view?: ProbabilityView
+  pair?: SeeDoPair
+  exportUrl?: string
+}) {
   const [sliders, setSliders] = useState<Record<string, number>>(() => defaultSliders(c))
   const [notation, setNotation] = useState<UiNotation>('propositional')
   const [mode, setMode] = useState<'value' | 'probability'>('probability')
@@ -127,13 +141,25 @@ export function ProbabilityPanelFor({ c, view = 'sliders', pair }: { c: LoadedCa
   if (view === 'compare') {
     const p = pair ?? seeDoPair(c)
     if (p === undefined) throw new Error(`case ${c.data.id} has no observe/do pair for the comparison`)
-    return <Compare c={c} pair={p} prior={prior} base={base} shown={shown} sliderSection={
+    return <Compare c={c} pair={p} prior={prior} base={base} shown={shown} exportUrl={exportUrl} sliderSection={
       <SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />
     } />
   }
 
   const showValues = mode === 'value' && c.context !== undefined
   const values = showValues && c.context !== undefined ? evaluate(c.model, c.context).values : undefined
+  const legend = probLegend(c.model, shown)
+  const exportSource = () => {
+    const svg = wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph')
+    if (svg === null || svg === undefined) return undefined
+    return {
+      name: `${c.data.id}-probability`,
+      title: c.data.title.zh,
+      panels: [{ svg, tags: [{ text: showValues ? '實際世界' : '機率', tone: 'fg' as const }] }],
+      legend: showValues ? '黑＝發生（1）　白＝沒發生（0）' : legend,
+      origin: originSources(c),
+    }
+  }
   return (
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="sliders">
       <div className="ca-box ca-graph-box">
@@ -151,7 +177,8 @@ export function ProbabilityPanelFor({ c, view = 'sliders', pair }: { c: LoadedCa
           ) : (
             <Tag tone="fg">機率</Tag>
           )}
-          <span className="ca-muted ca-small">{probLegend(c.model, shown)}</span>
+          <span className="ca-muted ca-small">{legend}</span>
+          <ExportMenu source={exportSource} url={exportUrl} />
         </div>
         <div className="ca-graph-wrap" ref={wrap}>
           <SignalGraph
@@ -180,9 +207,11 @@ interface CompareProps {
   readonly base: Readonly<Record<string, number>>
   readonly shown: readonly string[]
   readonly sliderSection: ReactNode
+  readonly exportUrl?: string
 }
 
-function Compare({ c, pair, prior, base, shown, sliderSection }: CompareProps) {
+function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: CompareProps) {
+  const root = useRef<HTMLDivElement>(null)
   const observedId = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(pair.observe)?.[1] ?? ''
   const doId = Object.keys(pair.intervene)[0] ?? ''
   let see: Record<string, number> | undefined
@@ -200,8 +229,33 @@ function Compare({ c, pair, prior, base, shown, sliderSection }: CompareProps) {
   const seeExpr = `P(${pair.event} | ${pair.observe})`
   const doExpr = `P(${pair.event} | ${doText(pair.intervene)})`
   const obsLabel = label(c.model, observedId)
+  const exportSource = () => {
+    const graph = (side: string) => root.current?.querySelector<SVGSVGElement>(`[data-side="${side}"] svg.ca-graph`) ?? null
+    const panels: ExportPanel[] = []
+    const seeSvg = graph('see')
+    const doSvg = graph('do')
+    if (seeSvg !== null) {
+      panels.push({ svg: seeSvg, tags: [{ text: `觀察 ${pair.observe}`, tone: 'outline' }], foot: `${seeExpr} = ${probText(seeValue)}` })
+    }
+    if (doSvg !== null) {
+      panels.push({
+        svg: doSvg,
+        tags: [
+          { text: '干預後', tone: 'slate' },
+          { text: doText(pair.intervene), tone: 'accent', mono: true },
+        ],
+        foot: `${doExpr} = ${probText(doValue)}`,
+        tint: true,
+      })
+    }
+    return { name: `${c.data.id}-compare`, title: c.data.title.zh, panels, legend: probLegend(c.model, shown), origin: originSources(c) }
+  }
   return (
-    <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="compare">
+    <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="compare" ref={root}>
+      <div className="ca-box-head ca-compare-head">
+        <span className="ca-muted ca-small">{probLegend(c.model, shown)}</span>
+        <ExportMenu source={exportSource} url={exportUrl} />
+      </div>
       <div className="ca-compare">
         <div className="ca-compare-side" data-side="see">
           <div className="ca-box-head">
