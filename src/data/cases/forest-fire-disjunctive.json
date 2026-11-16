@@ -1,6 +1,6 @@
 {
   "id": "forest-fire-disjunctive",
-  "title": { "zh-TW": "森林大火：析取式", "en": "Forest fire (disjunctive)" },
+  "title": { "zh-TW": "森林大火：選言式", "en": "Forest fire (disjunctive)" },
   "subtitle": { "zh-TW": "雷擊和火柴，任何一個都夠燒掉森林。", "en": "Lightning or the match: either alone is enough to burn the forest." },
   "family": "actual",
   "story": {
@@ -30,7 +30,7 @@
     "agree": ["hp-original", "hp-updated"]
   },
   "explanation": {
-    "zh-TW": "雷擊與縱火者的火柴各由一個外生變數決定，兩者之一就足以讓森林大火發生（FF = max(L, MD)）。這是析取結構：每個原因單獨都夠用，單看「拿掉它火還會不會燒」會得到兩者都不是原因，因此需要 Halpern–Pearl 的定義。",
+    "zh-TW": "雷擊與縱火者的火柴各由一個外生變數決定，兩者之一就足以讓森林大火發生（FF = max(L, MD)）。這是選言結構：每個原因單獨都夠用，單看「拿掉它火還會不會燒」會得到兩者都不是原因，因此需要 Halpern–Pearl 的定義。",
     "en": "The lightning and the arsonist's match are each set by an exogenous variable, and either one suffices for the forest fire (FF = max(L, MD)). This is the disjunctive structure: each cause suffices on its own, so asking only whether the fire would still have burned without it finds that neither is a cause. This is why the Halpern–Pearl definition is needed."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

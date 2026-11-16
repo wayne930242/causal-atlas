@@ -55,7 +55,7 @@ const ZH_PROBLEMS: ProblemWording = {
     'marginal-duplicate': (p) => `${p.key} 列了兩次`,
     'marginal-endogenous': (p) => `內生變項 ${p.id} 不能給機率`,
     'zero-probability-evidence': () => '證據的機率是 0',
-    'cause-not-conjunction': (p) => `原因 ${p.cause} 要寫成 X=x 的合取`,
+    'cause-not-conjunction': (p) => `原因 ${p.cause} 要寫成 X=x 的連言`,
     'cause-repeats': (p) => `原因裡 ${p.id} 出現兩次`,
     'cause-not-endogenous': (p) => `原因變項 ${p.id} 要是內生變項`,
     'cause-empty': () => '原因是空的',

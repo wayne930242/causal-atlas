@@ -1,6 +1,6 @@
 {
   "id": "forest-fire-conjunctive",
-  "title": { "zh-TW": "森林大火：合取式", "en": "Forest fire (conjunctive)" },
+  "title": { "zh-TW": "森林大火：連言式", "en": "Forest fire (conjunctive)" },
   "subtitle": { "zh-TW": "雷擊和火柴缺一不可。", "en": "The fire needs both the lightning and the match." },
   "family": "actual",
   "story": {
@@ -27,7 +27,7 @@
     "agree": ["butfor", "hp-modified"]
   },
   "explanation": {
-    "zh-TW": "雷擊與縱火者的火柴各由一個外生變數決定，森林大火需要兩者同時發生（FF = L·MD）。這是合取結構：少了任何一個，火都燒不起來，所以兩者各自是反事實依賴的原因。",
+    "zh-TW": "雷擊與縱火者的火柴各由一個外生變數決定，森林大火需要兩者同時發生（FF = L·MD）。這是連言結構：少了任何一個，火都燒不起來，所以兩者各自是反事實依賴的原因。",
     "en": "The lightning and the arsonist's match are each set by an exogenous variable, and the forest fire needs both at once (FF = L·MD). This is the conjunctive structure: without either one the fire does not start, so the fire depends counterfactually on each, and each is a cause."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
