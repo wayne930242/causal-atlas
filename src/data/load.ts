@@ -120,7 +120,11 @@ function toDecision(data: CaseFile): DecisionProblem | undefined {
 
 /** Validate raw JSON against the schema and build the engine objects. Throws on any problem. */
 export function loadCase(raw: unknown): LoadedCase {
-  const data = caseSchema.parse(raw)
+  return buildCase(caseSchema.parse(raw))
+}
+
+/** Build the engine objects from already-validated case data (or a model document turned into one). */
+export function buildCase(data: CaseFile): LoadedCase {
   const model = toModel(data)
   return {
     data,

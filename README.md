@@ -8,9 +8,9 @@ Interactive structural causal models and a dataset of philosophical causation an
 
 | Import | Contents |
 | --- | --- |
-| `@wayne930242/causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ProbabilityPanel`, `WorldLanes`, `Supplement` |
+| `@wayne930242/causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock` |
 | `@wayne930242/causal-atlas/engine` | The causal-model engine |
-| `@wayne930242/causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schema |
+| `@wayne930242/causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare` |
 | `@wayne930242/causal-atlas/style.css` | Styles for the components; import it once |
 
 React 19 is a peer dependency. Importing the components touches no browser globals, so they render on
@@ -28,6 +28,25 @@ The components read only the host's colour tokens (`--background`, `--foreground
 `--accent-foreground`, `--muted`, `--muted-foreground`, `--border`) and define their own `--ca-*`
 colours (slate, amber, green) with dark values under `[data-theme="dark"]`. Fonts inherit; numerals use
 `--font-mono` when the host defines it.
+
+`ModelEditor` lets readers build their own model: variables (id, Chinese label, exogenous or
+endogenous, `0／1` or a list of values), equations in the authoring syntax with parse and cycle errors
+shown inline, context values or priors, normality defaults, and node positions by dragging (or arrow
+keys). It starts from any bundled case or a blank model, exports and imports JSON validated by
+`modelDocSchema` (a whole case file also imports), and shares the model in the URL hash as
+`#model=1.<base64url(deflate-raw(JSON))>`; the leading `1` is the format version. Props: `initial`
+(case id or `blank`), `hash`, `shareHref(value)`, `exportUrl`.
+
+Every graph (case page, playground, editor, probability panel, world lanes) has 「下載圖片」: PNG at 2×
+or SVG, light or dark (default: the page's theme, read from the nearest `data-theme`). The export
+draws the current state (do(), witness hull, probabilities) with the blog's tokens resolved to literal
+colours, and bakes in a watermark strip: 「洪偉（Wei Hung）· causal-atlas · CC BY 4.0 · <url>」 plus
+「案例出處：…」 for a case. `exportUrl` sets the url (default `https://wayneh.tw/causal/`).
+
+Case files may carry `subtitle`, `story_tags` (`[{ sentence, variables }]`: the case page tags each
+sentence with its variable ids) and `intuition` (`{ query, expected, text, agree }`: the everyday
+judgment on one verdict query and the theories that reach it; the verdict list shows it first and
+marks the others 「和直覺不合」).
 
 A case may give graph positions as `layout: { "ST": [column, row], … }`; only the listed variables are
 drawn. Without it the graph shows endogenous variables plus exogenous ones with two or more children,

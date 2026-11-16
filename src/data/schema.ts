@@ -254,6 +254,50 @@ export const caseSchema = z
     })
   })
 
+/**
+ * A model someone built in the editor: the case file's model part without the story, sources or
+ * verdicts. Shared as JSON and, compressed, in a URL hash. `context` makes it a model with one
+ * actual world; `priors` without `context` makes it probabilistic.
+ */
+export const MODEL_DOC_FORMAT = 'causal-atlas/model'
+
+export const modelDocSchema = z
+  .strictObject({
+    format: z.literal(MODEL_DOC_FORMAT),
+    version: z.literal(1),
+    title: z.string().min(1),
+    /** The bundled case it started from, if any. */
+    from: z.string().optional(),
+    model: modelSchema,
+    context: assignmentSchema.optional(),
+    priors: priorsSchema.optional(),
+    normality: assignmentSchema.optional(),
+    layout: layoutSchema.optional(),
+  })
+  .superRefine((d, ctx) => {
+    const kinds = new Map(d.model.variables.map((v) => [v.id, v.kind]))
+    const known = (where: string, ids: readonly string[], exogenousOnly: boolean): void => {
+      for (const id of ids) {
+        const kind = kinds.get(id)
+        if (kind === undefined) ctx.addIssue({ code: 'custom', path: [where, id], message: `unknown variable ${id}` })
+        else if (exogenousOnly && kind !== 'exogenous') {
+          ctx.addIssue({ code: 'custom', path: [where, id], message: `${id} is not exogenous` })
+        }
+      }
+    }
+    known('layout', Object.keys(d.layout ?? {}), false)
+    known('normality', Object.keys(d.normality ?? {}), false)
+    known('context', Object.keys(d.context ?? {}), true)
+    if (d.priors !== undefined) {
+      known('priors', 'independent' in d.priors ? Object.keys(d.priors.independent) : d.priors.joint.variables, true)
+    }
+    if (d.context === undefined && d.priors === undefined) {
+      ctx.addIssue({ code: 'custom', path: ['context'], message: 'needs a context or priors' })
+    }
+  })
+
+export type ModelDoc = z.infer<typeof modelDocSchema>
+
 export type CaseFile = z.infer<typeof caseSchema>
 export type CaseVerdict = z.infer<typeof verdictSchema>
 export type CaseFamily = z.infer<typeof familySchema>

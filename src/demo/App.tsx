@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { CasePage, CausalPlayground, CiteBlock, Supplement, WorldLanes } from '../components/index.ts'
+import { CasePage, CausalPlayground, CiteBlock, ModelEditor, Supplement, WorldLanes } from '../components/index.ts'
 import { caseIds, getCase } from '../data/index.ts'
 
 interface Route {
-  readonly page: 'index' | 'playground' | 'case' | 'lesson'
+  readonly page: 'index' | 'playground' | 'case' | 'lesson' | 'editor'
   readonly id: string
   readonly step: number
 }
@@ -17,6 +17,7 @@ function parse(hash: string): Route {
   if (parts[0] === 'playground') return { page: 'playground', id, step }
   if (parts[0] === 'case') return { page: 'case', id, step }
   if (parts[0] === 'lesson') return { page: 'lesson', id, step }
+  if (parts[0] === 'editor') return { page: 'editor', id, step }
   return { page: 'index', id, step }
 }
 
@@ -58,6 +59,9 @@ function Index() {
       </ul>
       <p>
         <a href="#/lesson">講義示範：世界分道</a>
+      </p>
+      <p>
+        <a href="#/editor">自己建一個因果模型</a>
       </p>
     </div>
   )
@@ -111,6 +115,9 @@ export function App() {
           <a href="#/lesson" aria-current={route.page === 'lesson' ? 'page' : undefined}>
             講義
           </a>
+          <a href="#/editor" aria-current={route.page === 'editor' ? 'page' : undefined}>
+            自己建模型
+          </a>
         </nav>
         <span className="demo-spacer" />
         {(route.page === 'playground' || route.page === 'case') && (
@@ -134,6 +141,13 @@ export function App() {
         {route.page === 'playground' && <CausalPlayground key={route.id} caseId={route.id} />}
         {route.page === 'case' && <CasePage key={`${route.id}-${route.step}`} caseId={route.id} initialStep={route.step} />}
         {route.page === 'lesson' && <Lesson />}
+        {route.page === 'editor' && (
+          <ModelEditor
+            key={route.id}
+            initial={route.id}
+            shareHref={(value) => `${window.location.origin}${window.location.pathname}#/editor?model=${value}`}
+          />
+        )}
       </main>
       <footer className="demo-footer">
         <CiteBlock />

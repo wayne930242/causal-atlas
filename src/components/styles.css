@@ -1308,3 +1308,167 @@
 .ca-compare-head {
   padding: 12px 16px 0;
 }
+
+/* ---- model editor ---- */
+
+.ca-editor {
+  display: grid;
+  gap: 16px;
+}
+
+.ca-editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+}
+
+.ca-field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.ca-field-grow {
+  flex: 1 1 240px;
+}
+
+.ca-field-label {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.ca-editor :where(input:not([type="checkbox"]), select, textarea) {
+  font: inherit;
+  font-size: 14px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  border-radius: 0;
+}
+
+.ca-editor :where(input, select, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.ca-editor :where(input, textarea).ca-mono {
+  font-family: var(--ca-mono);
+}
+
+.ca-editor [aria-invalid="true"] {
+  border-color: var(--accent);
+}
+
+.ca-field-error {
+  color: var(--accent);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.ca-editor-errors {
+  border: 1px solid var(--accent);
+  padding: 10px 14px;
+  font-size: 13px;
+}
+
+.ca-editor-errors ul {
+  margin-top: 4px;
+  display: grid;
+  gap: 2px;
+}
+
+.ca-editor-empty {
+  border: 1px dashed var(--border);
+}
+
+.ca-editor-panels {
+  display: grid;
+  gap: 8px;
+}
+
+.ca-editor-vars,
+.ca-editor-eqs,
+.ca-editor-values {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ca-editor-var {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ca-editor-var .ca-field-error {
+  flex-basis: 100%;
+}
+
+.ca-input-id {
+  width: 7em;
+}
+
+.ca-editor-eq {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+}
+
+.ca-editor-eq .ca-field-error {
+  grid-column: 2;
+}
+
+.ca-editor-eq-lhs {
+  font-weight: 700;
+  min-width: 4em;
+}
+
+.ca-editor-eq[data-cycle="true"] .ca-editor-eq-lhs {
+  color: var(--accent);
+}
+
+.ca-editor-prior {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ca-editor-prior input {
+  width: 7em;
+}
+
+.ca-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.ca-editor-save,
+.ca-editor-import {
+  display: grid;
+  gap: 10px;
+}
+
+.ca-editor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.ca-editor-import textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.ca-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
