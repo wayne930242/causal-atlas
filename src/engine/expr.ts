@@ -76,7 +76,7 @@ export interface LookupRow {
   readonly value: Value
 }
 
-/** Explicit table: the first row whose `when` matches `inputs` wins, else `fallback`. */
+/** Explicit table: the row whose `when` matches the inputs (rows are distinct), else `fallback`. */
 export interface LookupExpr {
   readonly op: 'lookup'
   readonly inputs: readonly string[]

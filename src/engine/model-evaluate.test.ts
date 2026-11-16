@@ -39,6 +39,28 @@ describe('buildModel', () => {
     ).toThrow(ModelError)
     expect(() => buildModel({ variables: [variable('U', 'exogenous')], equations: { U: 'true' } })).toThrow(/exogenous/)
   })
+
+  it('evaluates lookup tables and rejects malformed ones', () => {
+    const lookupModel = (rows: { when: (number | string)[]; value: string }[], fallback?: string) =>
+      buildModel({
+        variables: [
+          variable('X', 'exogenous', { kind: 'finite', values: [0, 1, 2] }),
+          variable('Y', 'endogenous', { kind: 'finite', values: ['lo', 'hi'] }),
+        ],
+        equations: { Y: { op: 'lookup', inputs: ['X'], rows, fallback } },
+      })
+    const model = lookupModel([{ when: [2], value: 'hi' }], 'lo')
+    expect(evaluate(model, { X: 2 }).values.Y).toBe('hi')
+    expect(evaluate(model, { X: 0 }).values.Y).toBe('lo')
+    expect(() => evaluate(lookupModel([{ when: [2], value: 'hi' }]), { X: 1 })).toThrow(/no row for \(1\)/)
+    expect(() => lookupModel([{ when: [2, 1], value: 'hi' }])).toThrow(/has 2 inputs, expected 1/)
+    expect(() =>
+      lookupModel([
+        { when: [2], value: 'hi' },
+        { when: [2], value: 'lo' },
+      ]),
+    ).toThrow(/lists inputs \(2\) twice/)
+  })
 })
 
 describe('evaluate and do()', () => {

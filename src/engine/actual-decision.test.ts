@@ -35,6 +35,13 @@ describe('actual causation: rock throwing (preemption)', () => {
     expect(hp.check.smallerCause?.cause).toEqual({ ST: true })
   })
 
+  it('rejects malformed causes', () => {
+    const run = (cause: string) => actualCause(rock, rockContext, { cause, effect: 'BS=1' }, 'hp-modified')
+    expect(() => run('ST=1 and ST=0')).toThrow(/mentions ST twice/)
+    expect(() => run('U_ST=1')).toThrow(/must be endogenous/)
+    expect(() => run('ST=1 or BT=1')).toThrow(/conjunction/)
+  })
+
   it('AC1: an event that did not happen is no cause', () => {
     const result = actualCause(rock, rockContext, { cause: 'BH=1', effect: 'BS=1' }, 'hp-modified')
     expect(result.verdict).toBe('not-cause')

@@ -79,13 +79,19 @@ export function parseCause(model: CausalModel, cause: Assignment | string): Reco
     const expr = toFormula(model, cause)
     const conjuncts = expr.op === 'and' ? expr.args : [expr]
     for (const c of conjuncts) {
+      let id: string
+      let value: Value
       if (c.op === 'var') {
-        raw[c.name] = true
+        id = c.name
+        value = true
       } else if (c.op === 'eq' && !c.negated && c.left.op === 'var' && c.right.op === 'const') {
-        raw[c.left.name] = c.right.value
+        id = c.left.name
+        value = c.right.value
       } else {
         throw new ModelError(`cause ${JSON.stringify(cause)} must be a conjunction of events X=x`)
       }
+      if (id in raw) throw new ModelError(`cause mentions ${id} twice`)
+      raw[id] = value
     }
   } else {
     Object.assign(raw, cause)
@@ -94,7 +100,6 @@ export function parseCause(model: CausalModel, cause: Assignment | string): Reco
   for (const [id, value] of Object.entries(raw)) {
     const variable = getVariable(model, id)
     if (variable.kind !== 'endogenous') throw new ModelError(`cause variable ${id} must be endogenous`)
-    if (id in out) throw new ModelError(`cause mentions ${id} twice`)
     out[id] = coerceToDomain(variable, value)
   }
   if (Object.keys(out).length === 0) throw new ModelError('cause is empty')

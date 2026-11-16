@@ -97,6 +97,8 @@ describe('probabilistic queries', () => {
     expect(probability(model, prior, { event: 'C=1', given: 'S=1' }).value).toBeCloseTo(0.5, 12)
     expect(probability(model, prior, { event: 'C=1', do: { S: 1 } }).value).toBeCloseTo(0.25, 12)
     expect(probability(model, prior, { event: 'C=1', given: 'L=1', do: { S: 0 } }).value).toBeCloseTo(0.5, 12)
+    expect(probability(model, prior, { event: 'S=1', do: { S: 1 } }).value).toBe(1)
+    expect(probability(model, prior, { event: 'L=1', given: 'S=1', do: { S: 1 } }).value).toBeCloseTo(0.5, 12)
   })
 
   it('accepts a joint table equal to the product of the marginals', () => {

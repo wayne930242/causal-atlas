@@ -170,11 +170,15 @@ export function checkExpr(
         return
       case 'lookup': {
         const inputs = e.inputs.map(lookupVar)
+        const seen = new Set<string>()
         for (const row of e.rows) {
           if (row.when.length !== inputs.length) {
             throw new ModelError(`${where}: lookup row has ${row.when.length} inputs, expected ${inputs.length}`)
           }
           row.when.forEach((value, i) => checkConst(inputs[i], value))
+          const key = row.when.map((value, i) => String(coerceToDomain(inputs[i], value))).join('|')
+          if (seen.has(key)) throw new ModelError(`${where}: lookup lists inputs (${key}) twice`)
+          seen.add(key)
           if (owner !== undefined) checkConst(owner, row.value)
         }
         if (owner !== undefined && e.fallback !== undefined) checkConst(owner, e.fallback)
