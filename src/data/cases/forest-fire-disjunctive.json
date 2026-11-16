@@ -1,0 +1,40 @@
+{
+  "id": "forest-fire-disjunctive",
+  "title": { "zh": "森林大火：析取式", "en": "Forest fire (disjunctive)" },
+  "family": "actual",
+  "story_zh": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。森林燒了。拿掉任何一個，森林照樣會燒。",
+  "sources": [
+    {
+      "citation": "Halpern, J. Y. (2015). A modification of the Halpern–Pearl definition of causality. In Proceedings of the 24th International Joint Conference on Artificial Intelligence (IJCAI 2015).",
+      "key": "halpern-2015",
+      "verified": false
+    },
+    {
+      "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
+      "key": "halpern-2016",
+      "verified": false
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_L", "label": { "zh": "雷擊條件", "en": "Lightning conditions" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_MD", "label": { "zh": "縱火者意圖", "en": "Arsonist's intention" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "L", "label": { "zh": "雷擊", "en": "Lightning" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "MD", "label": { "zh": "丟下火柴", "en": "Match dropped" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "FF", "label": { "zh": "森林大火", "en": "Forest fire" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "L": "U_L", "MD": "U_MD", "FF": "L or MD" }
+  },
+  "context": { "U_L": 1, "U_MD": 1 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "not-cause" },
+    { "theory": "butfor", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "not-cause" },
+    { "theory": "hp-modified", "query": { "cause": "L=1 and MD=1", "effect": "FF=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "part-of-cause" },
+    { "theory": "hp-modified", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "part-of-cause" }
+  ],
+  "showcase": [
+    { "label": { "zh": "沒有雷擊", "en": "No lightning" }, "interventions": { "L": 0 } },
+    { "label": { "zh": "兩者都沒有", "en": "Neither" }, "interventions": { "L": 0, "MD": 0 } }
+  ]
+}

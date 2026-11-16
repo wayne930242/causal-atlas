@@ -1,0 +1,50 @@
+{
+  "id": "rock-throwing",
+  "title": { "zh": "丟石頭：先發制人", "en": "Rock throwing (preemption)" },
+  "family": "actual",
+  "story_zh": "Suzy 和 Billy 都朝瓶子丟石頭，兩人都丟得很準。Suzy 的石頭先到，打破了瓶子；Billy 的石頭到的時候瓶子已經碎了。直覺上是 Suzy 打破了瓶子，但就算 Suzy 沒丟，Billy 的石頭也會打破它。",
+  "sources": [
+    {
+      "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
+      "key": "halpern-pearl-2005",
+      "verified": false
+    },
+    {
+      "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
+      "key": "halpern-2016",
+      "verified": false
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_ST", "label": { "zh": "Suzy 想丟", "en": "Suzy's intention" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_BT", "label": { "zh": "Billy 想丟", "en": "Billy's intention" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "ST", "label": { "zh": "Suzy 丟", "en": "Suzy throws" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "BT", "label": { "zh": "Billy 丟", "en": "Billy throws" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "SH", "label": { "zh": "Suzy 打中", "en": "Suzy hits" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "BH", "label": { "zh": "Billy 打中", "en": "Billy hits" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "BS", "label": { "zh": "瓶子破了", "en": "Bottle shatters" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": {
+      "ST": "U_ST",
+      "BT": "U_BT",
+      "SH": "ST",
+      "BH": "BT and not SH",
+      "BS": "SH or BH"
+    }
+  },
+  "context": { "U_ST": 1, "U_BT": 1 },
+  "normality": { "ST": 0, "BT": 0, "SH": 0, "BH": 0, "BS": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "ST=1", "effect": "BS=1" }, "expected": "not-cause", "note": "Billy's rock is a backup." },
+    { "theory": "butfor", "query": { "cause": "BT=1", "effect": "BS=1" }, "expected": "not-cause" },
+    { "theory": "hp-modified", "query": { "cause": "ST=1", "effect": "BS=1" }, "expected": "cause", "note": "Witness: hold BH at its actual value 0." },
+    { "theory": "hp-modified", "query": { "cause": "BT=1", "effect": "BS=1" }, "expected": "not-cause" },
+    { "theory": "hp-modified", "query": { "cause": "ST=1 and BT=1", "effect": "BS=1" }, "expected": "not-cause", "note": "Fails AC3: ST=1 alone suffices." },
+    { "theory": "hp-normality", "query": { "cause": "ST=1", "effect": "BS=1" }, "expected": "cause" }
+  ],
+  "showcase": [
+    { "label": { "zh": "Suzy 沒丟", "en": "Suzy does not throw" }, "interventions": { "ST": 0 } },
+    { "label": { "zh": "Suzy 沒丟，Billy 也沒打中", "en": "Suzy does not throw; Billy's rock is stopped" }, "interventions": { "ST": 0, "BH": 0 } }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "id": "newcomb",
+  "title": { "zh": "Newcomb 問題", "en": "Newcomb's problem" },
+  "family": "decision",
+  "story_zh": "桌上有一個透明盒，裝著一千元；還有一個不透明盒。一位極準的預測者事先預測你的選擇：若預測你只拿不透明盒，就在裡面放一百萬元，否則放空。你可以只拿不透明盒，或兩個都拿。盒子裡有什麼在你選擇前就已決定。",
+  "sources": [
+    {
+      "citation": "Nozick, R. (1969). Newcomb's problem and two principles of choice. In N. Rescher (Ed.), Essays in Honor of Carl G. Hempel (pp. 114–146). Reidel.",
+      "key": "nozick-1969",
+      "verified": false
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "D", "label": { "zh": "選擇傾向", "en": "Disposition" }, "kind": "exogenous", "domain": ["one", "two"] },
+      { "id": "E", "label": { "zh": "預測失誤", "en": "Predictor error" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "A", "label": { "zh": "選擇", "en": "Act" }, "kind": "endogenous", "domain": ["one", "two"] },
+      { "id": "P", "label": { "zh": "預測", "en": "Prediction" }, "kind": "endogenous", "domain": ["one", "two"] },
+      { "id": "M", "label": { "zh": "不透明盒有一百萬", "en": "Million in the opaque box" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": {
+      "A": "D",
+      "P": {
+        "table": {
+          "inputs": ["D", "E"],
+          "rows": [
+            ["one", 0, "one"],
+            ["one", 1, "two"],
+            ["two", 0, "two"],
+            ["two", 1, "one"]
+          ]
+        }
+      },
+      "M": "P = 'one'"
+    }
+  },
+  "priors": {
+    "independent": {
+      "D": [
+        ["one", 0.5],
+        ["two", 0.5]
+      ],
+      "E": 0.01
+    }
+  },
+  "decision": {
+    "variable": "A",
+    "utility": {
+      "variables": ["A", "M"],
+      "rows": [
+        ["one", 1, 1000000],
+        ["one", 0, 0],
+        ["two", 1, 1001000],
+        ["two", 0, 1000]
+      ]
+    }
+  },
+  "verdicts": [
+    { "theory": "probability", "query": { "event": "M=1", "given": "A='one'" }, "expected": 0.99 },
+    { "theory": "probability", "query": { "event": "M=1", "do": { "A": "one" } }, "expected": 0.5 },
+    { "theory": "edt", "query": { "expectedUtility": "one" }, "expected": 990000, "tolerance": 1e-6 },
+    { "theory": "edt", "query": { "expectedUtility": "two" }, "expected": 11000, "tolerance": 1e-6 },
+    { "theory": "cdt", "query": { "expectedUtility": "one" }, "expected": 500000, "tolerance": 1e-6 },
+    { "theory": "cdt", "query": { "expectedUtility": "two" }, "expected": 501000, "tolerance": 1e-6 },
+    { "theory": "edt", "query": { "choice": "A" }, "expected": "one", "note": "EDT one-boxes." },
+    { "theory": "cdt", "query": { "choice": "A" }, "expected": "two", "note": "CDT two-boxes: dominance." }
+  ],
+  "showcase": [
+    { "label": { "zh": "只拿一盒", "en": "Take one box" }, "interventions": { "A": "one" } },
+    { "label": { "zh": "兩盒都拿", "en": "Take both boxes" }, "interventions": { "A": "two" } }
+  ]
+}

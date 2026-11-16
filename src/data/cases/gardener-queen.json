@@ -1,0 +1,42 @@
+{
+  "id": "gardener-queen",
+  "title": { "zh": "園丁與女王：不作為", "en": "The gardener and the Queen (omission)" },
+  "family": "omission",
+  "story_zh": "園丁答應幫鄰居澆花卻沒有澆，花枯死了。英國女王當然也沒有來澆這盆花。如果任何一人澆了，花都不會死。可是我們通常只說是園丁沒澆害死了花，不說女王沒澆也是原因。",
+  "sources": [
+    {
+      "citation": "Beebee, H. (2004). Causing and nothingness. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
+      "key": "beebee-2004",
+      "verified": false
+    },
+    {
+      "citation": "Halpern, J. Y., & Hitchcock, C. (2015). Graded causation and defaults. British Journal for the Philosophy of Science, 66(2), 413–457.",
+      "key": "halpern-hitchcock-2015",
+      "verified": false
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_G", "label": { "zh": "園丁的情況", "en": "Gardener's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_Q", "label": { "zh": "女王的情況", "en": "Queen's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "GW", "label": { "zh": "園丁澆花", "en": "Gardener waters" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "QW", "label": { "zh": "女王澆花", "en": "Queen waters" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "D", "label": { "zh": "花枯死", "en": "Flower dies" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "GW": "U_G", "QW": "U_Q", "D": "not GW and not QW" }
+  },
+  "context": { "U_G": 0, "U_Q": 0 },
+  "normality": { "GW": 1, "QW": 0, "D": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "GW=0", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "QW=0", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "GW=0", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "QW=0", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "GW=0", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "QW=0", "effect": "D=1" }, "expected": "not-cause", "note": "The Queen watering is more abnormal than the actual world." }
+  ],
+  "showcase": [
+    { "label": { "zh": "園丁澆了花", "en": "The gardener waters" }, "interventions": { "GW": 1 } },
+    { "label": { "zh": "女王澆了花", "en": "The Queen waters" }, "interventions": { "QW": 1 } }
+  ]
+}

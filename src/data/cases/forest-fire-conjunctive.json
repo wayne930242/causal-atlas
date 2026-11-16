@@ -1,0 +1,34 @@
+{
+  "id": "forest-fire-conjunctive",
+  "title": { "zh": "森林大火：合取式", "en": "Forest fire (conjunctive)" },
+  "family": "actual",
+  "story_zh": "這次森林很潮濕，雷擊和火柴必須同時出現才燒得起來。兩者都出現了，森林燒了。拿掉任何一個，森林就不會燒。",
+  "sources": [
+    {
+      "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
+      "key": "halpern-2016",
+      "verified": false
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_L", "label": { "zh": "雷擊條件", "en": "Lightning conditions" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_MD", "label": { "zh": "縱火者意圖", "en": "Arsonist's intention" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "L", "label": { "zh": "雷擊", "en": "Lightning" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "MD", "label": { "zh": "丟下火柴", "en": "Match dropped" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "FF", "label": { "zh": "森林大火", "en": "Forest fire" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "L": "U_L", "MD": "U_MD", "FF": "L and MD" }
+  },
+  "context": { "U_L": 1, "U_MD": 1 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "L=1 and MD=1", "effect": "FF=1" }, "expected": "not-cause", "note": "Fails AC3: either conjunct alone suffices." }
+  ],
+  "showcase": [
+    { "label": { "zh": "沒有雷擊", "en": "No lightning" }, "interventions": { "L": 0 } }
+  ]
+}

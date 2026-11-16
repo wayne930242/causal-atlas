@@ -1,0 +1,70 @@
+{
+  "id": "smoking-lesion",
+  "title": { "zh": "吸菸病灶", "en": "Smoking lesion" },
+  "family": "decision",
+  "story_zh": "假設吸菸本身不致癌，但有一種病灶同時讓人想吸菸、也讓人容易得癌症。觀察上，吸菸者得癌症的比例較高；可是若強制改變一個人吸不吸菸，他得癌症的機率不會變。那麼喜歡吸菸的人該不該吸？",
+  "sources": [
+    {
+      "citation": "Eells, E. (1982). Rational Decision and Causality. Cambridge University Press.",
+      "key": "eells-1982",
+      "verified": false
+    },
+    {
+      "citation": "Egan, A. (2007). Some counterexamples to causal decision theory. Philosophical Review, 116(1), 93–114.",
+      "key": "egan-2007",
+      "verified": false
+    },
+    {
+      "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.). Cambridge University Press.",
+      "key": "pearl-2009",
+      "verified": false
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "L", "label": { "zh": "病灶", "en": "Lesion" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "N_S1", "label": { "zh": "有病灶時想吸菸", "en": "Urge to smoke given lesion" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "N_S0", "label": { "zh": "無病灶時想吸菸", "en": "Urge to smoke given no lesion" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "N_C1", "label": { "zh": "有病灶時致癌", "en": "Cancer mechanism given lesion" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "N_C0", "label": { "zh": "無病灶時致癌", "en": "Cancer mechanism given no lesion" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "S", "label": { "zh": "吸菸", "en": "Smokes" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "C", "label": { "zh": "癌症", "en": "Cancer" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": {
+      "S": "if L then N_S1 else N_S0",
+      "C": "if L then N_C1 else N_C0"
+    }
+  },
+  "priors": {
+    "independent": { "L": 0.3, "N_S1": 0.8, "N_S0": 0.2, "N_C1": 0.6, "N_C0": 0.1 }
+  },
+  "decision": {
+    "variable": "S",
+    "utility": {
+      "variables": ["S", "C"],
+      "rows": [
+        [1, 1, -90],
+        [1, 0, 10],
+        [0, 1, -100],
+        [0, 0, 0]
+      ]
+    }
+  },
+  "verdicts": [
+    { "theory": "probability", "query": { "event": "C=1" }, "expected": 0.25, "note": "0.3·0.6 + 0.7·0.1" },
+    { "theory": "probability", "query": { "event": "C=1", "given": "S=1" }, "expected": 0.4157894736842105, "note": "0.158 / 0.38" },
+    { "theory": "probability", "query": { "event": "C=1", "given": "S=0" }, "expected": 0.14838709677419354, "note": "0.092 / 0.62" },
+    { "theory": "probability", "query": { "event": "C=1", "do": { "S": 1 } }, "expected": 0.25, "note": "Equals P(C=1): smoking has no effect." },
+    { "theory": "probability", "query": { "event": "C=1", "do": { "S": 0 } }, "expected": 0.25 },
+    { "theory": "edt", "query": { "expectedUtility": 1 }, "expected": -31.578947368421055 },
+    { "theory": "edt", "query": { "expectedUtility": 0 }, "expected": -14.838709677419354 },
+    { "theory": "cdt", "query": { "expectedUtility": 1 }, "expected": -15 },
+    { "theory": "cdt", "query": { "expectedUtility": 0 }, "expected": -25 },
+    { "theory": "edt", "query": { "choice": "S" }, "expected": false, "note": "EDT advises against smoking." },
+    { "theory": "cdt", "query": { "choice": "S" }, "expected": true, "note": "CDT advises smoking." }
+  ],
+  "showcase": [
+    { "label": { "zh": "強制吸菸", "en": "Force smoking" }, "interventions": { "S": 1 } },
+    { "label": { "zh": "強制不吸菸", "en": "Prevent smoking" }, "interventions": { "S": 0 } }
+  ]
+}
