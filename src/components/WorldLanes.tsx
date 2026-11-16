@@ -353,7 +353,8 @@ function WorldLanesFor({ c, interventions, actionLabel, witness, initialStep = 1
   const nextLabel = step === 1 ? action : '加上 HP 見證'
   return (
     <div className="ca-root not-prose ca-lanes" data-case={c.data.id} data-step={step}>
-      <div className="ca-lanes-stage">
+      {/* Narrow screens scroll the lanes sideways; the region takes focus so keys can scroll it. */}
+      <div className="ca-lanes-stage" role="region" aria-label="世界分道（可左右捲動）" tabIndex={0}>
         <svg
           className="ca-lanes-svg"
           viewBox={`0 0 ${width} ${height}`}
