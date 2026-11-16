@@ -5,7 +5,7 @@ import type { Domain, Variable, VariableKind } from './types.ts'
 /** Small models shared by the engine's unit tests. */
 
 export function variable(id: string, kind: VariableKind, domain: Domain = { kind: 'boolean' }): Variable {
-  return { id, label: { zh: id, en: id }, kind, domain }
+  return { id, label: { 'zh-TW': id, en: id }, kind, domain }
 }
 
 /** Halpern & Pearl rock throwing with SH/BH (Actual Causality, Example 2.3.3). */

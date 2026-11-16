@@ -4,11 +4,13 @@ import { caseIds, getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
 import { decodeShare, encodeShare, parseModelJson, shareFromHash } from '../data/model-doc.ts'
 import type { ModelDoc } from '../data/schema.ts'
-import type { Assignment, Value } from '../engine/index.ts'
+import type { Assignment, Problem, Value } from '../engine/index.ts'
 import { coerceToDomain } from '../engine/index.ts'
 import { saveFile } from './download.ts'
 import type { Draft, DraftMode, DraftVariable } from './editor/draft.ts'
 import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './editor/draft.ts'
+import type { Locale, Messages } from './i18n.ts'
+import { LocaleScope, draftIssueMessage, errorMessage, problemMessage, useMessages } from './i18n.ts'
 import type { ModelWorld } from './model-state.ts'
 import { solve } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
@@ -24,16 +26,13 @@ export interface ModelEditorProps {
   readonly shareHref?: (value: string) => string
   /** Link in exported images' watermark. */
   readonly exportUrl?: string
+  /** Interface language; also the title a bundled case starts with. Default: the surrounding LocaleProvider's, else zh-TW. */
+  readonly locale?: Locale
 }
 
-const MODES = [
-  { value: 'value', label: '確定值' },
-  { value: 'probability', label: '機率' },
-] as const satisfies readonly { value: DraftMode; label: string }[]
-
-function startDraft(initial: string): Draft {
-  if (initial === 'blank' || !caseIds.includes(initial)) return blankDraft()
-  return draftFromCase(getCase(initial))
+function startDraft(initial: string, t: Messages): Draft {
+  if (initial === 'blank' || !caseIds.includes(initial)) return blankDraft(t.editor.defaultTitle)
+  return draftFromCase(getCase(initial), t.locale)
 }
 
 /** Interventions that still name a variable of the model with a value in its domain. */
@@ -60,14 +59,30 @@ function priorsFor(v: DraftVariable): number[] {
  * Build a structural causal model yourself: variables, equations, context or priors, defaults,
  * layout. Draws it with the same graph and equations as the case pages; shares it by link or JSON.
  */
-export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, exportUrl }: ModelEditorProps) {
-  const [draft, setDraft] = useState<Draft>(() => startDraft(initial))
+export function ModelEditor({ locale, ...props }: ModelEditorProps) {
+  return (
+    <LocaleScope locale={locale}>
+      <EditorBody {...props} />
+    </LocaleScope>
+  )
+}
+
+function EditorBody({ initial = 'rock-throwing', hash, shareHref, exportUrl }: Omit<ModelEditorProps, 'locale'>) {
+  const t = useMessages()
+  const e = t.editor
+  const [draft, setDraft] = useState<Draft>(() => startDraft(initial, t))
   const [interventions, setInterventions] = useState<Assignment>({})
   const [notation, setNotation] = useState<UiNotation>('propositional')
-  const [loadErrors, setLoadErrors] = useState<readonly string[]>([])
+  // What reading the share link went wrong with; worded at render, so it follows the language.
+  const [loadErrors, setLoadErrors] = useState<readonly unknown[]>([])
   const compiled = useMemo(
-    () => compileDraft(draft, draft.from !== undefined && caseIds.includes(draft.from) ? getCase(draft.from).data.sources : undefined),
-    [draft],
+    () =>
+      compileDraft(
+        draft,
+        draft.from !== undefined && caseIds.includes(draft.from) ? getCase(draft.from).data.sources : undefined,
+        e.defaultTitle,
+      ),
+    [draft, e.defaultTitle],
   )
   // The last model that built: the graph keeps showing it while the draft has errors.
   const [lastGood, setLastGood] = useState<LoadedCase | undefined>(compiled.loaded)
@@ -86,9 +101,9 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
     try {
       return { world: solve(shown, valid), active: valid }
     } catch (error) {
-      return { runtimeError: `算不出來：${(error as Error).message}`, active: valid }
+      return { runtimeError: e.cannotCompute(errorMessage(error, t)), active: valid }
     }
-  }, [shown, interventions])
+  }, [shown, interventions, e, t])
 
   useEffect(() => {
     const value = shareFromHash(hash ?? (typeof window === 'undefined' ? '' : window.location.hash))
@@ -101,10 +116,10 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
           setDraft(draftFromImport(result.doc))
           setInterventions({})
           setLoadErrors([])
-        } else setLoadErrors(result.errors)
+        } else setLoadErrors(result.errors.map((p) => ({ problem: p })))
       })
       .catch((error: unknown) => {
-        if (live) setLoadErrors([error instanceof Error ? error.message : String(error)])
+        if (live) setLoadErrors([error])
       })
     return () => {
       live = false
@@ -137,7 +152,7 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
       let n = d.variables.length + 1
       while (ids.has(`V${n}`)) n += 1
       const key = newKey()
-      const v: DraftVariable = { key, id: `V${n}`, label: '', kind: 'endogenous', domain: 'boolean', values: '', shown: true }
+      const v: DraftVariable = { key, id: `V${n}`, label: '', en: '', kind: 'endogenous', domain: 'boolean', values: '', shown: true }
       return {
         ...d,
         variables: [...d.variables, v],
@@ -174,57 +189,60 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
 
   const summary: string[] = []
   const nameOf = (key: string): string => draft.variables.find((v) => v.key === key)?.id ?? key
-  for (const [key, msg] of Object.entries(compiled.errors.variables)) summary.push(`變項 ${nameOf(key)}：${msg}`)
-  for (const [key, msg] of Object.entries(compiled.errors.equations)) summary.push(`${nameOf(key)} 的式子：${msg}`)
-  for (const [key, msg] of Object.entries(compiled.errors.values)) summary.push(`${nameOf(key)}：${msg}`)
-  if (compiled.errors.model !== undefined) summary.push(compiled.errors.model)
+  const say = (issue: Parameters<typeof draftIssueMessage>[0]): string => draftIssueMessage(issue, t)
+  for (const [key, issue] of Object.entries(compiled.errors.variables)) summary.push(e.summaryVariable(nameOf(key), say(issue)))
+  for (const [key, issue] of Object.entries(compiled.errors.equations)) summary.push(e.summaryEquation(nameOf(key), say(issue)))
+  for (const [key, issue] of Object.entries(compiled.errors.values)) summary.push(e.summaryValue(nameOf(key), say(issue)))
+  if (compiled.errors.model !== undefined) summary.push(say(compiled.errors.model))
   if (runtimeError !== undefined) summary.push(runtimeError)
 
   const exogenous = draft.variables.filter((v) => v.kind === 'exogenous')
   const endogenous = draft.variables.filter((v) => v.kind === 'endogenous')
 
   return (
-    <div className="ca-root not-prose ca-editor">
+    <div className="ca-root not-prose ca-editor" lang={t.locale}>
       <div className="ca-editor-bar">
         <label className="ca-field">
-          <span className="ca-field-label">從案例開始</span>
+          <span className="ca-field-label">{e.startFrom}</span>
           <select
-            aria-label="從案例開始"
+            aria-label={e.startFrom}
             value={draft.from ?? ''}
-            onChange={(e) => {
-              const id = e.currentTarget.value
+            onChange={(ev) => {
+              const id = ev.currentTarget.value
               if (id === '') return
-              replace(id === 'blank' ? blankDraft() : draftFromCase(getCase(id)))
+              replace(id === 'blank' ? blankDraft(e.defaultTitle) : draftFromCase(getCase(id), t.locale))
             }}
           >
-            <option value="">選一個案例…</option>
-            <option value="blank">空白模型</option>
+            <option value="">{e.chooseCase}</option>
+            <option value="blank">{e.blank}</option>
             {caseIds.map((id) => (
               <option key={id} value={id}>
-                {getCase(id).data.title.zh}
+                {getCase(id).data.title[t.locale]}
               </option>
             ))}
           </select>
         </label>
         <label className="ca-field ca-field-grow">
-          <span className="ca-field-label">模型名稱</span>
-          <input aria-label="模型名稱" value={draft.title} onChange={(e) => update({ title: e.currentTarget.value })} />
+          <span className="ca-field-label">{e.title}</span>
+          <input aria-label={e.title} value={draft.title} onChange={(ev) => update({ title: ev.currentTarget.value })} />
         </label>
       </div>
 
       {loadErrors.length > 0 && (
         <div className="ca-editor-errors" role="alert">
-          <p>分享連結讀不出來：</p>
+          <p>{e.shareUnreadable}</p>
           <ul>
-            {loadErrors.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
+            {loadErrors
+              .map((err) => errorMessage(err, t))
+              .map((text) => (
+                <li key={text}>{text}</li>
+              ))}
           </ul>
         </div>
       )}
       {summary.length > 0 && (
         <div className="ca-editor-errors" role="alert">
-          <p>{shown === undefined ? '模型還不完整：' : '模型有問題，圖上是上一次能算的版本：'}</p>
+          <p>{shown === undefined ? e.incomplete : e.lastGood}</p>
           <ul>
             {summary.map((e) => (
               <li key={e}>{e}</li>
@@ -248,75 +266,84 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
         </div>
       ) : (
         <div className="ca-placeholder ca-editor-empty">
-          <span className="ca-muted ca-small">{draft.variables.length === 0 ? '先在「變項」裡加一個變項' : '補上式子，圖就會出現'}</span>
+          <span className="ca-muted ca-small">{draft.variables.length === 0 ? e.addFirst : e.fillEquations}</span>
         </div>
       )}
-      <p className="ca-hint">點節點可以套上干預；拖曳節點（或選取後按方向鍵）可以調整位置。</p>
+      <p className="ca-hint">{e.hint}</p>
 
       <div className="ca-editor-panels">
-        <Disclosure kicker="" title="變項">
+        <Disclosure kicker="" title={e.variables}>
           <ul className="ca-editor-vars">
             {draft.variables.map((v, i) => {
               const n = i + 1
-              const err = compiled.errors.variables[v.key]
+              const issue = compiled.errors.variables[v.key]
+              const err = issue === undefined ? undefined : say(issue)
               const errId = `${uid}-var-${v.key}`
               return (
                 <li key={v.key} className="ca-editor-var">
                   <input
                     className="ca-mono ca-input-id"
-                    aria-label={`第 ${n} 個變項：代號`}
+                    aria-label={e.varId(n)}
                     aria-invalid={err !== undefined}
                     aria-describedby={err !== undefined ? errId : undefined}
                     value={v.id}
-                    onChange={(e) => setVariable(v.key, { id: e.currentTarget.value.trim() })}
+                    onChange={(ev) => setVariable(v.key, { id: ev.currentTarget.value.trim() })}
                   />
                   <input
-                    aria-label={`第 ${n} 個變項：中文名稱`}
-                    placeholder="中文名稱"
+                    aria-label={e.varZh(n)}
+                    lang="zh-TW"
+                    placeholder={e.zhPlaceholder}
                     value={v.label}
-                    onChange={(e) => setVariable(v.key, { label: e.currentTarget.value })}
+                    onChange={(ev) => setVariable(v.key, { label: ev.currentTarget.value })}
+                  />
+                  <input
+                    aria-label={e.varEn(n)}
+                    lang="en"
+                    placeholder={e.enPlaceholder}
+                    value={v.en}
+                    onChange={(ev) => setVariable(v.key, { en: ev.currentTarget.value })}
                   />
                   <select
-                    aria-label={`第 ${n} 個變項：種類`}
+                    aria-label={e.varKind(n)}
                     value={v.kind}
-                    onChange={(e) => setVariable(v.key, { kind: e.currentTarget.value as DraftVariable['kind'] })}
+                    onChange={(ev) => setVariable(v.key, { kind: ev.currentTarget.value as DraftVariable['kind'] })}
                   >
-                    <option value="exogenous">外生</option>
-                    <option value="endogenous">內生</option>
+                    <option value="exogenous">{e.exogenous}</option>
+                    <option value="endogenous">{e.endogenous}</option>
                   </select>
                   <select
-                    aria-label={`第 ${n} 個變項：值域`}
+                    aria-label={e.varDomain(n)}
                     value={v.domain}
-                    onChange={(e) =>
+                    onChange={(ev) =>
                       setVariable(v.key, {
-                        domain: e.currentTarget.value as DraftVariable['domain'],
+                        domain: ev.currentTarget.value as DraftVariable['domain'],
                         values: v.values === '' ? 'a, b' : v.values,
                       })
                     }
                   >
-                    <option value="boolean">0／1</option>
-                    <option value="list">列舉</option>
+                    <option value="boolean">{e.domainBoolean}</option>
+                    <option value="list">{e.domainList}</option>
                   </select>
                   {v.domain === 'list' && (
                     <input
                       className="ca-mono"
-                      aria-label={`第 ${n} 個變項：可能的值`}
-                      placeholder="例如 one, two"
+                      aria-label={e.varValues(n)}
+                      placeholder={e.valuesPlaceholder}
                       value={v.values}
-                      onChange={(e) => setVariable(v.key, { values: e.currentTarget.value })}
+                      onChange={(ev) => setVariable(v.key, { values: ev.currentTarget.value })}
                     />
                   )}
                   <label className="ca-check">
                     <input
                       type="checkbox"
-                      aria-label={`第 ${n} 個變項：畫在圖上`}
+                      aria-label={e.varShown(n)}
                       checked={v.shown}
-                      onChange={(e) => setVariable(v.key, { shown: e.currentTarget.checked })}
+                      onChange={(ev) => setVariable(v.key, { shown: ev.currentTarget.checked })}
                     />
-                    畫在圖上
+                    {e.shown}
                   </label>
-                  <button type="button" className="ca-link" aria-label={`刪除第 ${n} 個變項`} onClick={() => removeVariable(v.key)}>
-                    刪除
+                  <button type="button" className="ca-link" aria-label={e.removeVar(n)} onClick={() => removeVariable(v.key)}>
+                    {e.remove}
                   </button>
                   {err !== undefined && (
                     <p className="ca-field-error" id={errId}>
@@ -328,21 +355,31 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
             })}
           </ul>
           <button type="button" className="ca-btn ca-btn-outline" onClick={addVariable}>
-            加一個變項
+            {e.addVar}
           </button>
         </Disclosure>
 
-        <Disclosure kicker="" title="式子">
+        <Disclosure kicker="" title={t.equations}>
           <p className="ca-muted ca-small">
-            寫法：<code>and</code>、<code>or</code>、<code>not</code>、<code>if … then … else …</code>，比較用 <code>=</code>，文字值加引號，例如{' '}
-            <code>if U then &apos;bright&apos; else &apos;dark&apos;</code>。
+            {e.syntax.lead}
+            <code>and</code>
+            {e.syntax.sep}
+            <code>or</code>
+            {e.syntax.sep}
+            <code>not</code>
+            {e.syntax.sep}
+            <code>if … then … else …</code>
+            {e.syntax.compare}
+            <code>=</code>
+            {e.syntax.quote}
+            <code>if U then &apos;bright&apos; else &apos;dark&apos;</code>
+            {e.syntax.end}
           </p>
-          {exogenous.length > 0 && (
-            <p className="ca-muted ca-small">外生變項沒有式子：{exogenous.map((v) => v.id).join('、')}</p>
-          )}
+          {exogenous.length > 0 && <p className="ca-muted ca-small">{e.noEquation(t.list(exogenous.map((v) => v.id)))}</p>}
           <ul className="ca-editor-eqs">
             {endogenous.map((v) => {
-              const err = compiled.errors.equations[v.key]
+              const issue = compiled.errors.equations[v.key]
+              const err = issue === undefined ? undefined : say(issue)
               const inCycle = compiled.errors.cycle?.includes(v.id) === true
               const errId = `${uid}-eq-${v.key}`
               return (
@@ -350,13 +387,13 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
                   <span className="ca-mono ca-editor-eq-lhs">{v.id} =</span>
                   <input
                     className="ca-mono"
-                    aria-label={`${v.id} 的式子`}
+                    aria-label={e.equationOf(v.id)}
                     aria-invalid={err !== undefined || inCycle}
                     aria-describedby={err !== undefined ? errId : undefined}
                     value={draft.equations[v.key] ?? ''}
                     spellCheck={false}
                     autoComplete="off"
-                    onChange={(e) => update({ equations: { ...draft.equations, [v.key]: e.currentTarget.value } })}
+                    onChange={(ev) => update({ equations: { ...draft.equations, [v.key]: ev.currentTarget.value } })}
                   />
                   {err !== undefined && (
                     <p className="ca-field-error" id={errId}>
@@ -367,27 +404,36 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
               )
             })}
           </ul>
-          {compiled.errors.cycle !== undefined && <p className="ca-field-error">{compiled.errors.model}</p>}
+          {compiled.errors.cycle !== undefined && compiled.errors.model !== undefined && (
+            <p className="ca-field-error">{say(compiled.errors.model)}</p>
+          )}
         </Disclosure>
 
-        <Disclosure kicker="" title="外生變項的值">
-          <Segmented label="外生變項" options={MODES} value={draft.mode} onChange={(mode) => update({ mode })} />
-          <p className="ca-muted ca-small">
-            {draft.mode === 'value' ? '每個外生變項取一個值，圖上畫出實際世界。' : '每個外生變項給機率，節點裡填色的高度是等於 1 的機率。'}
-          </p>
+        <Disclosure kicker="" title={e.exogenousValues}>
+          <Segmented
+            label={e.exogenousLabel}
+            options={[
+              { value: 'value', label: e.modes.value },
+              { value: 'probability', label: e.modes.probability },
+            ]}
+            value={draft.mode}
+            onChange={(mode: DraftMode) => update({ mode })}
+          />
+          <p className="ca-muted ca-small">{draft.mode === 'value' ? e.valueModeNote : e.probabilityModeNote}</p>
           <ul className="ca-editor-values">
             {exogenous.map((v) => {
               const texts = valueTexts(v)
-              const err = compiled.errors.values[v.key]
+              const issue = compiled.errors.values[v.key]
+              const err = issue === undefined ? undefined : say(issue)
               if (draft.mode === 'value') {
                 return (
                   <li key={v.key}>
                     <label className="ca-field">
                       <span className="ca-field-label ca-mono">{v.id}</span>
                       <select
-                        aria-label={`${v.id} 的值`}
+                        aria-label={e.valueOf(v.id)}
                         value={draft.context[v.key] ?? texts[0]}
-                        onChange={(e) => update({ context: { ...draft.context, [v.key]: e.currentTarget.value } })}
+                        onChange={(ev) => update({ context: { ...draft.context, [v.key]: ev.currentTarget.value } })}
                       >
                         {texts.map((t) => (
                           <option key={t} value={t}>
@@ -416,9 +462,9 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
                         step={0.01}
                         aria-label={`P(${v.id}=${t})`}
                         value={ps[i] ?? 0}
-                        onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        onChange={(ev: ChangeEvent<HTMLInputElement>) => {
                           const next = [...ps]
-                          next[i] = Number(e.currentTarget.value)
+                          next[i] = Number(ev.currentTarget.value)
                           update({ priors: { ...draft.priors, [v.key]: next } })
                         }}
                       />
@@ -431,19 +477,19 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
           </ul>
         </Disclosure>
 
-        <Disclosure kicker="" title="常態">
-          <p className="ca-muted ca-small">每個變項平常是什麼值。「HP 加上常態」的定義會用到；不設就是沒有預設。</p>
+        <Disclosure kicker="" title={e.normality}>
+          <p className="ca-muted ca-small">{e.normalityNote}</p>
           <ul className="ca-editor-values">
             {draft.variables.map((v) => (
               <li key={v.key}>
                 <label className="ca-field">
                   <span className="ca-field-label ca-mono">{v.id}</span>
                   <select
-                    aria-label={`${v.id} 的常態值`}
+                    aria-label={e.normalOf(v.id)}
                     value={draft.normality[v.key] ?? ''}
-                    onChange={(e) => update({ normality: { ...draft.normality, [v.key]: e.currentTarget.value } })}
+                    onChange={(ev) => update({ normality: { ...draft.normality, [v.key]: ev.currentTarget.value } })}
                   >
-                    <option value="">不設</option>
+                    <option value="">{e.unset}</option>
                     {valueTexts(v).map((t) => (
                       <option key={t} value={t}>
                         {t}
@@ -456,7 +502,7 @@ export function ModelEditor({ initial = 'rock-throwing', hash, shareHref, export
           </ul>
         </Disclosure>
 
-        <Disclosure kicker="" title="存檔與分享">
+        <Disclosure kicker="" title={e.saveShare}>
           <SaveShare
             doc={compiled.doc}
             shareHref={shareHref}
@@ -482,6 +528,9 @@ function SaveShare({
   readonly shareHref?: (value: string) => string
   readonly onImport: (doc: ModelDoc) => void
 }) {
+  const t = useMessages()
+  const e = t.editor
+  const problems = (list: readonly Problem[]): string[] => list.map((p) => problemMessage(p, t))
   const [link, setLink] = useState<string | undefined>(undefined)
   const [copied, setCopied] = useState(false)
   const [pasted, setPasted] = useState('')
@@ -496,7 +545,7 @@ function SaveShare({
       .then((value) => setLink((shareHref ?? defaultHref)(value)))
       .catch((error: unknown) => {
         setLink(undefined)
-        setErrors([error instanceof Error ? error.message : String(error)])
+        setErrors([errorMessage(error, t)])
       })
   }
   const importText = (text: string): void => {
@@ -506,19 +555,19 @@ function SaveShare({
       if (result.ok) {
         setErrors([])
         onImport(result.doc)
-      } else setErrors(result.errors)
+      } else setErrors(problems(result.errors))
     } catch (error) {
       setImported(false)
-      setErrors([error instanceof Error ? error.message : String(error)])
+      setErrors([errorMessage(error, t)])
     }
   }
 
   return (
     <div className="ca-editor-save">
-      {doc === undefined && <p className="ca-muted ca-small">模型有問題，修好之後才能分享或下載。</p>}
+      {doc === undefined && <p className="ca-muted ca-small">{e.fixFirst}</p>}
       <div className="ca-editor-row">
         <button type="button" className="ca-btn ca-btn-outline" disabled={doc === undefined} onClick={share}>
-          產生分享連結
+          {e.makeLink}
         </button>
         <button
           type="button"
@@ -526,52 +575,52 @@ function SaveShare({
           disabled={doc === undefined}
           onClick={() => doc !== undefined && saveFile('causal-model.json', `${JSON.stringify(doc, null, 2)}\n`, 'application/json')}
         >
-          下載 JSON
+          {e.downloadJson}
         </button>
       </div>
       {link !== undefined && (
         <div className="ca-editor-row">
-          <input className="ca-mono ca-field-grow" aria-label="分享連結" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
+          <input className="ca-mono ca-field-grow" aria-label={e.shareLink} readOnly value={link} onFocus={(ev) => ev.currentTarget.select()} />
           <button
             type="button"
             className="ca-link"
             onClick={() => void navigator.clipboard?.writeText(link).then(() => setCopied(true))}
           >
-            {copied ? '已複製' : '複製'}
+            {copied ? e.copied : e.copy}
           </button>
         </div>
       )}
-      <div className="ca-editor-import" role="group" aria-label="匯入 JSON">
+      <div className="ca-editor-import" role="group" aria-label={e.importJson}>
         <textarea
           className="ca-mono"
-          aria-label="貼上 JSON"
-          placeholder="貼上模型 JSON，或整個案例檔"
+          aria-label={e.pasteJson}
+          placeholder={e.pastePlaceholder}
           rows={4}
           value={pasted}
-          onChange={(e) => setPasted(e.currentTarget.value)}
+          onChange={(ev) => setPasted(ev.currentTarget.value)}
         />
         <div className="ca-editor-row">
           <button type="button" className="ca-btn ca-btn-outline" onClick={() => importText(pasted)}>
-            匯入
+            {e.import}
           </button>
           <label className="ca-link">
-            選擇 JSON 檔
+            {e.chooseFile}
             <input
               className="ca-sr"
               type="file"
               accept="application/json,.json"
-              aria-label="選擇 JSON 檔"
-              onChange={(e) => {
-                const file = e.currentTarget.files?.[0]
-                if (file !== undefined) void file.text().then(importText, (error: unknown) => setErrors([error instanceof Error ? error.message : String(error)]))
+              aria-label={e.chooseFile}
+              onChange={(ev) => {
+                const file = ev.currentTarget.files?.[0]
+                if (file !== undefined) void file.text().then(importText, (error: unknown) => setErrors([errorMessage(error, t)]))
               }}
             />
           </label>
-          {imported && errors.length === 0 && <span className="ca-muted ca-small">已匯入</span>}
+          {imported && errors.length === 0 && <span className="ca-muted ca-small">{e.imported}</span>}
         </div>
         {errors.length > 0 && (
           <div className="ca-editor-errors" role="alert">
-            <p>這份 JSON 不能用：</p>
+            <p>{e.unusable}</p>
             <ul>
               {errors.map((e) => (
                 <li key={e}>{e}</li>

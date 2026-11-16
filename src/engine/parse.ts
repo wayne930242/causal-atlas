@@ -1,3 +1,5 @@
+import type { Problem, ProblemCode, ProblemParams } from './errors.ts'
+import { CausalAtlasError, problem } from './errors.ts'
 import type { Expr, InterventionItem } from './expr.ts'
 import type { Value } from './types.ts'
 import { RESERVED_WORDS } from './values.ts'
@@ -21,16 +23,26 @@ import { RESERVED_WORDS } from './values.ts'
  * A bare boolean variable `BS` in a formula means `BS=1`.
  */
 
-export class ParseError extends Error {
+type ParseCode = Extract<ProblemCode, `parse-${string}`>
+type ParseExtra<K extends ParseCode> = Omit<ProblemParams[K], 'source' | 'position'>
+
+/** Text that does not parse; `problem.params` has the source and the character position. */
+export class ParseError extends CausalAtlasError {
   readonly source: string
   readonly position: number
 
-  constructor(message: string, source: string, position: number) {
-    super(`${message} at position ${position} in ${JSON.stringify(source)}`)
+  constructor(p: Problem & { readonly params: { readonly source: string; readonly position: number } }) {
+    super(p)
     this.name = 'ParseError'
-    this.source = source
-    this.position = position
+    this.source = p.params.source
+    this.position = p.params.position
   }
+}
+
+function parseError<K extends ParseCode>(code: K, source: string, position: number, extra: ParseExtra<K>): ParseError {
+  return new ParseError(problem(code, { ...extra, source, position } as ProblemParams[K]) as Problem & {
+    readonly params: { readonly source: string; readonly position: number }
+  })
 }
 
 type TokenKind = 'ident' | 'number' | 'string' | 'symbol' | 'end'
@@ -92,13 +104,13 @@ function tokenize(source: string): Token[] {
     }
     if (ch === "'" || ch === '"') {
       const end = source.indexOf(ch, i + 1)
-      if (end < 0) throw new ParseError('unterminated string', source, i)
+      if (end < 0) throw parseError('parse-unterminated-string', source, i, {})
       tokens.push({ kind: 'string', text: source.slice(i + 1, end), position: i })
       i = end + 1
       continue
     }
     const symbol = SYMBOLS.find((s) => source.startsWith(s, i))
-    if (symbol === undefined) throw new ParseError(`unexpected character ${JSON.stringify(ch)}`, source, i)
+    if (symbol === undefined) throw parseError('parse-unexpected-character', source, i, { character: ch })
     tokens.push({ kind: 'symbol', text: symbol, position: i })
     i += symbol.length
   }
@@ -121,7 +133,7 @@ class Parser {
   parseAll(): Expr {
     const expr = this.parseIff()
     const next = this.peek()
-    if (next.kind !== 'end') this.fail(`unexpected ${JSON.stringify(next.text)}`)
+    if (next.kind !== 'end') this.fail('parse-unexpected-token', { token: next.text })
     return expr
   }
 
@@ -135,8 +147,8 @@ class Parser {
     return token
   }
 
-  private fail(message: string): never {
-    throw new ParseError(message, this.source, this.peek().position)
+  private fail<K extends ParseCode>(code: K, extra: ParseExtra<K>): never {
+    throw parseError(code, this.source, this.peek().position, extra)
   }
 
   /** Consume the next token if it is one of `options` (symbol or keyword). */
@@ -150,7 +162,7 @@ class Parser {
   }
 
   private expect(...options: string[]): void {
-    if (!this.accept(...options)) this.fail(`expected ${options.join(' or ')}`)
+    if (!this.accept(...options)) this.fail('parse-expected', { options })
   }
 
   private parseIff(): Expr {
@@ -184,14 +196,14 @@ class Parser {
   private parseUnary(): Expr {
     if (this.accept('not', '!', '¬')) return { op: 'not', arg: this.parseUnary() }
     if (this.peek().text === '[' && this.peek().kind === 'symbol') {
-      if (!this.allowDo) this.fail('interventions [X←x] are only allowed in causal formulas')
+      if (!this.allowDo) this.fail('parse-intervention-not-allowed', {})
       this.next()
       const interventions: InterventionItem[] = []
       do {
         const name = this.next()
         if (name.kind !== 'ident' || KEYWORDS.has(name.text)) {
           this.index -= 1
-          this.fail('expected a variable name')
+          this.fail('parse-expected-variable', {})
         }
         this.expect('<-', '←')
         interventions.push({ variable: name.text, value: this.parseLiteral() })
@@ -216,7 +228,7 @@ class Parser {
     if (token.kind === 'ident' && token.text === 'true') return true
     if (token.kind === 'ident' && token.text === 'false') return false
     this.index -= 1
-    return this.fail('expected a value')
+    return this.fail('parse-expected-value', {})
   }
 
   private parseAtom(): Expr {

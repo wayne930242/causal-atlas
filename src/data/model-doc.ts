@@ -1,4 +1,8 @@
-import type { Value } from '../engine/index.ts'
+import type { z } from 'zod'
+import zhTW from 'zod/v4/locales/zh-TW.js'
+import type { Problem } from '../engine/errors.ts'
+import { problem, problemOf } from '../engine/errors.ts'
+import type { Locale, Value } from '../engine/index.ts'
 import { ModelError } from '../engine/index.ts'
 import type { LoadedCase } from './load.ts'
 import { buildCase } from './load.ts'
@@ -30,8 +34,8 @@ export function tableToSource(table: TableEquation['table']): string {
   return parts.reduceRight((rest, p) => `if ${p.when} then ${p.value} else ${rest}`, tail)
 }
 
-/** A bundled case as a model document, tables written out as equations. */
-export function caseToDoc(c: LoadedCase): ModelDoc {
+/** A bundled case as a model document, tables written out as equations; titled in `locale`. */
+export function caseToDoc(c: LoadedCase, locale: Locale = 'zh-TW'): ModelDoc {
   const { data } = c
   const equations: Record<string, string> = {}
   for (const [id, eq] of Object.entries(data.model.equations)) {
@@ -40,7 +44,7 @@ export function caseToDoc(c: LoadedCase): ModelDoc {
   return modelDocSchema.parse({
     format: MODEL_DOC_FORMAT,
     version: 1,
-    title: data.title.zh,
+    title: data.title[locale],
     from: data.id,
     model: { variables: data.model.variables, equations },
     context: data.context,
@@ -52,14 +56,19 @@ export function caseToDoc(c: LoadedCase): ModelDoc {
 
 /** Turn a document into the engine objects the components draw. Throws ModelError on a bad model. */
 export function docToCase(doc: ModelDoc, origin?: CaseFile['sources']): LoadedCase {
+  const both = { 'zh-TW': doc.title, en: doc.title }
   return buildCase({
     id: 'my-model',
-    title: { zh: doc.title, en: doc.title },
+    title: both,
     family: 'actual',
-    story_zh: doc.title,
-    explanation_zh: doc.title,
+    story: both,
+    explanation: both,
+    copy_status: { 'zh-TW': 'draft', en: 'draft' },
     sources: origin ?? [],
-    model: doc.model,
+    model: {
+      variables: doc.model.variables.map((v) => ({ ...v, label: { 'zh-TW': v.label['zh-TW'], en: v.label.en ?? v.id } })),
+      equations: doc.model.equations,
+    },
     context: doc.context,
     priors: doc.context === undefined ? doc.priors : undefined,
     normality: doc.normality,
@@ -75,19 +84,32 @@ export const MAX_SHARE_CHARS = 65_536
 /** A document may be this long as JSON text, pasted, uploaded or inflated from a share link. */
 export const MAX_DOC_CHARS = 1_048_576
 
-const TOO_LARGE = '資料過大'
+const TOO_LARGE = problem('too-large', {})
 
-export type ImportResult = { readonly ok: true; readonly doc: ModelDoc } | { readonly ok: false; readonly errors: readonly string[] }
+/** What an import gives: the document, or every problem found, each with a stable code. */
+export type ImportResult = { readonly ok: true; readonly doc: ModelDoc } | { readonly ok: false; readonly errors: readonly Problem[] }
 
-function issueLines(error: { issues: readonly { path: readonly PropertyKey[]; message: string }[] }): string[] {
-  return error.issues.map((i) => `${i.path.map(String).join('.') || '（根）'}：${i.message}`)
+const zhIssue = zhTW().localeError
+
+/**
+ * Schema issues as problems at their paths. Our own checks carry their problem; zod's built-in
+ * ones are worded in both languages here (the input is reported so the wording can name its type).
+ */
+export function schemaProblems(error: { readonly issues: readonly z.core.$ZodIssue[] }): Problem[] {
+  return error.issues.map((issue) => {
+    const where = { kind: 'path', path: issue.path.map(String).join('.') } as const
+    const own = issue.code === 'custom' ? (issue.params as { problem?: Problem } | undefined)?.problem : undefined
+    if (own !== undefined) return { ...own, where }
+    const zh = zhIssue(issue as unknown as z.core.$ZodRawIssue)
+    const zhText = typeof zh === 'string' ? zh : (zh?.message ?? issue.message)
+    return problem('schema', { message: { 'zh-TW': zhText, en: issue.message } }, where)
+  })
 }
 
-function errorLines(error: unknown): string[] {
-  if (typeof error === 'object' && error !== null && 'issues' in error && Array.isArray(error.issues)) {
-    return issueLines(error as { issues: { path: PropertyKey[]; message: string }[] })
-  }
-  return [error instanceof Error ? error.message : String(error)]
+function errorProblems(error: unknown): Problem[] {
+  const own = problemOf(error)
+  if (own !== undefined) return [own]
+  return [problem('not-json', { detail: error instanceof Error ? error.message : String(error) })]
 }
 
 /**
@@ -100,20 +122,20 @@ export function parseModelJson(text: string): ImportResult {
   try {
     raw = JSON.parse(text)
   } catch (error) {
-    return { ok: false, errors: [`不是 JSON：${(error as Error).message}`] }
+    return { ok: false, errors: [problem('not-json', { detail: (error as Error).message })] }
   }
-  const asDoc = modelDocSchema.safeParse(raw)
+  const asDoc = modelDocSchema.safeParse(raw, { reportInput: true })
   if (asDoc.success) return checkBuilds(asDoc.data)
-  if (typeof raw === 'object' && raw !== null && 'story_zh' in raw) {
-    const asCase = caseSchema.safeParse(raw)
-    if (!asCase.success) return { ok: false, errors: issueLines(asCase.error) }
+  if (typeof raw === 'object' && raw !== null && ('story' in raw || 'story_zh' in raw)) {
+    const asCase = caseSchema.safeParse(raw, { reportInput: true })
+    if (!asCase.success) return { ok: false, errors: schemaProblems(asCase.error) }
     try {
       return checkBuilds(caseToDoc(buildCase(asCase.data)))
     } catch (error) {
-      return { ok: false, errors: errorLines(error) }
+      return { ok: false, errors: errorProblems(error) }
     }
   }
-  return { ok: false, errors: issueLines(asDoc.error) }
+  return { ok: false, errors: schemaProblems(asDoc.error) }
 }
 
 function checkBuilds(doc: ModelDoc): ImportResult {
@@ -121,7 +143,7 @@ function checkBuilds(doc: ModelDoc): ImportResult {
     docToCase(doc)
     return { ok: true, doc }
   } catch (error) {
-    return { ok: false, errors: errorLines(error) }
+    return { ok: false, errors: errorProblems(error) }
   }
 }
 
@@ -129,7 +151,7 @@ function checkBuilds(doc: ModelDoc): ImportResult {
 
 const SHARE_VERSION = '1'
 
-/** Pipe bytes through a (de)compression stream; throws ModelError(資料過大) once the output passes `limit`. */
+/** Pipe bytes through a (de)compression stream; throws ModelError(too-large) once the output passes `limit`. */
 async function through(bytes: Uint8Array, stream: CompressionStream | DecompressionStream, limit: number): Promise<Uint8Array> {
   const writer = stream.writable.getWriter()
   void writer.write(bytes as Uint8Array<ArrayBuffer>).then(() => writer.close()).catch(() => undefined)
@@ -180,7 +202,7 @@ export async function encodeShare(doc: ModelDoc): Promise<string> {
 export async function decodeShare(value: string): Promise<ImportResult> {
   const dot = value.indexOf('.')
   const version = dot < 0 ? '' : value.slice(0, dot)
-  if (version !== SHARE_VERSION) return { ok: false, errors: [`分享連結的版本 ${version || '（無）'} 不支援`] }
+  if (version !== SHARE_VERSION) return { ok: false, errors: [problem('share-version', { version })] }
   if (value.length > MAX_SHARE_CHARS) return { ok: false, errors: [TOO_LARGE] }
   let text: string
   try {
@@ -188,7 +210,7 @@ export async function decodeShare(value: string): Promise<ImportResult> {
       await through(fromBase64Url(value.slice(dot + 1)), new DecompressionStream('deflate-raw'), MAX_DOC_CHARS),
     )
   } catch (error) {
-    return { ok: false, errors: [error instanceof ModelError ? error.message : '分享連結的資料損壞'] }
+    return { ok: false, errors: [error instanceof ModelError ? error.problem : problem('share-damaged', {})] }
   }
   return parseModelJson(text)
 }
@@ -202,5 +224,45 @@ export function shareFromHash(hash: string): string | undefined {
   } catch {
     // A malformed escape: hand it on as it is; decodeShare then reports damaged data.
     return m[1]
+  }
+}
+
+/** Keys in order, so two equal structures serialize the same. */
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical)
+  if (value instanceof Map) return canonical(Object.fromEntries(value))
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((k) => [k, canonical((value as Record<string, unknown>)[k])]),
+    )
+  }
+  return value
+}
+
+/** The parts of a built model that decide what it computes; labels, title and layout are left out. */
+function modelShape(c: LoadedCase): string {
+  return JSON.stringify(
+    canonical({
+      variables: c.model.variables.map((v) => ({ id: v.id, kind: v.kind, domain: v.domain })),
+      equations: c.model.equations,
+      context: c.context,
+      prior: c.context === undefined ? c.prior : undefined,
+      normality: c.normality ?? {},
+    }),
+  )
+}
+
+/**
+ * Whether two documents describe the same model: the same variables with the same kinds and
+ * domains, equations with the same syntax trees, and the same context, priors and defaults.
+ * Labels, title and layout may differ. A document that does not build is never the same.
+ */
+export function sameModel(a: ModelDoc, b: ModelDoc): boolean {
+  try {
+    return modelShape(docToCase(a)) === modelShape(docToCase(b))
+  } catch {
+    return false
   }
 }

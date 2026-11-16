@@ -4,11 +4,14 @@ import { getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import { evaluate, getVariable, probability } from '../engine/index.ts'
+import { graphExport, renderDetached } from './export-render.tsx'
 import { Equations } from './Equations.tsx'
-import type { ExportPanel } from './export-image.ts'
+import type { ExportPanel, ExportSource } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
+import type { Locale, Messages } from './i18n.ts'
+import { LocaleProvider, LocaleScope, messagesFor, useMessages } from './i18n.ts'
 import type { UiNotation } from './notation.ts'
-import { NOTATIONS } from './notation.ts'
+import { notations } from './notation.ts'
 import { Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
 import { useNarrow } from './use-narrow.ts'
@@ -24,7 +27,6 @@ import {
   probText,
   shownVariables,
   sliderVariables,
-  VALUE_LEGEND,
   targetText,
 } from './view-model.ts'
 
@@ -38,11 +40,14 @@ export interface ProbabilityPanelProps {
   readonly pair?: SeeDoPair
   /** Link in the exported image's watermark. */
   readonly exportUrl?: string
+  /** Interface language. Default: the surrounding LocaleProvider's, else zh-TW. */
+  readonly locale?: Locale
 }
 
 const SAME = 0.005
 
 function notesAgainst(
+  t: Messages,
   base: Readonly<Record<string, number>>,
   now: Readonly<Record<string, number>>,
   shown: readonly string[],
@@ -52,7 +57,7 @@ function notesAgainst(
   const out: Record<string, string> = {}
   for (const id of shown) {
     if (id === own) out[id] = ownNote
-    else out[id] = Math.abs((now[id] ?? 0) - (base[id] ?? 0)) < SAME ? '不變' : `原本 ${probText(base[id] ?? Number.NaN)}`
+    else out[id] = Math.abs((now[id] ?? 0) - (base[id] ?? 0)) < SAME ? t.unchanged : t.was(probText(base[id] ?? Number.NaN))
   }
   return out
 }
@@ -68,16 +73,17 @@ interface SlidersProps {
 }
 
 function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, withHead }: SlidersProps) {
+  const t = useMessages()
   const ids = sliderVariables(c)
   return (
     <div className="ca-prob-sliders">
       <div className="ca-eq-head">
-        {withHead && <h3 className="ca-h3">式子和機率</h3>}
-        <Segmented label="式子的寫法" options={NOTATIONS} value={notation} onChange={onNotation} />
+        {withHead && <h3 className="ca-h3">{t.probEquations}</h3>}
+        <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
       </div>
       <Equations c={c} shown={shown} notation={notation} interventions={{}} />
       {ids.length === 0 ? (
-        <p className="ca-muted">這個案例的機率是整張聯合分布，不能逐一調整。</p>
+        <p className="ca-muted">{t.jointOnly}</p>
       ) : (
         <ul className="ca-slider-list">
           {ids.map((id) => {
@@ -87,7 +93,7 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
               <li key={id} className="ca-slider-row">
                 <span className="ca-slider-var ca-mono">{id}</span>
                 <label className="ca-slider-label" htmlFor={`ca-slider-${c.data.id}-${id}`}>
-                  {label(c.model, id)}的機率
+                  {t.sliderLabel(label(c.model, id, t.locale))}
                 </label>
                 <input
                   id={`ca-slider-${c.data.id}-${id}`}
@@ -113,9 +119,13 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
 }
 
 /** Direction 1 probability mode: per-exogenous p sliders; node fill is P(V=1); observing vs do() side by side. */
-export function ProbabilityPanel({ caseId, view = 'sliders', pair, exportUrl }: ProbabilityPanelProps) {
+export function ProbabilityPanel({ caseId, view = 'sliders', pair, exportUrl, locale }: ProbabilityPanelProps) {
   const c = getCase(caseId)
-  return <ProbabilityPanelFor c={c} view={view} pair={pair} exportUrl={exportUrl} />
+  return (
+    <LocaleScope locale={locale}>
+      <ProbabilityPanelFor c={c} view={view} pair={pair} exportUrl={exportUrl} />
+    </LocaleScope>
+  )
 }
 
 export function ProbabilityPanelFor({
@@ -129,6 +139,7 @@ export function ProbabilityPanelFor({
   pair?: SeeDoPair
   exportUrl?: string
 }) {
+  const t = useMessages()
   const [sliders, setSliders] = useState<Record<string, number>>(() => defaultSliders(c))
   const [notation, setNotation] = useState<UiNotation>('propositional')
   const [mode, setMode] = useState<'value' | 'probability'>('probability')
@@ -149,49 +160,57 @@ export function ProbabilityPanelFor({
 
   const showValues = mode === 'value' && c.context !== undefined
   const values = showValues && c.context !== undefined ? evaluate(c.model, c.context).values : undefined
-  const legend = probLegend(c.model, shown)
-  const exportSource = () => {
-    const svg = wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph')
-    if (svg === null || svg === undefined) return undefined
+  const legend = probLegend(t, c.model, shown)
+  const graph = (m: Messages) => (
+    <SignalGraph
+      compact={narrow}
+      c={c}
+      shown={shown}
+      values={values}
+      probs={showValues ? undefined : base}
+      interventions={{}}
+      removedEdges={[]}
+      title={m.probGraphTitle(c.data.title[m.locale])}
+    />
+  )
+  const exportSource = (locale: Locale): ExportSource | undefined => {
+    const m = messagesFor(locale)
+    const { svg, dispose } = graphExport(locale, t, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => graph(m))
+    if (svg === null) {
+      dispose?.()
+      return undefined
+    }
     return {
       name: `${c.data.id}-probability`,
-      title: c.data.title.zh,
-      panels: [{ svg, tags: [{ text: showValues ? '實際世界' : '機率', tone: 'fg' as const }] }],
-      legend: showValues ? VALUE_LEGEND : legend,
-      origin: originSources(c),
+      title: c.data.title[locale],
+      panels: [{ svg, tags: [{ text: showValues ? m.actualWorld : m.probability, tone: 'fg' as const }] }],
+      legend: showValues ? m.valueLegend : probLegend(m, c.model, shown),
+      origin: originSources(m, c),
+      dispose,
     }
   }
   return (
-    <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="sliders">
+    <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="sliders" lang={t.locale}>
       <div className="ca-box ca-graph-box">
         <div className="ca-box-head">
           {c.context !== undefined ? (
             <Segmented
-              label="節點顯示"
+              label={t.nodesShow}
               options={[
-                { value: 'value', label: '0／1' },
-                { value: 'probability', label: '機率' },
+                { value: 'value', label: t.zeroOne },
+                { value: 'probability', label: t.probability },
               ]}
               value={mode}
               onChange={setMode}
             />
           ) : (
-            <Tag tone="fg">機率</Tag>
+            <Tag tone="fg">{t.probability}</Tag>
           )}
           <span className="ca-muted ca-small">{legend}</span>
           <ExportMenu source={exportSource} url={exportUrl} />
         </div>
         <div className="ca-graph-wrap" ref={wrap}>
-          <SignalGraph
-            compact={narrow}
-            c={c}
-            shown={shown}
-            values={values}
-            probs={showValues ? undefined : base}
-            interventions={{}}
-            removedEdges={[]}
-            title={`${c.data.title.zh}：各變項等於 1 的機率`}
-          />
+          {graph(t)}
         </div>
       </div>
       <div className="ca-box ca-eq-box">
@@ -212,6 +231,7 @@ interface CompareProps {
 }
 
 function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: CompareProps) {
+  const t = useMessages()
   const root = useRef<HTMLDivElement>(null)
   const observedId = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(pair.observe)?.[1] ?? ''
   const doId = Object.keys(pair.intervene)[0] ?? ''
@@ -229,56 +249,84 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
   const removed = c.model.edges.filter((e) => cut.has(e.to))
   const seeExpr = `P(${pair.event} | ${pair.observe})`
   const doExpr = `P(${pair.event} | ${doText(pair.intervene)})`
-  const obsLabel = label(c.model, observedId)
-  const exportSource = () => {
-    const graph = (side: string) => root.current?.querySelector<SVGSVGElement>(`[data-side="${side}"] svg.ca-graph`) ?? null
+  const obsLabel = label(c.model, observedId, t.locale)
+  const seeGraph = (m: Messages) =>
+    see === undefined ? null : (
+      <SignalGraph
+        c={c}
+        shown={shown}
+        probs={see}
+        probNotes={notesAgainst(m, base, see, shown, observedId, m.observed)}
+        observed={[observedId]}
+        compact
+        interventions={{}}
+        removedEdges={[]}
+        title={m.afterObserving(pair.observe)}
+      />
+    )
+  const doGraph = (m: Messages) => (
+    <SignalGraph
+      c={c}
+      shown={shown}
+      probs={doP}
+      probNotes={notesAgainst(m, base, doP, shown, doId, m.setByDo)}
+      interventions={pair.intervene as Assignment}
+      removedEdges={removed}
+      compact
+      title={m.afterSetting(doText(pair.intervene))}
+    />
+  )
+  const exportSource = (locale: Locale): ExportSource | undefined => {
+    const m = messagesFor(locale)
+    const view =
+      locale === t.locale
+        ? undefined
+        : renderDetached(
+            <LocaleProvider locale={locale}>
+              <div data-side="see">{seeGraph(m)}</div>
+              <div data-side="do">{doGraph(m)}</div>
+            </LocaleProvider>,
+          )
+    const scope = view?.container ?? root.current
+    const graph = (side: string) => scope?.querySelector<SVGSVGElement>(`[data-side="${side}"] svg.ca-graph`) ?? null
     const panels: ExportPanel[] = []
     const seeSvg = graph('see')
     const doSvg = graph('do')
     if (seeSvg !== null) {
-      panels.push({ svg: seeSvg, tags: [{ text: `觀察 ${pair.observe}`, tone: 'outline' }], foot: `${seeExpr} = ${probText(seeValue)}` })
+      panels.push({ svg: seeSvg, tags: [{ text: m.observing(pair.observe), tone: 'outline' }], foot: `${seeExpr} = ${probText(seeValue)}` })
     }
     if (doSvg !== null) {
       panels.push({
         svg: doSvg,
         tags: [
-          { text: '干預後', tone: 'slate' },
+          { text: m.afterDo, tone: 'slate' },
           { text: doText(pair.intervene), tone: 'accent', mono: true },
         ],
         foot: `${doExpr} = ${probText(doValue)}`,
         tint: true,
       })
     }
-    return { name: `${c.data.id}-compare`, title: c.data.title.zh, panels, legend: probLegend(c.model, shown), origin: originSources(c) }
+    return {
+      name: `${c.data.id}-compare`,
+      title: c.data.title[locale],
+      panels,
+      legend: probLegend(m, c.model, shown),
+      origin: originSources(m, c),
+      dispose: view?.dispose,
+    }
   }
   return (
-    <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="compare" ref={root}>
+    <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="compare" lang={t.locale} ref={root}>
       <div className="ca-box-head ca-compare-head">
-        <span className="ca-muted ca-small">{probLegend(c.model, shown)}</span>
+        <span className="ca-muted ca-small">{probLegend(t, c.model, shown)}</span>
         <ExportMenu source={exportSource} url={exportUrl} />
       </div>
       <div className="ca-compare">
         <div className="ca-compare-side" data-side="see">
           <div className="ca-box-head">
-            <Tag tone="outline">觀察 {pair.observe}</Tag>
+            <Tag tone="outline">{t.observing(pair.observe)}</Tag>
           </div>
-          <div className="ca-graph-wrap">
-            {see === undefined ? (
-              <p className="ca-muted">這個觀察的機率是 0，無法以它為條件。</p>
-            ) : (
-              <SignalGraph
-                c={c}
-                shown={shown}
-                probs={see}
-                probNotes={notesAgainst(base, see, shown, observedId, '看到的')}
-                observed={[observedId]}
-                compact
-                interventions={{}}
-                removedEdges={[]}
-                title={`觀察 ${pair.observe} 之後的機率`}
-              />
-            )}
-          </div>
+          <div className="ca-graph-wrap">{see === undefined ? <p className="ca-muted">{t.zeroObservation}</p> : seeGraph(t)}</div>
           <div className="ca-compare-result">
             <div>
               <code className="ca-mono ca-muted ca-small">{seeExpr}</code>
@@ -286,30 +334,19 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
                 {probText(seeValue)}
               </p>
             </div>
-            <p className="ca-compare-text">看到{obsLabel}，會改變對其他變項的猜測，上游的也會跟著變。</p>
+            <p className="ca-compare-text">{t.seeText(obsLabel)}</p>
           </div>
         </div>
         <div className="ca-compare-side is-cf" data-side="do">
           <div className="ca-box-head">
             <div className="ca-tags">
-              <Tag tone="slate">干預後</Tag>
+              <Tag tone="slate">{t.afterDo}</Tag>
               <Tag tone="accent" mono>
                 {doText(pair.intervene)}
               </Tag>
             </div>
           </div>
-          <div className="ca-graph-wrap">
-            <SignalGraph
-              c={c}
-              shown={shown}
-              probs={doP}
-              probNotes={notesAgainst(base, doP, shown, doId, '設定的')}
-              interventions={pair.intervene as Assignment}
-              removedEdges={removed}
-              compact
-              title={`${doText(pair.intervene)} 之後的機率`}
-            />
-          </div>
+          <div className="ca-graph-wrap">{doGraph(t)}</div>
           <div className="ca-compare-result">
             <div>
               <code className="ca-mono ca-muted ca-small">{doExpr}</code>
@@ -317,11 +354,11 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
                 {probText(doValue)}
               </p>
             </div>
-            <p className="ca-compare-text">動手設定{label(c.model, doId)}，指進它的箭頭被剪斷，只有下游會變。</p>
+            <p className="ca-compare-text">{t.doText(label(c.model, doId, t.locale))}</p>
           </div>
         </div>
       </div>
-      <Disclosure kicker="" title="式子和機率" className="ca-compare-more">
+      <Disclosure kicker="" title={t.probEquations} className="ca-compare-more">
         {sliderSection}
       </Disclosure>
     </div>

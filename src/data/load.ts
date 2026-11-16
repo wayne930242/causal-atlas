@@ -12,6 +12,8 @@ import {
   probability,
   valuesEqual,
 } from '../engine/index.ts'
+import type { Where } from '../engine/errors.ts'
+import { problem } from '../engine/errors.ts'
 import type { CaseFile, CaseVerdict } from './schema.ts'
 import { caseSchema } from './schema.ts'
 
@@ -25,14 +27,14 @@ export interface LoadedCase {
   readonly decision?: DecisionProblem
 }
 
-function splitRow(row: readonly Value[], where: string): { when: Value[]; last: Value } {
+function splitRow(row: readonly Value[], where: Where): { when: Value[]; last: Value } {
   const last = row[row.length - 1]
-  if (last === undefined) throw new ModelError(`${where}: empty row`)
+  if (last === undefined) throw new ModelError(problem('row-empty', {}, where))
   return { when: row.slice(0, -1), last }
 }
 
-function numberAt(value: Value, where: string): number {
-  if (typeof value !== 'number') throw new ModelError(`${where}: expected a number, got ${JSON.stringify(value)}`)
+function numberAt(value: Value, where: Where): number {
+  if (typeof value !== 'number') throw new ModelError(problem('not-a-number', { value: JSON.stringify(value) }, where))
   return value
 }
 
@@ -55,9 +57,9 @@ function toModel(data: CaseFile): CausalModel {
       inputs,
       rows: rows.map((row) => {
         if (row.length !== inputs.length + 1) {
-          throw new ModelError(`table for ${id}: each row needs ${inputs.length} inputs and an output`)
+          throw new ModelError(problem('table-row-length', { id, inputs: inputs.length }))
         }
-        const { when, last } = splitRow(row, `table for ${id}`)
+        const { when, last } = splitRow(row, { kind: 'table', id })
         return { when, value: last }
       }),
       fallback,
@@ -74,7 +76,7 @@ function toPrior(data: CaseFile, model: CausalModel): Prior | undefined {
     for (const [id, marginal] of Object.entries(priors.independent)) {
       if (typeof marginal === 'number') {
         if (getVariable(model, id).domain.kind !== 'boolean') {
-          throw new ModelError(`prior for ${id}: a bare number is only allowed for boolean variables`)
+          throw new ModelError(problem('bare-prior-not-boolean', { id }))
         }
         marginals[id] = [
           { value: true, p: marginal },
@@ -90,13 +92,13 @@ function toPrior(data: CaseFile, model: CausalModel): Prior | undefined {
   return {
     kind: 'joint',
     rows: rows.map((row) => {
-      if (row.length !== variables.length + 1) throw new ModelError('joint prior row has the wrong length')
-      const { when, last } = splitRow(row, 'joint prior')
+      if (row.length !== variables.length + 1) throw new ModelError(problem('joint-row-length', {}))
+      const { when, last } = splitRow(row, { kind: 'joint-prior' })
       const context: Record<string, Value> = {}
       variables.forEach((id, i) => {
         context[id] = when[i]
       })
-      return { context, p: numberAt(last, 'joint prior') }
+      return { context, p: numberAt(last, { kind: 'joint-prior' }) }
     }),
   }
 }
@@ -111,9 +113,9 @@ function toDecision(data: CaseFile): DecisionProblem | undefined {
     utility: {
       variables,
       rows: rows.map((row) => {
-        if (row.length !== variables.length + 1) throw new ModelError('utility row has the wrong length')
-        const { when, last } = splitRow(row, 'utility')
-        return { when, utility: numberAt(last, 'utility') }
+        if (row.length !== variables.length + 1) throw new ModelError(problem('utility-row-length', {}))
+        const { when, last } = splitRow(row, { kind: 'utility' })
+        return { when, utility: numberAt(last, { kind: 'utility' }) }
       }),
     },
   }
@@ -150,7 +152,7 @@ export interface VerdictCheck {
 const DEFAULT_TOLERANCE = 1e-9
 
 function need<T>(value: T | undefined, what: string): T {
-  if (value === undefined) throw new ModelError(`case has no ${what}`)
+  if (value === undefined) throw new ModelError(problem('case-missing', { what }))
   return value
 }
 
@@ -215,9 +217,9 @@ export function checkVerdict(loaded: LoadedCase, verdict: CaseVerdict): VerdictC
         return { ok: choice.length === 1 && valuesEqual(choice[0], verdict.expected), expected: verdict.expected, actual, label }
       }
       const act = result.acts.find((a) => valuesEqual(a.act, query.expectedUtility))
-      if (act === undefined) throw new ModelError(`no act ${String(query.expectedUtility)}`)
+      if (act === undefined) throw new ModelError(problem('no-such-act', { act: String(query.expectedUtility) }))
       const eu = verdict.theory === 'edt' ? need(act.edt, 'EDT value (act has probability 0)').eu : act.cdt.eu
-      return close(eu, numberAt(verdict.expected, 'expected utility'), verdict.tolerance)
+      return close(eu, numberAt(verdict.expected, { kind: 'utility' }), verdict.tolerance)
     }
   }
 }

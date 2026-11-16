@@ -1,3 +1,4 @@
+import { problem as makeProblem } from './errors.ts'
 import { evaluate } from './evaluate.ts'
 import type { CausalModel } from './model.ts'
 import { getVariable } from './model.ts'
@@ -58,11 +59,11 @@ const EPSILON = 1e-9
 function utilityOf(model: CausalModel, table: UtilityTable, world: Assignment): number {
   const values = table.variables.map((id) => requireValue(world, id))
   for (const row of table.rows) {
-    if (row.when.length !== values.length) throw new ModelError('utility row has the wrong number of values')
+    if (row.when.length !== values.length) throw new ModelError(makeProblem('utility-row-length', {}))
     if (row.when.every((w, i) => valuesEqual(w, values[i]))) return row.utility
   }
   const shown = table.variables.map((id, i) => `${getVariable(model, id).id}=${String(values[i])}`).join(', ')
-  throw new ModelError(`utility table has no row for ${shown}`)
+  throw new ModelError(makeProblem('utility-no-row', { values: shown }))
 }
 
 function accumulate(
@@ -114,7 +115,7 @@ export function evaluateDecision(model: CausalModel, prior: Prior, problem: Deci
       p,
     }))
     const cdt = accumulate(model, problem.utility, intervened)
-    if (cdt === undefined) throw new ModelError('prior has no mass')
+    if (cdt === undefined) throw new ModelError(makeProblem('prior-no-mass', {}))
     return { act, edt, cdt }
   })
 

@@ -55,8 +55,9 @@ describe('case display fields', () => {
   it.each(entries)('%s has a subtitle, story tags and Chinese names', (path, raw) => {
     const c = loadCase(raw)
     expect(c.data.subtitle, path).toBeDefined()
-    expect(c.data.story_tags?.length ?? 0, path).toBeGreaterThan(0)
-    const text = [c.data.title.zh, c.data.story_zh, c.data.explanation_zh, ...c.model.variables.map((v) => v.label.zh)]
+    expect(c.data.story_tags?.['zh-TW'].length ?? 0, path).toBeGreaterThan(0)
+    expect(c.data.story_tags?.en.length, path).toBe(c.data.story_tags?.['zh-TW'].length)
+    const text = [c.data.title['zh-TW'], c.data.story['zh-TW'], c.data.explanation['zh-TW'], ...c.model.variables.map((v) => v.label['zh-TW'])]
     expect(text.join(), path).not.toMatch(/Suzy|Billy/)
   })
 

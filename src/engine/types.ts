@@ -4,10 +4,11 @@ export type Value = boolean | number | string
 /** A (partial or full) assignment of values to variables, keyed by variable id. */
 export type Assignment = Readonly<Record<string, Value>>
 
-export interface LocalizedText {
-  readonly zh: string
-  readonly en: string
-}
+/** The interface and data languages: Traditional Chinese (the default) and English. */
+export type Locale = 'zh-TW' | 'en'
+
+/** A text in both languages. */
+export type LocalizedText = { readonly [L in Locale]: string }
 
 export interface BooleanDomain {
   readonly kind: 'boolean'

@@ -11,7 +11,7 @@ import { asBool } from './values.ts'
 /** Parse (if needed) and validate a causal formula against a model. */
 export function toFormula(model: CausalModel, formula: Expr | string): Expr {
   const expr = typeof formula === 'string' ? parseFormula(formula) : formula
-  checkExpr(expr, model.byId, `formula ${typeof formula === 'string' ? formula : ''}`.trim())
+  checkExpr(expr, model.byId, { kind: 'formula', text: typeof formula === 'string' ? formula.trim() : '' })
   return expr
 }
 
@@ -51,10 +51,10 @@ export function evalFormula(
   formula: Expr,
   interventions: Interventions = {},
 ): boolean {
-  return asBool(evalIn(model, context, interventions, formula), 'formula')
+  return asBool(evalIn(model, context, interventions, formula), { kind: 'formula', text: '' })
 }
 
 /** Truth of an intervention-free formula in an already computed world. */
 export function holdsIn(world: Assignment, formula: Expr): boolean {
-  return asBool(evalExpr(formula, { values: world }), 'formula')
+  return asBool(evalExpr(formula, { values: world }), { kind: 'formula', text: '' })
 }

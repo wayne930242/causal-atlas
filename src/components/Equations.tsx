@@ -3,6 +3,7 @@ import type { Assignment } from '../engine/index.ts'
 import { causalFormulas, renderExpr } from '../engine/index.ts'
 import { formatValue } from '../engine/values.ts'
 import type { UiNotation } from './notation.ts'
+import { useMessages } from './i18n.ts'
 import { OkIcon, Tag } from './parts.tsx'
 import { bracketText, doText, equationIds, equationRows, label, outcomeVariable } from './view-model.ts'
 
@@ -16,6 +17,7 @@ export interface EquationsProps {
 
 /** The model's equations in one notation at a time. */
 export function Equations({ c, shown, notation, values, interventions }: EquationsProps) {
+  const t = useMessages()
   const ids = equationIds(c, shown, interventions)
   const hasDo = Object.keys(interventions).length > 0
   if (notation === 'causal') {
@@ -28,14 +30,14 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
           <div className="ca-eq-row ca-eq-statement">
             <code className="ca-eq-text">{statement}</code>
             <span className="ca-eq-note">
-              {doText(interventions)} 之後，{label(c.model, y)}：{formatValue(v ?? '')}
+              {t.afterDoNote(doText(interventions), label(c.model, y, t.locale), formatValue(v ?? ''))}
             </span>
             <span className="ca-eq-holds">
               <OkIcon size={18} />
-              成立
+              {t.holds}
             </span>
           </div>
-          <p className="ca-eq-reading">讀法：先做方括號裡的干預，再看圓括號裡的事成不成立。</p>
+          <p className="ca-eq-reading">{t.readBrackets}</p>
         </div>
       )
     }
@@ -49,14 +51,14 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
                 .join(' ∧\n')}
             </code>
             <code className="ca-eq-worked" />
-            <span className="ca-eq-note">{label(c.model, id)}</span>
+            <span className="ca-eq-note">{label(c.model, id, t.locale)}</span>
           </div>
         ))}
-        <p className="ca-eq-reading">讀法：[X←x](Y=y) 是把 X 設成 x 之後，Y 等於 y。</p>
+        <p className="ca-eq-reading">{t.readCausal}</p>
       </div>
     )
   }
-  const rows = equationRows(c, ids, notation, values, interventions, shown)
+  const rows = equationRows(t, c, ids, notation, values, interventions, shown)
   return (
     <div className="ca-eqs" data-notation={notation}>
       {rows.map((r) => (

@@ -1,14 +1,30 @@
 {
   "id": "newcomb",
-  "title": { "zh": "紐康問題", "en": "Newcomb's problem" },
-  "subtitle": "錢已經放好了，你要拿一盒還是兩盒？",
+  "title": { "zh-TW": "紐康問題", "en": "Newcomb's problem" },
+  "subtitle": { "zh-TW": "錢已經放好了，你要拿一盒還是兩盒？", "en": "The money is already in place. Do you take one box or two?" },
   "family": "decision",
-  "story_zh": "桌上有一個透明盒，裝著一千元；還有一個不透明盒。一位極準的預測者事先預測你的選擇：若預測你只拿不透明盒，就在裡面放一百萬元，否則放空。你可以只拿不透明盒，或兩個都拿。盒子裡有什麼在你選擇前就已決定。",
-  "story_tags": [
-    { "sentence": "一位極準的預測者事先預測你的選擇：若預測你只拿不透明盒，就在裡面放一百萬元，否則放空。", "variables": ["P", "M"] },
-    { "sentence": "你可以只拿不透明盒，或兩個都拿。", "variables": ["A"] }
-  ],
-  "explanation_zh": "外生變數是玩家的選擇傾向 D 與預測者是否出錯 E。玩家的選擇 A 由傾向決定，預測 P 依傾向與出錯與否決定，不透明盒內有沒有錢 M 取決於預測。預測與選擇有共同的原因，但選擇本身不影響預測，這正是證據決策論與因果決策論分歧的來源。",
+  "story": {
+    "zh-TW": "桌上有一個透明盒，裝著一千元；還有一個不透明盒。一位極準的預測者事先預測你的選擇：若預測你只拿不透明盒，就在裡面放一百萬元，否則放空。你可以只拿不透明盒，或兩個都拿。盒子裡有什麼在你選擇前就已決定。",
+    "en": "On the table are a transparent box holding a thousand dollars and an opaque box. A highly accurate predictor has predicted your choice in advance: if it predicted you would take only the opaque box, it put a million dollars in it; otherwise it left the box empty. You may take only the opaque box, or both. What the boxes hold was settled before you choose."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "一位極準的預測者事先預測你的選擇：若預測你只拿不透明盒，就在裡面放一百萬元，否則放空。", "variables": ["P", "M"] },
+      { "sentence": "你可以只拿不透明盒，或兩個都拿。", "variables": ["A"] }
+    ],
+    "en": [
+      {
+        "sentence": "A highly accurate predictor has predicted your choice in advance: if it predicted you would take only the opaque box, it put a million dollars in it; otherwise it left the box empty.",
+        "variables": ["P", "M"]
+      },
+      { "sentence": "You may take only the opaque box, or both.", "variables": ["A"] }
+    ]
+  },
+  "explanation": {
+    "zh-TW": "外生變數是玩家的選擇傾向 D 與預測者是否出錯 E。玩家的選擇 A 由傾向決定，預測 P 依傾向與出錯與否決定，不透明盒內有沒有錢 M 取決於預測。預測與選擇有共同的原因，但選擇本身不影響預測，這正是證據決策論與因果決策論分歧的來源。",
+    "en": "The exogenous variables are the player's disposition D and whether the predictor errs, E. The player's act A follows the disposition; the prediction P depends on the disposition and on whether the predictor errs; whether the opaque box holds the million, M, depends on the prediction. Prediction and act share a common cause, but the act itself does not affect the prediction. This is exactly where evidential and causal decision theory part ways."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [
     {
       "citation": "Nozick, R. (1969). Newcomb's problem and two principles of choice. In N. Rescher (Ed.), Essays in Honor of Carl G. Hempel (pp. 114–146). Reidel.",
@@ -19,62 +35,43 @@
   ],
   "model": {
     "variables": [
-      { "id": "D", "label": { "zh": "選擇傾向", "en": "Disposition" }, "kind": "exogenous", "domain": ["one", "two"] },
-      { "id": "E", "label": { "zh": "預測失誤", "en": "Predictor error" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "A", "label": { "zh": "選擇", "en": "Act" }, "kind": "endogenous", "domain": ["one", "two"] },
-      { "id": "P", "label": { "zh": "預測", "en": "Prediction" }, "kind": "endogenous", "domain": ["one", "two"] },
-      { "id": "M", "label": { "zh": "不透明盒有一百萬", "en": "Million in the opaque box" }, "kind": "endogenous", "domain": "boolean" }
+      { "id": "D", "label": {"zh-TW": "選擇傾向", "en": "Disposition"}, "kind": "exogenous", "domain": ["one", "two"] },
+      { "id": "E", "label": {"zh-TW": "預測失誤", "en": "Predictor error"}, "kind": "exogenous", "domain": "boolean" },
+      { "id": "A", "label": {"zh-TW": "選擇", "en": "Act"}, "kind": "endogenous", "domain": ["one", "two"] },
+      { "id": "P", "label": {"zh-TW": "預測", "en": "Prediction"}, "kind": "endogenous", "domain": ["one", "two"] },
+      {
+        "id": "M",
+        "label": { "zh-TW": "不透明盒有一百萬", "en": "Million in the opaque box" },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
     ],
     "equations": {
       "A": "D",
       "P": {
-        "table": {
-          "inputs": ["D", "E"],
-          "rows": [
-            ["one", 0, "one"],
-            ["one", 1, "two"],
-            ["two", 0, "two"],
-            ["two", 1, "one"]
-          ]
-        }
+        "table": { "inputs": ["D", "E"], "rows": [["one", 0, "one"], ["one", 1, "two"], ["two", 0, "two"], ["two", 1, "one"]] }
       },
       "M": "P = 'one'"
     }
   },
-  "priors": {
-    "independent": {
-      "D": [
-        ["one", 0.5],
-        ["two", 0.5]
-      ],
-      "E": 0.01
-    }
-  },
+  "priors": { "independent": {"D": [["one", 0.5], ["two", 0.5]], "E": 0.01} },
   "decision": {
     "variable": "A",
-    "utility": {
-      "variables": ["A", "M"],
-      "rows": [
-        ["one", 1, 1000000],
-        ["one", 0, 0],
-        ["two", 1, 1001000],
-        ["two", 0, 1000]
-      ]
-    }
+    "utility": { "variables": ["A", "M"], "rows": [["one", 1, 1000000], ["one", 0, 0], ["two", 1, 1001000], ["two", 0, 1000]] }
   },
   "verdicts": [
-    { "theory": "probability", "query": { "event": "M=1", "given": "A='one'" }, "expected": 0.99 },
-    { "theory": "probability", "query": { "event": "M=1", "do": { "A": "one" } }, "expected": 0.5 },
-    { "theory": "edt", "query": { "expectedUtility": "one" }, "expected": 990000, "tolerance": 1e-6 },
-    { "theory": "edt", "query": { "expectedUtility": "two" }, "expected": 11000, "tolerance": 1e-6 },
-    { "theory": "cdt", "query": { "expectedUtility": "one" }, "expected": 500000, "tolerance": 1e-6 },
-    { "theory": "cdt", "query": { "expectedUtility": "two" }, "expected": 501000, "tolerance": 1e-6 },
-    { "theory": "edt", "query": { "choice": "A" }, "expected": "one", "note": "EDT one-boxes." },
-    { "theory": "cdt", "query": { "choice": "A" }, "expected": "two", "note": "CDT two-boxes: dominance." }
+    { "theory": "probability", "query": {"event": "M=1", "given": "A='one'"}, "expected": 0.99 },
+    { "theory": "probability", "query": {"event": "M=1", "do": {"A": "one"}}, "expected": 0.5 },
+    { "theory": "edt", "query": {"expectedUtility": "one"}, "expected": 990000, "tolerance": 1e-06 },
+    { "theory": "edt", "query": {"expectedUtility": "two"}, "expected": 11000, "tolerance": 1e-06 },
+    { "theory": "cdt", "query": {"expectedUtility": "one"}, "expected": 500000, "tolerance": 1e-06 },
+    { "theory": "cdt", "query": {"expectedUtility": "two"}, "expected": 501000, "tolerance": 1e-06 },
+    { "theory": "edt", "query": {"choice": "A"}, "expected": "one", "note": "EDT one-boxes." },
+    { "theory": "cdt", "query": {"choice": "A"}, "expected": "two", "note": "CDT two-boxes: dominance." }
   ],
   "showcase": [
-    { "label": { "zh": "只拿一盒", "en": "Take one box" }, "interventions": { "A": "one" } },
-    { "label": { "zh": "兩盒都拿", "en": "Take both boxes" }, "interventions": { "A": "two" } }
+    { "label": {"zh-TW": "只拿一盒", "en": "Take one box"}, "interventions": {"A": "one"} },
+    { "label": {"zh-TW": "兩盒都拿", "en": "Take both boxes"}, "interventions": {"A": "two"} }
   ],
   "layout": { "D": [0, 0.5], "A": [1, 0], "P": [1, 1], "M": [2, 1] }
 }

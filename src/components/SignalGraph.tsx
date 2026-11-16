@@ -6,6 +6,7 @@ import { getVariable } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, rectBox, shifted, textBox } from './graph-labels.ts'
+import { useMessages } from './i18n.ts'
 import { assignmentText, edgeLive, edgePolarity, gridLayout, label, probText, shownEdges, textWidth } from './view-model.ts'
 
 export interface SignalGraphProps {
@@ -72,6 +73,7 @@ function clampPath(r: number): string {
 export function SignalGraph(props: SignalGraphProps) {
   const { c, shown, values, original, probs, probNotes, observed = [], interventions, removedEdges, witness, onToggle, onMove } =
     props
+  const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
   const [drag, setDrag] = useState<Drag | undefined>(undefined)
@@ -141,7 +143,7 @@ export function SignalGraph(props: SignalGraphProps) {
     if (p === undefined) continue
     const above = labelAbove(id)
     const labelY = above ? -R - 16 : R + 24
-    const name = label(c.model, id)
+    const name = label(c.model, id, t.locale)
     const local: Box[] = [around(0, 0, R + 6), textBox(0, labelY, 'middle', textWidth(`${id} ${name}`, 14), 14)]
     if (prob) {
       const note = probNotes?.[id]
@@ -161,7 +163,7 @@ export function SignalGraph(props: SignalGraphProps) {
     const before = original?.[id]
     const now = values?.[id]
     if (!prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
-      local.push(textBox(R + 14, R + 14, 'start', textWidth(`原本 ${formatValue(before)}`, 12), 12))
+      local.push(textBox(R + 14, R + 14, 'start', textWidth(t.was(formatValue(before)), 12), 12))
     }
     for (const b of local) obstacles.push(shifted(b, p.x, p.y))
   }
@@ -195,7 +197,7 @@ export function SignalGraph(props: SignalGraphProps) {
           const x = mx + side * dist * uy
           const y = my - side * dist * ux + 4
           const anchor: Anchor = side * uy > 0.3 ? 'start' : side * uy < -0.3 ? 'end' : 'middle'
-          cutCandidates.push({ x, y, anchor, box: textBox(x, y, anchor, 24, 12) })
+          cutCandidates.push({ x, y, anchor, box: textBox(x, y, anchor, textWidth(t.cut, 12), 12) })
         }
       }
       const cutLabel = claim(firstClear(cutCandidates, obstacles))
@@ -205,7 +207,7 @@ export function SignalGraph(props: SignalGraphProps) {
           <line x1={mx + 10 * ux} y1={my + 10 * uy} x2={x2} y2={y2} className="ca-stroke-cut" />
           <path d={slash(mx - 4 * ux, my - 4 * uy) + slash(mx + 4 * ux, my + 4 * uy)} className="ca-stroke-slash" />
           <text x={cutLabel.x} y={cutLabel.y} className="ca-svg-small ca-svg-bold" textAnchor={cutLabel.anchor}>
-            切斷
+            {t.cut}
           </text>
         </g>
       )
@@ -278,7 +280,7 @@ export function SignalGraph(props: SignalGraphProps) {
         w: Math.max(...pts.map((p) => p.x)) + pad + 20 - x,
         // Include the label under the node.
         h: Math.max(...pts.map((p) => p.y)) + R + 34 - y,
-        text: `見證：固定 ${assignmentText(witness)}`,
+        text: t.witnessHold(assignmentText(witness)),
       }
     }
   }
@@ -297,12 +299,12 @@ export function SignalGraph(props: SignalGraphProps) {
     const before = original?.[id]
     const changed = !prob && before !== undefined && v !== undefined && !valuesEqual(before, v)
     const above = labelAbove(id)
-    const name = label(c.model, id)
+    const name = label(c.model, id, t.locale)
     const pv = probs?.[id]
     const state = prob
       ? `P(${id}${boolean ? '=1' : `=${String(variable.domain.kind === 'finite' ? variable.domain.values[0] : '')}`}) ${probText(pv ?? Number.NaN)}`
-      : `值 ${text}`
-    const aria = `${id} ${name}，${state}${intervened ? `，已干預成 ${formatValue(forced)}` : ''}${changed ? `，原本 ${formatValue(before)}` : ''}`
+      : t.nodeValue(text)
+    const aria = t.nodeAria(id, name, state, intervened ? formatValue(forced) : undefined, changed ? formatValue(before) : undefined)
     const interactive = onToggle !== undefined || onMove !== undefined
     const arrows: Record<string, [number, number]> = { ArrowLeft: [-0.5, 0], ArrowRight: [0.5, 0], ArrowUp: [0, -0.5], ArrowDown: [0, 0.5] }
     const onKey = (event: KeyboardEvent<SVGGElement>): void => {
@@ -321,9 +323,7 @@ export function SignalGraph(props: SignalGraphProps) {
       if (Date.now() < suppressUntil.current) return
       onToggle?.(id)
     }
-    const hint = [onToggle !== undefined ? `按一下${intervened ? '取消干預' : '套上干預'}` : '', onMove !== undefined ? '拖曳或用方向鍵移動' : '']
-      .filter((h) => h !== '')
-      .join('；')
+    const hint = t.nodeHint(onToggle === undefined ? undefined : intervened ? 'release' : 'set', onMove !== undefined)
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
     // A non-boolean node's fill is P(V = its first value): say which value.
     const fillMeans = prob && variable.domain.kind === 'finite' ? `${id}=${String(variable.domain.values[0])} ` : ''
@@ -355,7 +355,7 @@ export function SignalGraph(props: SignalGraphProps) {
               role: 'button',
               tabIndex: 0,
               'aria-pressed': onToggle !== undefined ? intervened : undefined,
-              'aria-label': `${aria}。${hint}`,
+              'aria-label': t.withHint(aria, hint),
               onClick,
               onKeyDown: onKey,
               onPointerDown: (e: PointerEvent<SVGGElement>) => startDrag(id, e),
@@ -407,7 +407,7 @@ export function SignalGraph(props: SignalGraphProps) {
         )}
         {changed && (
           <text x={R + 14} y={R + 14} className="ca-svg-small ca-fill-muted">
-            原本 {formatValue(before)}
+            {t.was(formatValue(before))}
           </text>
         )}
         <text y={labelY} textAnchor="middle" className="ca-svg-label">

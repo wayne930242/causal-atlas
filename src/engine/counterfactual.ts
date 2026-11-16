@@ -1,3 +1,4 @@
+import { problem } from './errors.ts'
 import type { Expr } from './expr.ts'
 import type { Interventions } from './evaluate.ts'
 import { evaluate } from './evaluate.ts'
@@ -57,7 +58,7 @@ export function counterfactual(model: CausalModel, prior: Prior, query: Counterf
     ({ context }) => evidence === undefined || evalFormula(model, context, evidence),
   )
   const evidenceProbability = consistent.reduce((sum, w) => sum + w.p, 0)
-  if (evidenceProbability <= 0) throw new ModelError('evidence has probability 0 under the prior')
+  if (evidenceProbability <= 0) throw new ModelError(problem('zero-probability-evidence', {}))
 
   let removedEdges: readonly Edge[] = []
   let intervened: readonly string[] = []

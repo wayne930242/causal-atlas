@@ -6,6 +6,7 @@ import { holdsIn, toFormula } from './formula.ts'
 import type { CausalModel } from './model.ts'
 import { getVariable } from './model.ts'
 import type { Assignment, Value } from './types.ts'
+import { problem } from './errors.ts'
 import { ModelError, coerceToDomain, domainValues, enumerateAssignments, requireValue, subsetsBySize, valuesEqual } from './values.ts'
 
 /**
@@ -117,9 +118,9 @@ export function parseCause(model: CausalModel, cause: Assignment | string): Reco
         id = c.left.name
         value = c.right.value
       } else {
-        throw new ModelError(`cause ${JSON.stringify(cause)} must be a conjunction of events X=x`)
+        throw new ModelError(problem('cause-not-conjunction', { cause }))
       }
-      if (Object.hasOwn(raw, id)) throw new ModelError(`cause mentions ${id} twice`)
+      if (Object.hasOwn(raw, id)) throw new ModelError(problem('cause-repeats', { id }))
       raw[id] = value
     }
   } else {
@@ -128,10 +129,10 @@ export function parseCause(model: CausalModel, cause: Assignment | string): Reco
   const out: Record<string, Value> = {}
   for (const [id, value] of Object.entries(raw)) {
     const variable = getVariable(model, id)
-    if (variable.kind !== 'endogenous') throw new ModelError(`cause variable ${id} must be endogenous`)
+    if (variable.kind !== 'endogenous') throw new ModelError(problem('cause-not-endogenous', { id }))
     out[id] = coerceToDomain(variable, value)
   }
-  if (Object.keys(out).length === 0) throw new ModelError('cause is empty')
+  if (Object.keys(out).length === 0) throw new ModelError(problem('cause-empty', {}))
   return out
 }
 
@@ -177,9 +178,7 @@ interface Setup {
 function charge(setup: Setup, units: number): void {
   setup.budget.left -= units
   if (setup.budget.left < 0) {
-    throw new ModelError(
-      `${setup.theory} search needs more than ${MAX_EVALUATIONS.toLocaleString('en-US')} evaluations; the model has too many endogenous variables for this theory`,
-    )
+    throw new ModelError(problem('search-budget', { theory: setup.theory, limit: MAX_EVALUATIONS }))
   }
 }
 
@@ -292,17 +291,17 @@ export function actualCause(
   options: ActualCauseOptions = {},
 ): ActualCauseResult {
   if (model.endogenous.length > MAX_ENDOGENOUS) {
-    throw new ModelError(`actual causation search is limited to ${MAX_ENDOGENOUS} endogenous variables`)
+    throw new ModelError(problem('too-many-endogenous', { limit: MAX_ENDOGENOUS }))
   }
   const cause = parseCause(model, query.cause)
   const effect = toFormula(model, query.effect)
-  if (containsDo(effect)) throw new ModelError('the effect must not contain interventions')
+  if (containsDo(effect)) throw new ModelError(problem('effect-has-intervention', {}))
   const actual = evaluate(model, context).values
 
   let admissible: (world: Assignment) => boolean = () => true
   if (theory === 'hp-normality') {
     const normality = options.normality
-    if (normality === undefined) throw new ModelError('hp-normality needs default (normal) values')
+    if (normality === undefined) throw new ModelError(problem('normality-missing', {}))
     for (const [id, value] of Object.entries(normality)) coerceToDomain(getVariable(model, id), value)
     admissible = (world) => atLeastAsNormal(world, actual, normality)
   }

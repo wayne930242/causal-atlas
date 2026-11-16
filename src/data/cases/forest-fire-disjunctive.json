@@ -1,15 +1,39 @@
 {
   "id": "forest-fire-disjunctive",
-  "title": { "zh": "森林大火：析取式", "en": "Forest fire (disjunctive)" },
-  "subtitle": "雷擊和火柴，任何一個都夠燒掉森林。",
+  "title": { "zh-TW": "森林大火：析取式", "en": "Forest fire (disjunctive)" },
+  "subtitle": { "zh-TW": "雷擊和火柴，任何一個都夠燒掉森林。", "en": "Lightning or the match: either alone is enough to burn the forest." },
   "family": "actual",
-  "story_zh": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。森林燒了。拿掉任何一個，森林照樣會燒。",
-  "story_tags": [
-    { "sentence": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。", "variables": ["L", "MD"] },
-    { "sentence": "森林燒了。", "variables": ["FF"] }
-  ],
-  "intuition": {"query": {"cause": "L=1", "effect": "FF=1"}, "expected": "cause", "text": "雷擊確實點燃了森林，旁邊多一根火柴不會讓它不算數。", "agree": ["hp-original", "hp-updated"]},
-  "explanation_zh": "雷擊與縱火者的火柴各由一個外生變數決定，兩者之一就足以讓森林大火發生（FF = max(L, MD)）。這是析取結構：每個原因單獨都夠用，單看「拿掉它火還會不會燒」會得到兩者都不是原因，因此需要 Halpern–Pearl 的定義。",
+  "story": {
+    "zh-TW": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。森林燒了。拿掉任何一個，森林照樣會燒。",
+    "en": "Lightning strikes and a discarded match falls at the same time, and either one alone would be enough to burn the forest. The forest burns. Remove either one, and the forest burns all the same."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "雷擊和一根丟棄的火柴同時出現，兩者任一單獨就足以燒掉森林。", "variables": ["L", "MD"] },
+      { "sentence": "森林燒了。", "variables": ["FF"] }
+    ],
+    "en": [
+      {
+        "sentence": "Lightning strikes and a discarded match falls at the same time, and either one alone would be enough to burn the forest.",
+        "variables": ["L", "MD"]
+      },
+      { "sentence": "The forest burns.", "variables": ["FF"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "L=1", "effect": "FF=1" },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "雷擊確實點燃了森林，旁邊多一根火柴不會讓它不算數。",
+      "en": "The lightning did set the forest alight; a match nearby does not stop the lightning from counting."
+    },
+    "agree": ["hp-original", "hp-updated"]
+  },
+  "explanation": {
+    "zh-TW": "雷擊與縱火者的火柴各由一個外生變數決定，兩者之一就足以讓森林大火發生（FF = max(L, MD)）。這是析取結構：每個原因單獨都夠用，單看「拿掉它火還會不會燒」會得到兩者都不是原因，因此需要 Halpern–Pearl 的定義。",
+    "en": "The lightning and the arsonist's match are each set by an exogenous variable, and either one suffices for the forest fire (FF = max(L, MD)). This is the disjunctive structure: each cause suffices on its own, so asking only whether the fire would still have burned without it finds that neither is a cause. This is why the Halpern–Pearl definition is needed."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [
     {
       "citation": "Halpern, J. Y. (2015). A modification of the Halpern–Pearl definition of causality. In Proceedings of the 24th International Joint Conference on Artificial Intelligence (IJCAI 2015).",
@@ -32,28 +56,48 @@
   ],
   "model": {
     "variables": [
-      { "id": "U_L", "label": { "zh": "雷擊條件", "en": "Lightning conditions" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "U_MD", "label": { "zh": "縱火者意圖", "en": "Arsonist's intention" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "L", "label": { "zh": "雷擊", "en": "Lightning" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "MD", "label": { "zh": "丟下火柴", "en": "Match dropped" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "FF", "label": { "zh": "森林大火", "en": "Forest fire" }, "kind": "endogenous", "domain": "boolean" }
+      {
+        "id": "U_L",
+        "label": { "zh-TW": "雷擊條件", "en": "Lightning conditions" },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_MD",
+        "label": { "zh-TW": "縱火者意圖", "en": "Arsonist's intention" },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      { "id": "L", "label": {"zh-TW": "雷擊", "en": "Lightning"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "MD", "label": {"zh-TW": "丟下火柴", "en": "Match dropped"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "FF", "label": {"zh-TW": "森林大火", "en": "Forest fire"}, "kind": "endogenous", "domain": "boolean" }
     ],
     "equations": { "L": "U_L", "MD": "U_MD", "FF": "L or MD" }
   },
   "context": { "U_L": 1, "U_MD": 1 },
   "verdicts": [
-    { "theory": "butfor", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "not-cause" },
-    { "theory": "butfor", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "not-cause" },
-    { "theory": "hp-modified", "query": { "cause": "L=1 and MD=1", "effect": "FF=1" }, "expected": "cause" },
-    { "theory": "hp-modified", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "part-of-cause" },
-    { "theory": "hp-modified", "query": { "cause": "MD=1", "effect": "FF=1" }, "expected": "part-of-cause" },
-    { "theory": "hp-original", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "cause", "note": "Witness: set MD to 0 (a non-actual contingency)." },
-    { "theory": "hp-updated", "query": { "cause": "L=1", "effect": "FF=1" }, "expected": "cause" },
-    { "theory": "hp-updated", "query": { "cause": "L=1 and MD=1", "effect": "FF=1" }, "expected": "not-cause", "note": "Fails AC3: L=1 alone suffices." }
+    { "theory": "butfor", "query": {"cause": "L=1", "effect": "FF=1"}, "expected": "not-cause" },
+    { "theory": "butfor", "query": {"cause": "MD=1", "effect": "FF=1"}, "expected": "not-cause" },
+    { "theory": "hp-modified", "query": {"cause": "L=1 and MD=1", "effect": "FF=1"}, "expected": "cause" },
+    { "theory": "hp-modified", "query": {"cause": "L=1", "effect": "FF=1"}, "expected": "part-of-cause" },
+    { "theory": "hp-modified", "query": {"cause": "MD=1", "effect": "FF=1"}, "expected": "part-of-cause" },
+    {
+      "theory": "hp-original",
+      "query": { "cause": "L=1", "effect": "FF=1" },
+      "expected": "cause",
+      "note": "Witness: set MD to 0 (a non-actual contingency)."
+    },
+    { "theory": "hp-updated", "query": {"cause": "L=1", "effect": "FF=1"}, "expected": "cause" },
+    {
+      "theory": "hp-updated",
+      "query": { "cause": "L=1 and MD=1", "effect": "FF=1" },
+      "expected": "not-cause",
+      "note": "Fails AC3: L=1 alone suffices."
+    }
   ],
   "showcase": [
-    { "label": { "zh": "沒有雷擊", "en": "No lightning" }, "interventions": { "L": 0 } },
-    { "label": { "zh": "兩者都沒有", "en": "Neither" }, "interventions": { "L": 0, "MD": 0 } }
+    { "label": {"zh-TW": "沒有雷擊", "en": "No lightning"}, "interventions": {"L": 0} },
+    { "label": {"zh-TW": "兩者都沒有", "en": "Neither"}, "interventions": {"L": 0, "MD": 0} }
   ],
   "layout": { "L": [0, 0], "MD": [0, 1], "FF": [1, 0.5] }
 }

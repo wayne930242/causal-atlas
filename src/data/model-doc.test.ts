@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluate } from '../engine/index.ts'
+import { evaluate, problem, problemText } from '../engine/index.ts'
 import { caseIds, getCase } from './index.ts'
 import { caseToDoc, decodeShare, docToCase, encodeShare, parseModelJson, shareFromHash } from './model-doc.ts'
 import type { ModelDoc } from './schema.ts'
@@ -37,8 +37,8 @@ describe('share links', () => {
 
   it('rejects other versions and damaged data', async () => {
     const value = await encodeShare(caseToDoc(getCase('rock-throwing')))
-    expect(await decodeShare(`2${value.slice(1)}`)).toEqual({ ok: false, errors: ['分享連結的版本 2 不支援'] })
-    expect(await decodeShare('1.not-deflate')).toEqual({ ok: false, errors: ['分享連結的資料損壞'] })
+    expect(await decodeShare(`2${value.slice(1)}`)).toEqual({ ok: false, errors: [problem('share-version', { version: '2' })] })
+    expect(await decodeShare('1.not-deflate')).toEqual({ ok: false, errors: [problem('share-damaged', {})] })
   })
 })
 
@@ -55,13 +55,13 @@ describe('JSON import', () => {
     expect(parseModelJson('{').ok).toBe(false)
     const bad = parseModelJson(JSON.stringify({ ...doc, version: 2, layout: { ZZ: [0, 0] } }))
     expect(bad.ok).toBe(false)
-    if (!bad.ok) expect(bad.errors.join('\n')).toMatch(/version/)
+    if (!bad.ok) expect(bad.errors.map((e) => problemText(e)).join('\n')).toMatch(/version/)
     const unknownVar = parseModelJson(JSON.stringify({ ...doc, layout: { ZZ: [0, 0] } }))
-    expect(unknownVar).toEqual({ ok: false, errors: ['layout.ZZ：unknown variable ZZ'] })
+    expect(unknownVar).toEqual({ ok: false, errors: [problem('unknown-variable', { id: 'ZZ' }, { kind: 'path', path: 'layout.ZZ' })] })
     const cyclic = parseModelJson(JSON.stringify({ ...doc, model: { ...doc.model, equations: { ...doc.model.equations, SH: 'BS' } } }))
     expect(cyclic.ok).toBe(false)
-    if (!cyclic.ok) expect(cyclic.errors[0]).toMatch(/cyclic: SH → BS → SH|cyclic: BS → SH → BS/)
+    if (!cyclic.ok) expect(problemText(cyclic.errors[0])).toMatch(/cyclic: SH → BS → SH|cyclic: BS → SH → BS/)
     const notContext = parseModelJson(JSON.stringify({ ...doc, context: { ST: 1 } }))
-    expect(notContext).toEqual({ ok: false, errors: ['context.ST：ST is not exogenous'] })
+    expect(notContext).toEqual({ ok: false, errors: [problem('not-exogenous', { id: 'ST' }, { kind: 'path', path: 'context.ST' })] })
   })
 })

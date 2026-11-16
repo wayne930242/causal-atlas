@@ -1,3 +1,4 @@
+import { problem } from './errors.ts'
 import type { Assignment, Value } from './types.ts'
 import { ModelError, asBool, valuesEqual } from './values.ts'
 
@@ -107,27 +108,27 @@ export function evalExpr(expr: Expr, env: EvalEnv): Value {
   switch (expr.op) {
     case 'var': {
       const value = env.values[expr.name]
-      if (value === undefined) throw new ModelError(`variable ${expr.name} has no value yet`)
+      if (value === undefined) throw new ModelError(problem('no-value', { id: expr.name }))
       return value
     }
     case 'const':
       return expr.value
     case 'not':
-      return !asBool(evalExpr(expr.arg, env), 'not')
+      return !asBool(evalExpr(expr.arg, env), { kind: 'operator', op: 'not' })
     case 'and':
-      return expr.args.every((a) => asBool(evalExpr(a, env), 'and'))
+      return expr.args.every((a) => asBool(evalExpr(a, env), { kind: 'operator', op: 'and' }))
     case 'or':
-      return expr.args.some((a) => asBool(evalExpr(a, env), 'or'))
+      return expr.args.some((a) => asBool(evalExpr(a, env), { kind: 'operator', op: 'or' }))
     case 'implies':
-      return !asBool(evalExpr(expr.left, env), 'implies') || asBool(evalExpr(expr.right, env), 'implies')
+      return !asBool(evalExpr(expr.left, env), { kind: 'operator', op: 'implies' }) || asBool(evalExpr(expr.right, env), { kind: 'operator', op: 'implies' })
     case 'iff':
-      return asBool(evalExpr(expr.left, env), 'iff') === asBool(evalExpr(expr.right, env), 'iff')
+      return asBool(evalExpr(expr.left, env), { kind: 'operator', op: 'iff' }) === asBool(evalExpr(expr.right, env), { kind: 'operator', op: 'iff' })
     case 'eq': {
       const equal = valuesEqual(evalExpr(expr.left, env), evalExpr(expr.right, env))
       return expr.negated ? !equal : equal
     }
     case 'if':
-      return asBool(evalExpr(expr.cond, env), 'if')
+      return asBool(evalExpr(expr.cond, env), { kind: 'operator', op: 'if' })
         ? evalExpr(expr.then, env)
         : evalExpr(expr.else, env)
     case 'lookup': {
@@ -136,11 +137,11 @@ export function evalExpr(expr: Expr, env: EvalEnv): Value {
         if (row.when.every((w, i) => valuesEqual(w, inputs[i]))) return row.value
       }
       if (expr.fallback !== undefined) return expr.fallback
-      throw new ModelError(`lookup on (${expr.inputs.join(', ')}) has no row for (${inputs.join(', ')})`)
+      throw new ModelError(problem('lookup-no-row', { inputs: expr.inputs.join(', '), values: inputs.join(', ') }))
     }
     case 'do':
       if (env.intervene === undefined) {
-        throw new ModelError('[X←x] formulas can only be evaluated against a model and context')
+        throw new ModelError(problem('intervention-needs-model', {}))
       }
       return env.intervene(expr.interventions, expr.body)
   }

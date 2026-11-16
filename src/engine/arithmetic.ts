@@ -1,3 +1,4 @@
+import { problem } from './errors.ts'
 import type { Expr } from './expr.ts'
 import type { CausalModel } from './model.ts'
 import { getVariable } from './model.ts'
@@ -82,7 +83,7 @@ export function toArith(model: CausalModel, expr: Expr): Arith {
           otherwise: e.fallback === undefined ? undefined : constArith(e.fallback),
         }
       case 'do':
-        throw new ModelError('[X←x] has no arithmetic form')
+        throw new ModelError(problem('arithmetic-intervention', {}))
     }
   }
   return go(expr)
@@ -93,7 +94,7 @@ type Num = number | string
 const toNum = (v: Value): Num => (typeof v === 'boolean' ? (v ? 1 : 0) : v)
 
 function asNumber(v: Num): number {
-  if (typeof v !== 'number') throw new ModelError(`arithmetic on non-number ${JSON.stringify(v)}`)
+  if (typeof v !== 'number') throw new ModelError(problem('arithmetic-non-number', { value: JSON.stringify(v) }))
   return v
 }
 
@@ -106,7 +107,7 @@ export function evalArith(a: Arith, values: Readonly<Record<string, Value>>): Nu
       return a.value
     case 'var': {
       const v = values[a.name]
-      if (v === undefined) throw new ModelError(`variable ${a.name} has no value`)
+      if (v === undefined) throw new ModelError(problem('no-value', { id: a.name }))
       return toNum(v)
     }
     case 'sub':
@@ -126,7 +127,7 @@ export function evalArith(a: Arith, values: Readonly<Record<string, Value>>): Nu
         if (row.when.every((w) => valuesEqual(ev(w.left), ev(w.right)))) return ev(row.value)
       }
       if (a.otherwise !== undefined) return ev(a.otherwise)
-      throw new ModelError('no case applies')
+      throw new ModelError(problem('arithmetic-no-case', {}))
     }
   }
 }

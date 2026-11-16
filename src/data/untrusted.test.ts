@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { evaluate } from '../engine/index.ts'
+import { evaluate, problem, problemText } from '../engine/index.ts'
 import { getCase } from './index.ts'
 import { caseToDoc, decodeShare, docToCase, encodeShare, parseModelJson, shareFromHash } from './model-doc.ts'
 import type { ModelDoc } from './schema.ts'
 import { modelDocSchema } from './schema.ts'
 
-const label = { zh: 'x', en: 'x' }
+const label = { 'zh-TW': 'x', en: 'x' }
 
 function b64url(buffer: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
@@ -45,7 +45,7 @@ describe('REV-F001: input that would take exponential time or space', () => {
     const started = Date.now()
     const result = parseModelJson(JSON.stringify(wideDoc(24)))
     expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.errors.join('\n')).toMatch(/too many contexts/)
+    if (!result.ok) expect(result.errors.map((e) => problemText(e)).join('\n')).toMatch(/too many contexts/)
     expect(Date.now() - started).toBeLessThan(1000)
   })
 
@@ -80,8 +80,9 @@ describe('REV-F003: untrusted input never throws', () => {
       id: 'x',
       title: label,
       family: 'actual',
-      story_zh: 's',
-      explanation_zh: 'e',
+      story: label,
+      explanation: label,
+      copy_status: { 'zh-TW': 'draft', en: 'draft' },
       sources: [{ citation: 'c', role: 'origin', verified: false }],
       model: {
         variables: [
@@ -96,14 +97,14 @@ describe('REV-F003: untrusted input never throws', () => {
     }
     const result = parseModelJson(JSON.stringify(cyclic))
     expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.errors[0]).toMatch(/cyclic/)
+    if (!result.ok) expect(result.errors[0].code).toBe('cyclic')
   })
 })
 
 describe('REV-F004: size caps', () => {
   it('rejects a share link longer than 64 KB', async () => {
     const result = await decodeShare(`1.${'A'.repeat(70_000)}`)
-    expect(result).toEqual({ ok: false, errors: ['資料過大'] })
+    expect(result).toEqual({ ok: false, errors: [problem('too-large', {})] })
   })
 
   it('rejects a link that inflates past 1 MB', async () => {
@@ -111,11 +112,11 @@ describe('REV-F004: size caps', () => {
     const packed = await new Response(new Blob([bomb]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer()
     const value = `1.${b64url(packed)}`
     expect(value.length).toBeLessThan(65_536)
-    expect(await decodeShare(value)).toEqual({ ok: false, errors: ['資料過大'] })
+    expect(await decodeShare(value)).toEqual({ ok: false, errors: [problem('too-large', {})] })
   })
 
   it('rejects pasted JSON longer than 1 MB', () => {
-    expect(parseModelJson(' '.repeat(1_100_000))).toEqual({ ok: false, errors: ['資料過大'] })
+    expect(parseModelJson(' '.repeat(1_100_000))).toEqual({ ok: false, errors: [problem('too-large', {})] })
   })
 
   it('still takes a normal document', async () => {
@@ -138,7 +139,7 @@ describe('REV-F005: ids that collide with Object.prototype or the equation synta
 
   it('does not let a __proto__ key in the context or layout through', () => {
     const text =
-      '{"format":"causal-atlas/model","version":1,"title":"t","model":{"variables":[{"id":"U","label":{"zh":"x","en":"x"},"kind":"exogenous","domain":"boolean"}],"equations":{}},"context":{"U":1,"__proto__":{"polluted":1}},"layout":{"U":[0,0],"__proto__":[1,1]}}'
+      '{"format":"causal-atlas/model","version":1,"title":"t","model":{"variables":[{"id":"U","label":{"zh-TW":"x","en":"x"},"kind":"exogenous","domain":"boolean"}],"equations":{}},"context":{"U":1,"__proto__":{"polluted":1}},"layout":{"U":[0,0],"__proto__":[1,1]}}'
     const result = parseModelJson(text)
     expect(({} as Record<string, unknown>).polluted).toBeUndefined()
     if (result.ok) {

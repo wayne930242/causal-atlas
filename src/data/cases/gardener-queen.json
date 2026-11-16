@@ -1,15 +1,39 @@
 {
   "id": "gardener-queen",
-  "title": { "zh": "園丁與女王：不作為", "en": "The gardener and the Queen (omission)" },
-  "subtitle": "兩個人都沒澆花，為什麼只怪園丁？",
+  "title": { "zh-TW": "園丁與女王：不作為", "en": "The gardener and the Queen (omission)" },
+  "subtitle": { "zh-TW": "兩個人都沒澆花，為什麼只怪園丁？", "en": "Neither of them watered the flower; why blame only the gardener?" },
   "family": "omission",
-  "story_zh": "園丁答應幫鄰居澆花卻沒有澆，花枯死了。英國女王當然也沒有來澆這盆花。如果任何一人澆了，花都不會死。可是我們通常只說是園丁沒澆害死了花，不說女王沒澆也是原因。",
-  "story_tags": [
-    { "sentence": "園丁答應幫鄰居澆花卻沒有澆，花枯死了。", "variables": ["GW", "D"] },
-    { "sentence": "英國女王當然也沒有來澆這盆花。", "variables": ["QW"] }
-  ],
-  "intuition": {"query": {"cause": "QW=0", "effect": "D=1"}, "expected": "not-cause", "text": "女王本來就不會來澆這盆花，花死不該算在她頭上。", "agree": ["hp-normality"]},
-  "explanation_zh": "園丁與女王都可以澆花，花枯死的條件是兩人都沒澆（D = ¬GW·¬QW）。模型把「沒做某事」當作事件，用來測試各種定義對缺席（omission）的處理：園丁沒澆花算不算花枯死的原因，女王沒澆花算不算。",
+  "story": {
+    "zh-TW": "園丁答應幫鄰居澆花卻沒有澆，花枯死了。英國女王當然也沒有來澆這盆花。如果任何一人澆了，花都不會死。可是我們通常只說是園丁沒澆害死了花，不說女王沒澆也是原因。",
+    "en": "The gardener promised to water the neighbour's flower but did not, and the flower withered. The Queen of England, of course, did not come to water it either. Had either of them watered it, the flower would not have died. Yet we usually say that the gardener's failure to water killed the flower, not that the Queen's failure was also a cause."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "園丁答應幫鄰居澆花卻沒有澆，花枯死了。", "variables": ["GW", "D"] },
+      { "sentence": "英國女王當然也沒有來澆這盆花。", "variables": ["QW"] }
+    ],
+    "en": [
+      {
+        "sentence": "The gardener promised to water the neighbour's flower but did not, and the flower withered.",
+        "variables": ["GW", "D"]
+      },
+      { "sentence": "The Queen of England, of course, did not come to water it either.", "variables": ["QW"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "QW=0", "effect": "D=1" },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "女王本來就不會來澆這盆花，花死不該算在她頭上。",
+      "en": "The Queen was never going to water this flower; its death should not be laid at her door."
+    },
+    "agree": ["hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "園丁與女王都可以澆花，花枯死的條件是兩人都沒澆（D = ¬GW·¬QW）。模型把「沒做某事」當作事件，用來測試各種定義對缺席（omission）的處理：園丁沒澆花算不算花枯死的原因，女王沒澆花算不算。",
+    "en": "Both the gardener and the Queen could water the flower, and it dies only if neither does (D = ¬GW·¬QW). The model treats not doing something as an event, to test how each definition handles omissions: does the gardener's not watering count as a cause of the flower's death, and does the Queen's?"
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [
     {
       "citation": "Beebee, H. (2004). Causing and nothingness. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
@@ -32,27 +56,42 @@
   ],
   "model": {
     "variables": [
-      { "id": "U_G", "label": { "zh": "園丁的情況", "en": "Gardener's circumstances" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "U_Q", "label": { "zh": "女王的情況", "en": "Queen's circumstances" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "GW", "label": { "zh": "園丁澆花", "en": "Gardener waters" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "QW", "label": { "zh": "女王澆花", "en": "Queen waters" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "D", "label": { "zh": "花枯死", "en": "Flower dies" }, "kind": "endogenous", "domain": "boolean" }
+      {
+        "id": "U_G",
+        "label": { "zh-TW": "園丁的情況", "en": "Gardener's circumstances" },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_Q",
+        "label": { "zh-TW": "女王的情況", "en": "Queen's circumstances" },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      { "id": "GW", "label": {"zh-TW": "園丁澆花", "en": "Gardener waters"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "QW", "label": {"zh-TW": "女王澆花", "en": "Queen waters"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "D", "label": {"zh-TW": "花枯死", "en": "Flower dies"}, "kind": "endogenous", "domain": "boolean" }
     ],
     "equations": { "GW": "U_G", "QW": "U_Q", "D": "not GW and not QW" }
   },
   "context": { "U_G": 0, "U_Q": 0 },
   "normality": { "GW": 1, "QW": 0, "D": 0 },
   "verdicts": [
-    { "theory": "butfor", "query": { "cause": "GW=0", "effect": "D=1" }, "expected": "cause" },
-    { "theory": "butfor", "query": { "cause": "QW=0", "effect": "D=1" }, "expected": "cause" },
-    { "theory": "hp-modified", "query": { "cause": "GW=0", "effect": "D=1" }, "expected": "cause" },
-    { "theory": "hp-modified", "query": { "cause": "QW=0", "effect": "D=1" }, "expected": "cause" },
-    { "theory": "hp-normality", "query": { "cause": "GW=0", "effect": "D=1" }, "expected": "cause" },
-    { "theory": "hp-normality", "query": { "cause": "QW=0", "effect": "D=1" }, "expected": "not-cause", "note": "The Queen watering is more abnormal than the actual world." }
+    { "theory": "butfor", "query": {"cause": "GW=0", "effect": "D=1"}, "expected": "cause" },
+    { "theory": "butfor", "query": {"cause": "QW=0", "effect": "D=1"}, "expected": "cause" },
+    { "theory": "hp-modified", "query": {"cause": "GW=0", "effect": "D=1"}, "expected": "cause" },
+    { "theory": "hp-modified", "query": {"cause": "QW=0", "effect": "D=1"}, "expected": "cause" },
+    { "theory": "hp-normality", "query": {"cause": "GW=0", "effect": "D=1"}, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "QW=0", "effect": "D=1" },
+      "expected": "not-cause",
+      "note": "The Queen watering is more abnormal than the actual world."
+    }
   ],
   "showcase": [
-    { "label": { "zh": "園丁澆了花", "en": "The gardener waters" }, "interventions": { "GW": 1 } },
-    { "label": { "zh": "女王澆了花", "en": "The Queen waters" }, "interventions": { "QW": 1 } }
+    { "label": {"zh-TW": "園丁澆了花", "en": "The gardener waters"}, "interventions": {"GW": 1} },
+    { "label": {"zh-TW": "女王澆了花", "en": "The Queen waters"}, "interventions": {"QW": 1} }
   ],
   "layout": { "GW": [0, 0], "QW": [0, 1], "D": [1, 0.5] }
 }

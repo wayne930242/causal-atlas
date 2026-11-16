@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useId, useState } from 'react'
+import { useMessages } from './i18n.ts'
 
 /** Small shared pieces: segmented control, disclosure, progress, icons, tags. */
 
@@ -30,6 +31,7 @@ export function Segmented<T extends string>({ label, options, value, onChange, c
 }
 
 export interface DisclosureProps {
+  /** Small label before the title; default 補充 / More. Empty for none. */
   readonly kicker?: string
   readonly title: ReactNode
   readonly children: ReactNode
@@ -38,7 +40,9 @@ export interface DisclosureProps {
 }
 
 /** A box that stays closed until asked; the header button carries aria-expanded. */
-export function Disclosure({ kicker = '補充', title, children, defaultOpen = false, className }: DisclosureProps) {
+export function Disclosure({ kicker: kickerProp, title, children, defaultOpen = false, className }: DisclosureProps) {
+  const t = useMessages()
+  const kicker = kickerProp ?? t.more
   const [open, setOpen] = useState(defaultOpen)
   const id = useId()
   return (
@@ -114,13 +118,14 @@ export function Pin() {
 }
 
 export function Progress({ step, total }: { readonly step: number; readonly total: number }) {
+  const t = useMessages()
   return (
-    <span className="ca-progress" role="img" aria-label={`第 ${step} 步，共 ${total} 步`}>
+    <span className="ca-progress" role="img" aria-label={t.stepOf(step, total)}>
       {Array.from({ length: total }, (_, i) => (
         <span key={i} className="ca-progress-dot" data-on={i < step ? 'true' : 'false'} />
       ))}
       <span className="ca-progress-text ca-mono" aria-hidden="true">
-        {step}／{total}
+        {step}/{total}
       </span>
     </span>
   )

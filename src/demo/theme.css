@@ -76,8 +76,13 @@ body {
   font-weight: 700;
 }
 
-.demo-bar a[aria-current="page"] {
+.demo-bar a[aria-current="page"],
+.demo-lang a[aria-current="true"] {
   color: var(--accent);
+}
+
+.demo-bar .demo-lang {
+  gap: 12px;
 }
 
 .demo-spacer {

@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import type { Problem } from '../engine/errors.ts'
+import { problem, problemText } from '../engine/errors.ts'
 import { isReservedName } from '../engine/values.ts'
 
 /**
@@ -13,16 +15,34 @@ export const MAX_VARIABLES = 40
 /** The most values a finite domain may list. */
 export const MAX_DOMAIN_VALUES = 32
 
-/** An identifier that is neither an equation keyword nor a name `{}` already has (`toString`, `__proto__`, …). */
-const identifier = z
-  .string()
-  .regex(/^[A-Za-z_][A-Za-z0-9_]*$/, 'must be an identifier')
-  .refine((id) => !isReservedName(id), { message: 'is a reserved name' })
+/** A schema issue that carries its {@link Problem}, so an interface can word it per locale. */
+export function addProblem(
+  ctx: { addIssue: (issue: z.core.$ZodRawIssue) => void },
+  path: PropertyKey[] | undefined,
+  p: Problem,
+): void {
+  ctx.addIssue({ code: 'custom', ...(path === undefined ? {} : { path }), message: problemText(p), params: { problem: p }, input: undefined })
+}
 
+const IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/
+
+/** An identifier that is neither an equation keyword nor a name `{}` already has (`toString`, `__proto__`, …). */
+const identifier = z.string().superRefine((id, ctx) => {
+  if (!IDENT.test(id)) addProblem(ctx, undefined, problem('not-identifier', {}))
+  else if (isReservedName(id)) addProblem(ctx, undefined, problem('reserved-name', { id }))
+})
+
+/** The languages every text of a case file comes in. */
+export const LOCALES = ['zh-TW', 'en'] as const
+
+/** A text in Traditional Chinese and English; both are required. */
 export const localizedSchema = z.strictObject({
-  zh: z.string().min(1),
+  'zh-TW': z.string().min(1),
   en: z.string().min(1),
 })
+
+/** Where a locale's copy stands: `draft` until it has been through writing and fact-checking. */
+export const copyStatusSchema = z.enum(['draft', 'checked'])
 
 export const valueSchema = z.union([z.boolean(), z.number(), z.string()])
 
@@ -69,7 +89,7 @@ export const sourceSchema = z.strictObject({
   key: z.string().optional(),
   /** origin: where the case comes from; treatment: a structural-model analysis of it; reference: an encyclopedia entry or survey. */
   role: z.enum(['origin', 'treatment', 'reference']),
-  note: z.string().min(1).optional(),
+  note: localizedSchema.optional(),
   pages: z.string().optional(),
   /** True only once someone has checked the citation and pages against the source. */
   verified: z.boolean(),
@@ -151,10 +171,16 @@ export const showcaseSchema = z.strictObject({
  */
 export const layoutSchema = z.record(identifier, z.tuple([z.number(), z.number()]))
 
-/** A sentence of `story_zh` and the variables it introduces; the page tags the sentence with their ids. */
+/** A sentence of the story and the variables it introduces; the page tags the sentence with their ids. */
 export const storyTagSchema = z.strictObject({
   sentence: z.string().min(1),
   variables: z.array(identifier).min(1),
+})
+
+/** Story tags per language: each sentence must occur in the story in that language. */
+export const storyTagsSchema = z.strictObject({
+  'zh-TW': z.array(storyTagSchema),
+  en: z.array(storyTagSchema),
 })
 
 const actualTheorySchema = z.enum(['butfor', 'hp-original', 'hp-updated', 'hp-modified', 'hp-normality'])
@@ -169,13 +195,13 @@ export const intuitionSchema = z.union([
     query: z.strictObject({ cause: z.string().min(1), effect: z.string().min(1) }),
     expected: z.enum(['cause', 'part-of-cause', 'not-cause']),
     /** One short sentence: why people judge it so. */
-    text: z.string().min(1),
+    text: localizedSchema,
     agree: z.array(actualTheorySchema),
   }),
   z.strictObject({
     query: z.strictObject({ choice: identifier }),
     expected: valueSchema,
-    text: z.string().min(1),
+    text: localizedSchema,
     agree: z.array(z.enum(['edt', 'cdt'])),
   }),
 ])
@@ -185,14 +211,16 @@ export const caseSchema = z
     id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'must be kebab-case'),
     title: localizedSchema,
     /** One line under the title. */
-    subtitle: z.string().min(1).optional(),
+    subtitle: localizedSchema.optional(),
     family: familySchema,
-    /** Traditional Chinese paraphrase of the story. */
-    story_zh: z.string().min(1),
-    story_tags: z.array(storyTagSchema).optional(),
+    /** The story, paraphrased in each language. */
+    story: localizedSchema,
+    story_tags: storyTagsSchema.optional(),
     intuition: intuitionSchema.optional(),
     /** What the model encodes and why these variables and equations. */
-    explanation_zh: z.string().min(1),
+    explanation: localizedSchema,
+    /** Per language: whether the texts above are still a draft. */
+    copy_status: z.strictObject({ 'zh-TW': copyStatusSchema, en: copyStatusSchema }),
     sources: z.array(sourceSchema).min(1),
     model: modelSchema,
     /** The actual context u (values of exogenous variables). */
@@ -210,18 +238,22 @@ export const caseSchema = z
     if (c.layout !== undefined) {
       const ids = new Set(c.model.variables.map((v) => v.id))
       for (const id of Object.keys(c.layout)) {
-        if (!ids.has(id)) ctx.addIssue({ code: 'custom', path: ['layout', id], message: `unknown variable ${id}` })
+        if (!ids.has(id)) addProblem(ctx, ['layout', id], problem('unknown-variable', { id }))
       }
     }
     const variableIds = new Set(c.model.variables.map((v) => v.id))
-    c.story_tags?.forEach((t, i) => {
-      if (!c.story_zh.includes(t.sentence)) {
-        ctx.addIssue({ code: 'custom', path: ['story_tags', i, 'sentence'], message: 'sentence not found in story_zh' })
-      }
-      for (const id of t.variables) {
-        if (!variableIds.has(id)) ctx.addIssue({ code: 'custom', path: ['story_tags', i, 'variables'], message: `unknown variable ${id}` })
-      }
-    })
+    for (const locale of LOCALES) {
+      c.story_tags?.[locale].forEach((t, i) => {
+        if (!c.story[locale].includes(t.sentence)) {
+          ctx.addIssue({ code: 'custom', path: ['story_tags', locale, i, 'sentence'], message: `sentence not found in story.${locale}` })
+        }
+        for (const id of t.variables) {
+          if (!variableIds.has(id)) {
+            addProblem(ctx, ['story_tags', locale, i, 'variables'], problem('unknown-variable', { id }))
+          }
+        }
+      })
+    }
     if (c.intuition !== undefined) {
       const q = c.intuition.query
       const listed = c.verdicts.some((v) =>
@@ -272,6 +304,16 @@ export const caseSchema = z
  */
 export const MODEL_DOC_FORMAT = 'causal-atlas/model'
 
+/** A variable of a model someone built: the English label may be left out (it falls back to the id). */
+export const docVariableSchema = variableSchema.extend({
+  label: z.strictObject({ 'zh-TW': z.string().min(1), en: z.string().min(1).optional() }),
+})
+
+export const docModelSchema = z.strictObject({
+  variables: z.array(docVariableSchema).min(1).max(MAX_VARIABLES),
+  equations: modelSchema.shape.equations,
+})
+
 export const modelDocSchema = z
   .strictObject({
     format: z.literal(MODEL_DOC_FORMAT),
@@ -279,7 +321,7 @@ export const modelDocSchema = z
     title: z.string().min(1),
     /** The bundled case it started from, if any. */
     from: z.string().optional(),
-    model: modelSchema,
+    model: docModelSchema,
     context: assignmentSchema.optional(),
     priors: priorsSchema.optional(),
     normality: assignmentSchema.optional(),
@@ -290,10 +332,8 @@ export const modelDocSchema = z
     const known = (where: string, ids: readonly string[], exogenousOnly: boolean): void => {
       for (const id of ids) {
         const kind = kinds.get(id)
-        if (kind === undefined) ctx.addIssue({ code: 'custom', path: [where, id], message: `unknown variable ${id}` })
-        else if (exogenousOnly && kind !== 'exogenous') {
-          ctx.addIssue({ code: 'custom', path: [where, id], message: `${id} is not exogenous` })
-        }
+        if (kind === undefined) addProblem(ctx, [where, id], problem('unknown-variable', { id }))
+        else if (exogenousOnly && kind !== 'exogenous') addProblem(ctx, [where, id], problem('not-exogenous', { id }))
       }
     }
     known('layout', Object.keys(d.layout ?? {}), false)
@@ -303,7 +343,7 @@ export const modelDocSchema = z
       known('priors', 'independent' in d.priors ? Object.keys(d.priors.independent) : d.priors.joint.variables, true)
     }
     if (d.context === undefined && d.priors === undefined) {
-      ctx.addIssue({ code: 'custom', path: ['context'], message: 'needs a context or priors' })
+      addProblem(ctx, ['context'], problem('needs-context-or-priors', {}))
     }
   })
 

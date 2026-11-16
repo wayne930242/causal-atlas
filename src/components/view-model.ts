@@ -12,7 +12,9 @@ import {
   renderEquation,
   toFormula,
 } from '../engine/index.ts'
+import type { Locale } from '../engine/types.ts'
 import { coerceToDomain, enumerateAssignments, formatValue, valuesEqual } from '../engine/values.ts'
+import type { Messages } from './i18n.ts'
 
 /** Pure helpers that turn a loaded case into what the components draw. No DOM access. */
 
@@ -121,8 +123,8 @@ export function edgeLive(values: Assignment | undefined, from: string): boolean 
   return typeof v !== 'boolean' || v
 }
 
-export function label(model: CausalModel, id: string): string {
-  return getVariable(model, id).label.zh
+export function label(model: CausalModel, id: string, locale: Locale): string {
+  return getVariable(model, id).label[locale]
 }
 
 export function valueText(value: Value | undefined): string {
@@ -208,6 +210,7 @@ export interface EquationRow {
 }
 
 export function equationRows(
+  t: Messages,
   c: LoadedCase,
   ids: readonly string[],
   notation: Exclude<Notation, 'causal'>,
@@ -222,13 +225,12 @@ export function equationRows(
     const forced = interventions[id]
     if (forced !== undefined) {
       const parents = (model.parents.get(id) ?? []).filter((p) => set.has(p))
-      const skip = parents.length === 0 ? '' : `不看 ${parents.join('、')}，`
       return {
         id,
         text: `${id} = ${formatValue(forced)}`,
         struck: text,
         intervened: true,
-        note: `${skip}直接設成 ${formatValue(forced)}`,
+        note: t.setDirectly(parents, formatValue(forced)),
       }
     }
     let worked: string | undefined
@@ -240,7 +242,7 @@ export function equationRows(
         worked = `= ${renderArith(substitute(arith, values), 'text')} = ${String(result)}`
       }
     }
-    return { id, text, worked, intervened: false, note: label(model, id) }
+    return { id, text, worked, intervened: false, note: label(model, id, t.locale) }
   })
 }
 
@@ -366,11 +368,8 @@ export function probText(p: number): string {
   return Number.isNaN(p) ? '—' : p.toFixed(2)
 }
 
-/** Legend for 0／1 nodes. Says filled and hollow, not black and white, so it holds in the dark theme too. */
-export const VALUE_LEGEND = '實心＝發生（1）　空心＝沒發生（0）'
-
-/** Legend for probability fill; names the convention for non-boolean variables when any is drawn. */
-export function probLegend(model: CausalModel, shown: readonly string[]): string {
+/** Legend for probability fill (the value legend is `t.valueLegend`); names the convention for non-boolean variables when any is drawn. */
+export function probLegend(t: Messages, model: CausalModel, shown: readonly string[]): string {
   const finite = shown.some((id) => getVariable(model, id).domain.kind === 'finite')
-  return finite ? '填色的高度＝等於 1 的機率；非 0／1 的變項，數字前標出填色代表的值' : '填色的高度＝等於 1 的機率'
+  return finite ? t.probLegendFinite : t.probLegend
 }

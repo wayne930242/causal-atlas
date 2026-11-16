@@ -1,7 +1,9 @@
+import type { Locale } from './i18n.ts'
+import { DEFAULT_LOCALE, messagesFor } from './i18n.ts'
+
 /** Author, licence and citation strings shared by CiteBlock, the image watermark and the README. */
 
-export const AUTHOR_ZH = '洪偉'
-export const AUTHOR_EN = 'Wei Hung'
+export { AUTHOR_EN, AUTHOR_ZH } from './i18n.ts'
 export const PROJECT = 'causal-atlas'
 /** Replaced at build time (vite `define`, see vite.define.ts) from package.json and CITATION.cff. */
 declare const __CA_VERSION__: string
@@ -12,8 +14,9 @@ export const YEAR: number = __CA_YEAR__
 export const DEFAULT_URL = 'https://wayneh.tw/causal/'
 export const DATA_LICENSE = 'CC BY 4.0'
 
+/** The Chinese author-year citation. */
 export function authorYear(url: string = DEFAULT_URL): string {
-  return `${AUTHOR_ZH}（${AUTHOR_EN}）（${YEAR}）。${PROJECT}（${VERSION} 版）。${url}`
+  return messagesFor('zh-TW').cite.authorYear(YEAR, PROJECT, VERSION, url)
 }
 
 export function authorYearEn(url: string = DEFAULT_URL): string {
@@ -33,7 +36,7 @@ export function bibtex(url: string = DEFAULT_URL): string {
   ].join('\n')
 }
 
-/** The line baked into exported images. */
-export function watermarkLine(url: string = DEFAULT_URL): string {
-  return `${AUTHOR_ZH}（${AUTHOR_EN}）· ${PROJECT} · ${DATA_LICENSE} · ${url}`
+/** The line baked into exported images, in `locale`. */
+export function watermarkLine(url: string = DEFAULT_URL, locale: Locale = DEFAULT_LOCALE): string {
+  return messagesFor(locale).cite.watermark(PROJECT, DATA_LICENSE, url)
 }

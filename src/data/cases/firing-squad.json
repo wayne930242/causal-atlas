@@ -1,15 +1,36 @@
 {
   "id": "firing-squad",
-  "title": { "zh": "行刑隊", "en": "Firing squad" },
-  "subtitle": "兩名槍手同時開槍，少了任何一槍，囚犯一樣會死。",
+  "title": { "zh-TW": "行刑隊", "en": "Firing squad" },
+  "subtitle": {
+    "zh-TW": "兩名槍手同時開槍，少了任何一槍，囚犯一樣會死。",
+    "en": "Two riflemen fire at once; without either shot, the prisoner still dies."
+  },
   "family": "actual",
-  "story_zh": "法院下令處決，隊長於是發令。兩名槍手 A 和 B 同時開槍，囚犯死亡。我們知道囚犯死了；如果 A 當時沒有開槍，囚犯會不會還活著？",
-  "story_tags": [
-    { "sentence": "法院下令處決，隊長於是發令。", "variables": ["U", "C"] },
-    { "sentence": "兩名槍手 A 和 B 同時開槍，囚犯死亡。", "variables": ["A", "B", "D"] }
-  ],
-  "intuition": {"query": {"cause": "A=1", "effect": "D=1"}, "expected": "cause", "text": "A 開了槍，囚犯中槍而死。", "agree": ["hp-original", "hp-updated"]},
-  "explanation_zh": "法院命令 U 讓隊長發令 C，隊長發令讓槍手 A、B 都開槍，任一人開槍囚犯 D 就死。這是一個共同原因加析取的小模型，用來示範三件事：從觀察推論、介入（讓 A 開槍）與反事實（若 A 沒開槍，D 還會死嗎）的差別。",
+  "story": {
+    "zh-TW": "法院下令處決，隊長於是發令。兩名槍手 A 和 B 同時開槍，囚犯死亡。我們知道囚犯死了；如果 A 當時沒有開槍，囚犯會不會還活著？",
+    "en": "A court orders an execution, and the captain gives the signal. Riflemen A and B fire at the same moment, and the prisoner dies. We know the prisoner died; had A not fired, would the prisoner still be alive?"
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "法院下令處決，隊長於是發令。", "variables": ["U", "C"] },
+      { "sentence": "兩名槍手 A 和 B 同時開槍，囚犯死亡。", "variables": ["A", "B", "D"] }
+    ],
+    "en": [
+      { "sentence": "A court orders an execution, and the captain gives the signal.", "variables": ["U", "C"] },
+      { "sentence": "Riflemen A and B fire at the same moment, and the prisoner dies.", "variables": ["A", "B", "D"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "A=1", "effect": "D=1" },
+    "expected": "cause",
+    "text": { "zh-TW": "A 開了槍，囚犯中槍而死。", "en": "A fired, and the prisoner was shot dead." },
+    "agree": ["hp-original", "hp-updated"]
+  },
+  "explanation": {
+    "zh-TW": "法院命令 U 讓隊長發令 C，隊長發令讓槍手 A、B 都開槍，任一人開槍囚犯 D 就死。這是一個共同原因加析取的小模型，用來示範三件事：從觀察推論、介入（讓 A 開槍）與反事實（若 A 沒開槍，D 還會死嗎）的差別。",
+    "en": "The court order U leads the captain to give the signal C; the signal leads both riflemen, A and B, to fire; the prisoner D dies if either fires. This small model of a common cause followed by a disjunction shows how three things differ: inference from an observation, intervention (making A fire), and the counterfactual (had A not fired, would D still have died?)."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [
     {
       "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.), §7.1.2. Cambridge University Press.",
@@ -26,32 +47,47 @@
   ],
   "model": {
     "variables": [
-      { "id": "U", "label": { "zh": "法院下令", "en": "Court order" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "C", "label": { "zh": "隊長發令", "en": "Captain signals" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "A", "label": { "zh": "槍手 A 開槍", "en": "Rifleman A shoots" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "B", "label": { "zh": "槍手 B 開槍", "en": "Rifleman B shoots" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "D", "label": { "zh": "囚犯死亡", "en": "Prisoner dies" }, "kind": "endogenous", "domain": "boolean" }
+      { "id": "U", "label": {"zh-TW": "法院下令", "en": "Court order"}, "kind": "exogenous", "domain": "boolean" },
+      { "id": "C", "label": {"zh-TW": "隊長發令", "en": "Captain signals"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "A", "label": {"zh-TW": "槍手 A 開槍", "en": "Rifleman A shoots"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "B", "label": {"zh-TW": "槍手 B 開槍", "en": "Rifleman B shoots"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "D", "label": {"zh-TW": "囚犯死亡", "en": "Prisoner dies"}, "kind": "endogenous", "domain": "boolean" }
     ],
     "equations": { "C": "U", "A": "C", "B": "C", "D": "A or B" }
   },
   "context": { "U": 1 },
-  "priors": { "independent": { "U": 0.7 } },
+  "priors": { "independent": {"U": 0.7} },
   "verdicts": [
-    { "theory": "counterfactual", "query": { "evidence": "D=1", "do": { "A": 0 }, "event": "D=1" }, "expected": 1, "note": "Abduction: D=1 ⇒ U=1 ⇒ B=1." },
-    { "theory": "counterfactual", "query": { "evidence": "D=1", "do": { "C": 0 }, "event": "D=0" }, "expected": 1 },
-    { "theory": "probability", "query": { "event": "D=1", "do": { "A": 0 } }, "expected": 0.7 },
-    { "theory": "probability", "query": { "event": "D=1", "do": { "C": 0 } }, "expected": 0 },
-    { "theory": "probability", "query": { "event": "D=1", "given": "A=0" }, "expected": 0, "note": "Seeing A=0 means no order was given." },
-    { "theory": "butfor", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "not-cause" },
-    { "theory": "butfor", "query": { "cause": "C=1", "effect": "D=1" }, "expected": "cause" },
-    { "theory": "hp-modified", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "part-of-cause" },
-    { "theory": "hp-original", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "cause", "note": "Witness: set B to 0." },
-    { "theory": "hp-updated", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "cause" },
-    { "theory": "hp-modified", "query": { "cause": "C=1", "effect": "D=1" }, "expected": "cause" }
+    {
+      "theory": "counterfactual",
+      "query": { "evidence": "D=1", "do": {"A": 0}, "event": "D=1" },
+      "expected": 1,
+      "note": "Abduction: D=1 ⇒ U=1 ⇒ B=1."
+    },
+    { "theory": "counterfactual", "query": {"evidence": "D=1", "do": {"C": 0}, "event": "D=0"}, "expected": 1 },
+    { "theory": "probability", "query": {"event": "D=1", "do": {"A": 0}}, "expected": 0.7 },
+    { "theory": "probability", "query": {"event": "D=1", "do": {"C": 0}}, "expected": 0 },
+    {
+      "theory": "probability",
+      "query": { "event": "D=1", "given": "A=0" },
+      "expected": 0,
+      "note": "Seeing A=0 means no order was given."
+    },
+    { "theory": "butfor", "query": {"cause": "A=1", "effect": "D=1"}, "expected": "not-cause" },
+    { "theory": "butfor", "query": {"cause": "C=1", "effect": "D=1"}, "expected": "cause" },
+    { "theory": "hp-modified", "query": {"cause": "A=1", "effect": "D=1"}, "expected": "part-of-cause" },
+    {
+      "theory": "hp-original",
+      "query": { "cause": "A=1", "effect": "D=1" },
+      "expected": "cause",
+      "note": "Witness: set B to 0."
+    },
+    { "theory": "hp-updated", "query": {"cause": "A=1", "effect": "D=1"}, "expected": "cause" },
+    { "theory": "hp-modified", "query": {"cause": "C=1", "effect": "D=1"}, "expected": "cause" }
   ],
   "showcase": [
-    { "label": { "zh": "A 沒開槍", "en": "A does not shoot" }, "interventions": { "A": 0 } },
-    { "label": { "zh": "隊長沒發令", "en": "Captain gives no signal" }, "interventions": { "C": 0 } }
+    { "label": {"zh-TW": "A 沒開槍", "en": "A does not shoot"}, "interventions": {"A": 0} },
+    { "label": {"zh-TW": "隊長沒發令", "en": "Captain gives no signal"}, "interventions": {"C": 0} }
   ],
   "layout": { "U": [0, 0.5], "C": [1, 0.5], "A": [2, 0], "B": [2, 1], "D": [3, 0.5] }
 }

@@ -1,16 +1,38 @@
 {
   "id": "rock-throwing",
-  "title": { "zh": "丟石頭砸瓶子", "en": "Rock throwing (preemption)" },
-  "subtitle": "兩個人都丟了石頭，只有一顆砸中瓶子。",
+  "title": { "zh-TW": "丟石頭砸瓶子", "en": "Rock throwing (preemption)" },
+  "subtitle": { "zh-TW": "兩個人都丟了石頭，只有一顆砸中瓶子。", "en": "Both throw a rock; only one hits the bottle." },
   "family": "actual",
-  "story_zh": "小蘇和小比各拿一顆石頭，瞄準同一個瓶子，兩人都丟了。小蘇的石頭先到，瓶子破了。小比的石頭晚一步，到的時候瓶子已經碎了。小蘇的石頭要是沒砸中，小比那顆就會砸破瓶子。一般人會說瓶子是小蘇砸破的。但少了小蘇那一顆，瓶子還是會破。",
-  "story_tags": [
-    { "sentence": "小蘇和小比各拿一顆石頭，瞄準同一個瓶子，兩人都丟了。", "variables": ["ST", "BT"] },
-    { "sentence": "小蘇的石頭先到，瓶子破了。", "variables": ["SH", "BS"] },
-    { "sentence": "小比的石頭晚一步，到的時候瓶子已經碎了。", "variables": ["BH"] }
-  ],
-  "intuition": {"query": {"cause": "ST=1", "effect": "BS=1"}, "expected": "cause", "text": "她的石頭砸到了瓶子，小比的沒有。", "agree": ["hp-modified", "hp-normality"]},
-  "explanation_zh": "模型把兩人的意圖當作外生變數，丟、打中、瓶子破掉是內生變數。小比打中的條件是他丟了而且小蘇沒有先打中（BH = BT·(1−SH)），這一條讓小比的石頭只能在小蘇落空時才起作用，正好刻畫先發制人。瓶子破掉只要任一人打中即可。",
+  "story": {
+    "zh-TW": "小蘇和小比各拿一顆石頭，瞄準同一個瓶子，兩人都丟了。小蘇的石頭先到，瓶子破了。小比的石頭晚一步，到的時候瓶子已經碎了。小蘇的石頭要是沒砸中，小比那顆就會砸破瓶子。一般人會說瓶子是小蘇砸破的。但少了小蘇那一顆，瓶子還是會破。",
+    "en": "Suzy and Billy each pick up a rock, aim at the same bottle, and both throw. Suzy's rock arrives first, and the bottle shatters. Billy's rock arrives a moment later, when the bottle is already broken. Had Suzy's rock missed, Billy's would have shattered the bottle. Most people say Suzy broke the bottle. Yet without Suzy's rock, the bottle would still have broken."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "小蘇和小比各拿一顆石頭，瞄準同一個瓶子，兩人都丟了。", "variables": ["ST", "BT"] },
+      { "sentence": "小蘇的石頭先到，瓶子破了。", "variables": ["SH", "BS"] },
+      { "sentence": "小比的石頭晚一步，到的時候瓶子已經碎了。", "variables": ["BH"] }
+    ],
+    "en": [
+      {
+        "sentence": "Suzy and Billy each pick up a rock, aim at the same bottle, and both throw.",
+        "variables": ["ST", "BT"]
+      },
+      { "sentence": "Suzy's rock arrives first, and the bottle shatters.", "variables": ["SH", "BS"] },
+      { "sentence": "Billy's rock arrives a moment later, when the bottle is already broken.", "variables": ["BH"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "ST=1", "effect": "BS=1" },
+    "expected": "cause",
+    "text": { "zh-TW": "她的石頭砸到了瓶子，小比的沒有。", "en": "Her rock hit the bottle; Billy's did not." },
+    "agree": ["hp-modified", "hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "模型把兩人的意圖當作外生變數，丟、打中、瓶子破掉是內生變數。小比打中的條件是他丟了而且小蘇沒有先打中（BH = BT·(1−SH)），這一條讓小比的石頭只能在小蘇落空時才起作用，正好刻畫先發制人。瓶子破掉只要任一人打中即可。",
+    "en": "The model treats the two throwers' intentions as exogenous variables; throwing, hitting and the bottle shattering are endogenous. Billy hits only if he throws and Suzy has not already hit (BH = BT·(1−SH)); this equation lets Billy's rock act only when Suzy's misses, which is exactly what preemption is. The bottle shatters if either of them hits."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [
     {
       "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
@@ -28,41 +50,56 @@
       "citation": "Hall, N. (2004). Two concepts of causation. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
       "key": "hall-2004",
       "role": "origin",
-      "note": "小蘇（Suzy）與小比（Billy）的丟石頭例子取自 Hall (2004)；它屬於 Lewis (1986) 討論過的早期先發制人。",
+      "note": {
+        "zh-TW": "小蘇（Suzy）與小比（Billy）的丟石頭例子取自 Hall (2004)；它屬於 Lewis (1986) 討論過的早期先發制人。",
+        "en": "The rock-throwing example with Suzy and Billy is from Hall (2004); it is a case of early preemption, which Lewis (1986) discussed."
+      },
       "verified": false
     }
   ],
   "model": {
     "variables": [
-      { "id": "U_ST", "label": { "zh": "小蘇想丟", "en": "Suzy's intention" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "U_BT", "label": { "zh": "小比想丟", "en": "Billy's intention" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "ST", "label": { "zh": "小蘇丟", "en": "Suzy throws" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "BT", "label": { "zh": "小比丟", "en": "Billy throws" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "SH", "label": { "zh": "小蘇擊中", "en": "Suzy hits" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "BH", "label": { "zh": "小比擊中", "en": "Billy hits" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "BS", "label": { "zh": "瓶子破", "en": "Bottle shatters" }, "kind": "endogenous", "domain": "boolean" }
+      { "id": "U_ST", "label": {"zh-TW": "小蘇想丟", "en": "Suzy's intention"}, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_BT", "label": {"zh-TW": "小比想丟", "en": "Billy's intention"}, "kind": "exogenous", "domain": "boolean" },
+      { "id": "ST", "label": {"zh-TW": "小蘇丟", "en": "Suzy throws"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "BT", "label": {"zh-TW": "小比丟", "en": "Billy throws"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "SH", "label": {"zh-TW": "小蘇擊中", "en": "Suzy hits"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "BH", "label": {"zh-TW": "小比擊中", "en": "Billy hits"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "BS", "label": {"zh-TW": "瓶子破", "en": "Bottle shatters"}, "kind": "endogenous", "domain": "boolean" }
     ],
-    "equations": {
-      "ST": "U_ST",
-      "BT": "U_BT",
-      "SH": "ST",
-      "BH": "BT and not SH",
-      "BS": "SH or BH"
-    }
+    "equations": { "ST": "U_ST", "BT": "U_BT", "SH": "ST", "BH": "BT and not SH", "BS": "SH or BH" }
   },
   "context": { "U_ST": 1, "U_BT": 1 },
   "normality": { "ST": 0, "BT": 0, "SH": 0, "BH": 0, "BS": 0 },
   "verdicts": [
-    { "theory": "butfor", "query": { "cause": "ST=1", "effect": "BS=1" }, "expected": "not-cause", "note": "Billy's rock is a backup." },
-    { "theory": "butfor", "query": { "cause": "BT=1", "effect": "BS=1" }, "expected": "not-cause" },
-    { "theory": "hp-modified", "query": { "cause": "ST=1", "effect": "BS=1" }, "expected": "cause", "note": "Witness: hold BH at its actual value 0." },
-    { "theory": "hp-modified", "query": { "cause": "BT=1", "effect": "BS=1" }, "expected": "not-cause" },
-    { "theory": "hp-modified", "query": { "cause": "ST=1 and BT=1", "effect": "BS=1" }, "expected": "not-cause", "note": "Fails AC3: ST=1 alone suffices." },
-    { "theory": "hp-normality", "query": { "cause": "ST=1", "effect": "BS=1" }, "expected": "cause" }
+    {
+      "theory": "butfor",
+      "query": { "cause": "ST=1", "effect": "BS=1" },
+      "expected": "not-cause",
+      "note": "Billy's rock is a backup."
+    },
+    { "theory": "butfor", "query": {"cause": "BT=1", "effect": "BS=1"}, "expected": "not-cause" },
+    {
+      "theory": "hp-modified",
+      "query": { "cause": "ST=1", "effect": "BS=1" },
+      "expected": "cause",
+      "note": "Witness: hold BH at its actual value 0."
+    },
+    { "theory": "hp-modified", "query": {"cause": "BT=1", "effect": "BS=1"}, "expected": "not-cause" },
+    {
+      "theory": "hp-modified",
+      "query": { "cause": "ST=1 and BT=1", "effect": "BS=1" },
+      "expected": "not-cause",
+      "note": "Fails AC3: ST=1 alone suffices."
+    },
+    { "theory": "hp-normality", "query": {"cause": "ST=1", "effect": "BS=1"}, "expected": "cause" }
   ],
   "showcase": [
-    { "label": { "zh": "小蘇沒丟", "en": "Suzy does not throw" }, "interventions": { "ST": 0 } },
-    { "label": { "zh": "小蘇沒丟，小比也沒擊中", "en": "Suzy does not throw; Billy's rock is stopped" }, "interventions": { "ST": 0, "BH": 0 } }
+    { "label": {"zh-TW": "小蘇沒丟", "en": "Suzy does not throw"}, "interventions": {"ST": 0} },
+    {
+      "label": { "zh-TW": "小蘇沒丟，小比也沒擊中", "en": "Suzy does not throw; Billy's rock is stopped" },
+      "interventions": { "ST": 0, "BH": 0 }
+    }
   ],
   "layout": { "ST": [0, 0], "SH": [1, 0], "BT": [0, 1], "BH": [1, 1], "BS": [2, 0.5] }
 }

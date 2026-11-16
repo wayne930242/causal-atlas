@@ -1,9 +1,11 @@
 import type { Notation } from '../engine/index.ts'
+import type { Messages } from './i18n.ts'
 
 export type UiNotation = Extract<Notation, 'propositional' | 'arithmetic' | 'causal'>
 
-export const NOTATIONS: readonly { readonly value: UiNotation; readonly label: string }[] = [
-  { value: 'propositional', label: '邏輯式' },
-  { value: 'arithmetic', label: '數學式' },
-  { value: 'causal', label: '干預式' },
-]
+const ORDER: readonly UiNotation[] = ['propositional', 'arithmetic', 'causal']
+
+/** The notation switch's options, labelled in the table's language. */
+export function notations(t: Messages): readonly { readonly value: UiNotation; readonly label: string }[] {
+  return ORDER.map((value) => ({ value, label: t.notation[value] }))
+}

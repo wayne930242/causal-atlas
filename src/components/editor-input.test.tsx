@@ -31,7 +31,7 @@ const open = (name: string): void => {
 const type = (label: string | RegExp, value: string): void => {
   fireEvent.change(screen.getByLabelText(label), { target: { value } })
 }
-const label = { zh: 'x', en: 'x' }
+const label = { 'zh-TW': 'x', en: 'x' }
 
 describe('REV-F001: the editor solves once per model, not once per render', () => {
   it('does not solve again when only the notation changes', () => {
@@ -48,15 +48,17 @@ describe('REV-F001: the editor solves once per model, not once per render', () =
       key: newKey(),
       id: `U${i}`,
       label: '',
+      en: '',
       kind: 'exogenous',
       domain: 'boolean',
       values: '',
       shown: false,
     }))
-    const draft: Draft = { ...blankDraft(), mode: 'probability', variables }
+    const draft: Draft = { ...blankDraft('t'), mode: 'probability', variables }
     const compiled = compileDraft(draft)
     expect(compiled.loaded).toBeUndefined()
-    expect(compiled.errors.model).toMatch(/too many contexts/)
+    const model = compiled.errors.model
+    expect(model?.code === 'model' && model.problems.map((p) => p.code)).toEqual(['too-many-contexts'])
   })
 })
 
@@ -75,8 +77,9 @@ describe('REV-F003: untrusted input in the editor', () => {
       id: 'x',
       title: label,
       family: 'actual',
-      story_zh: 's',
-      explanation_zh: 'e',
+      story: label,
+      explanation: label,
+      copy_status: { 'zh-TW': 'draft', en: 'draft' },
       sources: [{ citation: 'c', role: 'origin', verified: false }],
       model: {
         variables: [
@@ -92,25 +95,37 @@ describe('REV-F003: untrusted input in the editor', () => {
     type('貼上 JSON', JSON.stringify(cyclic))
     fireEvent.click(screen.getByRole('button', { name: '匯入' }))
     const alert = within(screen.getByRole('group', { name: '匯入 JSON' })).getByRole('alert')
-    expect(alert.textContent).toMatch(/cyclic/)
+    expect(alert.textContent).toMatch(/式子繞成一圈：A → B → A|式子繞成一圈：B → A → B/)
   })
 })
 
-describe('REV-F006: an imported document does not credit a bundled case', () => {
+describe('REV-F006: an imported document credits a bundled case only when it is that case', () => {
   const startedFrom = (): HTMLSelectElement => screen.getByLabelText('從案例開始') as HTMLSelectElement
+  const rock = caseToDoc(getCase('rock-throwing'))
+  const modified = { ...rock, model: { ...rock.model, equations: { ...rock.model.equations, BH: 'BT' } } }
 
-  it('drops `from` from pasted JSON', () => {
+  it('keeps `from` for pasted JSON of the unchanged case and drops it for a modified one', () => {
     render(<ModelEditor initial="blank" />)
     open('存檔與分享')
-    type('貼上 JSON', JSON.stringify(caseToDoc(getCase('rock-throwing'))))
+    type('貼上 JSON', JSON.stringify(rock))
+    fireEvent.click(screen.getByRole('button', { name: '匯入' }))
+    expect(startedFrom().value).toBe('rock-throwing')
+    type('貼上 JSON', JSON.stringify(modified))
     fireEvent.click(screen.getByRole('button', { name: '匯入' }))
     expect(startedFrom().value).toBe('')
   })
 
-  it('drops `from` from a share link', async () => {
-    const value = await encodeShare(caseToDoc(getCase('rock-throwing')))
+  it('keeps `from` from a share link of the unchanged case', async () => {
+    const value = await encodeShare(rock)
     render(<ModelEditor initial="blank" hash={`#model=${value}`} />)
-    await waitFor(() => expect(screen.getByLabelText('模型名稱')).toHaveProperty('value', getCase('rock-throwing').data.title.zh))
+    await waitFor(() => expect(screen.getByLabelText('模型名稱')).toHaveProperty('value', getCase('rock-throwing').data.title['zh-TW']))
+    expect(startedFrom().value).toBe('rock-throwing')
+  })
+
+  it('drops `from` from a share link of a modified model', async () => {
+    const value = await encodeShare(modified)
+    render(<ModelEditor initial="blank" hash={`#model=${value}`} />)
+    await waitFor(() => expect(screen.getByLabelText('模型名稱')).toHaveProperty('value', getCase('rock-throwing').data.title['zh-TW']))
     expect(startedFrom().value).toBe('')
   })
 

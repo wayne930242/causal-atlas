@@ -2,6 +2,8 @@ import { useRef, useState } from 'react'
 import { getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
+import type { Locale, Messages } from './i18n.ts'
+import { LocaleScope, useMessages } from './i18n.ts'
 import { useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
@@ -24,14 +26,8 @@ export interface CasePageProps {
   readonly next?: { readonly href: string; readonly label: string }
   /** Link in exported images' watermark. Default https://wayneh.tw/causal/. */
   readonly exportUrl?: string
-}
-
-const FAMILY: Record<LoadedCase['data']['family'], string> = {
-  actual: '實際因果',
-  omission: '不作為',
-  norms: '常態與規範',
-  law: '法律',
-  decision: '因果決策',
+  /** Interface and case language. Default: the surrounding LocaleProvider's, else zh-TW. */
+  readonly locale?: Locale
 }
 
 const TOTAL = 4
@@ -42,10 +38,10 @@ interface StorySentence {
 }
 
 /** The story in paragraphs of two sentences; a sentence named in story_tags carries its variable ids. */
-function storyParagraphs(c: LoadedCase): StorySentence[][] {
-  const tags = c.data.story_tags ?? []
-  return c.data.story_zh
-    .split(/(?<=[。？！])/)
+function storyParagraphs(t: Messages, c: LoadedCase): StorySentence[][] {
+  const tags = c.data.story_tags?.[t.locale] ?? []
+  return t
+    .sentences(c.data.story[t.locale])
     .map((s) => s.trim())
     .filter((s) => s !== '')
     .reduce<StorySentence[][]>((paras, text, i) => {
@@ -68,7 +64,16 @@ function notationFor(step: number): UiNotation {
  * Direction 1 case page: story → graph → do (or probabilities) → verdicts.
  * Each step adds one thing; 補充 stays closed until asked.
  */
-export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl }: CasePageProps) {
+export function CasePage({ locale, ...props }: CasePageProps) {
+  return (
+    <LocaleScope locale={locale}>
+      <CasePageBody {...props} />
+    </LocaleScope>
+  )
+}
+
+function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl }: Omit<CasePageProps, 'locale'>) {
+  const t = useMessages()
   const c = getCase(caseId)
   const probabilistic = c.context === undefined
   const preset = c.data.showcase[0]
@@ -90,37 +95,25 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
   }
 
   const nextLabel = (): string => {
-    if (step === 1) return '畫成圖'
-    if (step === 2) return probabilistic ? '把 0／1 改成機率' : '動手改一條式子'
-    return probabilistic ? '比較觀察和動手' : '看各定義怎麼判'
+    if (step === 1) return t.next.graph
+    if (step === 2) return probabilistic ? t.next.toProbability : t.next.intervene
+    return probabilistic ? t.next.compare : t.next.verdicts
   }
 
   const stepNote = (): string[] => {
     if (step === 3 && !probabilistic) {
-      if (preset === undefined) return ['點圖上的節點，套上干預，看其他變項怎麼重算。']
-      const ids = Object.keys(preset.interventions).join('、')
-      return [
-        `現在套上 ${doText(preset.interventions)}（${preset.label.zh}）：${ids} 的式子換成常數，其餘照式子重算。`,
-        '點圖上的節點，可以改別的變項。',
-      ]
+      if (preset === undefined) return [t.noteClickToIntervene]
+      const ids = t.list(Object.keys(preset.interventions))
+      return [t.notePreset(doText(preset.interventions), preset.label[t.locale], ids), t.noteClickOther]
     }
-    if (step === 3) {
-      return [
-        '外生變項原本只取 0 或 1。這一步把它們改成機率 p。',
-        '節點裡填色的高度，是這個變項等於 1 的機率。',
-        '拉滑桿，圖上的數字會跟著變。',
-      ]
-    }
+    if (step === 3) return [...t.noteProbability]
     if (step === 4 && probabilistic && pair !== undefined) {
       const obs = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(pair.observe)?.[1] ?? ''
-      return [
-        `左邊是看到 ${pair.observe}（${label(c.model, obs)}）之後的機率。`,
-        `右邊是動手設定 ${doText(pair.intervene)} 之後的機率。`,
-      ]
+      return [t.noteSee(pair.observe, label(c.model, obs, t.locale)), t.noteDo(doText(pair.intervene))]
     }
     if (step === 4) {
-      const summary = intuitionSummary(c)
-      return summary === undefined ? ['下面列出各個標準的判定，一個標準一列。'] : ['下面列出各個標準的判定，一個標準一列。', summary]
+      const summary = intuitionSummary(t, c)
+      return summary === undefined ? [t.noteVerdicts] : [t.noteVerdicts, summary]
     }
     return []
   }
@@ -134,29 +127,29 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
   const notes = stepNote()
   const rightEmpty = step === 1
   return (
-    <article className="ca-root not-prose ca-case" data-case={c.data.id} data-step={step}>
+    <article className="ca-root not-prose ca-case" data-case={c.data.id} data-step={step} lang={t.locale}>
       {heading && (
         <header className="ca-case-head">
           <p className="ca-kicker ca-mono">
-            CASE <span aria-hidden="true">·</span> {FAMILY[c.data.family]}
+            CASE <span aria-hidden="true">·</span> {t.family[c.data.family]}
           </p>
-          <h1 className="ca-h1">{c.data.title.zh}</h1>
-          {c.data.subtitle !== undefined && <p className="ca-subtitle">{c.data.subtitle}</p>}
+          <h1 className="ca-h1">{c.data.title[t.locale]}</h1>
+          {c.data.subtitle !== undefined && <p className="ca-subtitle">{c.data.subtitle[t.locale]}</p>}
         </header>
       )}
       <p className="ca-sr" aria-live="polite">
-        第 {step} 步，共 {TOTAL} 步
+        {t.stepOf(step, TOTAL)}
       </p>
       <div className="ca-case-body">
         <div className="ca-case-left">
-          <section className="ca-story" aria-label="故事">
-            {storyParagraphs(c).map((p, i) => (
+          <section className="ca-story" aria-label={t.story}>
+            {storyParagraphs(t, c).map((p, i) => (
               <p key={i}>
                 {p.map((s) => (
                   <span key={s.text} className="ca-story-sentence">
                     {s.text}
                     {s.tags.length > 0 && (
-                      <span className="ca-story-tags" aria-label={`對應變項 ${s.tags.join('、')}`}>
+                      <span className="ca-story-tags" aria-label={t.storyTags(t.list(s.tags))}>
                         {s.tags.map((id) => (
                           <span key={id} className="ca-story-tag ca-mono" aria-hidden="true">
                             {id}
@@ -170,8 +163,8 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
             ))}
           </section>
           {step >= 2 && (
-            <section className="ca-explain" aria-label="模型記了什麼" data-reveal="explanation">
-              <p>{c.data.explanation_zh}</p>
+            <section className="ca-explain" aria-label={t.explanation} data-reveal="explanation">
+              <p>{c.data.explanation[t.locale]}</p>
             </section>
           )}
           {notes.length > 0 && (
@@ -181,7 +174,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
               ))}
             </section>
           )}
-          <nav className="ca-stepnav" aria-label="步驟">
+          <nav className="ca-stepnav" aria-label={t.steps}>
             {step < TOTAL ? (
               <button type="button" className="ca-btn ca-btn-primary" onClick={() => go(step + 1)}>
                 {nextLabel()}
@@ -194,13 +187,13 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
               </a>
             ) : (
               <button type="button" className="ca-btn ca-btn-outline" onClick={() => go(1)}>
-                從頭再看
+                {t.startOver}
               </button>
             )}
             <Progress step={step} total={TOTAL} />
             {step > 1 && (
               <button type="button" className="ca-link ca-stepnav-back" onClick={() => go(step - 1)}>
-                上一步
+                {t.back}
               </button>
             )}
           </nav>
@@ -208,7 +201,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
         <div className={`ca-case-right${rightEmpty ? ' is-empty' : ''}`} ref={panelRef}>
           {rightEmpty ? (
             <div className="ca-placeholder" aria-hidden="true">
-              <span className="ca-muted ca-small">下一步把故事畫成圖</span>
+              <span className="ca-muted ca-small">{t.placeholder}</span>
             </div>
           ) : probabilistic && step >= 3 ? (
             <ProbabilityPanelFor
@@ -252,7 +245,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
         </section>
       )}
       <footer className="ca-sources">
-        <span className="ca-muted">來源</span> {shortSources(c)}
+        <span className="ca-muted">{t.sources}</span> {shortSources(t, c)}
       </footer>
     </article>
   )

@@ -1,3 +1,4 @@
+import { problem } from './errors.ts'
 import { evalExpr } from './expr.ts'
 import type { CausalModel } from './model.ts'
 import { getVariable } from './model.ts'
@@ -35,7 +36,7 @@ export function evaluate(model: CausalModel, context: Assignment, interventions:
   const values: Record<string, Value> = {}
   for (const id of model.exogenous) {
     const raw = fixed[id] ?? context[id]
-    if (raw === undefined) throw new ModelError(`context has no value for exogenous variable ${id}`)
+    if (raw === undefined) throw new ModelError(problem('context-missing', { id }))
     values[id] = coerceToDomain(getVariable(model, id), raw)
   }
   for (const id of model.endogenous) {
@@ -45,7 +46,7 @@ export function evaluate(model: CausalModel, context: Assignment, interventions:
       continue
     }
     const expr = model.equations.get(id)
-    if (expr === undefined) throw new ModelError(`no equation for ${id}`)
+    if (expr === undefined) throw new ModelError(problem('missing-equation', { id }))
     values[id] = coerceToDomain(getVariable(model, id), evalExpr(expr, { values }))
   }
   const intervened = Object.keys(fixed)

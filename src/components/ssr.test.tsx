@@ -15,7 +15,7 @@ describe('server rendering', () => {
     const { CasePage, CausalPlayground, ProbabilityPanel, WorldLanes } = await import('./index.ts')
     const c = getCase(id)
     for (let step = 1; step <= 4; step += 1) {
-      expect(renderToString(createElement(CasePage, { caseId: id, initialStep: step }))).toContain(c.data.title.zh)
+      expect(renderToString(createElement(CasePage, { caseId: id, initialStep: step }))).toContain(c.data.title['zh-TW'])
     }
     expect(renderToString(createElement(CausalPlayground, { caseId: id }))).toContain('ca-graph')
     expect(renderToString(createElement(ProbabilityPanel, { caseId: id }))).toContain('data-level')

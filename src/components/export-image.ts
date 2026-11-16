@@ -1,4 +1,6 @@
 import { DEFAULT_URL, watermarkLine } from './cite.ts'
+import type { Locale } from './i18n.ts'
+import { DEFAULT_LOCALE, messagesFor } from './i18n.ts'
 import { saveFile } from './download.ts'
 import { textWidth } from './view-model.ts'
 
@@ -214,7 +216,7 @@ export interface ExportTag {
 
 export interface ExportPanel {
   readonly svg: SVGSVGElement
-  /** Shown above the graph, like the box head on the page (e.g. 干預後 + do(SH=0)). */
+  /** Shown above the graph, like the box head on the page (e.g. After intervention + do(SH=0)). */
   readonly tags?: readonly ExportTag[]
   /** One line under the graph, e.g. a probability. */
   readonly foot?: string
@@ -228,14 +230,18 @@ export interface ExportSource {
   readonly title: string
   readonly panels: readonly ExportPanel[]
   readonly legend?: string
-  /** Short origin citations, e.g. `Hall 2004`; adds 「案例出處：…」 to the watermark. */
+  /** Short origin citations, e.g. `Hall 2004`; adds the case-source line to the watermark. */
   readonly origin?: string
+  /** Releases anything drawn only for this export (a graph rendered in another language). */
+  readonly dispose?: () => void
 }
 
 export interface ExportOptions {
   readonly theme: ExportTheme
   /** Link in the watermark. Default https://wayneh.tw/causal/. */
   readonly url?: string
+  /** Language of the watermark lines. Default zh-TW; the title, tags and legend come in the source. */
+  readonly locale?: Locale
 }
 
 function esc(s: string): string {
@@ -327,7 +333,9 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
   const contentH = Math.max(0, ...panels.map((x) => x.h))
   const legendH = source.legend === undefined ? 0 : 26
 
-  const lines = [watermarkLine(url), ...(source.origin === undefined || source.origin === '' ? [] : [`案例出處：${source.origin}`])]
+  const locale = options.locale ?? DEFAULT_LOCALE
+  const origin = source.origin === undefined || source.origin === '' ? [] : [messagesFor(locale).export.caseSource(source.origin)]
+  const lines = [watermarkLine(url, locale), ...origin]
   const WM_SIZE = 12
   const wmH = 14 + lines.length * 18 + 8
   const width = Math.ceil(
@@ -412,10 +420,10 @@ export async function rasterize(built: BuiltSvg, scale = 2): Promise<Blob> {
   })
 }
 
-/** Build and save the image: `<name>-<theme>.svg` or `.png` (2×). */
+/** Build and save the image: `<name>-<theme>.svg` or `.png` (2×), with `-en` for English. */
 export async function exportImage(source: ExportSource, options: ExportOptions & { readonly format: ExportFormat }): Promise<void> {
   const built = buildExportSvg(source, options)
-  const base = `${source.name}-${options.theme}`
+  const base = `${source.name}-${options.theme}${(options.locale ?? DEFAULT_LOCALE) === 'en' ? '-en' : ''}`
   if (options.format === 'svg') {
     saveFile(`${base}.svg`, built.svg, 'image/svg+xml')
     return

@@ -1,3 +1,5 @@
+import type { Where } from './errors.ts'
+import { problem } from './errors.ts'
 import type { Expr } from './expr.ts'
 import { containsDo, freeVariables } from './expr.ts'
 import { parseExpr } from './parse.ts'
@@ -27,7 +29,7 @@ export class CyclicModelError extends ModelError {
   readonly cycle: readonly string[]
 
   constructor(cycle: readonly string[]) {
-    super(`model is cyclic: ${cycle.join(' → ')}`)
+    super(problem('cyclic', { cycle }))
     this.name = 'CyclicModelError'
     this.cycle = cycle
   }
@@ -35,17 +37,17 @@ export class CyclicModelError extends ModelError {
 
 export function getVariable(model: CausalModel, id: string): Variable {
   const variable = model.byId.get(id)
-  if (variable === undefined) throw new ModelError(`unknown variable ${id}`)
+  if (variable === undefined) throw new ModelError(problem('unknown-variable', { id }))
   return variable
 }
 
 export function buildModel(spec: ModelSpec): CausalModel {
   const byId = new Map<string, Variable>()
   for (const variable of spec.variables) {
-    if (isReservedName(variable.id)) throw new ModelError(`${variable.id} is a reserved name and cannot be a variable`)
-    if (byId.has(variable.id)) throw new ModelError(`duplicate variable ${variable.id}`)
+    if (isReservedName(variable.id)) throw new ModelError(problem('reserved-name', { id: variable.id }))
+    if (byId.has(variable.id)) throw new ModelError(problem('duplicate-variable', { id: variable.id }))
     if (variable.domain.kind === 'finite' && variable.domain.values.length === 0) {
-      throw new ModelError(`variable ${variable.id} has an empty domain`)
+      throw new ModelError(problem('empty-domain', { id: variable.id }))
     }
     byId.set(variable.id, variable)
   }
@@ -53,11 +55,12 @@ export function buildModel(spec: ModelSpec): CausalModel {
   const equations = new Map<string, Expr>()
   for (const [id, rhs] of Object.entries(spec.equations)) {
     const variable = byId.get(id)
-    if (variable === undefined) throw new ModelError(`equation for unknown variable ${id}`)
-    if (variable.kind === 'exogenous') throw new ModelError(`exogenous variable ${id} cannot have an equation`)
+    if (variable === undefined) throw new ModelError(problem('equation-for-unknown', { id }))
+    if (variable.kind === 'exogenous') throw new ModelError(problem('equation-for-exogenous', { id }))
+    const where: Where = { kind: 'equation', id }
     const expr = typeof rhs === 'string' ? parseExpr(rhs) : rhs
-    if (containsDo(expr)) throw new ModelError(`equation for ${id} contains an intervention`)
-    checkExpr(expr, byId, `equation for ${id}`, variable)
+    if (containsDo(expr)) throw new ModelError(problem('intervention-in-equation', {}, where))
+    checkExpr(expr, byId, where, variable)
     equations.set(id, expr)
   }
 
@@ -65,7 +68,7 @@ export function buildModel(spec: ModelSpec): CausalModel {
   for (const variable of spec.variables) {
     if (variable.kind === 'exogenous') continue
     const expr = equations.get(variable.id)
-    if (expr === undefined) throw new ModelError(`endogenous variable ${variable.id} has no equation`)
+    if (expr === undefined) throw new ModelError(problem('missing-equation', { id: variable.id }))
     const free = freeVariables(expr)
     parents.set(
       variable.id,
@@ -124,19 +127,20 @@ function topologicalOrder(ids: readonly string[], parents: ReadonlyMap<string, r
 export function checkExpr(
   expr: Expr,
   byId: ReadonlyMap<string, Variable>,
-  where: string,
+  where: Where,
   owner?: Variable,
 ): void {
   const lookupVar = (name: string): Variable => {
     const v = byId.get(name)
-    if (v === undefined) throw new ModelError(`${where}: unknown variable ${name}`)
+    if (v === undefined) throw new ModelError(problem('unknown-variable', { id: name }, where))
     return v
   }
   const checkConst = (variable: Variable, value: Value): void => {
     try {
       coerceToDomain(variable, value)
     } catch (error) {
-      throw new ModelError(`${where}: ${(error as Error).message}`)
+      if (error instanceof ModelError) throw new ModelError({ ...error.problem, where })
+      throw error
     }
   }
   const visit = (e: Expr): void => {
@@ -174,11 +178,11 @@ export function checkExpr(
         const seen = new Set<string>()
         for (const row of e.rows) {
           if (row.when.length !== inputs.length) {
-            throw new ModelError(`${where}: lookup row has ${row.when.length} inputs, expected ${inputs.length}`)
+            throw new ModelError(problem('lookup-row-length', { got: row.when.length, expected: inputs.length }, where))
           }
           row.when.forEach((value, i) => checkConst(inputs[i], value))
           const key = row.when.map((value, i) => String(coerceToDomain(inputs[i], value))).join('|')
-          if (seen.has(key)) throw new ModelError(`${where}: lookup lists inputs (${key}) twice`)
+          if (seen.has(key)) throw new ModelError(problem('lookup-duplicate', { key }, where))
           seen.add(key)
           if (owner !== undefined) checkConst(owner, row.value)
         }
@@ -186,7 +190,7 @@ export function checkExpr(
         return
       }
       case 'do':
-        if (owner !== undefined) throw new ModelError(`${where}: interventions are not allowed in equations`)
+        if (owner !== undefined) throw new ModelError(problem('intervention-in-equation', {}, where))
         e.interventions.forEach((item) => checkConst(lookupVar(item.variable), item.value))
         visit(e.body)
         return

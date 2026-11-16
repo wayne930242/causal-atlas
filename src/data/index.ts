@@ -5,9 +5,9 @@ import { loadCase } from './load.ts'
 export type { LoadedCase, VerdictCheck } from './load.ts'
 export { buildCase, checkVerdict, describeVerdict, loadCase } from './load.ts'
 export type { CaseFamily, CaseFile, CaseTheory, CaseVerdict, ModelDoc } from './schema.ts'
-export { MODEL_DOC_FORMAT, caseSchema, modelDocSchema } from './schema.ts'
+export { LOCALES, MODEL_DOC_FORMAT, caseSchema, localizedSchema, modelDocSchema } from './schema.ts'
 export type { ImportResult } from './model-doc.ts'
-export { caseToDoc, decodeShare, docToCase, encodeShare, parseModelJson, shareFromHash, tableToSource } from './model-doc.ts'
+export { caseToDoc, decodeShare, docToCase, encodeShare, parseModelJson, sameModel, schemaProblems, shareFromHash, tableToSource } from './model-doc.ts'
 export { caseFiles, fileId }
 
 const loaded = new Map<string, LoadedCase>()

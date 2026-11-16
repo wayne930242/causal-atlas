@@ -2,17 +2,10 @@ import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, CausalTheory, CausalVerdict, Value } from '../engine/index.ts'
 import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
+import type { Messages } from './i18n.ts'
 import { assignmentText, bracketText, flipValue, label } from './view-model.ts'
 
-/** Verdict rows computed by the engine, with short plain-language sentences. */
-
-export const THEORY_NAME: Record<CausalTheory, string> = {
-  butfor: '簡單反事實',
-  'hp-original': 'HP 原始定義',
-  'hp-updated': 'HP 更新定義',
-  'hp-modified': 'HP 修正定義',
-  'hp-normality': 'HP 加上常態',
-}
+/** Verdict rows computed by the engine, with short plain-language sentences in the table's language. */
 
 export const THEORY_REF: Record<CausalTheory, string> = {
   butfor: '',
@@ -20,12 +13,6 @@ export const THEORY_REF: Record<CausalTheory, string> = {
   'hp-updated': 'Halpern & Pearl 2005',
   'hp-modified': 'Halpern 2015',
   'hp-normality': 'Halpern & Hitchcock 2015',
-}
-
-export const VERDICT_WORD: Record<CausalVerdict, string> = {
-  cause: '算',
-  'not-cause': '不算',
-  'part-of-cause': '算一部分',
 }
 
 const ACTUAL_THEORIES = new Set<string>(['butfor', 'hp-original', 'hp-updated', 'hp-modified', 'hp-normality'])
@@ -65,19 +52,15 @@ function causeText(cause: string): string {
   return cause.replace(/\s+and\s+/g, ' ∧ ')
 }
 
-function changeText(a: Assignment): string {
-  return Object.entries(a)
-    .map(([id, v]) => `${id} 改成 ${formatValue(v)}`)
-    .join('、')
+function changeText(t: Messages, a: Assignment): string {
+  return t.list(Object.entries(a).map(([id, v]) => t.changeItem(id, formatValue(v))))
 }
 
-function fixText(a: Assignment): string {
-  return Object.entries(a)
-    .map(([id, v]) => `${id} 固定在 ${formatValue(v)}`)
-    .join('、')
+function fixText(t: Messages, a: Assignment): string {
+  return t.list(Object.entries(a).map(([id, v]) => t.fixItem(id, formatValue(v))))
 }
 
-export function actualGroups(c: LoadedCase): ActualGroup[] {
+export function actualGroups(t: Messages, c: LoadedCase): ActualGroup[] {
   const context = c.context
   if (context === undefined) return []
   const { model } = c
@@ -92,29 +75,28 @@ export function actualGroups(c: LoadedCase): ActualGroup[] {
     groups.set(key, group)
     const result = actualCause(model, context, { cause, effect }, theory, { normality: c.normality })
     const yId = effectVariable(effect)
-    const yNow = (world: Assignment): string => (yId === undefined ? '' : `${yId} 是 ${formatValue(world[yId] ?? '')}`)
+    const yNow = (world: Assignment): string => (yId === undefined ? '' : t.outcomeIs(yId, formatValue(world[yId] ?? '')))
     const check = result.check
     let sentence: string
     let formula: string | undefined
     let fixed: Assignment | undefined
     let show: Assignment | undefined
     if (!check.ac1) {
-      sentence = `${causeText(cause)} 或 ${effect} 在實際世界不成立。`
+      sentence = t.notActual(causeText(cause), effect)
     } else if (result.verdict === 'cause' && check.witness !== undefined) {
       const w = check.witness
       const hasW = w.W.length > 0
       fixed = hasW ? w.w : undefined
       show = { ...w.xPrime, ...w.w }
       const allActual = w.W.every((id) => valuesEqual(w.w[id], actual[id]))
-      const hold = hasW ? `先把 ${fixText(w.w)}${allActual ? '（實際值）' : ''}，再把` : '把'
-      sentence = `${hold} ${changeText(w.xPrime)}，${yNow(w.world)}。`
+      sentence = t.witnessSentence(hasW ? fixText(t, w.w) : undefined, allActual, changeText(t, w.xPrime), yNow(w.world))
       formula = `${bracketText(show)}(${negateEffect(effect)})`
     } else if (result.verdict === 'part-of-cause' && result.containedIn !== undefined) {
-      sentence = `單獨不算；它是 ${assignmentText(result.containedIn.cause, ' ∧ ')} 這個原因的一部分。`
+      sentence = t.partOfCause(assignmentText(result.containedIn.cause, ' ∧ '))
     } else if (check.smallerCause !== undefined) {
-      sentence = `其中 ${assignmentText(check.smallerCause.cause, ' ∧ ')} 單獨就夠了，多出來的部分不算。`
+      sentence = t.smallerCause(assignmentText(check.smallerCause.cause, ' ∧ '))
     } else if (theory === 'hp-normality') {
-      sentence = '能讓結果不發生的情況，都比實際世界更不尋常。'
+      sentence = t.lessNormal
     } else {
       const parsed = parseCause(model, cause)
       const flipped: Record<string, Value> = {}
@@ -122,18 +104,18 @@ export function actualGroups(c: LoadedCase): ActualGroup[] {
       const world = evaluate(model, context, flipped).values
       sentence =
         theory === 'butfor'
-          ? `只問一件事：少了它，結果還會不會發生。把 ${changeText(flipped)}，${yNow(world)}。`
-          : `固定哪些變項都一樣：把 ${changeText(flipped)}，${yNow(world)}。`
+          ? t.butForSentence(changeText(t, flipped), yNow(world))
+          : t.anyFixSentence(changeText(t, flipped), yNow(world))
     }
     group.rows.push({ theory, verdict: result.verdict, sentence, formula, fixed, show })
   }
   return [...groups.values()].map((g) => {
     const parsed = parseCause(model, g.cause)
     const ids = Object.keys(parsed)
-    const causeLabel = ids.map((id) => label(model, id)).join('、')
+    const causeLabel = t.list(ids.map((id) => label(model, id, t.locale)))
     const yId = effectVariable(g.effect)
-    const effectLabel = yId === undefined ? '' : label(model, yId)
-    return { ...g, heading: `${causeLabel}（${causeText(g.cause)}）算不算${effectLabel}（${g.effect}）的原因` }
+    const effectLabel = yId === undefined ? '' : label(model, yId, t.locale)
+    return { ...g, heading: t.verdictHeading(causeLabel, causeText(g.cause), effectLabel, g.effect) }
   })
 }
 
@@ -170,7 +152,7 @@ export interface DecisionRow {
   readonly utilities: readonly { readonly act: string; readonly eu: number | undefined }[]
 }
 
-export function decisionRows(c: LoadedCase): DecisionRow[] {
+export function decisionRows(t: Messages, c: LoadedCase): DecisionRow[] {
   const prior = c.prior
   const decision = c.decision
   if (prior === undefined || decision === undefined) return []
@@ -178,8 +160,8 @@ export function decisionRows(c: LoadedCase): DecisionRow[] {
   const act = (a: Value): string => `${decision.act}=${formatValue(a)}`
   return (['edt', 'cdt'] as const).map((theory) => ({
     theory,
-    name: theory === 'edt' ? '證據決策論（EDT）' : '因果決策論（CDT）',
-    choice: (theory === 'edt' ? result.edtChoice : result.cdtChoice).map(act).join('、'),
+    name: t.decisionName[theory],
+    choice: t.list((theory === 'edt' ? result.edtChoice : result.cdtChoice).map(act)),
     utilities: result.acts.map((a) => ({ act: act(a.act), eu: theory === 'edt' ? a.edt?.eu : a.cdt.eu })),
   }))
 }
@@ -218,18 +200,19 @@ export interface Intuition {
   readonly agree: ReadonlySet<string>
 }
 
-export function intuition(c: LoadedCase): Intuition | undefined {
+export function intuition(t: Messages, c: LoadedCase): Intuition | undefined {
   const i = c.data.intuition
   if (i === undefined) return undefined
+  const text = i.text[t.locale]
   if ('choice' in i.query) {
-    return { key: `choice:${i.query.choice}`, choice: `${i.query.choice}=${formatValue(i.expected as Value)}`, text: i.text, agree: new Set(i.agree) }
+    return { key: `choice:${i.query.choice}`, choice: `${i.query.choice}=${formatValue(i.expected as Value)}`, text, agree: new Set(i.agree) }
   }
-  return { key: `${i.query.cause}⇒${i.query.effect}`, verdict: i.expected as CausalVerdict, text: i.text, agree: new Set(i.agree) }
+  return { key: `${i.query.cause}⇒${i.query.effect}`, verdict: i.expected as CausalVerdict, text, agree: new Set(i.agree) }
 }
 
-/** 「簡單反事實和直覺不一致；HP 修正定義、HP 加上常態和直覺一致。」 for the theories the case lists on that query. */
-export function intuitionSummary(c: LoadedCase): string | undefined {
-  const i = intuition(c)
+/** Which theories the case lists on the intuition's query agree with it and which do not, as one sentence. */
+export function intuitionSummary(t: Messages, c: LoadedCase): string | undefined {
+  const i = intuition(t, c)
   if (i === undefined) return undefined
   const listed = new Set<string>()
   for (const v of c.data.verdicts) {
@@ -239,13 +222,10 @@ export function intuitionSummary(c: LoadedCase): string | undefined {
       listed.add(v.theory)
     }
   }
-  const name = (t: string): string => (t === 'edt' ? '證據決策論' : t === 'cdt' ? '因果決策論' : THEORY_NAME[t as CausalTheory])
-  const agree = [...listed].filter((t) => i.agree.has(t)).map(name)
-  const differ = [...listed].filter((t) => !i.agree.has(t)).map(name)
-  const parts: string[] = []
-  if (differ.length > 0) parts.push(`${differ.join('、')}和直覺不一致`)
-  if (agree.length > 0) parts.push(`${agree.join('、')}和直覺一致`)
-  return parts.length === 0 ? undefined : `${parts.join('；')}。`
+  const name = (x: string): string => (x === 'edt' || x === 'cdt' ? t.decisionShort[x] : t.theory[x as CausalTheory])
+  const agree = [...listed].filter((x) => i.agree.has(x)).map(name)
+  const differ = [...listed].filter((x) => !i.agree.has(x)).map(name)
+  return t.intuitionSummary(differ, agree)
 }
 
 function shortCitation(citation: string): string {
@@ -257,18 +237,15 @@ function shortCitation(citation: string): string {
 }
 
 /** Short citations: `Hall 2004；Halpern & Pearl 2005`. */
-export function shortSources(c: LoadedCase): string {
+export function shortSources(t: Messages, c: LoadedCase): string {
   const order = { origin: 0, treatment: 1, reference: 2 }
-  return [...c.data.sources]
+  const sorted = [...c.data.sources]
     .sort((a, b) => order[a.role] - order[b.role])
     .map((s) => shortCitation(s.citation))
-    .join('；')
+  return t.sourceList(sorted)
 }
 
 /** Where the case comes from, short form: `Hall 2004`. */
-export function originSources(c: LoadedCase): string {
-  return c.data.sources
-    .filter((s) => s.role === 'origin')
-    .map((s) => shortCitation(s.citation))
-    .join('；')
+export function originSources(t: Messages, c: LoadedCase): string {
+  return t.sourceList(c.data.sources.filter((s) => s.role === 'origin').map((s) => shortCitation(s.citation)))
 }

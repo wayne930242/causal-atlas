@@ -1,8 +1,11 @@
+import type { Problem, Where } from './errors.ts'
+import { CausalAtlasError, problem } from './errors.ts'
 import type { Assignment, Domain, Value, Variable } from './types.ts'
 
-export class ModelError extends Error {
-  constructor(message: string) {
-    super(message)
+/** A model, query or document the engine cannot work with; `problem` says which and why. */
+export class ModelError extends CausalAtlasError {
+  constructor(p: Problem) {
+    super(p)
     this.name = 'ModelError'
   }
 }
@@ -27,11 +30,11 @@ export function domainValues(domain: Domain): readonly Value[] {
  * Interpret a value as a boolean. Accepts `true`/`false` and the numbers 1/0, so that
  * authoring syntax such as `BS=1` works on boolean variables.
  */
-export function asBool(value: Value, where: string): boolean {
+export function asBool(value: Value, where: Where): boolean {
   if (typeof value === 'boolean') return value
   if (value === 1) return true
   if (value === 0) return false
-  throw new ModelError(`${where}: expected a boolean, got ${JSON.stringify(value)}`)
+  throw new ModelError(problem('not-boolean', { value: JSON.stringify(value) }, where))
 }
 
 /** Equality that treats 1/0 and true/false as the same value. */
@@ -45,13 +48,16 @@ export function valuesEqual(a: Value, b: Value): boolean {
 export function coerceToDomain(variable: Variable, value: Value): Value {
   const { domain } = variable
   if (domain.kind === 'boolean') {
-    return asBool(value, `variable ${variable.id}`)
+    if (typeof value === 'boolean') return value
+    if (value === 1) return true
+    if (value === 0) return false
+    throw new ModelError(problem('not-boolean', { id: variable.id, value: JSON.stringify(value) }))
   }
   for (const candidate of domain.values) {
     if (valuesEqual(candidate, value)) return candidate
   }
   throw new ModelError(
-    `variable ${variable.id}: value ${JSON.stringify(value)} is not in domain ${JSON.stringify(domain.values)}`,
+    problem('not-in-domain', { id: variable.id, value: JSON.stringify(value), values: JSON.stringify(domain.values) }),
   )
 }
 
@@ -68,7 +74,7 @@ export function assignmentKey(assignment: Assignment, order: readonly string[]):
 
 export function requireValue(assignment: Assignment, id: string): Value {
   const value = assignment[id]
-  if (value === undefined) throw new ModelError(`no value for variable ${id}`)
+  if (value === undefined) throw new ModelError(problem('no-value', { id }))
   return value
 }
 

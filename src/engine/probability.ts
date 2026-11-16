@@ -1,3 +1,5 @@
+import type { Where } from './errors.ts'
+import { problem } from './errors.ts'
 import type { Expr } from './expr.ts'
 import type { Interventions } from './evaluate.ts'
 import { evalFormula, toFormula } from './formula.ts'
@@ -42,12 +44,12 @@ export function pointMass(context: Assignment): JointPrior {
   return { kind: 'joint', rows: [{ context, p: 1 }] }
 }
 
-function checkProbability(p: number, where: string): void {
-  if (!Number.isFinite(p) || p < 0 || p > 1 + TOLERANCE) throw new ModelError(`${where}: invalid probability ${p}`)
+function checkProbability(p: number, where: Where): void {
+  if (!Number.isFinite(p) || p < 0 || p > 1 + TOLERANCE) throw new ModelError(problem('invalid-probability', { p }, where))
 }
 
-function checkSum(total: number, where: string): void {
-  if (Math.abs(total - 1) > 1e-6) throw new ModelError(`${where}: probabilities sum to ${total}, not 1`)
+function checkSum(total: number, where: Where): void {
+  if (Math.abs(total - 1) > 1e-6) throw new ModelError(problem('probabilities-sum', { total }, where))
 }
 
 /** The most contexts a prior may spread over: the queries enumerate every one of them. */
@@ -68,9 +70,7 @@ export function contextCount(model: CausalModel, prior: Prior): number {
 export function checkContextBudget(model: CausalModel, prior: Prior): void {
   const count = contextCount(model, prior)
   if (count > MAX_CONTEXTS) {
-    throw new ModelError(
-      `too many contexts to enumerate: ${count.toLocaleString('en-US')} (limit ${MAX_CONTEXTS.toLocaleString('en-US')}); use fewer exogenous variables or smaller supports`,
-    )
+    throw new ModelError(problem('too-many-contexts', { count, limit: MAX_CONTEXTS }))
   }
 }
 
@@ -82,46 +82,46 @@ export function enumerateContexts(model: CausalModel, prior: Prior): WeightedCon
     let total = 0
     const out: WeightedContext[] = []
     for (const row of prior.rows) {
-      checkProbability(row.p, 'joint prior')
+      checkProbability(row.p, { kind: 'joint-prior' })
       const context: Record<string, Value> = {}
       for (const id of model.exogenous) {
         const raw = row.context[id]
-        if (raw === undefined) throw new ModelError(`joint prior row has no value for ${id}`)
+        if (raw === undefined) throw new ModelError(problem('joint-row-missing', { id }))
         context[id] = coerceToDomain(getVariable(model, id), raw)
       }
       for (const id of Object.keys(row.context)) {
-        if (getVariable(model, id).kind !== 'exogenous') throw new ModelError(`joint prior assigns endogenous ${id}`)
+        if (getVariable(model, id).kind !== 'exogenous') throw new ModelError(problem('joint-endogenous', { id }))
       }
       const key = assignmentKey(context, model.exogenous)
-      if (seen.has(key)) throw new ModelError(`joint prior lists context ${key} twice`)
+      if (seen.has(key)) throw new ModelError(problem('joint-duplicate', { key }))
       seen.add(key)
       total += row.p
       if (row.p > 0) out.push({ context, p: row.p })
     }
-    checkSum(total, 'joint prior')
+    checkSum(total, { kind: 'joint-prior' })
     return out
   }
 
   const marginals = model.exogenous.map((id) => {
     const outcomes = prior.marginals[id]
-    if (outcomes === undefined) throw new ModelError(`prior has no marginal for exogenous ${id}`)
+    if (outcomes === undefined) throw new ModelError(problem('marginal-missing', { id }))
     const variable = getVariable(model, id)
     const seen = new Set<string>()
     let total = 0
     const normalized = outcomes.map((o) => {
-      checkProbability(o.p, `marginal of ${id}`)
+      checkProbability(o.p, { kind: 'marginal', id })
       const value = coerceToDomain(variable, o.value)
       const key = String(value)
-      if (seen.has(key)) throw new ModelError(`marginal of ${id} lists ${key} twice`)
+      if (seen.has(key)) throw new ModelError(problem('marginal-duplicate', { key }, { kind: 'marginal', id }))
       seen.add(key)
       total += o.p
       return { value, p: o.p }
     })
-    checkSum(total, `marginal of ${id}`)
+    checkSum(total, { kind: 'marginal', id })
     return { id, outcomes: normalized.filter((o) => o.p > 0) }
   })
   for (const id of Object.keys(prior.marginals)) {
-    if (getVariable(model, id).kind !== 'exogenous') throw new ModelError(`prior has a marginal for endogenous ${id}`)
+    if (getVariable(model, id).kind !== 'exogenous') throw new ModelError(problem('marginal-endogenous', { id }))
   }
 
   let worlds: WeightedContext[] = [{ context: {}, p: 1 }]
@@ -163,6 +163,6 @@ export function probability(model: CausalModel, prior: Prior, query: Probability
     evidence += p
     if (evalFormula(model, context, event, intervention)) joint += p
   }
-  if (evidence <= 0) throw new ModelError('conditioning event has probability 0')
+  if (evidence <= 0) throw new ModelError(problem('zero-probability-evidence', {}))
   return { value: joint / evidence, joint, evidence }
 }

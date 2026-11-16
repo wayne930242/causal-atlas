@@ -1,4 +1,6 @@
-export type { Assignment, Domain, BooleanDomain, FiniteDomain, Edge, LocalizedText, Value, Variable, VariableKind } from './types.ts'
+export type { Assignment, Domain, BooleanDomain, FiniteDomain, Edge, Locale, LocalizedText, Value, Variable, VariableKind } from './types.ts'
+export type { Problem, ProblemCode, ProblemParams, ProblemWording, Where } from './errors.ts'
+export { CausalAtlasError, PROBLEMS_EN, problem, problemOf, problemText } from './errors.ts'
 export { ModelError, asBool, coerceToDomain, domainValues, formatValue, isReservedName, valuesEqual } from './values.ts'
 export type { Expr, InterventionItem, LookupExpr, LookupRow } from './expr.ts'
 export { evalExpr, freeVariables } from './expr.ts'

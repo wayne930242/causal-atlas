@@ -1,9 +1,10 @@
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import { formatValue } from '../engine/values.ts'
+import { useMessages } from './i18n.ts'
 import { Disclosure, NoIcon, OkIcon, PartIcon, Pin, Tag } from './parts.tsx'
 import type { ActualGroup, ActualRow, Intuition } from './verdict-rows.ts'
-import { THEORY_NAME, THEORY_REF, VERDICT_WORD, actualGroups, decisionRows, intuition, numberRows } from './verdict-rows.ts'
+import { THEORY_REF, actualGroups, decisionRows, intuition, numberRows } from './verdict-rows.ts'
 import { assignmentText, probText } from './view-model.ts'
 
 export interface VerdictsProps {
@@ -22,29 +23,31 @@ function VerdictIcon({ verdict }: { readonly verdict: ActualRow['verdict'] }) {
 }
 
 function Mismatch() {
+  const t = useMessages()
   return (
     <span className="ca-mismatch">
-      <Tag tone="line">和直覺不合</Tag>
+      <Tag tone="line">{t.againstIntuition}</Tag>
     </span>
   )
 }
 
 function IntuitionRow({ i }: { readonly i: Intuition }) {
+  const t = useMessages()
   return (
     <li className="ca-verdict" data-theory="intuition" data-intuition="true" data-verdict={i.verdict ?? ''}>
       <div className="ca-verdict-main">
         <span className="ca-verdict-theory">
-          <Tag tone="chip">直覺</Tag>
+          <Tag tone="chip">{t.intuition}</Tag>
         </span>
         <span className="ca-verdict-word">
           {i.verdict !== undefined ? (
             <>
               <VerdictIcon verdict={i.verdict} />
-              <strong>{VERDICT_WORD[i.verdict]}</strong>
+              <strong>{t.verdict[i.verdict]}</strong>
             </>
           ) : (
             <strong>
-              選 <span className="ca-mono">{i.choice}</span>
+              {t.choose} <span className="ca-mono">{i.choice}</span>
             </strong>
           )}
         </span>
@@ -63,16 +66,17 @@ function ActualRowView({
   readonly onShow?: VerdictsProps['onShow']
   readonly mismatch?: boolean
 }) {
+  const t = useMessages()
   const hasWitness = row.fixed !== undefined && row.theory !== 'butfor'
   return (
     <li className="ca-verdict" data-theory={row.theory} data-verdict={row.verdict} data-mismatch={mismatch ? 'true' : undefined}>
       <div className="ca-verdict-main">
         <span className="ca-verdict-theory">
-          <Tag tone={hasWitness ? 'amber' : 'chip'}>{THEORY_NAME[row.theory]}</Tag>
+          <Tag tone={hasWitness ? 'amber' : 'chip'}>{t.theory[row.theory]}</Tag>
         </span>
         <span className="ca-verdict-word">
           <VerdictIcon verdict={row.verdict} />
-          <strong>{VERDICT_WORD[row.verdict]}</strong>
+          <strong>{t.verdict[row.verdict]}</strong>
         </span>
         <span className="ca-verdict-sentence">{row.sentence}</span>
         {mismatch && <Mismatch />}
@@ -80,7 +84,7 @@ function ActualRowView({
           <span className="ca-verdict-aside">
             <Tag tone="amber">
               <Pin />
-              見證：固定 {assignmentText(row.fixed)}
+              {t.witnessHold(assignmentText(row.fixed))}
             </Tag>
           </span>
         )}
@@ -92,11 +96,11 @@ function ActualRowView({
               <code className="ca-mono">{row.formula}</code>
               <span className="ca-holds">
                 <OkIcon size={18} />
-                成立
+                {t.holds}
               </span>
               {onShow !== undefined && row.show !== undefined && (
                 <button type="button" className="ca-link" onClick={() => onShow(row.show ?? {}, row.fixed)}>
-                  在圖上看
+                  {t.showOnGraph}
                 </button>
               )}
             </>
@@ -109,56 +113,53 @@ function ActualRowView({
 }
 
 function HpSupplement({ group, href, linkLabel }: { group: ActualGroup; href?: string; linkLabel?: string }) {
+  const t = useMessages()
   const row = group.rows.find((r) => r.theory !== 'butfor' && r.formula !== undefined)
   const witnessRow = row ?? group.rows.find((r) => r.formula !== undefined)
   const causeVars = group.cause.replace(/\s+and\s+/g, ' ∧ ')
   return (
     <div className="ca-supplement">
       <div className="ca-supplement-def">
-        <p>在模型 M 和脈絡 u 之下，X=x 是 φ 的實際原因，要三個條件都成立。</p>
+        <p>{t.hp.intro}</p>
         <dl className="ca-defs">
           <dt className="ca-mono">AC1</dt>
-          <dd>X=x 和 φ 在實際世界都成立。</dd>
+          <dd>{t.hp.ac1}</dd>
           <dt className="ca-mono">AC2</dt>
           <dd>
-            有一組變項 W 和另一個值 x′：把 W 固定在實際值 w*，再把 X 設成 x′，φ 就不成立。
+            {t.hp.ac2}
             <br />
             <code className="ca-mono">(M,u) ⊨ [X←x′, W←w*]¬φ</code>
           </dd>
           <dt className="ca-mono">AC3</dt>
-          <dd>X 的任何真子集都不能同時滿足 AC1 和 AC2。</dd>
+          <dd>{t.hp.ac3}</dd>
         </dl>
         {href !== undefined && (
           <a className="ca-link" href={href}>
-            {linkLabel ?? '形式系列：實際因果'}
+            {linkLabel ?? t.hp.lesson}
           </a>
         )}
       </div>
       <div className="ca-supplement-case">
-        <p className="ca-muted">套到這個案例</p>
+        <p className="ca-muted">{t.hp.applied}</p>
         <p>
-          X=x 是 <code className="ca-mono">{causeVars}</code>
+          {t.hp.causeIs} <code className="ca-mono">{causeVars}</code>
         </p>
         {witnessRow?.fixed !== undefined && (
-          <p>
-            W 是 {'{'}
-            {Object.keys(witnessRow.fixed).join(', ')}
-            {'}'}，w* 是 {Object.values(witnessRow.fixed).map(formatValue).join(', ')}
-          </p>
+          <p>{t.hp.witnessIs(Object.keys(witnessRow.fixed).join(', '), Object.values(witnessRow.fixed).map(formatValue).join(', '))}</p>
         )}
         <p>
-          φ 是 <code className="ca-mono">{group.effect}</code>
+          {t.hp.effectIs} <code className="ca-mono">{group.effect}</code>
         </p>
         {witnessRow?.formula !== undefined && (
           <p>
             <code className="ca-mono">{witnessRow.formula}</code>{' '}
             <span className="ca-holds">
               <OkIcon size={18} />
-              成立
+              {t.holds}
             </span>
           </p>
         )}
-        <p className="ca-verdict-ref ca-mono">Halpern 2016，第 2 章</p>
+        <p className="ca-verdict-ref ca-mono">{t.hp.ref}</p>
       </div>
     </div>
   )
@@ -166,10 +167,11 @@ function HpSupplement({ group, href, linkLabel }: { group: ActualGroup; href?: s
 
 /** Each standard's verdict, one row per standard; formal definitions stay in a closed 補充 box. */
 export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) {
-  const groups = actualGroups(c)
+  const t = useMessages()
+  const groups = actualGroups(t, c)
   const numbers = numberRows(c)
-  const decisions = decisionRows(c)
-  const intu = intuition(c)
+  const decisions = decisionRows(t, c)
+  const intu = intuition(t, c)
   return (
     <div className="ca-verdicts">
       {groups.map((g) => (
@@ -190,13 +192,13 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
       ))}
       {numbers.length > 0 && (
         <section className="ca-verdict-group">
-          <h2 className="ca-h2">機率</h2>
+          <h2 className="ca-h2">{t.probabilities}</h2>
           <ul className="ca-verdict-list">
             {numbers.map((n) => (
               <li key={n.expression} className="ca-verdict ca-number-row" data-kind={n.kind}>
                 <code className="ca-mono">{n.expression}</code>
                 <strong className="ca-mono">{probText(n.value)}</strong>
-                <span className="ca-muted">{n.kind === 'counterfactual' ? '反事實：先依證據回推，再干預、預測' : ''}</span>
+                <span className="ca-muted">{n.kind === 'counterfactual' ? t.counterfactualNote : ''}</span>
               </li>
             ))}
           </ul>
@@ -204,7 +206,7 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
       )}
       {decisions.length > 0 && (
         <section className="ca-verdict-group">
-          <h2 className="ca-h2">該怎麼選</h2>
+          <h2 className="ca-h2">{t.whatToChoose}</h2>
           <ul className="ca-verdict-list">
             {intu?.choice !== undefined && <IntuitionRow i={intu} />}
             {decisions.map((d) => (
@@ -216,12 +218,12 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
               >
                 <Tag tone="chip">{d.name}</Tag>
                 <span>
-                  選 <strong className="ca-mono">{d.choice}</strong>
+                  {t.choose} <strong className="ca-mono">{d.choice}</strong>
                 </span>
                 <span className="ca-muted ca-mono">
                   {d.utilities
-                    .map((u) => `${u.act}：${u.eu === undefined ? '—' : u.eu.toFixed(1)}`)
-                    .join('　')}
+                    .map((u) => t.utility(u.act, u.eu === undefined ? '—' : u.eu.toFixed(1)))
+                    .join(t.utilitySep)}
                 </span>
                 {intu?.choice !== undefined && !intu.agree.has(d.theory) && <Mismatch />}
               </li>
@@ -230,22 +232,24 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
         </section>
       )}
       {groups.length > 0 && (
-        <Disclosure title="HP 定義的三個條件">
+        <Disclosure title={t.hpConditions}>
           <HpSupplement group={groups[0]} href={lessonHref} linkLabel={lessonLabel} />
         </Disclosure>
       )}
       {groups.length === 0 && decisions.length > 0 && (
-        <Disclosure title="兩種期望效用">
+        <Disclosure title={t.twoUtilities}>
           <div className="ca-supplement-def">
             <p>
-              <code className="ca-mono">EU_EDT(a) = Σ P(o | a) · U(o)</code>：看到自己做了 a 之後，結果的機率。
+              <code className="ca-mono">EU_EDT(a) = Σ P(o | a) · U(o)</code>
+              {t.eu.edt}
             </p>
             <p>
-              <code className="ca-mono">EU_CDT(a) = Σ P(o | do(a)) · U(o)</code>：動手做 a 之後，結果的機率。
+              <code className="ca-mono">EU_CDT(a) = Σ P(o | do(a)) · U(o)</code>
+              {t.eu.cdt}
             </p>
             {lessonHref !== undefined && (
               <a className="ca-link" href={lessonHref}>
-                {lessonLabel ?? '形式系列：因果決策'}
+                {lessonLabel ?? t.eu.lesson}
               </a>
             )}
           </div>

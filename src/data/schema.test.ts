@@ -41,14 +41,14 @@ describe('case schema', () => {
     expect(issues(noContext)).toContain('verdicts.0: butfor needs a context')
   })
 
-  it('requires story_zh, explanation_zh and an origin source', () => {
+  it('requires the story, the explanation and an origin source', () => {
     const noExplanation = seed('rock-throwing')
-    delete noExplanation.explanation_zh
-    expect(issues(noExplanation).join()).toMatch(/explanation_zh/)
+    delete noExplanation.explanation
+    expect(issues(noExplanation).join()).toMatch(/explanation/)
 
     const emptyStory = seed('rock-throwing')
-    emptyStory.story_zh = ''
-    expect(issues(emptyStory).join()).toMatch(/story_zh/)
+    emptyStory.story = { 'zh-TW': '', en: 'A story.' }
+    expect(issues(emptyStory).join()).toMatch(/story\.zh-TW/)
 
     const noOrigin = seed('rock-throwing')
     noOrigin.sources = (noOrigin.sources as { role: string }[]).map((s) => ({ ...s, role: 'treatment' }))
@@ -77,10 +77,13 @@ describe('case schema', () => {
 
   it('checks story tags and the intuition query', () => {
     const badTag = seed('rock-throwing')
-    badTag.story_tags = [{ sentence: '不在故事裡的句子。', variables: ['ST'] }, { sentence: '瓶子', variables: ['XX'] }]
-    expect(issues(badTag)).toEqual(['story_tags.0.sentence: sentence not found in story_zh', 'story_tags.1.variables: unknown variable XX'])
+    badTag.story_tags = { 'zh-TW': [{ sentence: '不在故事裡的句子。', variables: ['ST'] }, { sentence: '瓶子', variables: ['XX'] }], en: [] }
+    expect(issues(badTag)).toEqual([
+      'story_tags.zh-TW.0.sentence: sentence not found in story.zh-TW',
+      'story_tags.zh-TW.1.variables: unknown variable XX',
+    ])
     const badIntuition = seed('rock-throwing')
-    badIntuition.intuition = { query: { cause: 'SH=1', effect: 'BS=1' }, expected: 'cause', text: 'x', agree: [] }
+    badIntuition.intuition = { query: { cause: 'SH=1', effect: 'BS=1' }, expected: 'cause', text: { 'zh-TW': 'x', en: 'x' }, agree: [] }
     expect(issues(badIntuition)).toContain('intuition.query: no verdict asks this query')
   })
 

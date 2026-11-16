@@ -1,10 +1,12 @@
+import { caseIds, getCase } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
-import { caseToDoc, docToCase } from '../../data/model-doc.ts'
+import { caseToDoc, docToCase, sameModel, schemaProblems } from '../../data/model-doc.ts'
 import type { CaseFile, ModelDoc } from '../../data/schema.ts'
 import { MODEL_DOC_FORMAT, modelDocSchema } from '../../data/schema.ts'
-import type { Value, Variable } from '../../engine/index.ts'
-import { CyclicModelError, ParseError, isReservedName, parseExpr } from '../../engine/index.ts'
+import type { Locale, Problem, Value, Variable } from '../../engine/index.ts'
+import { CyclicModelError, ParseError, isReservedName, parseExpr, problemOf } from '../../engine/index.ts'
 import { checkExpr } from '../../engine/model.ts'
+import type { DraftIssue } from '../i18n.ts'
 import { gridLayout, shownVariables } from '../view-model.ts'
 
 /**
@@ -15,9 +17,10 @@ import { gridLayout, shownVariables } from '../view-model.ts'
 export interface DraftVariable {
   readonly key: string
   readonly id: string
+  /** The Chinese label as typed; empty means the id. */
   readonly label: string
-  /** Kept from a loaded case; new variables reuse the Chinese label. */
-  readonly en?: string
+  /** The English label as typed; empty means the id. */
+  readonly en: string
   readonly kind: 'exogenous' | 'endogenous'
   readonly domain: 'boolean' | 'list'
   /** For a list domain: the values as typed, separated by commas. */
@@ -51,8 +54,9 @@ export function newKey(): string {
   return `v${Date.now().toString(36)}${counter}`
 }
 
-export function blankDraft(): Draft {
-  return { title: '我的模型', variables: [], equations: {}, mode: 'value', context: {}, priors: {}, normality: {}, layout: {} }
+/** An empty draft titled `title` (the editor passes its language's 「我的模型」). */
+export function blankDraft(title: string): Draft {
+  return { title, variables: [], equations: {}, mode: 'value', context: {}, priors: {}, normality: {}, layout: {} }
 }
 
 /** Domain values typed as `a, b，c`: numbers become numbers. */
@@ -83,8 +87,8 @@ export function draftFromDoc(doc: ModelDoc, layoutFrom?: LoadedCase): Draft {
   const variables: DraftVariable[] = doc.model.variables.map((v) => ({
     key: key(v.id),
     id: v.id,
-    label: v.label.zh,
-    en: v.label.en,
+    label: v.label['zh-TW'],
+    en: v.label.en ?? '',
     kind: v.kind,
     domain: v.domain === 'boolean' ? 'boolean' : 'list',
     values: v.domain === 'boolean' ? '' : v.domain.join(', '),
@@ -133,26 +137,28 @@ export function draftFromDoc(doc: ModelDoc, layoutFrom?: LoadedCase): Draft {
 }
 
 /**
- * A draft from a document someone else wrote (a pasted file or a share link). The document's
- * `from` is not trusted: only a draft this editor started from a bundled case credits it.
+ * A draft from a document someone else wrote (a pasted file or a share link). Its `from` stands,
+ * and the image keeps 「案例出處」, only when the model is that bundled case's model; a modified or
+ * unknown one is the importer's own.
  */
 export function draftFromImport(doc: ModelDoc): Draft {
-  return draftFromDoc({ ...doc, from: undefined })
+  const from = doc.from !== undefined && caseIds.includes(doc.from) && sameModel(doc, caseToDoc(getCase(doc.from))) ? doc.from : undefined
+  return draftFromDoc({ ...doc, from })
 }
 
-export function draftFromCase(c: LoadedCase): Draft {
-  return draftFromDoc(caseToDoc(c), c)
+export function draftFromCase(c: LoadedCase, locale: Locale = 'zh-TW'): Draft {
+  return draftFromDoc(caseToDoc(c, locale), c)
 }
 
 export interface DraftErrors {
   /** By variable key. */
-  readonly variables: Readonly<Record<string, string>>
+  readonly variables: Readonly<Record<string, DraftIssue>>
   /** By variable key. */
-  readonly equations: Readonly<Record<string, string>>
+  readonly equations: Readonly<Record<string, DraftIssue>>
   /** By variable key: context, priors or normality problems. */
-  readonly values: Readonly<Record<string, string>>
+  readonly values: Readonly<Record<string, DraftIssue>>
   readonly cycle?: readonly string[]
-  readonly model?: string
+  readonly model?: DraftIssue
 }
 
 export interface Compiled {
@@ -168,41 +174,46 @@ function domainOf(v: DraftVariable): Variable['domain'] {
 
 /**
  * Check the draft and build the model; every problem is reported where the user typed it.
- * `origin`: the starting case's sources, so exported images keep 「案例出處」.
+ * `origin`: the starting case's sources, so exported images keep 「案例出處」. `defaultTitle`
+ * names a model whose title is blank.
  */
-export function compileDraft(draft: Draft, origin?: CaseFile['sources']): Compiled {
-  const variableErrors: Record<string, string> = {}
-  const equationErrors: Record<string, string> = {}
-  const valueErrors: Record<string, string> = {}
+export function compileDraft(draft: Draft, origin?: CaseFile['sources'], defaultTitle = 'My model'): Compiled {
+  const variableErrors: Record<string, DraftIssue> = {}
+  const equationErrors: Record<string, DraftIssue> = {}
+  const valueErrors: Record<string, DraftIssue> = {}
   const seen = new Map<string, number>()
   for (const v of draft.variables) seen.set(v.id, (seen.get(v.id) ?? 0) + 1)
   for (const v of draft.variables) {
-    if (!IDENT.test(v.id)) variableErrors[v.key] = '代號要用英文字母開頭，只能有英文字母、數字和底線'
-    else if (isReservedName(v.id)) variableErrors[v.key] = `${v.id} 是保留字，不能當代號`
-    else if ((seen.get(v.id) ?? 0) > 1) variableErrors[v.key] = `代號 ${v.id} 重複了`
+    if (!IDENT.test(v.id)) variableErrors[v.key] = { code: 'id-invalid' }
+    else if (isReservedName(v.id)) variableErrors[v.key] = { code: 'id-reserved', id: v.id }
+    else if ((seen.get(v.id) ?? 0) > 1) variableErrors[v.key] = { code: 'id-duplicate', id: v.id }
     else if (v.domain === 'list') {
       const values = parseValues(v.values)
-      if (values.length < 2) variableErrors[v.key] = '列舉的值至少要兩個'
-      else if (new Set(values.map(String)).size !== values.length) variableErrors[v.key] = '列舉的值有重複'
+      if (values.length < 2) variableErrors[v.key] = { code: 'values-few' }
+      else if (new Set(values.map(String)).size !== values.length) variableErrors[v.key] = { code: 'values-repeat' }
     }
   }
   const ok = Object.keys(variableErrors).length === 0
   const byId = new Map<string, Variable>(
-    ok ? draft.variables.map((v) => [v.id, { id: v.id, label: { zh: v.label || v.id, en: v.en ?? (v.label || v.id) }, kind: v.kind, domain: domainOf(v) }]) : [],
+    ok ? draft.variables.map((v) => [v.id, { id: v.id, label: { 'zh-TW': v.label || v.id, en: v.en || v.id }, kind: v.kind, domain: domainOf(v) }]) : [],
   )
   if (ok) {
     for (const v of draft.variables) {
       if (v.kind !== 'endogenous') continue
       const source = (draft.equations[v.key] ?? '').trim()
       if (source === '') {
-        equationErrors[v.key] = '還沒寫式子'
+        equationErrors[v.key] = { code: 'equation-empty' }
         continue
       }
       try {
         const owner = byId.get(v.id)
-        checkExpr(parseExpr(source), byId, v.id, owner)
+        checkExpr(parseExpr(source), byId, { kind: 'equation', id: v.id }, owner)
       } catch (error) {
-        equationErrors[v.key] = error instanceof ParseError ? `看不懂這條式子：${error.message}` : `式子有誤：${(error as Error).message}`
+        const found = problemOf(error)
+        if (found === undefined) throw error
+        // Shown under this very equation: leave out the 「X 的式子」 prefix.
+        const bare = ({ ...found, where: undefined }) as Problem
+        equationErrors[v.key] = { code: error instanceof ParseError ? 'equation-parse' : 'equation-invalid', problem: bare }
       }
     }
   }
@@ -215,23 +226,23 @@ export function compileDraft(draft: Draft, origin?: CaseFile['sources']): Compil
       const texts = valueTexts(v)
       if (v.kind === 'exogenous') {
         const t = draft.context[v.key] ?? texts[0]
-        if (!texts.includes(t)) valueErrors[v.key] = `${v.id} 的值 ${t} 不在值域裡`
+        if (!texts.includes(t)) valueErrors[v.key] = { code: 'value-not-in-domain', id: v.id, value: t }
         else context[v.id] = valueOf(v, t)
         const ps = draft.priors[v.key] ?? []
         if (v.domain === 'boolean') {
           const p = ps[0] ?? 0.5
-          if (!(p >= 0 && p <= 1)) valueErrors[v.key] = `P(${v.id}=1) 要在 0 到 1 之間`
+          if (!(p >= 0 && p <= 1)) valueErrors[v.key] = { code: 'prior-range', id: v.id }
           independent[v.id] = p
         } else {
           const weights = texts.map((_, i) => ps[i] ?? 0)
           const total = weights.reduce((s, w) => s + w, 0)
-          if (weights.some((w) => !(w >= 0)) || !(total > 0)) valueErrors[v.key] = `${v.id} 的機率要是非負數，加起來大於 0`
+          if (weights.some((w) => !(w >= 0)) || !(total > 0)) valueErrors[v.key] = { code: 'prior-weights', id: v.id }
           else independent[v.id] = texts.map((t, i) => [valueOf(v, t), weights[i] / total])
         }
       }
       const n = draft.normality[v.key]
       if (n !== undefined && n !== '') {
-        if (!texts.includes(n)) valueErrors[v.key] = `${v.id} 的常態值 ${n} 不在值域裡`
+        if (!texts.includes(n)) valueErrors[v.key] = { code: 'normal-not-in-domain', id: v.id, value: n }
         else normality[v.id] = valueOf(v, n)
       }
     }
@@ -250,12 +261,12 @@ export function compileDraft(draft: Draft, origin?: CaseFile['sources']): Compil
   const raw = {
     format: MODEL_DOC_FORMAT,
     version: 1,
-    title: draft.title.trim() || '我的模型',
+    title: draft.title.trim() || defaultTitle,
     from: draft.from,
     model: {
       variables: draft.variables.map((v) => ({
         id: v.id,
-        label: { zh: v.label || v.id, en: v.en ?? (v.label || v.id) },
+        label: v.en === '' ? { 'zh-TW': v.label || v.id } : { 'zh-TW': v.label || v.id, en: v.en },
         kind: v.kind,
         domain: v.domain === 'boolean' ? 'boolean' : parseValues(v.values),
       })),
@@ -268,15 +279,17 @@ export function compileDraft(draft: Draft, origin?: CaseFile['sources']): Compil
   }
   const parsed = modelDocSchema.safeParse(raw)
   if (!parsed.success) {
-    return { errors: { ...errors, model: parsed.error.issues.map((i) => `${i.path.join('.')}：${i.message}`).join('；') }, count: 1 }
+    return { errors: { ...errors, model: { code: 'model', problems: schemaProblems(parsed.error) } }, count: 1 }
   }
   try {
     return { doc: parsed.data, loaded: docToCase(parsed.data, origin), errors, count: 0 }
   } catch (error) {
     if (error instanceof CyclicModelError) {
-      return { errors: { ...errors, cycle: error.cycle, model: `式子繞成一圈：${error.cycle.join(' → ')}` }, count: 1 }
+      return { errors: { ...errors, cycle: error.cycle, model: { code: 'cycle', cycle: error.cycle } }, count: 1 }
     }
-    return { errors: { ...errors, model: (error as Error).message }, count: 1 }
+    const found = problemOf(error)
+    if (found === undefined) throw error
+    return { errors: { ...errors, model: { code: 'model', problems: [found] } }, count: 1 }
   }
 }
 

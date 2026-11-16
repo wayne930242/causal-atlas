@@ -1,30 +1,35 @@
 import { useEffect, useState } from 'react'
-import { CasePage, CausalPlayground, CiteBlock, ModelEditor, Supplement, WorldLanes } from '../components/index.ts'
+import type { Locale } from '../components/index.ts'
+import { CasePage, CausalPlayground, CiteBlock, LANGUAGE_NAMES, LocaleProvider, ModelEditor, Supplement, WorldLanes } from '../components/index.ts'
 import { caseIds, getCase } from '../data/index.ts'
 
 interface Route {
   readonly page: 'index' | 'playground' | 'case' | 'lesson' | 'editor'
   readonly id: string
   readonly step: number
+  /** `lang=en` in the route (`#/case/x?lang=en`) or in the page's query string; default zh-TW. */
+  readonly locale: Locale
 }
 
-function parse(hash: string): Route {
+function parse(hash: string, search: string): Route {
   const [path, query = ''] = hash.replace(/^#/, '').split('?')
   const params = new URLSearchParams(query)
   const step = Number(params.get('step') ?? '1') || 1
+  const lang = params.get('lang') ?? new URLSearchParams(search).get('lang')
+  const locale: Locale = lang === 'en' ? 'en' : 'zh-TW'
   const parts = path.split('/').filter((p) => p !== '')
   const id = parts[1] !== undefined && caseIds.includes(parts[1]) ? parts[1] : 'rock-throwing'
-  if (parts[0] === 'playground') return { page: 'playground', id, step }
-  if (parts[0] === 'case') return { page: 'case', id, step }
-  if (parts[0] === 'lesson') return { page: 'lesson', id, step }
-  if (parts[0] === 'editor') return { page: 'editor', id, step }
-  return { page: 'index', id, step }
+  if (parts[0] === 'playground') return { page: 'playground', id, step, locale }
+  if (parts[0] === 'case') return { page: 'case', id, step, locale }
+  if (parts[0] === 'lesson') return { page: 'lesson', id, step, locale }
+  if (parts[0] === 'editor') return { page: 'editor', id, step, locale }
+  return { page: 'index', id, step, locale }
 }
 
 function useRoute(): Route {
-  const [route, setRoute] = useState(() => parse(window.location.hash))
+  const [route, setRoute] = useState(() => parse(window.location.hash, window.location.search))
   useEffect(() => {
-    const on = (): void => setRoute(parse(window.location.hash))
+    const on = (): void => setRoute(parse(window.location.hash, window.location.search))
     window.addEventListener('hashchange', on)
     return () => window.removeEventListener('hashchange', on)
   }, [])
@@ -39,35 +44,82 @@ function useTheme(): [string, () => void] {
   return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))]
 }
 
-function Index() {
+/** A demo route with `lang=en` added for English; zh-TW leaves it out. */
+function href(path: string, locale: Locale, extra = ''): string {
+  const query = [extra, locale === 'en' ? 'lang=en' : ''].filter((q) => q !== '').join('&')
+  return `#${path}${query === '' ? '' : `?${query}`}`
+}
+
+/** The current route in another language, keeping page, case and step. */
+function switchHref(route: Route, locale: Locale): string {
+  const path =
+    route.page === 'index' ? '/' : route.page === 'lesson' || route.page === 'editor' ? `/${route.page}` : `/${route.page}/${route.id}`
+  return href(path, locale, route.page === 'case' && route.step > 1 ? `step=${route.step}` : '')
+}
+
+const DEMO = {
+  'zh-TW': {
+    title: 'causal-atlas 示範',
+    intro: '元件示範。每個案例有一頁案例頁，也可以在遊樂場裡自己改。',
+    playground: '遊樂場',
+    casePage: '案例頁',
+    lesson: '講義',
+    lessonLink: '講義示範：世界分道',
+    editor: '自己建模型',
+    editorLink: '自己建一個因果模型',
+    pages: '示範頁面',
+    case: '案例',
+    light: '淺色',
+    dark: '深色',
+    language: '語言',
+  },
+  en: {
+    title: 'causal-atlas demo',
+    intro: 'Component demo. Every case has a case page, and you can change it yourself in the playground.',
+    playground: 'Playground',
+    casePage: 'Case page',
+    lesson: 'Lesson',
+    lessonLink: 'Lesson demo: world lanes',
+    editor: 'Build a model',
+    editorLink: 'Build a causal model yourself',
+    pages: 'Demo pages',
+    case: 'Case',
+    light: 'Light',
+    dark: 'Dark',
+    language: 'Language',
+  },
+} as const satisfies Record<Locale, Record<string, string>>
+
+function Index({ locale }: { readonly locale: Locale }) {
+  const d = DEMO[locale]
   return (
     <div className="demo-index">
       <h1>causal-atlas</h1>
-      <p className="demo-muted">元件示範。每個案例有一頁案例頁，也可以在遊樂場裡自己改。</p>
+      <p className="demo-muted">{d.intro}</p>
       <ul>
         {caseIds.map((id) => {
           const c = getCase(id)
           return (
             <li key={id}>
-              <a href={`#/case/${id}`}>{c.data.title.zh}</a>
-              <a className="demo-muted" href={`#/playground/${id}`}>
-                遊樂場
+              <a href={href(`/case/${id}`, locale)}>{c.data.title[locale]}</a>
+              <a className="demo-muted" href={href(`/playground/${id}`, locale)}>
+                {d.playground}
               </a>
             </li>
           )
         })}
       </ul>
       <p>
-        <a href="#/lesson">講義示範：世界分道</a>
+        <a href={href('/lesson', locale)}>{d.lessonLink}</a>
       </p>
       <p>
-        <a href="#/editor">自己建一個因果模型</a>
+        <a href={href('/editor', locale)}>{d.editorLink}</a>
       </p>
     </div>
   )
 }
 
-function Lesson() {
+function LessonZh() {
   return (
     <article className="demo-article">
       <h2>二、如果小蘇的石頭沒打中</h2>
@@ -93,65 +145,114 @@ function Lesson() {
   )
 }
 
+function LessonEn() {
+  return (
+    <article className="demo-article" lang="en">
+      <h2>2. If Suzy&apos;s rock had missed</h2>
+      <p>
+        The context stays the same: both of them still throw. Only the equation for SH becomes 0; every other variable is recomputed from
+        its own equation. The world this gives is drawn as a second lane, lined up with the actual world.
+      </p>
+      <WorldLanes caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="Stop Suzy's rock" />
+      <p>
+        The two lanes differ only in SH and BH; the last cell, BS, is 1 in both. Stop Suzy&apos;s rock, and the bottle still breaks. So
+        asking only whether the outcome would still occur without it cannot pick out Suzy&apos;s rock as a cause.
+      </p>
+      <Supplement title="The three steps of a counterfactual: abduction, action, prediction">
+        <p>
+          Abduction: infer the values of the exogenous variables from what was observed. Action: replace the variables to be changed by
+          constants. Prediction: recompute the other variables in the changed model.
+        </p>
+      </Supplement>
+      <h2>3. Holding Billy&apos;s rock fixed</h2>
+      <p>
+        The HP definition lets us first hold some variables at their actual values and then change the cause. The third lane is the world
+        computed this way.
+      </p>
+      <WorldLanes
+        caseId="rock-throwing"
+        interventions={{ ST: 0 }}
+        actionLabel="Suzy does not throw"
+        witness={{ cause: 'ST=1', effect: 'BS=1' }}
+      />
+    </article>
+  )
+}
+
 export function App() {
   const route = useRoute()
   const [theme, toggleTheme] = useTheme()
+  const { locale } = route
+  const d = DEMO[locale]
+  useEffect(() => {
+    document.documentElement.lang = locale
+    document.title = DEMO[locale].title
+  }, [locale])
   const go = (page: 'playground' | 'case', id: string): void => {
-    window.location.hash = `#/${page}/${id}`
+    window.location.hash = href(`/${page}/${id}`, locale)
   }
   return (
-    <div className="demo-shell">
-      <header className="demo-bar">
-        <a className="demo-brand" href="#/">
-          causal-atlas
-        </a>
-        <nav aria-label="示範頁面">
-          <a href={`#/playground/${route.id}`} aria-current={route.page === 'playground' ? 'page' : undefined}>
-            遊樂場
+    <LocaleProvider locale={locale}>
+      <div className="demo-shell">
+        <header className="demo-bar">
+          <a className="demo-brand" href={href('/', locale)}>
+            causal-atlas
           </a>
-          <a href={`#/case/${route.id}`} aria-current={route.page === 'case' ? 'page' : undefined}>
-            案例頁
-          </a>
-          <a href="#/lesson" aria-current={route.page === 'lesson' ? 'page' : undefined}>
-            講義
-          </a>
-          <a href="#/editor" aria-current={route.page === 'editor' ? 'page' : undefined}>
-            自己建模型
-          </a>
-        </nav>
-        <span className="demo-spacer" />
-        {(route.page === 'playground' || route.page === 'case') && (
-          <label>
-            <span className="demo-muted">案例 </span>
-            <select value={route.id} onChange={(e) => go(route.page === 'case' ? 'case' : 'playground', e.currentTarget.value)}>
-              {caseIds.map((id) => (
-                <option key={id} value={id}>
-                  {getCase(id).data.title.zh}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <button type="button" onClick={toggleTheme} aria-pressed={theme === 'dark'}>
-          {theme === 'dark' ? '淺色' : '深色'}
-        </button>
-      </header>
-      <main>
-        {route.page === 'index' && <Index />}
-        {route.page === 'playground' && <CausalPlayground key={route.id} caseId={route.id} />}
-        {route.page === 'case' && <CasePage key={`${route.id}-${route.step}`} caseId={route.id} initialStep={route.step} />}
-        {route.page === 'lesson' && <Lesson />}
-        {route.page === 'editor' && (
-          <ModelEditor
-            key={route.id}
-            initial={route.id}
-            shareHref={(value) => `${window.location.origin}${window.location.pathname}#/editor?model=${value}`}
-          />
-        )}
-      </main>
-      <footer className="demo-footer">
-        <CiteBlock />
-      </footer>
-    </div>
+          <nav aria-label={d.pages}>
+            <a href={href(`/playground/${route.id}`, locale)} aria-current={route.page === 'playground' ? 'page' : undefined}>
+              {d.playground}
+            </a>
+            <a href={href(`/case/${route.id}`, locale)} aria-current={route.page === 'case' ? 'page' : undefined}>
+              {d.casePage}
+            </a>
+            <a href={href('/lesson', locale)} aria-current={route.page === 'lesson' ? 'page' : undefined}>
+              {d.lesson}
+            </a>
+            <a href={href('/editor', locale)} aria-current={route.page === 'editor' ? 'page' : undefined}>
+              {d.editor}
+            </a>
+          </nav>
+          <span className="demo-spacer" />
+          {(route.page === 'playground' || route.page === 'case') && (
+            <label>
+              <span className="demo-muted">{d.case} </span>
+              <select value={route.id} onChange={(e) => go(route.page === 'case' ? 'case' : 'playground', e.currentTarget.value)}>
+                {caseIds.map((id) => (
+                  <option key={id} value={id}>
+                    {getCase(id).data.title[locale]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <nav className="demo-lang" aria-label={d.language}>
+            {(Object.keys(LANGUAGE_NAMES) as Locale[]).map((l) => (
+              <a key={l} href={switchHref(route, l)} lang={l} aria-current={l === locale ? 'true' : undefined}>
+                {LANGUAGE_NAMES[l]}
+              </a>
+            ))}
+          </nav>
+          <button type="button" onClick={toggleTheme} aria-pressed={theme === 'dark'}>
+            {theme === 'dark' ? d.light : d.dark}
+          </button>
+        </header>
+        <main>
+          {route.page === 'index' && <Index locale={locale} />}
+          {route.page === 'playground' && <CausalPlayground key={`${route.id}-${locale}`} caseId={route.id} />}
+          {route.page === 'case' && <CasePage key={`${route.id}-${route.step}-${locale}`} caseId={route.id} initialStep={route.step} />}
+          {route.page === 'lesson' && (locale === 'en' ? <LessonEn /> : <LessonZh />)}
+          {route.page === 'editor' && (
+            <ModelEditor
+              key={`${route.id}-${locale}`}
+              initial={route.id}
+              shareHref={(value) => `${window.location.origin}${window.location.pathname}${href('/editor', locale, `model=${value}`)}`}
+            />
+          )}
+        </main>
+        <footer className="demo-footer">
+          <CiteBlock />
+        </footer>
+      </div>
+    </LocaleProvider>
   )
 }
