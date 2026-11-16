@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.lib.tsbuildinfo",
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": "./src",
+    "outDir": "./dist/types"
+  },
+  "include": ["src/components", "src/engine", "src/data"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/engine/test-models.ts"]
+}
