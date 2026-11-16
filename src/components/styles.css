@@ -327,16 +327,20 @@
 
 .ca-eqs {
   display: grid;
-  gap: 6px;
-}
-
-.ca-eq-row {
-  display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, auto) minmax(0, 1fr);
+  grid-template-columns: max-content max-content minmax(0, 1fr);
   column-gap: 24px;
+  row-gap: 6px;
   align-items: baseline;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.ca-eq-row {
+  display: contents;
+}
+
+.ca-eqs > p {
+  grid-column: 1 / -1;
 }
 
 .ca-eq-text {
@@ -364,10 +368,6 @@
 .ca-eq-note {
   font-size: 12px;
   color: var(--muted-foreground);
-}
-
-.ca-eq-statement {
-  grid-template-columns: auto 1fr auto;
 }
 
 .ca-eq-holds,
@@ -1039,6 +1039,7 @@
   .ca-case-body {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0;
   }
 
@@ -1073,6 +1074,7 @@
 
   .ca-eq-box .ca-eq-head {
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
   }
 
@@ -1086,9 +1088,18 @@
     font-size: 15px;
   }
 
-  .ca-eq-row {
+  .ca-eqs {
     grid-template-columns: 1fr;
+    row-gap: 2px;
     font-size: 16px;
+  }
+
+  .ca-eq-worked:empty {
+    display: none;
+  }
+
+  .ca-eq-note {
+    margin-bottom: 10px;
   }
 
   .ca-eq-text,
@@ -1117,8 +1128,10 @@
     position: sticky;
     bottom: 0;
     z-index: 1;
+    gap: 12px;
     margin: 24px -16px 0;
     padding: 12px 16px;
+    white-space: nowrap;
     background: var(--background);
     border-top: 1px solid var(--border);
   }

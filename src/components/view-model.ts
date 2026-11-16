@@ -153,10 +153,15 @@ export function flipValue(variable: Variable, value: Value): Value {
   return values[(i + 1) % values.length]
 }
 
-/** Endogenous variables whose equation is shown: those with at least one drawn parent. */
-export function equationIds(c: LoadedCase, shown: readonly string[]): string[] {
+/**
+ * Endogenous variables whose equation is shown: those with at least one drawn parent, plus any
+ * intervened ones (their replaced equation is shown struck through).
+ */
+export function equationIds(c: LoadedCase, shown: readonly string[], interventions: Assignment = {}): string[] {
   const set = new Set(shown)
-  return c.model.endogenous.filter((id) => set.has(id) && (c.model.parents.get(id) ?? []).some((p) => set.has(p)))
+  return c.model.endogenous.filter(
+    (id) => set.has(id) && (id in interventions || (c.model.parents.get(id) ?? []).some((p) => set.has(p))),
+  )
 }
 
 function substitute(a: Arith, values: Assignment): Arith {

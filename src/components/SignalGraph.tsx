@@ -25,12 +25,10 @@ export interface SignalGraphProps {
   readonly witness?: Assignment
   readonly onToggle?: (id: string) => void
   readonly title: string
+  /** Narrower columns, for two graphs side by side. */
+  readonly compact?: boolean
 }
 
-const COL = 220
-const ROW = 120
-const PAD_X = 96
-const PAD_Y = 72
 
 interface Point {
   readonly x: number
@@ -57,6 +55,10 @@ export function SignalGraph(props: SignalGraphProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const prob = probs !== undefined
   const R = prob ? 34 : 30
+  const COL = props.compact === true ? 132 : 220
+  const ROW = props.compact === true ? 112 : 120
+  const PAD_X = props.compact === true ? 60 : 96
+  const PAD_Y = 72
   const grid = gridLayout(c, shown)
   const cells = [...grid.values()]
   const minCol = Math.min(...cells.map((p) => p.col))
@@ -65,7 +67,8 @@ export function SignalGraph(props: SignalGraphProps) {
   const maxRow = Math.max(...cells.map((p) => p.row))
   const multiRow = maxRow > minRow
   const width = PAD_X * 2 + (maxCol - minCol) * COL
-  const extraBottom = prob ? 44 : 0
+  const hasWitness = witness !== undefined && Object.keys(witness).length > 0
+  const extraBottom = (prob ? 44 : 0) + (hasWitness ? 40 : 0)
   const height = PAD_Y * 2 + (maxRow - minRow) * ROW + extraBottom
   const pos = new Map<string, Point>()
   for (const [id, p] of grid) pos.set(id, { x: PAD_X + (p.col - minCol) * COL, y: PAD_Y + (p.row - minRow) * ROW })
@@ -96,7 +99,12 @@ export function SignalGraph(props: SignalGraphProps) {
           <line x1={x1} y1={y1} x2={mx - 10 * ux} y2={my - 10 * uy} className="ca-stroke-cut" />
           <line x1={mx + 10 * ux} y1={my + 10 * uy} x2={x2} y2={y2} className="ca-stroke-cut" />
           <path d={slash(mx - 4 * ux, my - 4 * uy) + slash(mx + 4 * ux, my + 4 * uy)} className="ca-stroke-slash" />
-          <text x={mx} y={my - 16} className="ca-svg-small ca-svg-bold" textAnchor="middle">
+          <text
+            x={mx + 18 * uy}
+            y={my - 18 * ux + 4}
+            className="ca-svg-small ca-svg-bold"
+            textAnchor={uy > 0.3 ? 'start' : uy < -0.3 ? 'end' : 'middle'}
+          >
             切斷
           </text>
         </g>
@@ -142,13 +150,14 @@ export function SignalGraph(props: SignalGraphProps) {
       .filter((p): p is Point => p !== undefined)
     if (pts.length > 0) {
       const pad = R + 14
-      const x = Math.min(...pts.map((p) => p.x)) - pad
+      const x = Math.min(...pts.map((p) => p.x)) - pad - 20
       const y = Math.min(...pts.map((p) => p.y)) - pad
       hull = {
         x,
         y,
-        w: Math.max(...pts.map((p) => p.x)) + pad - x,
-        h: Math.max(...pts.map((p) => p.y)) + pad - y,
+        w: Math.max(...pts.map((p) => p.x)) + pad + 20 - x,
+        // Include the label under the node.
+        h: Math.max(...pts.map((p) => p.y)) + R + 34 - y,
         text: `見證：固定 ${assignmentText(witness)}`,
       }
     }
@@ -161,6 +170,7 @@ export function SignalGraph(props: SignalGraphProps) {
     const v = values?.[id]
     const forced = interventions[id]
     const intervened = forced !== undefined
+    const held = witness !== undefined && id in witness
     const boolean = variable.domain.kind === 'boolean'
     const filled = !prob && v === true
     const text = v === undefined ? '' : formatValue(v)
@@ -181,7 +191,7 @@ export function SignalGraph(props: SignalGraphProps) {
       }
     }
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
-    const labelY = above ? p.y - R - 16 : p.y + R + 24
+    const labelY = above ? -R - 16 : R + 24
     const numberRight = prob && above
     const doTagLeft = (grid.get(id)?.col ?? 0) === maxCol
     const doText = `${id}←${formatValue(forced ?? '')}`
@@ -237,7 +247,7 @@ export function SignalGraph(props: SignalGraphProps) {
             </text>
           </>
         )}
-        {intervened && (
+        {intervened && !held && (
           <>
             <path d={clampPath(R)} className="ca-stroke-clamp" />
             <g transform={`translate(${doTagLeft ? -R - 12 - doW : R + 12} ${-R - 10})`}>
@@ -249,7 +259,7 @@ export function SignalGraph(props: SignalGraphProps) {
           </>
         )}
         {changed && (
-          <text x={R + 12} y={R + 2} className="ca-svg-small ca-fill-muted">
+          <text x={R + 14} y={R + 14} className="ca-svg-small ca-fill-muted">
             原本 {formatValue(before)}
           </text>
         )}
@@ -305,7 +315,7 @@ export function SignalGraph(props: SignalGraphProps) {
       {hull !== undefined && (
         <g className="ca-witness" data-witness={Object.keys(witness ?? {}).join(',')}>
           <rect x={hull.x} y={hull.y} width={hull.w} height={hull.h} className="ca-hull" />
-          <g transform={`translate(${hull.x} ${hull.y - 26})`}>
+          <g transform={`translate(${hull.x} ${hull.y + hull.h + 6})`}>
             <rect width={textWidth(hull.text, 12) + 18} height={22} className="ca-amber-tag" />
             <text x={8} y={15.5} className="ca-svg-small ca-svg-bold ca-fill-amber">
               {hull.text}

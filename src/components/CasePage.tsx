@@ -4,6 +4,7 @@ import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import { useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
+import type { UiNotation } from './notation.ts'
 import { Arrow, Progress } from './parts.tsx'
 import { ProbabilityPanelFor } from './ProbabilityPanel.tsx'
 import { Verdicts } from './Verdicts.tsx'
@@ -33,6 +34,13 @@ const FAMILY: Record<LoadedCase['data']['family'], string> = {
 
 const TOTAL = 4
 
+/** Each step opens on the notation that shows its point: logic, then arithmetic under do(), then [X←x]. */
+function notationFor(step: number): UiNotation {
+  if (step === 3) return 'arithmetic'
+  if (step === 4) return 'causal'
+  return 'propositional'
+}
+
 /**
  * Direction 1 case page: story → graph → do (or probabilities) → verdicts.
  * Each step adds one thing; 補充 stays closed until asked.
@@ -43,7 +51,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
   const preset = c.data.showcase[0]
   const [step, setStep] = useState(Math.min(Math.max(initialStep, 1), TOTAL))
   const presetDo: Assignment = !probabilistic && step >= 3 && preset !== undefined ? preset.interventions : {}
-  const model = useModel(c, presetDo)
+  const model = useModel(c, presetDo, notationFor(step))
   const [witness, setWitness] = useState<Assignment | undefined>(undefined)
   const panelRef = useRef<HTMLDivElement>(null)
   const pair = seeDoPair(c)
@@ -54,9 +62,7 @@ export function CasePage({ caseId, heading = true, initialStep = 1, lessonHref, 
     setWitness(undefined)
     if (!probabilistic) {
       model.setInterventions(target >= 3 && preset !== undefined ? preset.interventions : {})
-      if (target === 3) model.setNotation('arithmetic')
-      if (target === 4) model.setNotation('causal')
-      if (target <= 2) model.setNotation('propositional')
+      model.setNotation(notationFor(target))
     }
   }
 

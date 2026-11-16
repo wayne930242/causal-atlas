@@ -104,7 +104,7 @@ function WorldLanesFor({ c, interventions, actionLabel, witness, initialStep = 1
   const colX = new Map(shown.map((id, i) => [id, LEFT + i * STEP]))
   const width = LEFT + (n - 1) * STEP + RIGHT
   const edges = shownEdges(c.model.edges, shown)
-  const longLabels = shown.some((id) => textWidth(`${id} ${label(c.model, id)}`, 13) > STEP - 6)
+  const longLabels = shown.some((id) => textWidth(`${id} ${label(c.model, id)}`, 13) > STEP - 2)
   const head = longLabels ? HEAD + 16 : HEAD
 
   // Place long edges above or below the row so arcs on one side do not overlap.
@@ -246,12 +246,7 @@ function WorldLanesFor({ c, interventions, actionLabel, witness, initialStep = 1
               </g>
             </>
           )}
-          {held && (
-            <>
-              <rect x={-28} y={-28} width={56} height={56} className="ca-hull" />
-              {tagEl(-36, -56, `固定 ${id}=${formatValue(lane.fixed?.[id] ?? '')}`, 'amber')}
-            </>
-          )}
+          {held && <rect x={-28} y={-28} width={56} height={56} className="ca-hull" />}
         </g>
       )
     })
@@ -267,6 +262,7 @@ function WorldLanesFor({ c, interventions, actionLabel, witness, initialStep = 1
     return (
       <g key={lane.kind} className={`ca-lane ca-lane-${lane.kind}`} data-lane={lane.kind}>
         {cf && <rect x={1} y={top} width={width - 2} height={LANE} className="ca-lane-cf" />}
+        {lane.kind === 'witness' && <line x1={0} y1={top + 0.5} x2={width} y2={top + 0.5} className="ca-hair" />}
         <path d={shown.map((id) => `M${colX.get(id)} ${top}v${LANE}`).join('')} className="ca-guide" />
         {lane.kind === 'actual' && (
           <>

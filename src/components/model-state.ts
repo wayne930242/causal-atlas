@@ -50,9 +50,9 @@ export function useNotation(initial: UiNotation = 'propositional'): [UiNotation,
 }
 
 /** Shared state for a graph with do(): interventions, notation and the solved world. */
-export function useModel(c: LoadedCase, initial: Assignment = {}) {
+export function useModel(c: LoadedCase, initial: Assignment = {}, initialNotation: UiNotation = 'propositional') {
   const [interventions, setInterventions] = useState<Assignment>(initial)
-  const [notation, setNotation] = useNotation()
+  const [notation, setNotation] = useNotation(initialNotation)
   const world = useMemo(() => solve(c, interventions), [c, interventions])
   return { interventions, setInterventions, notation, setNotation, world }
 }

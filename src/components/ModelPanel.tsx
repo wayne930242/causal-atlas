@@ -1,7 +1,9 @@
+import { useRef } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import type { ModelWorld } from './model-state.ts'
 import { toggled } from './model-state.ts'
+import { useNarrow } from './use-narrow.ts'
 import { Equations } from './Equations.tsx'
 import type { UiNotation } from './notation.ts'
 import { NOTATIONS } from './notation.ts'
@@ -22,6 +24,8 @@ export interface GraphBoxProps {
 /** The graph with its world tags; clicking a node toggles do() on it. */
 export function GraphBox({ c, world, interventions, onInterventions, witness, legend, title }: GraphBoxProps) {
   const hasDo = Object.keys(interventions).length > 0
+  const wrap = useRef<HTMLDivElement>(null)
+  const narrow = useNarrow(wrap, 560)
   return (
     <div className={`ca-box ca-graph-box${hasDo ? ' is-cf' : ''}`} data-world={hasDo ? 'do' : 'actual'}>
       <div className="ca-box-head">
@@ -53,8 +57,9 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
           </button>
         )}
       </div>
-      <div className="ca-graph-wrap">
+      <div className="ca-graph-wrap" ref={wrap}>
         <SignalGraph
+          compact={narrow}
           c={c}
           shown={world.shown}
           values={world.values}

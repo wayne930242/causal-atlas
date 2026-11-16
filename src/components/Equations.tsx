@@ -1,6 +1,6 @@
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
-import { renderEquation } from '../engine/index.ts'
+import { causalFormulas, renderExpr } from '../engine/index.ts'
 import { formatValue } from '../engine/values.ts'
 import type { UiNotation } from './notation.ts'
 import { OkIcon, Tag } from './parts.tsx'
@@ -16,7 +16,7 @@ export interface EquationsProps {
 
 /** The model's equations in one notation at a time. */
 export function Equations({ c, shown, notation, values, interventions }: EquationsProps) {
-  const ids = equationIds(c, shown)
+  const ids = equationIds(c, shown, interventions)
   const hasDo = Object.keys(interventions).length > 0
   if (notation === 'causal') {
     if (hasDo && values !== undefined) {
@@ -43,7 +43,12 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
       <div className="ca-eqs" data-notation={notation}>
         {ids.map((id) => (
           <div key={id} className="ca-eq-row">
-            <code className="ca-eq-text">{renderEquation(c.model, id, 'causal', 'text')}</code>
+            <code className="ca-eq-text">
+              {causalFormulas(c.model, id)
+                .map((f) => renderExpr(f, 'text'))
+                .join(' ∧\n')}
+            </code>
+            <code className="ca-eq-worked" />
             <span className="ca-eq-note">{label(c.model, id)}</span>
           </div>
         ))}
@@ -72,7 +77,7 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
               </>
             )}
           </code>
-          {r.worked !== undefined && <code className="ca-eq-worked">{r.worked}</code>}
+          <code className="ca-eq-worked">{r.worked ?? ''}</code>
           <span className="ca-eq-note">{r.note}</span>
         </div>
       ))}

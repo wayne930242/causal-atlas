@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
@@ -9,6 +9,7 @@ import type { UiNotation } from './notation.ts'
 import { NOTATIONS } from './notation.ts'
 import { Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
+import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
 import { seeDoPair } from './verdict-rows.ts'
 import {
@@ -119,6 +120,8 @@ export function ProbabilityPanelFor({ c, view = 'sliders', pair }: { c: LoadedCa
   const prior = useMemo(() => priorWithSliders(c, sliders), [c, sliders])
   const base = useMemo(() => marginals(c.model, prior).p, [c, prior])
   const onSlider = (id: string, p: number): void => setSliders((s) => ({ ...s, [id]: p }))
+  const wrap = useRef<HTMLDivElement>(null)
+  const narrow = useNarrow(wrap, 560)
 
   if (view === 'compare') {
     const p = pair ?? seeDoPair(c)
@@ -149,8 +152,9 @@ export function ProbabilityPanelFor({ c, view = 'sliders', pair }: { c: LoadedCa
           )}
           <span className="ca-muted ca-small">黑色的高度＝等於 1 的機率</span>
         </div>
-        <div className="ca-graph-wrap">
+        <div className="ca-graph-wrap" ref={wrap}>
           <SignalGraph
+            compact={narrow}
             c={c}
             shown={shown}
             values={values}
@@ -212,6 +216,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection }: CompareProps) {
                 probs={see}
                 probNotes={notesAgainst(base, see, shown, observedId, '看到的')}
                 observed={[observedId]}
+                compact
                 interventions={{}}
                 removedEdges={[]}
                 title={`觀察 ${pair.observe} 之後的機率`}
@@ -245,6 +250,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection }: CompareProps) {
               probNotes={notesAgainst(base, doP, shown, doId, '設定的')}
               interventions={pair.intervene as Assignment}
               removedEdges={removed}
+              compact
               title={`${doText(pair.intervene)} 之後的機率`}
             />
           </div>

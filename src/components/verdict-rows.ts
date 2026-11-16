@@ -130,7 +130,7 @@ export function actualGroups(c: LoadedCase): ActualGroup[] {
   return [...groups.values()].map((g) => {
     const parsed = parseCause(model, g.cause)
     const ids = Object.keys(parsed)
-    const causeLabel = ids.map((id) => label(model, id)).join('和')
+    const causeLabel = ids.map((id) => label(model, id)).join('、')
     const yId = effectVariable(g.effect)
     const effectLabel = yId === undefined ? '' : label(model, yId)
     return { ...g, heading: `${causeLabel}（${causeText(g.cause)}）算不算${effectLabel}（${g.effect}）的原因` }

@@ -8,5 +8,7 @@ export type { ProbabilityPanelProps, ProbabilityView } from './ProbabilityPanel.
 export { ProbabilityPanel } from './ProbabilityPanel.tsx'
 export type { WorldLanesProps } from './WorldLanes.tsx'
 export { WorldLanes } from './WorldLanes.tsx'
+export type { DisclosureProps as SupplementProps } from './parts.tsx'
+export { Disclosure as Supplement } from './parts.tsx'
 export type { SeeDoPair } from './verdict-rows.ts'
 export type { UiNotation } from './notation.ts'
