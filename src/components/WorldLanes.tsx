@@ -11,7 +11,7 @@ import type { ExportSource } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { LocaleProvider, LocaleScope, messagesFor, useMessages } from './i18n.ts'
-import { originSources } from './verdict-rows.ts'
+import { originCitations, originSources } from './verdict-rows.ts'
 import { Arrow, Progress } from './parts.tsx'
 import {
   assignmentText,
@@ -448,7 +448,8 @@ function WorldLanesFor({
       view?.dispose()
       return undefined
     }
-    return { name: `${c.data.id}-lanes`, title: c.data.title[locale], panels: [{ svg }], origin: originSources(m, c), dispose: view?.dispose }
+    return { name: `${c.data.id}-lanes`, title: c.data.title[locale], panels: [{ svg }], origin: originSources(m, c),
+      originCitations: originCitations(c), dispose: view?.dispose }
   }
   return (
     <div className="ca-root not-prose ca-lanes" data-case={c.data.id} data-step={step} lang={t.locale}>
@@ -462,7 +463,7 @@ function WorldLanesFor({
           <button type="button" className="ca-link" aria-expanded={showEq} onClick={() => setShowEq((s) => !s)}>
             {showEq ? t.lanes.hideEquations : t.lanes.showEquations}
           </button>
-          <ExportMenu url={exportUrl} source={exportSource} />
+          <ExportMenu url={exportUrl} source={exportSource} origins={originCitations(c)} />
         </div>
         <div className="ca-lanes-foot-right">
           {step > 1 && (

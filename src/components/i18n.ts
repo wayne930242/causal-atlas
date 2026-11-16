@@ -313,6 +313,15 @@ const ZH = {
     nothing: '畫面上沒有圖可以下載',
     failed: (message: string): string => `下載失敗：${message}`,
     caseSource: (origin: string): string => `案例出處：${origin}`,
+    style: '樣式',
+    styleColor: '彩色（含浮水印）',
+    styleAcademic: '學術版（黑白線條）',
+    citeLead: '引用本圖請註明：',
+    reminderHeading: '學術版沒有浮水印，請在圖說或參考文獻裡引用：',
+    reminderOrigins: '這個案例的原始出處也請一併引用：',
+    copyAuthorYear: '複製作者年份',
+    copyOrigins: '複製案例出處',
+    copied: '已複製',
   },
 
   // citation
@@ -598,6 +607,15 @@ const EN: Messages = {
     nothing: 'There is no graph on screen to download',
     failed: (message) => `Download failed: ${message}`,
     caseSource: (origin) => `Case source: ${origin}`,
+    style: 'Style',
+    styleColor: 'Colour (watermarked)',
+    styleAcademic: 'Academic (B/W line art)',
+    citeLead: 'Please cite this figure as:',
+    reminderHeading: 'The academic version has no watermark. Please cite it in the caption or the references:',
+    reminderOrigins: 'Please also cite the case’s original sources:',
+    copyAuthorYear: 'Copy author-year',
+    copyOrigins: 'Copy case sources',
+    copied: 'Copied',
   },
 
   cite: {

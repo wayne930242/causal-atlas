@@ -14,7 +14,7 @@ import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
-import { originSources } from './verdict-rows.ts'
+import { originCitations, originSources } from './verdict-rows.ts'
 import { doText, probLegend } from './view-model.ts'
 
 export interface GraphBoxProps {
@@ -73,6 +73,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
       panels: [{ svg, tags, tint: hasDo }],
       legend: legendFor(m),
       origin: originSources(m, c),
+      originCitations: originCitations(c),
       dispose,
     }
   }
@@ -107,7 +108,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
               {t.backToActual}
             </button>
           )}
-          <ExportMenu source={exportSource} url={exportUrl} />
+          <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} />
         </div>
       </div>
       <div className="ca-graph-wrap" ref={wrap}>

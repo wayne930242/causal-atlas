@@ -249,3 +249,8 @@ export function shortSources(t: Messages, c: LoadedCase): string {
 export function originSources(t: Messages, c: LoadedCase): string {
   return t.sourceList(c.data.sources.filter((s) => s.role === 'origin').map((s) => shortCitation(s.citation)))
 }
+
+/** Full citations of the case's origin sources, for the academic export's citation reminder. */
+export function originCitations(c: LoadedCase): string[] {
+  return c.data.sources.filter((s) => s.role === 'origin').map((s) => s.citation)
+}

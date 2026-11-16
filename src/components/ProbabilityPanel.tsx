@@ -16,7 +16,7 @@ import { Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
 import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
-import { originSources, seeDoPair } from './verdict-rows.ts'
+import { originCitations, originSources, seeDoPair } from './verdict-rows.ts'
 import {
   defaultSliders,
   doText,
@@ -186,6 +186,7 @@ export function ProbabilityPanelFor({
       panels: [{ svg, tags: [{ text: showValues ? m.actualWorld : m.probability, tone: 'fg' as const }] }],
       legend: showValues ? m.valueLegend : probLegend(m, c.model, shown),
       origin: originSources(m, c),
+      originCitations: originCitations(c),
       dispose,
     }
   }
@@ -207,7 +208,7 @@ export function ProbabilityPanelFor({
             <Tag tone="fg">{t.probability}</Tag>
           )}
           <span className="ca-muted ca-small">{legend}</span>
-          <ExportMenu source={exportSource} url={exportUrl} />
+          <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} />
         </div>
         <div className="ca-graph-wrap" ref={wrap}>
           {graph(t)}
@@ -312,6 +313,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
       panels,
       legend: probLegend(m, c.model, shown),
       origin: originSources(m, c),
+      originCitations: originCitations(c),
       dispose: view?.dispose,
     }
   }
@@ -319,7 +321,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="compare" lang={t.locale} ref={root}>
       <div className="ca-box-head ca-compare-head">
         <span className="ca-muted ca-small">{probLegend(t, c.model, shown)}</span>
-        <ExportMenu source={exportSource} url={exportUrl} />
+        <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} />
       </div>
       <div className="ca-compare">
         <div className="ca-compare-side" data-side="see">

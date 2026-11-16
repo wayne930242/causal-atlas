@@ -1295,6 +1295,21 @@
   min-height: 32px;
 }
 
+.ca-export-cite {
+  display: grid;
+  gap: 0.4rem;
+  max-width: 28rem;
+  white-space: normal;
+}
+.ca-export-cite ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.ca-export-copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
 .ca-export-error {
   color: var(--accent);
   white-space: normal;

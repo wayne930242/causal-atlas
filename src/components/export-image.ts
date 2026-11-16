@@ -1,4 +1,4 @@
-import { DEFAULT_URL, watermarkLine } from './cite.ts'
+import { DEFAULT_URL, authorYear, authorYearEn, bibtex, watermarkLine } from './cite.ts'
 import type { Locale } from './i18n.ts'
 import { DEFAULT_LOCALE, messagesFor } from './i18n.ts'
 import { saveFile } from './download.ts'
@@ -12,6 +12,8 @@ import { textWidth } from './view-model.ts'
 
 export type ExportTheme = 'light' | 'dark'
 export type ExportFormat = 'png' | 'svg'
+/** `color`: the page's look with a watermark strip. `academic`: black and white line art, nothing else. */
+export type ExportStyle = 'color' | 'academic'
 
 interface Translucent {
   readonly color: string
@@ -99,6 +101,28 @@ export const PALETTES: Record<ExportTheme, Palette> = {
   },
 }
 
+/** Academic style: only black and white; every difference the colours carried is carried by line and shape. */
+export const ACADEMIC_PALETTE: Palette = {
+  background: '#ffffff',
+  foreground: '#000000',
+  accent: '#000000',
+  accentForeground: '#ffffff',
+  muted: '#ffffff',
+  mutedForeground: '#000000',
+  border: '#000000',
+  slate: '#000000',
+  slateText: '#000000',
+  onSlate: '#ffffff',
+  amber: '#000000',
+  amberText: '#000000',
+  amberFill: { color: '#ffffff', alpha: 1 },
+  green: '#000000',
+  onGreen: '#ffffff',
+  idle: '#000000',
+  guide: '#000000',
+  cf: '#ffffff',
+}
+
 const SANS = "'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif"
 const MONO = "ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace"
 
@@ -183,10 +207,29 @@ const RULES: readonly Rule[] = [
   { cls: ['ca-lane-tag-text-amber'], decl: (p) => ({ fill: p.amberText }) },
 ]
 
+/**
+ * Academic overrides, after RULES: print-friendly widths (none under 0.75), a dashed cut edge
+ * with its two slashes, a dotted hull for the witness, thin idle edges against thick live ones.
+ */
+const ACADEMIC_RULES: readonly Rule[] = [
+  { cls: ['ca-stroke-idle'], decl: (p) => ({ stroke: p.idle, 'stroke-width': '1', fill: 'none' }) },
+  { cls: ['ca-stroke-live'], decl: (p) => ({ stroke: p.foreground, 'stroke-width': '2', fill: 'none' }) },
+  { cls: ['ca-stroke-cut'], decl: (p) => ({ stroke: p.idle, 'stroke-width': '1.25', 'stroke-dasharray': '5 3', fill: 'none' }) },
+  { cls: ['ca-stroke-slash'], decl: (p) => ({ stroke: p.foreground, 'stroke-width': '2', 'stroke-linecap': 'butt', fill: 'none' }) },
+  { cls: ['ca-stroke-clamp'], decl: (p) => ({ stroke: p.foreground, 'stroke-width': '2', 'stroke-linecap': 'butt', fill: 'none' }) },
+  {
+    cls: ['ca-hull'],
+    decl: (p) => ({ fill: 'none', stroke: p.foreground, 'stroke-width': '1.5', 'stroke-dasharray': '1.5 3', 'stroke-linecap': 'round' }),
+  },
+  { cls: ['ca-guide'], decl: (p) => ({ stroke: p.guide, 'stroke-width': '0.75', 'stroke-dasharray': '1 3', fill: 'none' }) },
+  { cls: ['ca-hair'], decl: (p) => ({ stroke: p.border, 'stroke-width': '0.75' }) },
+]
+
 const DROP_ATTRS = /^(class|role|tabindex|aria-.*|data-.*|style)$/i
 
 /** A copy of `svg` with classes resolved to literal attributes; focus rings and ARIA removed. */
-export function inlineSvg(svg: SVGSVGElement, palette: Palette): SVGSVGElement {
+export function inlineSvg(svg: SVGSVGElement, palette: Palette, style: ExportStyle = 'color'): SVGSVGElement {
+  const rules = style === 'academic' ? [...RULES, ...ACADEMIC_RULES] : RULES
   const clone = svg.cloneNode(true) as SVGSVGElement
   for (const ring of [...clone.querySelectorAll('.ca-focus-ring')]) ring.remove()
   const all = [clone, ...clone.querySelectorAll('*')]
@@ -194,7 +237,7 @@ export function inlineSvg(svg: SVGSVGElement, palette: Palette): SVGSVGElement {
     const tag = el.tagName.toLowerCase()
     const classes = new Set((el.getAttribute('class') ?? '').split(/\s+/).filter((s) => s !== ''))
     const decl: Record<string, string> = {}
-    for (const rule of RULES) {
+    for (const rule of rules) {
       if (rule.tag !== undefined && rule.tag !== tag) continue
       if (rule.tag === undefined && rule.cls.length === 0) continue
       if (!rule.cls.every((c) => classes.has(c))) continue
@@ -232,11 +275,15 @@ export interface ExportSource {
   readonly legend?: string
   /** Short origin citations, e.g. `Hall 2004`; adds the case-source line to the watermark. */
   readonly origin?: string
+  /** Full origin citations of a case graph; the academic SVG carries them in its description. */
+  readonly originCitations?: readonly string[]
   /** Releases anything drawn only for this export (a graph rendered in another language). */
   readonly dispose?: () => void
 }
 
 export interface ExportOptions {
+  /** Default `color`. `academic` ignores `theme` and draws no watermark or case-source strip. */
+  readonly style?: ExportStyle
   readonly theme: ExportTheme
   /** Link in the watermark. Default https://wayneh.tw/causal/. */
   readonly url?: string
@@ -309,9 +356,17 @@ export interface BuiltSvg {
   readonly height: number
 }
 
+/** `<title>`, `<desc>` and `<metadata>` carrying the citation of an academic image; none of it is drawn. */
+function citationMetadata(source: ExportSource, url: string, locale: Locale): string {
+  const m = messagesFor(locale).export
+  const desc = [m.citeLead, locale === 'en' ? authorYearEn(url) : authorYear(url), ...(source.originCitations ?? [])].join('\n')
+  return `<title>${esc(source.title)}</title><desc>${esc(desc)}</desc><metadata>${esc(bibtex(url))}</metadata>`
+}
+
 /** The framed export: title, panels with their tags, legend, and the watermark strip. */
 export function buildExportSvg(source: ExportSource, options: ExportOptions): BuiltSvg {
-  const p = PALETTES[options.theme]
+  const academic = options.style === 'academic'
+  const p = academic ? ACADEMIC_PALETTE : PALETTES[options.theme]
   const url = options.url ?? DEFAULT_URL
   const PAD = 24
   const INNER = 14
@@ -335,9 +390,9 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
 
   const locale = options.locale ?? DEFAULT_LOCALE
   const origin = source.origin === undefined || source.origin === '' ? [] : [messagesFor(locale).export.caseSource(source.origin)]
-  const lines = [watermarkLine(url, locale), ...origin]
+  const lines = academic ? [] : [watermarkLine(url, locale), ...origin]
   const WM_SIZE = 12
-  const wmH = 14 + lines.length * 18 + 8
+  const wmH = academic ? 0 : 14 + lines.length * 18 + 8
   const width = Math.ceil(
     Math.max(
       contentW,
@@ -347,7 +402,7 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
     ) +
       PAD * 2,
   )
-  const height = Math.ceil(PAD + headH + contentH + legendH + 16 + wmH)
+  const height = Math.ceil(PAD + headH + contentH + legendH + (academic ? 8 : 16) + wmH)
 
   const parts: string[] = []
   parts.push(`<rect width="${width}" height="${height}" fill="${p.background}"/>`)
@@ -368,7 +423,7 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
       tx += tagWidth(t) + 8
     }
     if (tags.length > 0) y += TAG_H + 10
-    const clone = inlineSvg(panel.svg, p)
+    const clone = inlineSvg(panel.svg, p, options.style)
     clone.setAttribute('x', String(x + (w - box.w) / 2))
     clone.setAttribute('y', String(y))
     clone.setAttribute('width', String(box.w))
@@ -389,16 +444,19 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
     parts.push(`<text x="${PAD}" y="${y + 19}" font-size="12" fill="${p.mutedForeground}">${esc(source.legend)}</text>`)
     y += legendH
   }
-  const wmTop = height - wmH
-  parts.push(`<rect x="0" y="${wmTop}" width="${width}" height="${wmH}" fill="${p.muted}"/>`)
-  lines.forEach((line, i) => {
-    parts.push(
-      `<text x="${PAD}" y="${wmTop + 14 + 12 + i * 18}" font-size="${WM_SIZE}" ${i === 0 ? 'font-weight="700" ' : ''}fill="${i === 0 ? p.foreground : p.mutedForeground}">${esc(line)}</text>`,
-    )
-  })
+  if (!academic) {
+    const wmTop = height - wmH
+    parts.push(`<rect x="0" y="${wmTop}" width="${width}" height="${wmH}" fill="${p.muted}"/>`)
+    lines.forEach((line, i) => {
+      parts.push(
+        `<text x="${PAD}" y="${wmTop + 14 + 12 + i * 18}" font-size="${WM_SIZE}" ${i === 0 ? 'font-weight="700" ' : ''}fill="${i === 0 ? p.foreground : p.mutedForeground}">${esc(line)}</text>`,
+      )
+    })
+  }
+  const meta = academic ? citationMetadata(source, url, locale) : ''
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" ` +
-    `font-family="${esc(SANS)}" font-size="16">${parts.join('')}</svg>`
+    `font-family="${esc(SANS)}" font-size="16">${meta}${parts.join('')}</svg>`
   return { svg, width, height }
 }
 
@@ -420,10 +478,10 @@ export async function rasterize(built: BuiltSvg, scale = 2): Promise<Blob> {
   })
 }
 
-/** Build and save the image: `<name>-<theme>.svg` or `.png` (2×), with `-en` for English. */
+/** Build and save the image: `<name>-<theme>.svg` (`-academic` for the academic style) or `.png` (2×), with `-en` for English. */
 export async function exportImage(source: ExportSource, options: ExportOptions & { readonly format: ExportFormat }): Promise<void> {
   const built = buildExportSvg(source, options)
-  const base = `${source.name}-${options.theme}${(options.locale ?? DEFAULT_LOCALE) === 'en' ? '-en' : ''}`
+  const base = `${source.name}-${options.style === 'academic' ? 'academic' : options.theme}${(options.locale ?? DEFAULT_LOCALE) === 'en' ? '-en' : ''}`
   if (options.format === 'svg') {
     saveFile(`${base}.svg`, built.svg, 'image/svg+xml')
     return
