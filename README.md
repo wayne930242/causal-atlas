@@ -4,7 +4,7 @@ Interactive structural causal models and a dataset of philosophical causation an
 
 ## Package
 
-`causal-atlas` (0.1.0, not published) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.2.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -49,6 +49,32 @@ keys). It starts from any bundled case or a blank model, exports and imports JSO
 `#model=1.<base64url(deflate-raw(JSON))>`; the leading `1` is the format version. Props: `initial`
 (case id or `blank`), `hash`, `shareHref(value)`, `exportUrl`, `locale`.
 
+A custom model need not go through the editor. `CausalPlayground`, `ProbabilityPanel` and `WorldLanes`
+take `doc` (a `modelDocSchema` value, e.g. one exported from the editor) instead of `caseId`;
+`ModelEditor` takes `initialDoc`, which wins over `initial`:
+
+```mdx
+import doc from './my-model.json'
+import { CausalPlayground, ModelEditor } from 'causal-atlas'
+
+<CausalPlayground client:visible doc={doc} />
+<CausalPlayground client:visible doc={doc} presets={[{ label: '關掉下雨', interventions: { R: false } }]} />
+<ModelEditor client:visible initialDoc={doc} />
+```
+
+- `<CausalPlayground doc>`: graph, notation toggle, do() on click and the export menu, server-rendered
+  with values, no editor chrome. `presets` is `true` (a bundled case's own; a document has none),
+  `false`, or a list of `{ label: string | { 'zh-TW', en }, interventions }`.
+- `<ProbabilityPanel doc>` takes a document with priors or a `context` (a point mass);
+  `<WorldLanes doc interventions>` needs a `context`, and `interventions` because a document has no preset.
+- `<ModelEditor initialDoc>` renders that model on the server instead of a blank one; a share hash
+  still overrides it on the client.
+- A document that fails `modelDocSchema` or does not build (parse error, cycle, …) does not throw:
+  the three panels show an alert with each problem's stable code (`data-code` on the alert), and the
+  editor starts blank with the same alert.
+- Export credit: a document's image carries 「案例出處」 only when `doc.from` is a bundled case and the
+  model is that case's model (`sameModel`, see below); otherwise it has no case origin.
+
 An imported document (pasted, uploaded or from a share link) keeps the bundled case it names in
 `from`, and with it the image's case source, only when its model is that case's model: the same
 variables, kinds and domains, equations with the same syntax trees, and the same context, priors and
@@ -92,9 +118,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.1.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.2.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.1.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.2.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -103,7 +129,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.1.0},
+  version = {0.2.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

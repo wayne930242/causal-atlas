@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 import { useId, useMemo, useRef, useState } from 'react'
-import { getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
+import type { ModelDoc } from '../data/schema.ts'
 import type { Assignment, CausalTheory, Edge, Value } from '../engine/index.ts'
 import { actualCause, evaluate } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
+import { useCaseOrDoc } from './doc-case.ts'
 import { Equations } from './Equations.tsx'
 import { renderDetached } from './export-render.tsx'
 import type { ExportSource } from './export-image.ts'
@@ -12,7 +13,7 @@ import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { LocaleProvider, LocaleScope, messagesFor, useMessages } from './i18n.ts'
 import { originCitations, originSources } from './verdict-rows.ts'
-import { Arrow, Progress } from './parts.tsx'
+import { DocProblems, Arrow, Progress } from './parts.tsx'
 import {
   assignmentText,
   columnOrder,
@@ -26,8 +27,17 @@ import {
   textWidth,
 } from './view-model.ts'
 
-export interface WorldLanesProps {
-  readonly caseId: string
+export type WorldLanesProps = WorldLanesSource & WorldLanesOptions
+
+/**
+ * What to draw: a bundled case by id, or a model document with a `context` (invalid ones show
+ * their problem codes). A document has no preset, so pass `interventions` with it.
+ */
+export type WorldLanesSource =
+  | { readonly caseId: string; readonly doc?: undefined }
+  | { readonly doc: ModelDoc; readonly caseId?: undefined }
+
+export interface WorldLanesOptions {
   /** The counterfactual's do(); defaults to the case's first preset. */
   readonly interventions?: Assignment
   /** Text on the button that adds the counterfactual lane. */
@@ -73,12 +83,12 @@ function tagEl(x: number, y: number, text: string, tone: 'fg' | 'slate' | 'accen
 }
 
 /** Direction 2 「世界分道」: each world is a row of cells; columns line up so changes read down a column. */
-export function WorldLanes({ caseId, interventions, actionLabel, witness, initialStep = 1, exportUrl, locale }: WorldLanesProps) {
-  const c = getCase(caseId)
+export function WorldLanes({ caseId, doc, interventions, actionLabel, witness, initialStep = 1, exportUrl, locale }: WorldLanesProps) {
   return (
     <LocaleScope locale={locale}>
-      <WorldLanesFor
-        c={c}
+      <WorldLanesResolved
+        caseId={caseId}
+        doc={doc}
         interventions={interventions}
         actionLabel={actionLabel}
         witness={witness}
@@ -89,6 +99,12 @@ export function WorldLanes({ caseId, interventions, actionLabel, witness, initia
   )
 }
 
+function WorldLanesResolved({ caseId, doc, ...rest }: Omit<WorldLanesProps, 'locale'>) {
+  const resolved = useCaseOrDoc(caseId, doc)
+  if (!resolved.ok) return <DocProblems problems={resolved.problems} />
+  return <WorldLanesFor c={resolved.c} {...rest} />
+}
+
 function WorldLanesFor({
   c,
   interventions,
@@ -96,7 +112,7 @@ function WorldLanesFor({
   witness,
   initialStep = 1,
   exportUrl,
-}: Omit<WorldLanesProps, 'caseId' | 'locale'> & { c: LoadedCase }) {
+}: Omit<WorldLanesOptions, 'locale'> & { c: LoadedCase }) {
   const t = useMessages()
   const stage = useRef<HTMLDivElement>(null)
   const context = c.context

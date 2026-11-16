@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 import { useMemo, useRef, useState } from 'react'
-import { getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
+import type { ModelDoc } from '../data/schema.ts'
 import type { Assignment } from '../engine/index.ts'
 import { evaluate, getVariable, probability } from '../engine/index.ts'
 import { graphExport, renderDetached } from './export-render.tsx'
+import { useCaseOrDoc } from './doc-case.ts'
 import { Equations } from './Equations.tsx'
 import type { ExportPanel, ExportSource } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
@@ -12,7 +13,7 @@ import type { Locale, Messages } from './i18n.ts'
 import { LocaleProvider, LocaleScope, messagesFor, useMessages } from './i18n.ts'
 import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
-import { Disclosure, Segmented, Tag } from './parts.tsx'
+import { DocProblems, Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
 import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
@@ -32,8 +33,14 @@ import {
 
 export type ProbabilityView = 'sliders' | 'compare'
 
-export interface ProbabilityPanelProps {
-  readonly caseId: string
+export type ProbabilityPanelProps = ProbabilitySource & ProbabilityOptions
+
+/** What to draw: a bundled case by id, or a model document (invalid ones show their problem codes). */
+export type ProbabilitySource =
+  | { readonly caseId: string; readonly doc?: undefined }
+  | { readonly doc: ModelDoc; readonly caseId?: undefined }
+
+export interface ProbabilityOptions {
   /** `sliders`: set p per exogenous variable. `compare`: observing vs do() side by side. */
   readonly view?: ProbabilityView
   /** For `compare`: the observation, the do() and the event. Defaults to the case's own pair. */
@@ -119,13 +126,18 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
 }
 
 /** Direction 1 probability mode: per-exogenous p sliders; node fill is P(V=1); observing vs do() side by side. */
-export function ProbabilityPanel({ caseId, view = 'sliders', pair, exportUrl, locale }: ProbabilityPanelProps) {
-  const c = getCase(caseId)
+export function ProbabilityPanel({ caseId, doc, view = 'sliders', pair, exportUrl, locale }: ProbabilityPanelProps) {
   return (
     <LocaleScope locale={locale}>
-      <ProbabilityPanelFor c={c} view={view} pair={pair} exportUrl={exportUrl} />
+      <ProbabilityPanelResolved caseId={caseId} doc={doc} view={view} pair={pair} exportUrl={exportUrl} />
     </LocaleScope>
   )
+}
+
+function ProbabilityPanelResolved({ caseId, doc, view, pair, exportUrl }: Omit<ProbabilityPanelProps, 'locale'>) {
+  const resolved = useCaseOrDoc(caseId, doc)
+  if (!resolved.ok) return <DocProblems problems={resolved.problems} />
+  return <ProbabilityPanelFor c={resolved.c} view={view} pair={pair} exportUrl={exportUrl} />
 }
 
 export function ProbabilityPanelFor({

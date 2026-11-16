@@ -298,6 +298,7 @@ const ZH = {
   // playground
   playgroundHint: '點圖上的節點，可以把它設成另一個值；再點一次就放開。',
   presets: '預設的干預',
+  docInvalid: '這份模型文件無法顯示：',
 
   // export
   export: {
@@ -593,6 +594,7 @@ const EN: Messages = {
 
   playgroundHint: 'Click a node on the graph to set it to another value; click it again to release it.',
   presets: 'Preset interventions',
+  docInvalid: 'This model document cannot be shown:',
 
   export: {
     open: 'Download image',

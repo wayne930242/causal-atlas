@@ -2,8 +2,9 @@ import type { ChangeEvent } from 'react'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { caseIds, getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
-import { decodeShare, encodeShare, parseModelJson, shareFromHash } from '../data/model-doc.ts'
+import { decodeShare, encodeShare, parseModelJson, schemaProblems, shareFromHash } from '../data/model-doc.ts'
 import type { ModelDoc } from '../data/schema.ts'
+import { modelDocSchema } from '../data/schema.ts'
 import type { Assignment, Problem, Value } from '../engine/index.ts'
 import { coerceToDomain } from '../engine/index.ts'
 import { saveFile } from './download.ts'
@@ -15,11 +16,18 @@ import type { ModelWorld } from './model-state.ts'
 import { solve } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
-import { Disclosure, Segmented } from './parts.tsx'
+import { Disclosure, DocProblems, Segmented } from './parts.tsx'
 
 export interface ModelEditorProps {
   /** Starting model: a bundled case id or `blank`. Default `rock-throwing`. */
   readonly initial?: string
+  /**
+   * Starting model as a document (a `modelDocSchema` value); wins over `initial`, so the editor
+   * renders on the server with this model instead of a blank one. A share hash still overrides it
+   * on the client. Its `from` keeps the case source only when the model is that bundled case's.
+   * An invalid document starts blank and shows its problem codes.
+   */
+  readonly initialDoc?: ModelDoc
   /** Where to look for a shared model (`#model=…`); defaults to the page's hash. */
   readonly hash?: string
   /** Builds the share link from the encoded model. Default: this page with `#model=<value>`. */
@@ -30,7 +38,16 @@ export interface ModelEditorProps {
   readonly locale?: Locale
 }
 
-function startDraft(initial: string, t: Messages): Draft {
+function startDraft(initial: string, t: Messages, initialDoc?: ModelDoc): { readonly draft: Draft; readonly problems: readonly Problem[] } {
+  if (initialDoc !== undefined) {
+    const parsed = modelDocSchema.safeParse(initialDoc, { reportInput: true })
+    if (parsed.success) return { draft: draftFromImport(parsed.data), problems: [] }
+    return { draft: blankDraft(t.editor.defaultTitle), problems: schemaProblems(parsed.error) }
+  }
+  return { draft: startFromCase(initial, t), problems: [] }
+}
+
+function startFromCase(initial: string, t: Messages): Draft {
   if (initial === 'blank' || !caseIds.includes(initial)) return blankDraft(t.editor.defaultTitle)
   return draftFromCase(getCase(initial), t.locale)
 }
@@ -67,10 +84,11 @@ export function ModelEditor({ locale, ...props }: ModelEditorProps) {
   )
 }
 
-function EditorBody({ initial = 'rock-throwing', hash, shareHref, exportUrl }: Omit<ModelEditorProps, 'locale'>) {
+function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, exportUrl }: Omit<ModelEditorProps, 'locale'>) {
   const t = useMessages()
   const e = t.editor
-  const [draft, setDraft] = useState<Draft>(() => startDraft(initial, t))
+  const [start] = useState(() => startDraft(initial, t, initialDoc))
+  const [draft, setDraft] = useState<Draft>(start.draft)
   const [interventions, setInterventions] = useState<Assignment>({})
   const [notation, setNotation] = useState<UiNotation>('propositional')
   // What reading the share link went wrong with; worded at render, so it follows the language.
@@ -228,6 +246,7 @@ function EditorBody({ initial = 'rock-throwing', hash, shareHref, exportUrl }: O
         </label>
       </div>
 
+      {start.problems.length > 0 && <DocProblems problems={start.problems} />}
       {loadErrors.length > 0 && (
         <div className="ca-editor-errors" role="alert">
           <p>{e.shareUnreadable}</p>

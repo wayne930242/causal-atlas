@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useId, useState } from 'react'
-import { useMessages } from './i18n.ts'
+import type { Problem } from '../engine/index.ts'
+import { problemMessage, useMessages } from './i18n.ts'
 
 /** Small shared pieces: segmented control, disclosure, progress, icons, tags. */
 
@@ -135,4 +136,21 @@ export type TagTone = 'fg' | 'slate' | 'accent' | 'chip' | 'line' | 'amber' | 'o
 
 export function Tag({ tone, children, mono }: { readonly tone: TagTone; readonly children: ReactNode; readonly mono?: boolean }) {
   return <span className={`ca-tag ca-tag-${tone}${mono === true ? ' ca-mono' : ''}`}>{children}</span>
+}
+
+/** A model document that could not be drawn: every problem with its stable code (and the first as `data-code`). */
+export function DocProblems({ problems }: { readonly problems: readonly Problem[] }) {
+  const t = useMessages()
+  return (
+    <div className="ca-root not-prose ca-editor-errors ca-doc-error" role="alert" data-code={problems[0]?.code} lang={t.locale}>
+      <p>{t.docInvalid}</p>
+      <ul>
+        {problems.map((p, i) => (
+          <li key={`${p.code}-${i}`}>
+            <code className="ca-mono">{p.code}</code> {problemMessage(p, t)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }

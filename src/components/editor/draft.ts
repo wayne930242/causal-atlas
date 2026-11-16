@@ -1,11 +1,11 @@
-import { caseIds, getCase } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
-import { caseToDoc, docToCase, sameModel, schemaProblems } from '../../data/model-doc.ts'
+import { caseToDoc, docToCase, schemaProblems } from '../../data/model-doc.ts'
 import type { CaseFile, ModelDoc } from '../../data/schema.ts'
 import { MODEL_DOC_FORMAT, modelDocSchema } from '../../data/schema.ts'
 import type { Locale, Problem, Value, Variable } from '../../engine/index.ts'
 import { CyclicModelError, ParseError, isReservedName, parseExpr, problemOf } from '../../engine/index.ts'
 import { checkExpr } from '../../engine/model.ts'
+import { creditedFrom } from '../doc-case.ts'
 import type { DraftIssue } from '../i18n.ts'
 import { gridLayout, shownVariables } from '../view-model.ts'
 
@@ -142,8 +142,7 @@ export function draftFromDoc(doc: ModelDoc, layoutFrom?: LoadedCase): Draft {
  * unknown one is the importer's own.
  */
 export function draftFromImport(doc: ModelDoc): Draft {
-  const from = doc.from !== undefined && caseIds.includes(doc.from) && sameModel(doc, caseToDoc(getCase(doc.from))) ? doc.from : undefined
-  return draftFromDoc({ ...doc, from })
+  return draftFromDoc({ ...doc, from: creditedFrom(doc) })
 }
 
 export function draftFromCase(c: LoadedCase, locale: Locale = 'zh-TW'): Draft {
