@@ -1,0 +1,295 @@
+{
+  "id": "billy-suzy-overdetermination",
+  "title": {
+    "zh-TW": "兩顆石頭同時到：對稱的過度決定",
+    "en": "Two rocks arrive together (symmetric overdetermination)"
+  },
+  "subtitle": {
+    "zh-TW": "兩顆石頭同時打中窗戶，任何一顆就夠把窗打破。",
+    "en": "Two rocks hit the window at once, and either one alone would break it."
+  },
+  "family": "actual",
+  "story": {
+    "zh-TW": "小蘇和小比各拿一塊石頭，在同一瞬間朝窗戶丟去。兩塊石頭同時到達，每一塊單獨都足以把窗戶打破。窗戶破了。兩個人的條件完全對稱，沒有誰先、誰後。",
+    "en": "Suzy and Billy each pick up a rock and throw it at a window at the very same instant. The two rocks arrive together, and either one alone would be enough to break the window. The window breaks. The two throwers stand in exactly the same position; neither is first or second."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "小蘇和小比各拿一塊石頭，在同一瞬間朝窗戶丟去。",
+        "variables": [
+          "ST",
+          "BT"
+        ]
+      },
+      {
+        "sentence": "窗戶破了。",
+        "variables": [
+          "BS"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "Suzy and Billy each pick up a rock and throw it at a window at the very same instant.",
+        "variables": [
+          "ST",
+          "BT"
+        ]
+      },
+      {
+        "sentence": "The window breaks.",
+        "variables": [
+          "BS"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "ST=1",
+      "effect": "BS=1"
+    },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "她的石頭確實打中了窗戶，另一顆石頭同時到達並不會讓她的那一顆不算數。",
+      "en": "Her rock did hit the window; a second rock arriving at the same moment does not stop hers from counting."
+    },
+    "agree": [
+      "hp-original",
+      "hp-updated"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型採用 Halpern (2016) 例 2.3.3 的粗略模型 MRT：兩人各由一個外生變數決定丟不丟，窗戶破裂只要任一人丟就成立（BS = ST ∨ BT）。兩個變數在方程式中的地位完全相同，所以任何理論對兩人的判斷都一樣。與「丟石頭砸瓶子」（晚期先發制人）的差別只在於：這裡沒有 SH、BH 這兩個中間變數，因為兩顆石頭同時到達，沒有誰阻斷誰。單純的反事實依賴（but-for）會判定兩人都不是原因，原始與更新版 HP 定義各自固定另一人「沒丟」而判定兩人都是原因，修正版 HP 定義則要求兩人合起來才是一個原因，單獨的一人只算原因的一部分。Chockler 與 Halpern (2004) 例 3.4 在這個粗略模型中給小蘇的石頭的責任度是 1/2；兩人對稱，小比的也相同。",
+    "en": "The model is the coarse model MRT of Halpern (2016, Ex. 2.3.3): each thrower's act is set by an exogenous variable, and the window breaks if either throws (BS = ST ∨ BT). The two variables play identical roles in the equations, so every theory treats the two throwers alike. It differs from the rock-throwing (late preemption) case only in lacking the intermediate variables SH and BH: the rocks arrive together, so neither blocks the other. The plain but-for test says neither throw is a cause. The original and updated HP definitions each hold the other thrower at \"did not throw\" and call both throws causes. The modified HP definition makes the two throws together one cause, and each alone only part of a cause. Chockler and Halpern (2004, Ex. 3.4) give Suzy's throw a degree of responsibility of 1/2 in this coarse model; the throwers are symmetric, so the same holds for Billy."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
+      "key": "halpern2016actual",
+      "role": "origin",
+      "pages": "p. 30 (Example 2.3.3, the coarse model M_RT: BS = BT ∨ ST)",
+      "note": {
+        "zh-TW": "Halpern (2016) 例 2.3.3 先給出 BS = BT ∨ ST 的粗略模型，並指出其中 ST 與 BT 的角色對稱，原始與更新版 HP 定義判兩者皆為原因，修正版定義判兩者的合取為原因。",
+        "en": "Halpern (2016, Ex. 2.3.3) first gives the coarse model BS = BT ∨ ST, notes that ST and BT play symmetric roles, and states that the original and updated HP definitions classify both as causes while the modified definition classifies their conjunction as the cause."
+      },
+      "verified": true
+    },
+    {
+      "citation": "Hall, N. (2004). Two concepts of causation. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
+      "key": "hall2004two",
+      "role": "reference",
+      "pages": "pp. 7–8 (§3.3, author manuscript pagination)",
+      "note": {
+        "zh-TW": "Suzy 與 Billy 兩位丟石頭者出自 Hall (2004) §3.3，但他的版本是 Suzy 的石頭先到（晚期先發制人）；本案取兩顆石頭同時到達的對稱版本。",
+        "en": "The two rock-throwers come from Hall (2004, §3.3), but his version has Suzy's rock arrive first (late preemption); this case takes the symmetric version in which the rocks arrive together."
+      },
+      "verified": true
+    },
+    {
+      "citation": "Chockler, H., & Halpern, J. Y. (2004). Responsibility and blame: A structural-model approach. Journal of Artificial Intelligence Research, 22, 93–115.",
+      "key": "chockler2004responsibility",
+      "role": "treatment",
+      "pages": "p. 8 (Example 3.4, arXiv cs/0312038 manuscript pagination)",
+      "verified": true
+    },
+    {
+      "citation": "Lewis, D. (1973). Causation. The Journal of Philosophy, 70(17), 556–567.",
+      "key": "lewis1973causation",
+      "role": "reference",
+      "pages": "p. 567, n. 12",
+      "note": {
+        "zh-TW": "Lewis 在註 12 說明他不討論對稱的過度決定，因為他對這類案例沒有確定的直覺。",
+        "en": "In footnote 12 Lewis says he will not discuss symmetric overdetermination, because he lacks firm naive opinions about such cases."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_ST",
+        "label": {
+          "zh-TW": "小蘇想丟",
+          "en": "Suzy's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_BT",
+        "label": {
+          "zh-TW": "小比想丟",
+          "en": "Billy's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "ST",
+        "label": {
+          "zh-TW": "小蘇丟",
+          "en": "Suzy throws"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BT",
+        "label": {
+          "zh-TW": "小比丟",
+          "en": "Billy throws"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BS",
+        "label": {
+          "zh-TW": "窗戶破",
+          "en": "Window breaks"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "ST": "U_ST",
+      "BT": "U_BT",
+      "BS": "ST or BT"
+    }
+  },
+  "context": {
+    "U_ST": 1,
+    "U_BT": 1
+  },
+  "normality": {
+    "ST": 0,
+    "BT": 0,
+    "BS": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "ST=1",
+        "effect": "BS=1"
+      },
+      "expected": "not-cause",
+      "note": "Billy's rock would have broken the window anyway."
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "BT=1",
+        "effect": "BS=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "ST=1",
+        "effect": "BS=1"
+      },
+      "expected": "cause",
+      "note": "Witness: set BT to 0."
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "BT=1",
+        "effect": "BS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "ST=1",
+        "effect": "BS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "BT=1",
+        "effect": "BS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "ST=1 and BT=1",
+        "effect": "BS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "ST=1",
+        "effect": "BS=1"
+      },
+      "expected": "part-of-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "BT=1",
+        "effect": "BS=1"
+      },
+      "expected": "part-of-cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "ST=1",
+        "effect": "BS=1"
+      },
+      "expected": "part-of-cause"
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "小蘇沒丟",
+        "en": "Suzy does not throw"
+      },
+      "interventions": {
+        "ST": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "兩人都沒丟",
+        "en": "Neither throws"
+      },
+      "interventions": {
+        "ST": 0,
+        "BT": 0
+      }
+    }
+  ],
+  "layout": {
+    "ST": [
+      0,
+      0
+    ],
+    "BT": [
+      0,
+      1
+    ],
+    "BS": [
+      1,
+      0.5
+    ]
+  }
+}

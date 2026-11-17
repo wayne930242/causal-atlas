@@ -1,0 +1,374 @@
+{
+  "id": "trumping-merlin-morgana",
+  "title": {
+    "zh-TW": "越位阻斷：先施咒者說了算",
+    "en": "Trumping: the first spell of the day counts"
+  },
+  "subtitle": {
+    "zh-TW": "兩道咒語都要把王子變成青蛙，法則規定每天的第一道才算數。",
+    "en": "Two spells would turn the prince into a frog, and the law of magic says only the first of the day counts."
+  },
+  "family": "actual",
+  "story": {
+    "zh-TW": "在一個魔法世界裡，有一條法則：每天施放的第一道咒語，會在當晚午夜成真。梅林在中午施咒，要把王子變成青蛙；摩根娜在傍晚六點也施了同樣的咒語，是那天的第二道。午夜，王子變成了青蛙。",
+    "en": "In a world of magic there is a law that the first spell cast on a given day comes true at midnight. Merlin casts a spell at noon to turn the prince into a frog; Morgana casts the same spell at six in the evening, the second of the day. At midnight the prince becomes a frog."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "在一個魔法世界裡，有一條法則：每天施放的第一道咒語，會在當晚午夜成真。",
+        "variables": [
+          "MerE",
+          "MorE"
+        ]
+      },
+      {
+        "sentence": "梅林在中午施咒，要把王子變成青蛙；摩根娜在傍晚六點也施了同樣的咒語，是那天的第二道。",
+        "variables": [
+          "Mer",
+          "Mor"
+        ]
+      },
+      {
+        "sentence": "午夜，王子變成了青蛙。",
+        "variables": [
+          "FC",
+          "F"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "In a world of magic there is a law that the first spell cast on a given day comes true at midnight.",
+        "variables": [
+          "MerE",
+          "MorE"
+        ]
+      },
+      {
+        "sentence": "Merlin casts a spell at noon to turn the prince into a frog; Morgana casts the same spell at six in the evening, the second of the day.",
+        "variables": [
+          "Mer",
+          "Mor"
+        ]
+      },
+      {
+        "sentence": "At midnight the prince becomes a frog.",
+        "variables": [
+          "FC",
+          "F"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "Mor=1",
+      "effect": "F=1"
+    },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "法則只認當天第一道咒語，摩根娜的咒語沒有發揮作用；是梅林把王子變成青蛙。",
+      "en": "The law counts only the first spell of the day, so Morgana's spell did nothing; Merlin turned the prince into a frog."
+    },
+    "agree": [
+      "butfor",
+      "hp-original",
+      "hp-updated",
+      "hp-modified",
+      "hp-normality"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "同一個故事有兩種建模，在模型中並排出現。粗略模型只有 Mer（梅林在中午施咒）、Mor（摩根娜在傍晚施咒）與 FC：青蛙出現只要有人施咒。這個模型對兩人完全對稱，沒有表達「當天第一道才算數」這條法則，所以原始與更新版 HP 定義都判兩人皆是原因；修正版只接受實際值，把兩人的咒語合起來才是一個原因，各自只是原因的一部分（Halpern 與 Pearl 2005 例 5.5）。細緻模型加入 MerE、MorE，表示各自的咒語是否生效：梅林施了咒就生效，摩根娜要在梅林沒施咒時才生效（MorE = Mor ∧ ¬Mer），結構與丟石頭案例裡的 SH、BH 相同。青蛙出現取決於哪一道生效。這時摩根娜的咒語不再是原因：把 MorE 固定在實際值 0，她的咒語就不可能產生差別（HP 原文說它不滿足 AC2(b)）。MerE、MorE 的方程式是依這條法則寫出的，Halpern 與 Pearl 只畫了圖 9 而沒有寫出方程式。原文讓 Mer、Mor 各有三個值（沒施咒、早上、傍晚），本案把兩人施咒的時刻寫進變數的定義，改用兩值變數：引擎不限制可以設定的組合，三值版本會出現一個法則本來不許的見證（梅林改在傍晚、摩根娜改在中午，而 MorE 固定為 0），使摩根娜變成原因。Schaffer (2000) 的重點是這種阻斷沒有切斷任何因果過程，單看過程的理論也解釋不了；Halpern 與 Pearl 的回答是：答案取決於建模者有沒有把優先規則寫進方程式。",
+    "en": "The same story is modeled twice, side by side. The coarse model has only Mer (Merlin casts at noon), Mor (Morgana casts at six) and FC: the prince becomes a frog if anyone casts. It treats the two wizards completely symmetrically and does not express the law that the first spell of the day counts, so the original and updated HP definitions call both casts causes; the modified definition accepts only actual values, takes the two casts together as one cause, and makes each alone only part of a cause (Halpern and Pearl 2005, Ex. 5.5). The fine model adds MerE and MorE for whether each spell is effective: Merlin's is effective if he casts, and Morgana's only if Merlin does not (MorE = Mor ∧ ¬Mer), the same structure as SH and BH in the rock-throwing case. The frog depends on whichever spell is effective. Morgana's spell is then no longer a cause: with MorE held at its actual value 0, her spell cannot make a difference (the original says it fails AC2(b)). The equations for MerE and MorE are written from the law; Halpern and Pearl show only the graph in Figure 9 and give no equations. The original gives Mer and Mor three values each (no spell, morning, evening); this case writes the casting times into the variable definitions and uses two-valued variables instead, because the engine places no restriction on which combinations may be set: the three-valued version admits a witness the law forbids (Merlin casts in the evening, Morgana at noon, MorE held at 0), which would make Morgana a cause. Schaffer's (2000) point is that this preemption cuts no causal process, so theories of causal processes cannot explain it either; Halpern and Pearl's answer is that the verdict depends on whether the modeler wrote the priority rule into the equations."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Schaffer, J. (2000). Trumping preemption. The Journal of Philosophy, 97(4), 165–181.",
+      "key": "schaffer2000trumping",
+      "role": "origin",
+      "pages": "p. 165 (the wizards case)",
+      "verified": true
+    },
+    {
+      "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
+      "key": "halpern2005causes",
+      "role": "treatment",
+      "pages": "pp. 27–28 (Example 5.5, arXiv cs/0011012v3 manuscript pagination)",
+      "note": {
+        "zh-TW": "例 5.5 引述 Schaffer 的原文，先給三變數的粗略模型，再加入 MerE、MorE 兩個變數。",
+        "en": "Example 5.5 quotes Schaffer, gives the three-variable coarse model first, and then adds the variables MerE and MorE."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_Mer",
+        "label": {
+          "zh-TW": "梅林想施咒",
+          "en": "Merlin's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_Mor",
+        "label": {
+          "zh-TW": "摩根娜想施咒",
+          "en": "Morgana's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Mer",
+        "label": {
+          "zh-TW": "梅林在中午施咒",
+          "en": "Merlin casts at noon"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Mor",
+        "label": {
+          "zh-TW": "摩根娜在傍晚施咒",
+          "en": "Morgana casts at six"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "FC",
+        "label": {
+          "zh-TW": "王子變青蛙（粗略模型）",
+          "en": "Prince becomes a frog (coarse model)"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "MerE",
+        "label": {
+          "zh-TW": "梅林的咒語生效",
+          "en": "Merlin's spell effective"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "MorE",
+        "label": {
+          "zh-TW": "摩根娜的咒語生效",
+          "en": "Morgana's spell effective"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "F",
+        "label": {
+          "zh-TW": "王子變青蛙（細緻模型）",
+          "en": "Prince becomes a frog (fine model)"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "Mer": "U_Mer",
+      "Mor": "U_Mor",
+      "FC": "Mer or Mor",
+      "MerE": "Mer",
+      "MorE": "Mor and not Mer",
+      "F": "MerE or MorE"
+    }
+  },
+  "context": {
+    "U_Mer": 1,
+    "U_Mor": 1
+  },
+  "normality": {
+    "Mer": 0,
+    "Mor": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "Mer=1",
+        "effect": "FC=1"
+      },
+      "expected": "not-cause",
+      "note": "Morgana's spell is a backup."
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "FC=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "Mer=1",
+        "effect": "FC=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "FC=1"
+      },
+      "expected": "cause",
+      "note": "The coarse model cannot tell Morgana from Merlin."
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "FC=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "Mer=1 and Mor=1",
+        "effect": "FC=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "FC=1"
+      },
+      "expected": "part-of-cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "F=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "F=1"
+      },
+      "expected": "not-cause",
+      "note": "Fails AC2(b)."
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "F=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "F=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "Mor=1",
+        "effect": "F=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "Mer=1",
+        "effect": "F=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "Mer=1",
+        "effect": "F=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "Mer=1",
+        "effect": "F=1"
+      },
+      "expected": "cause"
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "梅林沒施咒",
+        "en": "Merlin does not cast"
+      },
+      "interventions": {
+        "Mer": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "兩人都沒施咒",
+        "en": "Neither casts"
+      },
+      "interventions": {
+        "Mer": 0,
+        "Mor": 0
+      }
+    }
+  ],
+  "layout": {
+    "Mer": [
+      0,
+      0
+    ],
+    "Mor": [
+      0,
+      1
+    ],
+    "FC": [
+      1,
+      1.5
+    ],
+    "MerE": [
+      1,
+      0
+    ],
+    "MorE": [
+      1,
+      1
+    ],
+    "F": [
+      2,
+      0.5
+    ]
+  }
+}

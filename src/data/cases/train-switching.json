@@ -1,0 +1,371 @@
+{
+  "id": "train-switching",
+  "title": {
+    "zh-TW": "扳道岔與重合的軌道：轉軌",
+    "en": "Flipping the switch onto reconverging tracks (switching)"
+  },
+  "subtitle": {
+    "zh-TW": "扳道改變了火車走哪條軌，火車仍然抵站；換個建模方式，結論就變。",
+    "en": "Flipping the switch changes which track the train takes, yet it arrives; change the model and the verdict changes."
+  },
+  "family": "actual",
+  "story": {
+    "zh-TW": "工程師站在岔路的道岔旁，遠處有一列火車駛近。她扳動道岔，火車改走右軌而不走左軌。兩條軌道在前方會合，火車照常抵達終點。同一個故事可以用兩種方式建模：只記錄火車走哪一條軌，或者分別記錄兩條軌是否被堵住。",
+    "en": "An engineer stands by a railway switch as a train approaches in the distance. She flips the switch, and the train takes the right-hand track instead of the left. The tracks join again further on, and the train arrives at its destination all the same. The story can be modeled in two ways: by recording only which track the train takes, or by recording separately whether each track is blocked."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "她扳動道岔，火車改走右軌而不走左軌。",
+        "variables": [
+          "F",
+          "T"
+        ]
+      },
+      {
+        "sentence": "兩條軌道在前方會合，火車照常抵達終點。",
+        "variables": [
+          "A",
+          "AB"
+        ]
+      },
+      {
+        "sentence": "同一個故事可以用兩種方式建模：只記錄火車走哪一條軌，或者分別記錄兩條軌是否被堵住。",
+        "variables": [
+          "LB",
+          "RB"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "She flips the switch, and the train takes the right-hand track instead of the left.",
+        "variables": [
+          "F",
+          "T"
+        ]
+      },
+      {
+        "sentence": "The tracks join again further on, and the train arrives at its destination all the same.",
+        "variables": [
+          "A",
+          "AB"
+        ]
+      },
+      {
+        "sentence": "The story can be modeled in two ways: by recording only which track the train takes, or by recording separately whether each track is blocked.",
+        "variables": [
+          "LB",
+          "RB"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "F=1",
+      "effect": "A=1"
+    },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "扳道只改變了走哪條軌，沒有改變火車會不會到；火車本來就會抵站。",
+      "en": "The switch changed which track the train took, not whether it would arrive; it would have arrived anyway."
+    },
+    "agree": [
+      "butfor",
+      "hp-original",
+      "hp-updated",
+      "hp-modified",
+      "hp-normality"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "同一個事件在模型裡出現兩次，各自代表一種建模。粗略模型只有 F（扳道）、T（走哪條軌）、A（抵站）：不論 T 是哪一個值，A 都是 1，所以所有理論都判扳道不是抵站的原因，只是走哪條軌的原因（Halpern 與 Pearl 2005 例 5.4；Halpern 2016 例 2.3.6）。細緻模型改用 LB、RB 記錄左右軌是否被堵住，抵站與否取決於火車走的那一條有沒有被堵（AB = F·¬LB ∨ ¬F·¬RB）。這時「左軌被堵」成為可以想像的異常情境：在這個情境下，扳道決定了火車到不到站，因此原始與更新版 HP 定義判扳道是抵站的原因；修正版 HP 定義只接受實際值，扳道單獨不是原因，只算原因的一部分，要與「右軌沒被堵」合起來才成為一個原因；加上常態排序後連這個部分原因的身分也沒有了（Halpern 2016 例 3.4.3 的說法是扳道不是原因，引擎另外算出修正版下它屬於部分原因）。Halpern 與 Pearl (2005) 自己用的是 LT、RT 兩個變數（火車走了左軌／右軌），也得到「是原因」的結論，並認為表示法的改變就是故事的改變。",
+    "en": "The same event appears twice in the model, once per way of modeling it. The coarse model has only F (flip), T (track) and A (arrival): A is 1 whatever the value of T, so every theory says the flip is not a cause of arrival, only of which track was taken (Halpern and Pearl 2005, Ex. 5.4; Halpern 2016, Ex. 2.3.6). The fine model records with LB and RB whether the left and right tracks are blocked, and arrival depends on whether the track actually taken is free (AB = F·¬LB ∨ ¬F·¬RB). A blocked left track is then an imaginable abnormal situation, in which the flip decides whether the train arrives; so the original and updated HP definitions call the flip a cause of arrival. The modified definition accepts only actual values: the flip alone is not a cause, only part of one, which it forms together with \"the right track is not blocked\"; adding a normality ordering removes even that (Halpern 2016, Ex. 3.4.3 says the flip is not a cause; the engine additionally finds that under the modified definition it is part of a cause). Halpern and Pearl (2005) themselves used two variables LT and RT (the train is on the left or right track), reached the verdict \"cause\" as well, and held that a change of representation is a change of story."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
+      "key": "halpern2005causes",
+      "role": "origin",
+      "pages": "pp. 26–27 (Example 5.4, arXiv cs/0011012v3 manuscript pagination; quotes Hall 2000)",
+      "note": {
+        "zh-TW": "Hall (2000) 的轉軌故事由 Halpern 與 Pearl 在例 5.4 引述原文並建模：三變數版與兩條軌道各一變數的版本得到不同的判斷。",
+        "en": "Hall's (2000) switching story is quoted and modeled in Halpern and Pearl's Example 5.4: the three-variable version and the version with one variable per track receive different verdicts."
+      },
+      "verified": true
+    },
+    {
+      "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
+      "key": "halpern2016actual",
+      "role": "treatment",
+      "pages": "pp. 38–39 (Example 2.3.6), p. 90 (Example 3.4.3)",
+      "note": {
+        "zh-TW": "本案的 LB、RB 方程式取自例 2.3.6：A = (F ∧ ¬LB) ∨ (¬F ∧ ¬RB)。",
+        "en": "The LB and RB equation of this case is taken from Ex. 2.3.6: A = (F ∧ ¬LB) ∨ (¬F ∧ ¬RB)."
+      },
+      "verified": true
+    },
+    {
+      "citation": "Halpern, J. Y., & Hitchcock, C. (2010). Actual causation and the art of modeling. In R. Dechter, H. Geffner, & J. Y. Halpern (Eds.), Heuristics, Probability and Causality (pp. 383–406). College Publications.",
+      "key": "halpern2010art",
+      "role": "treatment",
+      "pages": "p. 16 (Example 4; page of the arXiv 1106.2652v1 PDF, which carries no printed page numbers)",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_F",
+        "label": {
+          "zh-TW": "工程師想扳道",
+          "en": "Engineer's decision"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_LB",
+        "label": {
+          "zh-TW": "左軌狀況",
+          "en": "Left-track condition"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_RB",
+        "label": {
+          "zh-TW": "右軌狀況",
+          "en": "Right-track condition"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "F",
+        "label": {
+          "zh-TW": "扳道",
+          "en": "Flip the switch"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "T",
+        "label": {
+          "zh-TW": "走右軌",
+          "en": "Right track taken"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A",
+        "label": {
+          "zh-TW": "抵站（粗略模型）",
+          "en": "Arrival (coarse model)"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "LB",
+        "label": {
+          "zh-TW": "左軌被堵",
+          "en": "Left track blocked"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "RB",
+        "label": {
+          "zh-TW": "右軌被堵",
+          "en": "Right track blocked"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "AB",
+        "label": {
+          "zh-TW": "抵站（細緻模型）",
+          "en": "Arrival (fine model)"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "F": "U_F",
+      "T": "F",
+      "A": "T or not T",
+      "LB": "U_LB",
+      "RB": "U_RB",
+      "AB": "(F and not LB) or (not F and not RB)"
+    }
+  },
+  "context": {
+    "U_F": 1,
+    "U_LB": 0,
+    "U_RB": 0
+  },
+  "normality": {
+    "F": 0,
+    "LB": 0,
+    "RB": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "F=1",
+        "effect": "T=1"
+      },
+      "expected": "cause",
+      "note": "The flip does decide which track."
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "F=1",
+        "effect": "A=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "F=1",
+        "effect": "A=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "F=1",
+        "effect": "A=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "F=1",
+        "effect": "A=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "F=1",
+        "effect": "A=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "F=1",
+        "effect": "AB=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "F=1",
+        "effect": "AB=1"
+      },
+      "expected": "cause",
+      "note": "Witness: set LB to 1; then arrival depends on the flip."
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "F=1",
+        "effect": "AB=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "F=1",
+        "effect": "AB=1"
+      },
+      "expected": "part-of-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "F=1 and RB=0",
+        "effect": "AB=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "F=1",
+        "effect": "AB=1"
+      },
+      "expected": "not-cause"
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "沒有扳道",
+        "en": "No flip"
+      },
+      "interventions": {
+        "F": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "沒有扳道，左軌被堵",
+        "en": "No flip, left track blocked"
+      },
+      "interventions": {
+        "F": 0,
+        "LB": 1
+      }
+    }
+  ],
+  "layout": {
+    "F": [
+      0,
+      0.5
+    ],
+    "T": [
+      1,
+      0
+    ],
+    "A": [
+      2,
+      0
+    ],
+    "LB": [
+      1,
+      1
+    ],
+    "RB": [
+      1,
+      2
+    ],
+    "AB": [
+      2,
+      1.5
+    ]
+  }
+}
