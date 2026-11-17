@@ -11,7 +11,7 @@ import { Arrow, Progress } from './parts.tsx'
 import { ProbabilityPanelFor } from './ProbabilityPanel.tsx'
 import { Verdicts } from './Verdicts.tsx'
 import { intuitionSummary, seeDoPair, shortSources } from './verdict-rows.ts'
-import { doText, label } from './view-model.ts'
+import { doText, phraseOf } from './view-model.ts'
 
 export interface CasePageProps {
   /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
@@ -111,8 +111,7 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
     }
     if (step === 3) return [...t.noteProbability]
     if (step === 4 && probabilistic && pair !== undefined) {
-      const obs = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(pair.observe)?.[1] ?? ''
-      return [t.noteSee(pair.observe, label(c.model, obs, t.locale)), t.noteDo(doText(pair.intervene))]
+      return [t.noteSee(phraseOf(c.model, t.locale, pair.observe, false)), t.noteDo(doText(pair.intervene))]
     }
     if (step === 4) {
       const summary = intuitionSummary(t, c)

@@ -141,14 +141,25 @@ describe('ProbabilityPanel', () => {
 })
 
 describe('ProbabilityPanel captions', () => {
-  it('states the observed value, not just the variable label', () => {
+  const texts = (c: HTMLElement): string[] => [...c.querySelectorAll('.ca-compare-text')].map((n) => n.textContent ?? '')
+  it('words a 0 observation as not having happened, in zh and en', () => {
     const zh = render(<ProbabilityPanel caseId="firing-squad" view="compare" />)
-    const text = zh.container.querySelector('.ca-compare-text')?.textContent ?? ''
-    expect(text).toContain('A=0')
+    expect(texts(zh.container)[0]).toContain('看到槍手 A 開槍沒有發生（A=0）')
+    expect(texts(zh.container)[1]).toContain('讓槍手 A 開槍不發生（do(A=0)）')
     cleanup()
     const en = render(<ProbabilityPanel caseId="firing-squad" view="compare" locale="en" />)
-    expect(en.container.querySelector('.ca-compare-text')?.textContent ?? '').toContain('A=0')
-    expect(en.container.querySelectorAll('.ca-compare-text')[1]?.textContent ?? '').toContain('A=0')
+    expect(texts(en.container)[0]).toContain('Seeing that “Rifleman A shoots” did not happen (A=0)')
+    expect(texts(en.container)[1]).toContain('Making “Rifleman A shoots” not happen (do(A=0))')
+  })
+  it('words a 1 value as the event happening', () => {
+    const pair = { event: 'D=1', observe: 'A=1', intervene: { A: 1 } }
+    const zh = render(<ProbabilityPanel caseId="firing-squad" view="compare" pair={pair} />)
+    expect(texts(zh.container)[0]).toContain('看到槍手 A 開槍（A=1）')
+    expect(texts(zh.container)[1]).toContain('讓槍手 A 開槍（do(A=1)）')
+    cleanup()
+    const en = render(<ProbabilityPanel caseId="firing-squad" view="compare" pair={pair} locale="en" />)
+    expect(texts(en.container)[0]).toContain('Seeing that “Rifleman A shoots” (A=1)')
+    expect(texts(en.container)[1]).toContain('Making “Rifleman A shoots” (do(A=1))')
   })
 })
 

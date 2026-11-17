@@ -29,6 +29,7 @@ import {
   shownVariables,
   sliderVariables,
   targetText,
+  phraseOf,
 } from './view-model.ts'
 
 export type ProbabilityView = 'sliders' | 'compare'
@@ -266,7 +267,8 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
   const removed = c.model.edges.filter((e) => cut.has(e.to))
   const seeExpr = `P(${pair.event} | ${pair.observe})`
   const doExpr = `P(${pair.event} | ${doText(pair.intervene)})`
-  const obsLabel = label(c.model, observedId, t.locale)
+  const obsPhrase = phraseOf(c.model, t.locale, pair.observe, false)
+  const doPhrase = phraseOf(c.model, t.locale, doText(pair.intervene), true, pair.intervene)
   const seeGraph = (m: Messages) =>
     see === undefined ? null : (
       <SignalGraph
@@ -352,7 +354,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
                 {probText(seeValue)}
               </p>
             </div>
-            <p className="ca-compare-text">{t.seeText(pair.observe, obsLabel)}</p>
+            <p className="ca-compare-text">{t.seeText(obsPhrase)}</p>
           </div>
         </div>
         <div className="ca-compare-side is-cf" data-side="do">
@@ -372,7 +374,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
                 {probText(doValue)}
               </p>
             </div>
-            <p className="ca-compare-text">{t.doText(doText(pair.intervene), label(c.model, doId, t.locale))}</p>
+            <p className="ca-compare-text">{t.doText(doPhrase)}</p>
           </div>
         </div>
       </div>

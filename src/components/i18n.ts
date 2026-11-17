@@ -159,7 +159,14 @@ const ZH = {
     `現在套上 ${doText}（${label}）：${ids} 的式子換成常數，其餘照式子重算。`,
   noteClickOther: '點圖上的節點，可以改別的變項。',
   noteProbability: ['外生變項原本只取 0 或 1。這一步把它們改成機率 p。', '節點裡填色的高度，是這個變項等於 1 的機率。', '拉滑桿，圖上的數字會跟著變。'],
-  noteSee: (observe: string, label: string): string => `左邊是看到 ${observe}（${label}）之後的機率。`,
+  noteSee: (phrase: string): string => `左邊是看到${phrase}之後的機率。`,
+  phrase: {
+    seeOn: (name: string, text: string): string => `${name}（${text}）`,
+    seeOff: (name: string, text: string): string => `${name}沒有發生（${text}）`,
+    doOn: (name: string, text: string): string => `${name}（${text}）`,
+    doOff: (name: string, text: string): string => `${name}不發生（${text}）`,
+    other: (name: string, text: string): string => `${text}（${name}）`,
+  },
   noteDo: (doText: string): string => `右邊是動手設定 ${doText} 之後的機率。`,
   noteVerdicts: '下面列出各個標準的判定，一個標準一列。',
 
@@ -267,9 +274,9 @@ const ZH = {
   setByDo: '設定的',
   zeroObservation: '這個觀察的機率是 0，無法以它為條件。',
   afterObserving: (event: string): string => `觀察 ${event} 之後的機率`,
-  seeText: (observe: string, label: string): string => `看到 ${observe}（${label}），會改變對其他變項的猜測，上游的也會跟著變。`,
+  seeText: (phrase: string): string => `看到${phrase}，會改變對其他變項的猜測，上游的也會跟著變。`,
   afterSetting: (doText: string): string => `${doText} 之後的機率`,
-  doText: (setting: string, label: string): string => `動手設定 ${setting}（${label}），指進它的箭頭被剪斷，只有下游會變。`,
+  doText: (phrase: string): string => `動手讓${phrase}，指進它的箭頭被剪斷，只有下游會變。`,
 
   // world lanes
   lanes: {
@@ -460,7 +467,14 @@ const EN: Messages = {
     'The height of the fill inside a node is the probability that the variable equals 1.',
     'Drag a slider, and the numbers on the graph change with it.',
   ],
-  noteSee: (observe, label) => `On the left: the probabilities after seeing ${observe} (${label}).`,
+  noteSee: (phrase) => `On the left: the probabilities after seeing ${phrase}.`,
+  phrase: {
+    seeOn: (name, text) => `that “${name}” (${text})`,
+    seeOff: (name, text) => `that “${name}” did not happen (${text})`,
+    doOn: (name, text) => `“${name}” (${text})`,
+    doOff: (name, text) => `“${name}” not happen (${text})`,
+    other: (name, text) => `${text} (${name})`,
+  },
   noteDo: (doText) => `On the right: the probabilities after setting ${doText}.`,
   noteVerdicts: "Below is each standard's verdict, one standard per row.",
 
@@ -565,9 +579,9 @@ const EN: Messages = {
   setByDo: 'set',
   zeroObservation: 'This observation has probability 0, so we cannot condition on it.',
   afterObserving: (event) => `Probabilities after observing ${event}`,
-  seeText: (observe, label) => `Seeing ${observe} (“${label}”) changes what we expect of the other variables, upstream ones included.`,
+  seeText: (phrase) => `Seeing ${phrase} changes what we expect of the other variables, upstream ones included.`,
   afterSetting: (doText) => `Probabilities after ${doText}`,
-  doText: (setting, label) => `Setting ${setting} (“${label}”) cuts the arrows into it; only what lies downstream changes.`,
+  doText: (phrase) => `Making ${phrase} cuts the arrows into it; only what lies downstream changes.`,
 
   lanes: {
     region: 'World lanes (scroll sideways)',

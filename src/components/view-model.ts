@@ -15,6 +15,7 @@ import {
 import type { Locale } from '../engine/types.ts'
 import { coerceToDomain, enumerateAssignments, formatValue, valuesEqual } from '../engine/values.ts'
 import type { Messages } from './i18n.ts'
+import { messagesFor } from './i18n.ts'
 
 /** Pure helpers that turn a loaded case into what the components draw. No DOM access. */
 
@@ -135,6 +136,26 @@ export function assignmentText(a: Assignment, sep = ', '): string {
   return Object.entries(a)
     .map(([id, v]) => `${id}=${formatValue(v)}`)
     .join(sep)
+}
+
+/**
+ * A variable's label with its value, worded by value: a boolean 0 says the label's event did not
+ * happen, so the label alone is never read as the event having occurred. `text` is `A=0` or `do(A=0)`.
+ */
+export function valuePhrase(model: CausalModel, locale: Locale, id: string, value: Value, text: string, doing: boolean): string {
+  const t = messagesFor(locale).phrase
+  const name = label(model, id, locale)
+  if (getVariable(model, id).domain.kind !== 'boolean' || ![true, false, 0, 1].includes(value as never)) return t.other(name, text)
+  const on = value === true || value === 1
+  return (doing ? (on ? t.doOn : t.doOff) : on ? t.seeOn : t.seeOff)(name, text)
+}
+
+/** `valuePhrase` for an observation text like `A=0`, or for the first entry of a do() assignment. */
+export function phraseOf(model: CausalModel, locale: Locale, text: string, doing: boolean, assignment?: Assignment): string {
+  const [id, value] = assignment !== undefined ? (Object.entries(assignment)[0] ?? ['', 0]) : (/^\s*([A-Za-z_]\w*)\s*=\s*(\S+)\s*$/.exec(text)?.slice(1) ?? ['', '0'])
+  if (id === '') return text
+  const v: Value = value === '0' ? 0 : value === '1' ? 1 : value === 'true' ? true : value === 'false' ? false : (value as Value)
+  return valuePhrase(model, locale, id, v, text, doing)
 }
 
 export function doText(a: Assignment): string {
