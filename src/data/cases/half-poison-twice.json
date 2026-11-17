@@ -1,0 +1,78 @@
+{
+  "id": "half-poison-twice",
+  "title": { "zh-TW": "兩個殺手各下半分毒", "en": "Two killers, half a dose each" },
+  "subtitle": {
+    "zh-TW": "每人單獨都毒不死市長，兩人合起來才致命，兩人都是原因。",
+    "en": "Neither dose alone would kill the mayor; together they do, and both are causes."
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮兩名殺手各自在市長的咖啡裡下了毒：毒藥的致死劑量是 10 毫克，甲下了 5 毫克，乙也下了 5 毫克。市長喝下咖啡後中毒身亡。",
+    "en": "Consider two killers who each put poison in the mayor's coffee. The lethal dose is 10 milligrams; the first adds 5 milligrams and the second adds 5 milligrams as well. The mayor drinks the coffee and dies of poisoning."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "毒藥的致死劑量是 10 毫克，甲下了 5 毫克，乙也下了 5 毫克。", "variables": ["A", "B"] },
+      { "sentence": "市長喝下咖啡後中毒身亡。", "variables": ["D"] }
+    ],
+    "en": [
+      { "sentence": "the first adds 5 milligrams and the second adds 5 milligrams as well.", "variables": ["A", "B"] },
+      { "sentence": "The mayor drinks the coffee and dies of poisoning.", "variables": ["D"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "A=1", "effect": "D=1" },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "兩人都在咖啡裡下了毒，缺了任何一份，市長都不會死，兩個殺手都是死因。",
+      "en": "Both put poison in the coffee and without either dose the mayor would not have died, so both killers are causes of his death."
+    },
+    "agree": ["butfor", "hp-updated", "hp-modified", "hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "模型取自王一奇與王鵬翔 (2021) 的 HD：A = 1（甲下半分毒）、B = 1（乙下半分毒）、D = A·B（市長死亡），結構與他們討論的醫師案例相同。兩份半分毒缺一不可，所以每個殺手都是反事實依賴的原因，各定義的判定一致。案例的用意在別處：Hitchcock (2007) 把依賴於其他異常事件的反事實依賴稱為「寄生」，並用非自足的網絡來刻畫。在 HD 中，A 與 D 之間的網絡是自足的（A 取預設值 0 時，D 也取預設值 0），所以 A 是典型的因果；但 A 對 D 的反事實依賴成立，又需要 B 這個偏差事件。因此網絡是否自足，與依賴是否寄生，並不對應，不能用自足與否來區分寄生。",
+    "en": "The model is the HD of Wang and Wang (2021): A = 1 (the first killer adds half a dose), B = 1 (the second does), D = A·B (the mayor dies), with the same structure as the doctor case they discuss. Neither half-dose can be dropped, so each killer is a counterfactual cause and the definitions agree. The case has another purpose: Hitchcock (2007) calls a counterfactual dependence that rests on some other abnormal event parasitic and characterises it by a network that is not self-contained. In HD the network linking A and D is self-contained (when A takes its default value 0, D also takes its default 0), so A is a typical cause; yet A's counterfactual dependence holds only because of B, a deviant event. Whether the network is self-contained and whether the dependence is parasitic therefore do not correspond, and self-containment cannot be used to tell the parasitic from the rest."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Wang, P.-H., & Wang, L. (2021). Parasitic counterfactual dependence and paradigmatic causation [in Chinese]. Philosophical Journal (National Chengchi University), 45, 39–90.",
+      "key": "wang2021parasitic",
+      "role": "origin",
+      "pages": "pp. 62–64",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_A", "label": { "zh-TW": "甲的情況", "en": "First killer's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_B", "label": { "zh-TW": "乙的情況", "en": "Second killer's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "A", "label": { "zh-TW": "甲下半分毒", "en": "First killer adds half a dose" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "B", "label": { "zh-TW": "乙下半分毒", "en": "Second killer adds half a dose" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "D", "label": { "zh-TW": "市長死亡", "en": "The mayor dies" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "A": "U_A", "B": "U_B", "D": "A and B" }
+  },
+  "context": { "U_A": 1, "U_B": 1 },
+  "normality": { "A": 0, "B": 0, "D": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "B=1", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "B=1", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "A=1", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "B=1", "effect": "D=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "A=1", "effect": "D=1" },
+      "expected": "cause",
+      "note": "Witness: A = 0 with B = 1 held, a world no more deviant than the actual one."
+    },
+    { "theory": "hp-normality", "query": { "cause": "B=1", "effect": "D=1" }, "expected": "cause" }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "甲沒下毒", "en": "The first killer adds nothing" }, "interventions": { "A": 0 } },
+    { "label": { "zh-TW": "乙沒下毒", "en": "The second killer adds nothing" }, "interventions": { "B": 0 } }
+  ],
+  "layout": { "A": [0, 0], "B": [0, 1], "D": [1, 0.5] }
+}

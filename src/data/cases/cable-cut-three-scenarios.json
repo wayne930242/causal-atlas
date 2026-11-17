@@ -1,0 +1,131 @@
+{
+  "id": "cable-cut-three-scenarios",
+  "title": { "zh-TW": "挖斷電纜三情境", "en": "Cable cut: three scenarios" },
+  "subtitle": {
+    "zh-TW": "停電的責任落在誰身上，取決於誰是避免損失成本最低的人。",
+    "en": "Who is picked out as the cause of the outage depends on who could have avoided the loss most cheaply."
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮一次道路施工：建設公司的挖土機不小心挖斷了埋在路面下的電纜，電力因而中斷。公司有纜線圖，卻不知道電纜的確切位置，唯一能避免挖斷的辦法是多花 5000 歐元，改用人工挖掘。情境 A：電纜供應舊城的商店街，停電一晚使店家損失 10 萬歐元，商店街的業主幾乎不可能只花 5000 歐元就避免損失。情境 B：電纜供應一間汽車工廠，停電使生產中斷，損失 100 萬歐元，但工廠只要買一台不到 5000 歐元的緊急發電機就能應付。情境 C：電力公司鋪設電纜時，本可以用更堅固的材料避免它被挖壞，所需的錢比人工挖掘或買發電機都少，但當時沒有做。",
+    "en": "Consider a road-building job in which the construction company's excavator accidentally cuts a power cable buried under the road, and the power fails. The company has a map of the cables but does not know exactly where this one lies, and the only way to avoid cutting it is to spend 5,000 euros more on digging by hand. Scenario A: the cable supplies the shops of an old town street; the outage closes restaurants, hotels and cafés for a night at a total loss of 100,000 euros, and the street's owners could hardly have avoided the loss by spending 5,000 euros themselves. Scenario B: the cable supplies a car factory; the outage stops production at a loss of 1,000,000 euros, but the factory could have coped by buying an emergency generator for less than 5,000 euros. Scenario C: when the cable was laid, the power company could have used sturdier material that would have kept it from being cut, for less money than digging by hand or buying a generator, but did not."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "情境 A：電纜供應舊城的商店街，", "variables": ["DIG_A", "LOSS_A"] },
+      { "sentence": "情境 B：電纜供應一間汽車工廠，", "variables": ["DIG_B", "GEN_B", "LOSS_B"] },
+      { "sentence": "情境 C：電力公司鋪設電纜時，", "variables": ["DIG_C", "REINF_C", "LOSS_C"] }
+    ],
+    "en": [
+      { "sentence": "Scenario A: the cable supplies the shops of an old town street;", "variables": ["DIG_A", "LOSS_A"] },
+      { "sentence": "Scenario B: the cable supplies a car factory;", "variables": ["DIG_B", "GEN_B", "LOSS_B"] },
+      { "sentence": "Scenario C: when the cable was laid,", "variables": ["DIG_C", "REINF_C", "LOSS_C"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "DIG_A=1", "effect": "LOSS_A=1" },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "情境 A 中只有建設公司能以不到 10 萬歐元避免損失，停電損失算在它用挖土機而非人工挖掘上。",
+      "en": "In scenario A only the construction company could cheaply avoid the loss, and the outage is put down to its digging with a machine rather than by hand."
+    },
+    "agree": ["butfor", "hp-modified", "hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "三個情境各自佔模型的一塊，彼此互不相連，這樣三組預設可以同時存在。每一塊的結構是：挖土機開挖（DIG）而沒有其他預防時就造成損失（LOSS），預防手段是變數：情境 B 是工廠購置發電機（GEN_B），情境 C 是電力公司強化電纜（REINF_C）。判定依據王鵬翔 (2019) 的成本判準：能避免結果的手段中，成本最低的是最正常的妨礙者，沒採用它的不作為被選為原因。因此預設值設為最便宜的預防手段：A 是人工挖掘（DIG_A = 0），B 是發電機（GEN_B = 1，人工挖掘不再是預設，DIG_B = 1），C 是強化電纜（REINF_C = 1，DIG_C = 1）。結果與文獻一致：A 的原因是建設公司用挖土機，B 是工廠沒有發電機，C 是電力公司沒有強化電纜；B 與 C 中建設公司用挖土機只是簡單反事實依賴下的原因，在成本判準下被排除。其餘可能的預防手段（例如 A 的業主、B 的電力公司）文獻沒有給出成本，也沒有放進模型。",
+    "en": "The three scenarios occupy separate, unconnected blocks of one model, so that three sets of defaults can coexist. Each block has the same shape: the excavator digging (DIG), with no other precaution taken, brings about the loss (LOSS); the precautions are variables: the factory's buying a generator in scenario B (GEN_B), the power company's strengthening the cable in scenario C (REINF_C). The verdicts follow Wang's (2019) cost criterion: among the means that would avoid the outcome, the cheapest is the most normal preventer, and failing to use it is picked out as the cause. The defaults therefore make the cheapest precaution the default: hand digging in A (DIG_A = 0), the generator in B (GEN_B = 1, and hand digging is then no longer the default, DIG_B = 1), strengthening the cable in C (REINF_C = 1, DIG_C = 1). The results match the literature: in A the cause is the construction company's use of the excavator; in B it is the factory's lacking a generator; in C it is the power company's not strengthening the cable. In B and C the excavator's digging is a cause only under the simple counterfactual test and is ruled out by the cost criterion. Other possible precautions (for example by the street's owners in A or by the power company in B) are not costed in the literature and are left out of the model."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Wang, P.-H. (2019). The problems of counterfactual thinking in omissive causal judgements [in Chinese]. EurAmerica, 49(3), 287–340.",
+      "key": "wang2019omission",
+      "role": "origin",
+      "note": {
+        "zh-TW": "案例與三個情境在第 329–330 頁，成本判準在第 328 頁，文中轉述 Schäfer 與 Ott (2004: 180) 的例子。Schäfer 與 Ott 的原書不在書目資料庫，未查，所以頁碼 180 沒有核對，也沒有列為來源。",
+        "en": "The case and its three scenarios are on pp. 329–330 and the cost criterion on p. 328; the paper relays an example of Schäfer and Ott (2004: 180). Schäfer and Ott's book is not in the bibliography and was not consulted, so p. 180 is unchecked and the book is not listed as a source."
+      },
+      "pages": "pp. 328–330",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_DA", "label": { "zh-TW": "情境 A：施工的情況", "en": "A: construction circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_DB", "label": { "zh-TW": "情境 B：施工的情況", "en": "B: construction circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_GB", "label": { "zh-TW": "情境 B：工廠的情況", "en": "B: factory's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_DC", "label": { "zh-TW": "情境 C：施工的情況", "en": "C: construction circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_RC", "label": { "zh-TW": "情境 C：電力公司的情況", "en": "C: power company's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "DIG_A", "label": { "zh-TW": "情境 A：用挖土機開挖", "en": "A: dig with the excavator" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "LOSS_A", "label": { "zh-TW": "情境 A：商店街停電損失", "en": "A: shopping street loses power" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "DIG_B", "label": { "zh-TW": "情境 B：用挖土機開挖", "en": "B: dig with the excavator" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "GEN_B", "label": { "zh-TW": "情境 B：工廠有緊急發電機", "en": "B: factory has a generator" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "LOSS_B", "label": { "zh-TW": "情境 B：工廠停電損失", "en": "B: factory loses power" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "DIG_C", "label": { "zh-TW": "情境 C：用挖土機開挖", "en": "C: dig with the excavator" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "REINF_C", "label": { "zh-TW": "情境 C：電纜已強化", "en": "C: cable is strengthened" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "LOSS_C", "label": { "zh-TW": "情境 C：停電損失", "en": "C: power is lost" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": {
+      "DIG_A": "U_DA",
+      "LOSS_A": "DIG_A",
+      "DIG_B": "U_DB",
+      "GEN_B": "U_GB",
+      "LOSS_B": "DIG_B and not GEN_B",
+      "DIG_C": "U_DC",
+      "REINF_C": "U_RC",
+      "LOSS_C": "DIG_C and not REINF_C"
+    }
+  },
+  "context": { "U_DA": 1, "U_DB": 1, "U_GB": 0, "U_DC": 1, "U_RC": 0 },
+  "normality": {
+    "DIG_A": 0,
+    "LOSS_A": 0,
+    "DIG_B": 1,
+    "GEN_B": 1,
+    "LOSS_B": 0,
+    "DIG_C": 1,
+    "REINF_C": 1,
+    "LOSS_C": 0
+  },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "DIG_A=1", "effect": "LOSS_A=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "DIG_B=1", "effect": "LOSS_B=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "GEN_B=0", "effect": "LOSS_B=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "DIG_C=1", "effect": "LOSS_C=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "REINF_C=0", "effect": "LOSS_C=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "DIG_A=1", "effect": "LOSS_A=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "DIG_B=1", "effect": "LOSS_B=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "GEN_B=0", "effect": "LOSS_B=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "DIG_C=1", "effect": "LOSS_C=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "REINF_C=0", "effect": "LOSS_C=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "DIG_A=1", "effect": "LOSS_A=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "DIG_B=1", "effect": "LOSS_B=1" },
+      "expected": "not-cause",
+      "note": "Hand digging (DIG_B = 0) is dearer than the generator, so it is not the default preventer."
+    },
+    { "theory": "hp-normality", "query": { "cause": "GEN_B=0", "effect": "LOSS_B=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "DIG_C=1", "effect": "LOSS_C=1" },
+      "expected": "not-cause"
+    },
+    { "theory": "hp-normality", "query": { "cause": "REINF_C=0", "effect": "LOSS_C=1" }, "expected": "cause" }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "A：改用人工挖掘", "en": "A: dig by hand" }, "interventions": { "DIG_A": 0 } },
+    { "label": { "zh-TW": "B：工廠買了發電機", "en": "B: the factory buys a generator" }, "interventions": { "GEN_B": 1 } },
+    { "label": { "zh-TW": "C：電纜已強化", "en": "C: the cable is strengthened" }, "interventions": { "REINF_C": 1 } }
+  ],
+  "layout": {
+    "DIG_A": [0, 0],
+    "LOSS_A": [1, 0],
+    "DIG_B": [0, 1],
+    "GEN_B": [0, 1.7],
+    "LOSS_B": [1, 1.35],
+    "DIG_C": [0, 2.4],
+    "REINF_C": [0, 3.1],
+    "LOSS_C": [1, 2.75]
+  }
+}

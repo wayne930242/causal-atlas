@@ -1,0 +1,90 @@
+{
+  "id": "india-famine",
+  "title": { "zh-TW": "印度飢荒：乾旱還是政府沒儲糧", "en": "The Indian famine: drought or no grain reserves" },
+  "subtitle": {
+    "zh-TW": "兩種說法都有道理，差別在把什麼當作正常。",
+    "en": "Both accounts are reasonable; they differ in what they take to be normal."
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮印度發生的一場大飢荒。當地的農民說，飢荒是乾旱造成的；世界糧食組織則說，飢荒是因為政府沒有儲備糧食。降雨稀少與政府不儲糧，兩者都是飢荒發生的必要條件，兩種說法各自在強調其中一項。",
+    "en": "Consider a great famine in India. The local farmers say that the drought caused it; an international food organisation says that it was caused by the government's failure to keep grain in reserve. Scant rainfall and the lack of reserves are each necessary for the famine to happen, and each account stresses one of them."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "當地的農民說，飢荒是乾旱造成的；", "variables": ["DR", "FAM"] },
+      { "sentence": "世界糧食組織則說，飢荒是因為政府沒有儲備糧食。", "variables": ["ST", "FAM"] }
+    ],
+    "en": [
+      { "sentence": "The local farmers say that the drought caused it;", "variables": ["DR", "FAM"] },
+      {
+        "sentence": "an international food organisation says that it was caused by the government's failure to keep grain in reserve.",
+        "variables": ["ST", "FAM"]
+      }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "DR=1", "effect": "FAM=1" },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "農民認為好天氣才是常態，乾旱是異常，因此把飢荒歸因於乾旱。",
+      "en": "The farmers take good weather to be normal and the drought to be the anomaly, and so blame the drought."
+    },
+    "agree": ["butfor", "hp-updated", "hp-modified"]
+  },
+  "explanation": {
+    "zh-TW": "模型依 Hart 與 Honoré 的例子擬成：FAM = DR·¬ST，乾旱發生而且政府沒有儲糧，飢荒才會發生。簡單反事實依賴與 HP 定義都把兩者判為原因，分歧只在預設值。世界糧食組織的觀點：降雨稀少是當地常見的天候（DR 的預設是 1），政府本來就該儲糧（ST 的預設是 1），所以沒儲糧是偏差，乾旱只是背景條件；引擎在這組預設下把 ST = 0 判為原因，DR = 1 不是。農民的觀點正好相反：風調雨順才是常態（DR 的預設是 0），政府不儲糧是意料中事（ST 的預設是 0），把預設改成這一組，結果會對調（以此預設重算驗證過）。王鵬翔 (2019) 指出，即使接受農民認為乾旱異常，要改變天氣幾乎不可能，政府儲糧卻是成本較低、可以採取的干預手段，所以糧食組織的說法仍有理由。一個模型只能取一組預設，這裡取糧食組織的版本，農民的判斷列在直覺中，兩者在引擎的比較結果上不同。",
+    "en": "The model is built from Hart and Honoré's example: FAM = DR·¬ST, so the famine occurs when drought occurs and the government keeps no reserves. The simple counterfactual test and the HP definitions count both as causes; the disagreement is about defaults. On the food organisation's view, scant rain is ordinary weather there (the default for DR is 1) and the government ought to hold reserves (the default for ST is 1), so the lack of reserves is the departure and the drought a background condition; with these defaults the engine makes ST = 0 a cause and DR = 1 not. The farmers' view is the reverse: good weather is normal (default DR = 0) and a government that keeps no reserves is only to be expected (default ST = 0); with those defaults the two verdicts swap (checked by recomputing). Wang (2019) points out that even if the farmers are right that drought is abnormal, changing the weather is practically impossible while keeping reserves is a cheaper intervention the government could take, so the organisation's account still has its reasons. A model holds one set of defaults, so the organisation's version is encoded here, and the farmers' judgment is the intuition shown; the two differ in the engine's comparison."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Wang, P.-H. (2019). The problems of counterfactual thinking in omissive causal judgements [in Chinese]. EurAmerica, 49(3), 287–340.",
+      "key": "wang2019omission",
+      "role": "origin",
+      "note": {
+        "zh-TW": "此文第 318 頁轉述 Hart 與 Honoré (1985: 35–36) 的例子，第 319 頁分析農民與糧食組織的預設，第 328–329 頁談成本。Hart 與 Honoré 的書本身未查，所以頁碼 35–36 沒有核對。",
+        "en": "The paper relays Hart and Honoré's (1985: 35–36) example on p. 318, analyses the farmers' and the organisation's defaults on p. 319, and turns to cost on pp. 328–329. Hart and Honoré's book itself was not consulted, so pp. 35–36 are unchecked."
+      },
+      "pages": "pp. 318–319, 328–329",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_DR", "label": { "zh-TW": "天候的情況", "en": "Weather circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_ST", "label": { "zh-TW": "政府的情況", "en": "Government's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "DR", "label": { "zh-TW": "乾旱", "en": "Drought" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "ST", "label": { "zh-TW": "政府儲糧", "en": "Government keeps reserves" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "FAM", "label": { "zh-TW": "飢荒", "en": "Famine" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "DR": "U_DR", "ST": "U_ST", "FAM": "DR and not ST" }
+  },
+  "context": { "U_DR": 1, "U_ST": 0 },
+  "normality": { "DR": 1, "ST": 1, "FAM": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "DR=1", "effect": "FAM=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "ST=0", "effect": "FAM=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "DR=1", "effect": "FAM=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "ST=0", "effect": "FAM=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "DR=1", "effect": "FAM=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "ST=0", "effect": "FAM=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "ST=0", "effect": "FAM=1" },
+      "expected": "cause",
+      "note": "The organisation's defaults: scant rain is ordinary, reserves are expected."
+    },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "DR=1", "effect": "FAM=1" },
+      "expected": "not-cause",
+      "note": "With the farmers' defaults (DR = 0, ST = 0) the two verdicts swap."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "沒有乾旱", "en": "No drought" }, "interventions": { "DR": 0 } },
+    { "label": { "zh-TW": "政府儲了糧", "en": "The government keeps reserves" }, "interventions": { "ST": 1 } }
+  ],
+  "layout": { "DR": [0, 0], "ST": [0, 1], "FAM": [1, 0.5] }
+}

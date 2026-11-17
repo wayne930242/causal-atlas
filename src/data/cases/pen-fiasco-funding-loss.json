@@ -1,0 +1,91 @@
+{
+  "id": "pen-fiasco-funding-loss",
+  "title": { "zh-TW": "鉛筆之亂：沒筆記就丟了補助", "en": "The pencil fiasco: a lost grant" },
+  "subtitle": {
+    "zh-TW": "教授拿筆算是補助落空的原因，但他要為補助落空負責嗎？",
+    "en": "The professor's pen is a cause of the lost grant, but is the professor answerable for it?"
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮系辦的筆案例的後續：系上規定行政人員可以拿筆，教授則須自行購買。某天早上，一位助教和一位教授各自拿走筆筒裡的一支筆，筆筒因此空了。這時秘書接到一通電話，需要記下的是經費補助申請的通知。她沒有筆可記，這則通知沒有被轉達，系上因而錯過申請，沒有拿到補助款。",
+    "en": "Consider a sequel to the department-office pen case. The department allows administrative staff to take pens and expects professors to buy their own. One morning an assistant and a professor each take a pen from the cup, and the cup is empty. The secretary then takes a call whose message is a notice about a funding application. With no pen to write it down, she does not pass the notice on, and the department misses the application and does not receive the grant."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "某天早上，一位助教和一位教授各自拿走筆筒裡的一支筆，筆筒因此空了。", "variables": ["AT", "PT", "PO"] },
+      { "sentence": "這時秘書接到一通電話，需要記下的是經費補助申請的通知。", "variables": ["U_N"] },
+      { "sentence": "系上因而錯過申請，沒有拿到補助款。", "variables": ["GL"] }
+    ],
+    "en": [
+      {
+        "sentence": "One morning an assistant and a professor each take a pen from the cup, and the cup is empty.",
+        "variables": ["AT", "PT", "PO"]
+      },
+      { "sentence": "The secretary then takes a call whose message is a notice about a funding application.", "variables": ["U_N"] },
+      { "sentence": "the department misses the application and does not receive the grant.", "variables": ["GL"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "PT=1", "effect": "GL=1" },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "教授拿筆是沒筆可用的原因，也經由這個結果成為補助落空的一環；要不要由他負責，則看禁止教授拿筆的規定是否以補助為目的。",
+      "en": "The professor's pen is a cause of the missing pen and, through it, a link in the chain to the lost grant; whether he must answer for the grant depends on whether the rule against professors taking pens aims at protecting the grant."
+    },
+    "agree": ["butfor", "hp-updated", "hp-modified", "hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "在筆案例的 PO = PT·AT 之後接上一環：補助落空 GL 需要「沒筆可用」，也需要「這則訊息是補助申請通知」這個背景條件 U_N（GL = PO·U_N），形成 PT → PO → GL 的鏈。本案例的重點不在因果判定：教授拿筆是 GL 的原因，在各個定義下都成立，助教拿筆則只在不看規範的定義下成立。王鵬翔 (2025) 指出，違規者要負責的結果範圍，還要看兩個條件：該規定的目的是否包含避免這個結果，以及這個結果是否合理可預見（因果恆定性）。教授拿筆與沒筆可用的關係穩定，與補助落空的關係則依賴訊息恰好是補助通知這個少見的背景條件。這兩項條件不屬於因果模型，是責任歸屬的另一道門檻，所以資料只記錄因果判定。",
+    "en": "The model extends the pen case's PO = PT·AT by one link: the grant is lost (GL) only if the secretary has no pen and the message happens to be a funding notice, a background condition U_N (GL = PO·U_N). This gives the chain PT → PO → GL. The point of the case is not the causal verdict: the professor's pen is a cause of GL under every definition, while the assistant's pen is one only under definitions that ignore norms. Wang (2025) adds that how far a violator answers for outcomes depends on two further conditions: whether the rule's purpose includes preventing that outcome, and whether the outcome was reasonably foreseeable (causal invariance). The professor's pen and the missing pen are stably related; its relation to the lost grant depends on the unusual background condition that the message was a funding notice. Neither condition belongs to the causal model, since they are a separate threshold for responsibility, so the data record only the causal verdicts."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Wang, P.-H. (2025). The linkage between causality and responsibility from the viewpoint of norms [in Chinese]. EurAmerica, 55(2), 227–271.",
+      "key": "wang2025causality",
+      "role": "origin",
+      "note": {
+        "zh-TW": "鉛筆之亂的情境在第 256 頁；鏈狀結構 X→Z→W 與因果恆定性分析在第 259–262 頁。文中引用 Sartorio (2022: 350) 談可預見性（第 257 頁），原文未查。",
+        "en": "The pencil-fiasco vignette is on p. 256; the chain X→Z→W and the causal-invariance analysis are on pp. 259–262. The paper cites Sartorio (2022: 350) on foreseeability (p. 257); that source was not consulted."
+      },
+      "pages": "pp. 256–257, 259–262",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_PT", "label": { "zh-TW": "教授的情況", "en": "Professor's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_AT", "label": { "zh-TW": "助教的情況", "en": "Assistant's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_N", "label": { "zh-TW": "訊息是補助申請通知", "en": "The message is a funding notice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "PT", "label": { "zh-TW": "教授拿筆", "en": "Professor takes a pen" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "AT", "label": { "zh-TW": "助教拿筆", "en": "Assistant takes a pen" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "PO", "label": { "zh-TW": "秘書沒筆可用", "en": "Secretary has no pen" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "GL", "label": { "zh-TW": "補助落空", "en": "Grant is lost" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "PT": "U_PT", "AT": "U_AT", "PO": "PT and AT", "GL": "PO and U_N" }
+  },
+  "context": { "U_PT": 1, "U_AT": 1, "U_N": 1 },
+  "normality": { "PT": 0, "AT": 1, "PO": 0, "GL": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "PT=1", "effect": "GL=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "AT=1", "effect": "GL=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "PT=1", "effect": "GL=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "AT=1", "effect": "GL=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "PT=1", "effect": "GL=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "AT=1", "effect": "GL=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "PT=1", "effect": "GL=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "AT=1", "effect": "GL=1" },
+      "expected": "not-cause",
+      "note": "As in the pen case, the assistant's witness is more deviant than the actual world."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "教授沒拿筆", "en": "The professor takes no pen" }, "interventions": { "PT": 0 } },
+    { "label": { "zh-TW": "訊息不是補助通知", "en": "The message is not a funding notice" }, "interventions": { "U_N": 0 } }
+  ],
+  "layout": { "PT": [0, 0], "AT": [0, 1], "PO": [1, 0.5], "U_N": [1, 1.4], "GL": [2, 0.5] }
+}

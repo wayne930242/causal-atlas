@@ -1,0 +1,96 @@
+{
+  "id": "intern-doctor-pharmacist",
+  "title": { "zh-TW": "住院醫師、藥師與違規的主治醫師", "en": "The intern, the pharmacist and the attending who breaks policy" },
+  "subtitle": {
+    "zh-TW": "病人康復了，違規簽名的主治醫師沒有被怪罪，仍被當作康復的原因。",
+    "en": "The patient recovers and nobody is blamed, yet the attending who broke policy is still picked out as the cause."
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮一家醫院裡的用藥申請：住院醫師想為一位腎臟功能不佳的病人使用一種新藥，投藥前需要藥師簽名確認庫存，也需要主治醫師簽名確認藥物適合病人。藥師確認庫存足夠，立刻簽名。主治醫師知道這種藥可能有危險的副作用，院方也規定這個病症不得使用，仍然決定簽名。兩份簽名齊備，病人用了藥，很快康復，也沒有出現副作用。",
+    "en": "Consider a drug request in a hospital. An intern wants to give a patient with kidney trouble a new drug. Before giving it, the intern needs the pharmacist's signature to confirm the stock and the attending physician's signature to confirm that the drug suits the patient. The pharmacist sees that there is enough in stock and signs at once. The attending knows that the drug may have dangerous side effects, and the hospital forbids its use for this condition, but decides to sign anyway. With both signatures in hand, the patient is given the drug, recovers quickly and shows no side effects."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "藥師確認庫存足夠，立刻簽名。", "variables": ["PH"] },
+      { "sentence": "仍然決定簽名。", "variables": ["AT"] },
+      { "sentence": "病人用了藥，很快康復，也沒有出現副作用。", "variables": ["REC"] }
+    ],
+    "en": [
+      { "sentence": "The pharmacist sees that there is enough in stock and signs at once.", "variables": ["PH"] },
+      { "sentence": "but decides to sign anyway.", "variables": ["AT"] },
+      { "sentence": "the patient is given the drug, recovers quickly and shows no side effects.", "variables": ["REC"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "PH=1", "effect": "REC=1" },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "受試者較同意主治醫師的簽名造成康復（平均 3.9），較不同意藥師的簽名造成康復（平均 2.5；量尺 1 至 7）。",
+      "en": "Subjects agreed more that the attending's signature caused the recovery (mean 3.9) than that the pharmacist's did (mean 2.5, on a scale from 1 to 7)."
+    },
+    "agree": ["hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "模型是依故事擬的最小結構：藥物需要兩份簽名才會投下，投下後病人康復（REC = PH·AT）。兩份簽名缺一不可，所以簡單反事實依賴與 HP 定義都把兩人判為原因。規範使兩人不同：藥師依常規簽名（預設 PH = 1），主治醫師違反院方政策簽名（預設 AT = 0）。主治醫師不簽名的見證世界不比實際世界更偏離預設，藥師不簽名的見證世界則更偏離，因此引擎只把主治醫師判為原因。這個案例是 Hitchcock 與 Knobe 設計來拆開「規範違反」與「責備」的：康復是好結果，沒有人該被責備，違規的行為仍被選為原因。康復 REC 沒有設預設值，因為好結果與否不影響這個比較。",
+    "en": "The model is a minimal structure built from the story: the drug is given only with both signatures, and then the patient recovers (REC = PH·AT). Neither signature can be dropped, so the simple counterfactual test and the HP definitions count both signers as causes. The norm separates them: the pharmacist signs as a matter of routine (default PH = 1), while the attending signs against hospital policy (default AT = 0). The witness world in which the attending does not sign is no more deviant than the actual world, whereas the one in which the pharmacist does not sign is more deviant, so the engine makes only the attending a cause. Hitchcock and Knobe designed the case to pull norm violation apart from blame: the recovery is good, nobody should be blamed for it, and the violating act is still picked out as the cause. REC has no default because whether the outcome is good plays no part in this comparison."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Hitchcock, C., & Knobe, J. (2009). Cause and norm. Journal of Philosophy, 106(11), 587–612.",
+      "key": "hitchcock2009cause",
+      "role": "origin",
+      "note": {
+        "zh-TW": "情境在第 603–604 頁；評分 3.9 與 2.5 在第 604 頁註 27。",
+        "en": "The vignette is on pp. 603–604; the ratings 3.9 and 2.5 are in note 27 on p. 604."
+      },
+      "pages": "pp. 603–604",
+      "verified": true
+    },
+    {
+      "citation": "Wang, P.-H. (2019). The problems of counterfactual thinking in omissive causal judgements [in Chinese]. EurAmerica, 49(3), 287–340.",
+      "key": "wang2019omission",
+      "role": "treatment",
+      "pages": "pp. 333–335",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_PH", "label": { "zh-TW": "藥師的情況", "en": "Pharmacist's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_AT", "label": { "zh-TW": "主治醫師的情況", "en": "Attending's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "PH", "label": { "zh-TW": "藥師簽名", "en": "Pharmacist signs" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "AT", "label": { "zh-TW": "主治醫師簽名", "en": "Attending signs" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "REC", "label": { "zh-TW": "病人康復", "en": "Patient recovers" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "PH": "U_PH", "AT": "U_AT", "REC": "PH and AT" }
+  },
+  "context": { "U_PH": 1, "U_AT": 1 },
+  "normality": { "PH": 1, "AT": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "PH=1", "effect": "REC=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "AT=1", "effect": "REC=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "PH=1", "effect": "REC=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "AT=1", "effect": "REC=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "PH=1", "effect": "REC=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "AT=1", "effect": "REC=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "AT=1", "effect": "REC=1" },
+      "expected": "cause",
+      "note": "Witness: AT = 0, the policy-conforming state."
+    },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "PH=1", "effect": "REC=1" },
+      "expected": "not-cause",
+      "note": "Witness: PH = 0 would be more deviant than the actual world."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "主治醫師沒簽名", "en": "The attending does not sign" }, "interventions": { "AT": 0 } },
+    { "label": { "zh-TW": "藥師沒簽名", "en": "The pharmacist does not sign" }, "interventions": { "PH": 0 } }
+  ],
+  "layout": { "PH": [0, 0], "AT": [0, 1], "REC": [1, 0.5] }
+}
