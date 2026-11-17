@@ -19,6 +19,8 @@ import type { UiNotation } from './notation.ts'
 import { Disclosure, DocProblems, Segmented } from './parts.tsx'
 
 export interface ModelEditorProps {
+  /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
+  readonly defaultNotation?: UiNotation
   /** Starting model: a bundled case id or `blank`. Default `rock-throwing`. */
   readonly initial?: string
   /**
@@ -84,13 +86,13 @@ export function ModelEditor({ locale, ...props }: ModelEditorProps) {
   )
 }
 
-function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, exportUrl }: Omit<ModelEditorProps, 'locale'>) {
+function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, exportUrl, defaultNotation }: Omit<ModelEditorProps, 'locale'>) {
   const t = useMessages()
   const e = t.editor
   const [start] = useState(() => startDraft(initial, t, initialDoc))
   const [draft, setDraft] = useState<Draft>(start.draft)
   const [interventions, setInterventions] = useState<Assignment>({})
-  const [notation, setNotation] = useState<UiNotation>('propositional')
+  const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
   // What reading the share link went wrong with; worded at render, so it follows the language.
   const [loadErrors, setLoadErrors] = useState<readonly unknown[]>([])
   const compiled = useMemo(

@@ -14,6 +14,8 @@ import { intuitionSummary, seeDoPair, shortSources } from './verdict-rows.ts'
 import { doText, label } from './view-model.ts'
 
 export interface CasePageProps {
+  /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
+  readonly defaultNotation?: UiNotation
   readonly caseId: string
   /** Show the kicker and title. Turn off when the page around it already has them. Default true. */
   readonly heading?: boolean
@@ -54,7 +56,8 @@ function storyParagraphs(t: Messages, c: LoadedCase): StorySentence[][] {
 }
 
 /** Each step opens on the notation that shows its point: logic, then arithmetic under do(), then [X←x]. */
-function notationFor(step: number): UiNotation {
+function notationFor(step: number, fixed?: UiNotation): UiNotation {
+  if (fixed !== undefined) return fixed
   if (step === 3) return 'arithmetic'
   if (step === 4) return 'causal'
   return 'propositional'
@@ -72,14 +75,14 @@ export function CasePage({ locale, ...props }: CasePageProps) {
   )
 }
 
-function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl }: Omit<CasePageProps, 'locale'>) {
+function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl, defaultNotation }: Omit<CasePageProps, 'locale'>) {
   const t = useMessages()
   const c = getCase(caseId)
   const probabilistic = c.context === undefined
   const preset = c.data.showcase[0]
   const [step, setStep] = useState(Math.min(Math.max(initialStep, 1), TOTAL))
   const presetDo: Assignment = !probabilistic && step >= 3 && preset !== undefined ? preset.interventions : {}
-  const model = useModel(c, presetDo, notationFor(step))
+  const model = useModel(c, presetDo, notationFor(step, defaultNotation))
   const [witness, setWitness] = useState<Assignment | undefined>(undefined)
   const panelRef = useRef<HTMLDivElement>(null)
   const pair = seeDoPair(c)
@@ -90,7 +93,7 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
     setWitness(undefined)
     if (!probabilistic) {
       model.setInterventions(target >= 3 && preset !== undefined ? preset.interventions : {})
-      model.setNotation(notationFor(target))
+      model.setNotation(notationFor(target, defaultNotation))
     }
   }
 

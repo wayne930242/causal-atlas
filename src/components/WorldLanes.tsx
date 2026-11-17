@@ -13,7 +13,9 @@ import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { LocaleProvider, LocaleScope, messagesFor, useMessages } from './i18n.ts'
 import { originCitations, originSources } from './verdict-rows.ts'
-import { DocProblems, Arrow, Progress } from './parts.tsx'
+import type { UiNotation } from './notation.ts'
+import { notations } from './notation.ts'
+import { DocProblems, Arrow, Progress, Segmented } from './parts.tsx'
 import {
   assignmentText,
   columnOrder,
@@ -38,6 +40,8 @@ export type WorldLanesSource =
   | { readonly doc: ModelDoc; readonly caseId?: undefined }
 
 export interface WorldLanesOptions {
+  /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
+  readonly defaultNotation?: UiNotation
   /** The counterfactual's do(); defaults to the case's first preset. */
   readonly interventions?: Assignment
   /** Text on the button that adds the counterfactual lane. */
@@ -83,7 +87,7 @@ function tagEl(x: number, y: number, text: string, tone: 'fg' | 'slate' | 'accen
 }
 
 /** Direction 2 「世界分道」: each world is a row of cells; columns line up so changes read down a column. */
-export function WorldLanes({ caseId, doc, interventions, actionLabel, witness, initialStep = 1, exportUrl, locale }: WorldLanesProps) {
+export function WorldLanes({ caseId, doc, interventions, actionLabel, witness, initialStep = 1, exportUrl, defaultNotation, locale }: WorldLanesProps) {
   return (
     <LocaleScope locale={locale}>
       <WorldLanesResolved
@@ -94,6 +98,7 @@ export function WorldLanes({ caseId, doc, interventions, actionLabel, witness, i
         witness={witness}
         initialStep={initialStep}
         exportUrl={exportUrl}
+        defaultNotation={defaultNotation}
       />
     </LocaleScope>
   )
@@ -112,6 +117,7 @@ function WorldLanesFor({
   witness,
   initialStep = 1,
   exportUrl,
+  defaultNotation,
 }: Omit<WorldLanesOptions, 'locale'> & { c: LoadedCase }) {
   const t = useMessages()
   const stage = useRef<HTMLDivElement>(null)
@@ -122,6 +128,7 @@ function WorldLanesFor({
   if (doAssign === undefined) throw new Error(`WorldLanes: case ${c.data.id} has no preset; pass interventions`)
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const [showEq, setShowEq] = useState(false)
+  const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
 
   const shown = useMemo(() => columnOrder(c, shownVariables(c)), [c])
   const lanes = useMemo(() => {
@@ -501,10 +508,11 @@ function WorldLanesFor({
       </div>
       {showEq && (
         <div className="ca-lanes-eq">
+          <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={setNotation} />
           <Equations
             c={c}
             shown={shown}
-            notation="propositional"
+            notation={notation}
             values={visible[visible.length - 1].values}
             interventions={visible[visible.length - 1].intervened}
           />

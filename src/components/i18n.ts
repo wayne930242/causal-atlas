@@ -267,9 +267,9 @@ const ZH = {
   setByDo: '設定的',
   zeroObservation: '這個觀察的機率是 0，無法以它為條件。',
   afterObserving: (event: string): string => `觀察 ${event} 之後的機率`,
-  seeText: (label: string): string => `看到${label}，會改變對其他變項的猜測，上游的也會跟著變。`,
+  seeText: (observe: string, label: string): string => `看到 ${observe}（${label}），會改變對其他變項的猜測，上游的也會跟著變。`,
   afterSetting: (doText: string): string => `${doText} 之後的機率`,
-  doText: (label: string): string => `動手設定${label}，指進它的箭頭被剪斷，只有下游會變。`,
+  doText: (setting: string, label: string): string => `動手設定 ${setting}（${label}），指進它的箭頭被剪斷，只有下游會變。`,
 
   // world lanes
   lanes: {
@@ -565,9 +565,9 @@ const EN: Messages = {
   setByDo: 'set',
   zeroObservation: 'This observation has probability 0, so we cannot condition on it.',
   afterObserving: (event) => `Probabilities after observing ${event}`,
-  seeText: (label) => `Seeing “${label}” changes what we expect of the other variables, upstream ones included.`,
+  seeText: (observe, label) => `Seeing ${observe} (“${label}”) changes what we expect of the other variables, upstream ones included.`,
   afterSetting: (doText) => `Probabilities after ${doText}`,
-  doText: (label) => `Setting “${label}” cuts the arrows into it; only what lies downstream changes.`,
+  doText: (setting, label) => `Setting ${setting} (“${label}”) cuts the arrows into it; only what lies downstream changes.`,
 
   lanes: {
     region: 'World lanes (scroll sideways)',

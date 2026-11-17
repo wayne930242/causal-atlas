@@ -6,6 +6,7 @@ import type { Locale } from './i18n.ts'
 import { LocaleScope, useMessages } from './i18n.ts'
 import { useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
+import type { UiNotation } from './notation.ts'
 import { DocProblems } from './parts.tsx'
 import { assignmentText } from './view-model.ts'
 
@@ -35,6 +36,8 @@ export type CausalPlaygroundSource =
     }
 
 export interface CausalPlaygroundOptions {
+  /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
+  readonly defaultNotation?: UiNotation
   /** do() applied at the start. */
   readonly initialInterventions?: Assignment
   /**
@@ -67,9 +70,10 @@ function PlaygroundFor({
   initialInterventions,
   presets = true,
   exportUrl,
+  defaultNotation,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase }) {
   const t = useMessages()
-  const { interventions, setInterventions, notation, setNotation, world } = useModel(c, initialInterventions)
+  const { interventions, setInterventions, notation, setNotation, world } = useModel(c, initialInterventions, defaultNotation)
   const buttons = presetButtons(c, presets, t.locale)
   return (
     <div className="ca-root not-prose ca-playground" data-case={c.data.id} lang={t.locale}>

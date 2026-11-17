@@ -41,6 +41,8 @@ export type ProbabilitySource =
   | { readonly doc: ModelDoc; readonly caseId?: undefined }
 
 export interface ProbabilityOptions {
+  /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
+  readonly defaultNotation?: UiNotation
   /** `sliders`: set p per exogenous variable. `compare`: observing vs do() side by side. */
   readonly view?: ProbabilityView
   /** For `compare`: the observation, the do() and the event. Defaults to the case's own pair. */
@@ -126,18 +128,18 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
 }
 
 /** Direction 1 probability mode: per-exogenous p sliders; node fill is P(V=1); observing vs do() side by side. */
-export function ProbabilityPanel({ caseId, doc, view = 'sliders', pair, exportUrl, locale }: ProbabilityPanelProps) {
+export function ProbabilityPanel({ caseId, doc, view = 'sliders', pair, exportUrl, defaultNotation, locale }: ProbabilityPanelProps) {
   return (
     <LocaleScope locale={locale}>
-      <ProbabilityPanelResolved caseId={caseId} doc={doc} view={view} pair={pair} exportUrl={exportUrl} />
+      <ProbabilityPanelResolved caseId={caseId} doc={doc} view={view} pair={pair} exportUrl={exportUrl} defaultNotation={defaultNotation} />
     </LocaleScope>
   )
 }
 
-function ProbabilityPanelResolved({ caseId, doc, view, pair, exportUrl }: Omit<ProbabilityPanelProps, 'locale'>) {
+function ProbabilityPanelResolved({ caseId, doc, view, pair, exportUrl, defaultNotation }: Omit<ProbabilityPanelProps, 'locale'>) {
   const resolved = useCaseOrDoc(caseId, doc)
   if (!resolved.ok) return <DocProblems problems={resolved.problems} />
-  return <ProbabilityPanelFor c={resolved.c} view={view} pair={pair} exportUrl={exportUrl} />
+  return <ProbabilityPanelFor c={resolved.c} view={view} pair={pair} exportUrl={exportUrl} defaultNotation={defaultNotation} />
 }
 
 export function ProbabilityPanelFor({
@@ -145,15 +147,17 @@ export function ProbabilityPanelFor({
   view = 'sliders',
   pair,
   exportUrl,
+  defaultNotation,
 }: {
   c: LoadedCase
   view?: ProbabilityView
   pair?: SeeDoPair
   exportUrl?: string
+  defaultNotation?: UiNotation
 }) {
   const t = useMessages()
   const [sliders, setSliders] = useState<Record<string, number>>(() => defaultSliders(c))
-  const [notation, setNotation] = useState<UiNotation>('propositional')
+  const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
   const [mode, setMode] = useState<'value' | 'probability'>('probability')
   const shown = useMemo(() => shownVariables(c), [c])
   const prior = useMemo(() => priorWithSliders(c, sliders), [c, sliders])
@@ -348,7 +352,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
                 {probText(seeValue)}
               </p>
             </div>
-            <p className="ca-compare-text">{t.seeText(obsLabel)}</p>
+            <p className="ca-compare-text">{t.seeText(pair.observe, obsLabel)}</p>
           </div>
         </div>
         <div className="ca-compare-side is-cf" data-side="do">
@@ -368,7 +372,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
                 {probText(doValue)}
               </p>
             </div>
-            <p className="ca-compare-text">{t.doText(label(c.model, doId, t.locale))}</p>
+            <p className="ca-compare-text">{t.doText(doText(pair.intervene), label(c.model, doId, t.locale))}</p>
           </div>
         </div>
       </div>

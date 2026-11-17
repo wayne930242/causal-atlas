@@ -140,6 +140,18 @@ describe('ProbabilityPanel', () => {
   })
 })
 
+describe('ProbabilityPanel captions', () => {
+  it('states the observed value, not just the variable label', () => {
+    const zh = render(<ProbabilityPanel caseId="firing-squad" view="compare" />)
+    const text = zh.container.querySelector('.ca-compare-text')?.textContent ?? ''
+    expect(text).toContain('A=0')
+    cleanup()
+    const en = render(<ProbabilityPanel caseId="firing-squad" view="compare" locale="en" />)
+    expect(en.container.querySelector('.ca-compare-text')?.textContent ?? '').toContain('A=0')
+    expect(en.container.querySelectorAll('.ca-compare-text')[1]?.textContent ?? '').toContain('A=0')
+  })
+})
+
 describe('WorldLanes', () => {
   it('adds the counterfactual lane and a diff strip on the second step', () => {
     const { container } = render(<WorldLanes caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />)

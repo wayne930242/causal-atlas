@@ -6,7 +6,7 @@ import { getCase } from '../data/index.ts'
 import { caseToDoc } from '../data/model-doc.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import { modelDocSchema } from '../data/schema.ts'
-import { CausalPlayground, ModelEditor, ProbabilityPanel, WorldLanes } from './index.ts'
+import { CasePage, CausalPlayground, ModelEditor, ProbabilityPanel, WorldLanes } from './index.ts'
 import { docOrigin } from './doc-case.ts'
 
 const valueDoc: ModelDoc = modelDocSchema.parse({
@@ -121,5 +121,24 @@ describe('ProbabilityPanel and WorldLanes with a doc', () => {
   it('an invalid doc shows its code in both', () => {
     expect(renderToString(createElement(ProbabilityPanel, { doc: bad }))).toMatch(/data-code="parse-/)
     expect(renderToString(createElement(WorldLanes, { doc: bad, interventions: {} }))).toMatch(/data-code="parse-/)
+  })
+})
+
+describe('defaultNotation', () => {
+  const ff = (n?: 'propositional' | 'arithmetic' | 'causal') => ({ caseId: 'forest-fire-disjunctive', defaultNotation: n })
+  const pressed = (html: string, label: string): boolean => new RegExp(`aria-pressed="true"[^>]*>${label}<`).test(html)
+  it('renders the chosen notation on the server and keeps propositional by default', () => {
+    expect(renderToString(createElement(CausalPlayground, ff()))).toContain('FF ↔ (L ∨ MD)')
+    expect(renderToString(createElement(CausalPlayground, ff('arithmetic')))).toContain('FF = max(L, MD)')
+    expect(renderToString(createElement(CausalPlayground, ff('causal')))).toContain('[L←0, MD←0](FF=0)')
+  })
+  it('applies to ProbabilityPanel, WorldLanes, CasePage and ModelEditor', () => {
+    const arith = renderToString(createElement(ProbabilityPanel, { ...ff('arithmetic'), caseId: 'firing-squad' }))
+    expect(pressed(arith, '數學式')).toBe(true)
+    expect(pressed(renderToString(createElement(ProbabilityPanel, { caseId: 'firing-squad' })), '邏輯式')).toBe(true)
+    const lanes = renderToString(createElement(WorldLanes, { caseId: 'forest-fire-disjunctive', initialStep: 2, defaultNotation: 'causal' }))
+    expect(lanes.length).toBeGreaterThan(0)
+    expect(pressed(renderToString(createElement(CasePage, { caseId: 'forest-fire-disjunctive', initialStep: 2, defaultNotation: 'arithmetic' })), '數學式')).toBe(true)
+    expect(pressed(renderToString(createElement(ModelEditor, { defaultNotation: 'causal' })), '干預式')).toBe(true)
   })
 })
