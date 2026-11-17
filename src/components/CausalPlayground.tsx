@@ -8,6 +8,7 @@ import { useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
 import { DocProblems } from './parts.tsx'
+import { Rich } from './typeset.tsx'
 import { assignmentText } from './view-model.ts'
 
 /** A preset intervention button for a model document (a bundled case brings its own). */
@@ -93,7 +94,7 @@ function PlaygroundFor({
                 aria-pressed={assignmentText(s.interventions) === assignmentText(interventions)}
                 onClick={() => setInterventions(s.interventions)}
               >
-                {s.text}
+                <Rich text={s.text} ids={c.model.byId} />
               </button>
             ))}
           </div>

@@ -2,8 +2,10 @@ import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import { formatValue } from '../engine/values.ts'
 import { useMessages } from './i18n.ts'
+import type { KnownIds } from './typeset-text.ts'
 import { Disclosure, NoIcon, OkIcon, PartIcon, Pin, Tag } from './parts.tsx'
 import type { ActualGroup, ActualRow, Intuition } from './verdict-rows.ts'
+import { Formula, Rich } from './typeset.tsx'
 import { THEORY_REF, actualGroups, decisionRows, intuition, numberRows } from './verdict-rows.ts'
 import { assignmentText, probText } from './view-model.ts'
 
@@ -31,7 +33,7 @@ function Mismatch() {
   )
 }
 
-function IntuitionRow({ i }: { readonly i: Intuition }) {
+function IntuitionRow({ i, ids }: { readonly i: Intuition; readonly ids: KnownIds }) {
   const t = useMessages()
   return (
     <li className="ca-verdict" data-theory="intuition" data-intuition="true" data-verdict={i.verdict ?? ''}>
@@ -47,11 +49,13 @@ function IntuitionRow({ i }: { readonly i: Intuition }) {
             </>
           ) : (
             <strong>
-              {t.choose} <span className="ca-mono">{i.choice}</span>
+              {t.choose} <span className="ca-mono"><Rich text={i.choice ?? ''} ids={ids} /></span>
             </strong>
           )}
         </span>
-        <span className="ca-verdict-sentence">{i.text}</span>
+        <span className="ca-verdict-sentence">
+          <Rich text={i.text} ids={ids} />
+        </span>
       </div>
     </li>
   )
@@ -59,10 +63,12 @@ function IntuitionRow({ i }: { readonly i: Intuition }) {
 
 function ActualRowView({
   row,
+  ids,
   onShow,
   mismatch = false,
 }: {
   readonly row: ActualRow
+  readonly ids: KnownIds
   readonly onShow?: VerdictsProps['onShow']
   readonly mismatch?: boolean
 }) {
@@ -78,13 +84,15 @@ function ActualRowView({
           <VerdictIcon verdict={row.verdict} />
           <strong>{t.verdict[row.verdict]}</strong>
         </span>
-        <span className="ca-verdict-sentence">{row.sentence}</span>
+        <span className="ca-verdict-sentence">
+          <Rich text={row.sentence} ids={ids} />
+        </span>
         {mismatch && <Mismatch />}
         {hasWitness && row.fixed !== undefined && (
           <span className="ca-verdict-aside">
             <Tag tone="amber">
               <Pin />
-              {t.witnessHold(assignmentText(row.fixed))}
+              <Rich text={t.witnessHold(assignmentText(row.fixed))} ids={ids} />
             </Tag>
           </span>
         )}
@@ -93,7 +101,9 @@ function ActualRowView({
         <div className="ca-verdict-detail">
           {row.formula !== undefined && (
             <>
-              <code className="ca-mono">{row.formula}</code>
+              <code className="ca-mono">
+                <Formula text={row.formula} />
+              </code>
               <span className="ca-holds">
                 <OkIcon size={18} />
                 {t.holds}
@@ -112,7 +122,7 @@ function ActualRowView({
   )
 }
 
-function HpSupplement({ group, href, linkLabel }: { group: ActualGroup; href?: string; linkLabel?: string }) {
+function HpSupplement({ group, ids, href, linkLabel }: { group: ActualGroup; ids: KnownIds; href?: string; linkLabel?: string }) {
   const t = useMessages()
   const row = group.rows.find((r) => r.theory !== 'butfor' && r.formula !== undefined)
   const witnessRow = row ?? group.rows.find((r) => r.formula !== undefined)
@@ -142,17 +152,27 @@ function HpSupplement({ group, href, linkLabel }: { group: ActualGroup; href?: s
       <div className="ca-supplement-case">
         <p className="ca-muted">{t.hp.applied}</p>
         <p>
-          {t.hp.causeIs} <code className="ca-mono">{causeVars}</code>
+          {t.hp.causeIs}{' '}
+          <code className="ca-mono">
+            <Rich text={causeVars} ids={ids} />
+          </code>
         </p>
         {witnessRow?.fixed !== undefined && (
-          <p>{t.hp.witnessIs(Object.keys(witnessRow.fixed).join(', '), Object.values(witnessRow.fixed).map(formatValue).join(', '))}</p>
+          <p>
+            <Rich text={t.hp.witnessIs(Object.keys(witnessRow.fixed).join(', '), Object.values(witnessRow.fixed).map(formatValue).join(', '))} ids={ids} />
+          </p>
         )}
         <p>
-          {t.hp.effectIs} <code className="ca-mono">{group.effect}</code>
+          {t.hp.effectIs}{' '}
+          <code className="ca-mono">
+            <Rich text={group.effect} ids={ids} />
+          </code>
         </p>
         {witnessRow?.formula !== undefined && (
           <p>
-            <code className="ca-mono">{witnessRow.formula}</code>{' '}
+            <code className="ca-mono">
+              <Formula text={witnessRow.formula} />
+            </code>{' '}
             <span className="ca-holds">
               <OkIcon size={18} />
               {t.holds}
@@ -168,6 +188,7 @@ function HpSupplement({ group, href, linkLabel }: { group: ActualGroup; href?: s
 /** Each standard's verdict, one row per standard; formal definitions stay in a closed 補充 box. */
 export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) {
   const t = useMessages()
+  const ids = c.model.byId
   const groups = actualGroups(t, c)
   const numbers = numberRows(c)
   const decisions = decisionRows(t, c)
@@ -176,13 +197,16 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
     <div className="ca-verdicts">
       {groups.map((g) => (
         <section key={`${g.cause}>${g.effect}`} className="ca-verdict-group">
-          <h2 className="ca-h2">{g.heading}</h2>
+          <h2 className="ca-h2">
+            <Rich text={g.heading} ids={ids} />
+          </h2>
           <ul className="ca-verdict-list">
-            {intu?.key === `${g.cause}⇒${g.effect}` && <IntuitionRow i={intu} />}
+            {intu?.key === `${g.cause}⇒${g.effect}` && <IntuitionRow i={intu} ids={ids} />}
             {g.rows.map((r, i) => (
               <ActualRowView
                 key={`${r.theory}-${i}`}
                 row={r}
+                ids={ids}
                 onShow={onShow}
                 mismatch={intu?.key === `${g.cause}⇒${g.effect}` && !intu.agree.has(r.theory)}
               />
@@ -196,7 +220,9 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
           <ul className="ca-verdict-list">
             {numbers.map((n) => (
               <li key={n.expression} className="ca-verdict ca-number-row" data-kind={n.kind}>
-                <code className="ca-mono">{n.expression}</code>
+                <code className="ca-mono">
+                  <Formula text={n.expression} />
+                </code>
                 <strong className="ca-mono">{probText(n.value)}</strong>
                 <span className="ca-muted">{n.kind === 'counterfactual' ? t.counterfactualNote : ''}</span>
               </li>
@@ -208,7 +234,7 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
         <section className="ca-verdict-group">
           <h2 className="ca-h2">{t.whatToChoose}</h2>
           <ul className="ca-verdict-list">
-            {intu?.choice !== undefined && <IntuitionRow i={intu} />}
+            {intu?.choice !== undefined && <IntuitionRow i={intu} ids={ids} />}
             {decisions.map((d) => (
               <li
                 key={d.theory}
@@ -218,12 +244,16 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
               >
                 <Tag tone="chip">{d.name}</Tag>
                 <span>
-                  {t.choose} <strong className="ca-mono">{d.choice}</strong>
+                  {t.choose}{' '}
+                  <strong className="ca-mono">
+                    <Rich text={d.choice} ids={ids} />
+                  </strong>
                 </span>
                 <span className="ca-muted ca-mono">
-                  {d.utilities
-                    .map((u) => t.utility(u.act, u.eu === undefined ? '—' : u.eu.toFixed(1)))
-                    .join(t.utilitySep)}
+                  <Rich
+                    text={d.utilities.map((u) => t.utility(u.act, u.eu === undefined ? '—' : u.eu.toFixed(1))).join(t.utilitySep)}
+                    ids={ids}
+                  />
                 </span>
                 {intu?.choice !== undefined && !intu.agree.has(d.theory) && <Mismatch />}
               </li>
@@ -233,7 +263,7 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
       )}
       {groups.length > 0 && (
         <Disclosure title={t.hpConditions}>
-          <HpSupplement group={groups[0]} href={lessonHref} linkLabel={lessonLabel} />
+          <HpSupplement group={groups[0]} ids={ids} href={lessonHref} linkLabel={lessonLabel} />
         </Disclosure>
       )}
       {groups.length === 0 && decisions.length > 0 && (

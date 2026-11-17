@@ -12,10 +12,12 @@ import type { ExportSource } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { LocaleProvider, LocaleScope, messagesFor, useMessages } from './i18n.ts'
+import { sub } from './svg-text.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
 import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { DocProblems, Arrow, Progress, Segmented } from './parts.tsx'
+import { Rich } from './typeset.tsx'
 import {
   assignmentText,
   columnOrder,
@@ -80,7 +82,7 @@ function tagEl(x: number, y: number, text: string, tone: 'fg' | 'slate' | 'accen
     <g transform={`translate(${x} ${y})`}>
       <rect width={w} height={22} className={`ca-lane-tag-${tone}`} />
       <text x={w / 2} y={15} textAnchor="middle" className={`ca-svg-small ca-svg-bold ca-lane-tag-text-${tone}${mono ? ' ca-mono' : ''}`}>
-        {text}
+        {sub(text)}
       </text>
     </g>
   )
@@ -285,7 +287,7 @@ function WorldLanesFor({
               <line x1={sx} y1={cy} x2={end} y2={cy} className={cls} />
               <circle cx={end + (forward ? 5 : -5)} cy={cy} r={5} className={`ca-inhibit${live ? ' is-live' : ''}`} />
               <text x={(sx + end) / 2} y={cy - 8} textAnchor="middle" className={`ca-mono ca-svg-tiny ca-svg-bold${live ? '' : ' ca-fill-muted'}`}>
-                ¬{e.from}
+                {sub(`¬${e.from}`)}
               </text>
             </g>,
           )
@@ -336,7 +338,7 @@ function WorldLanesFor({
             <>
               {tagEl(16, cy - 32, m.actualWorld, 'fg')}
               <text x={16} y={cy + 14} className="ca-mono ca-svg-small ca-fill-muted">
-                {m.lanes.context(ctx)}
+                {sub(m.lanes.context(ctx))}
               </text>
             </>
           )}
@@ -354,14 +356,14 @@ function WorldLanesFor({
               {tagEl(16, cy - 46, m.lanes.witness, 'amber')}
               {tagEl(16, cy - 16, doText(lane.intervened), 'accent', true)}
               <text x={16} y={cy + 30} className="ca-svg-small ca-fill-amber">
-                {m.lanes.heldActual(assignmentText(lane.fixed ?? {}))}
+                {sub(m.lanes.heldActual(assignmentText(lane.fixed ?? {})))}
               </text>
             </>
           )}
           {parts}
           {cells}
           <text x={outX} y={cy - 4} className="ca-mono ca-svg-bold" fontSize={15}>
-            {outcome}={ov === undefined ? '' : formatValue(ov)}
+            {sub(`${outcome}=${ov === undefined ? '' : formatValue(ov)}`)}
           </text>
           <text x={outX} y={cy + 18} fontSize={13} className="ca-svg-text">
             {line2}
@@ -438,14 +440,14 @@ function WorldLanesFor({
           const name = label(c.model, id, m.locale)
           return longLabels ? (
             <text key={id} x={x} y={24} textAnchor="middle" className="ca-svg-label">
-              <tspan className="ca-mono ca-svg-bold">{id}</tspan>
+              <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
               <tspan x={x} dy={17} className="ca-svg-small">
                 {name}
               </tspan>
             </text>
           ) : (
             <text key={id} x={x} y={29} textAnchor="middle" className="ca-svg-label">
-              <tspan className="ca-mono ca-svg-bold">{id}</tspan> {name}
+              <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan> {name}
             </text>
           )
         })}
@@ -496,7 +498,7 @@ function WorldLanesFor({
           )}
           {step < total ? (
             <button type="button" className="ca-btn ca-btn-primary" onClick={() => setStep(step + 1)}>
-              {nextLabel}
+              <Rich text={nextLabel} ids={c.model.byId} />
               <Arrow />
             </button>
           ) : (

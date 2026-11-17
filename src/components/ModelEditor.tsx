@@ -17,6 +17,8 @@ import { solve } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
 import { Disclosure, DocProblems, Segmented } from './parts.tsx'
+import { Formula, Ident, Rich } from './typeset.tsx'
+import { isIdent } from './typeset-text.ts'
 
 export interface ModelEditorProps {
   /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
@@ -216,6 +218,8 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
   if (compiled.errors.model !== undefined) summary.push(say(compiled.errors.model))
   if (runtimeError !== undefined) summary.push(runtimeError)
 
+  // Display-only text typesets the ids the draft names; the inputs stay plain text.
+  const draftIds = new Set(draft.variables.map((v) => v.id).filter(isIdent))
   const exogenous = draft.variables.filter((v) => v.kind === 'exogenous')
   const endogenous = draft.variables.filter((v) => v.kind === 'endogenous')
 
@@ -266,7 +270,9 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
           <p>{shown === undefined ? e.incomplete : e.lastGood}</p>
           <ul>
             {summary.map((e) => (
-              <li key={e}>{e}</li>
+              <li key={e}>
+                <Rich text={e} ids={draftIds} />
+              </li>
             ))}
           </ul>
         </div>
@@ -368,7 +374,7 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
                   </button>
                   {err !== undefined && (
                     <p className="ca-field-error" id={errId}>
-                      {err}
+                      <Rich text={err} ids={draftIds} />
                     </p>
                   )}
                 </li>
@@ -396,7 +402,9 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
             <code>if U then &apos;bright&apos; else &apos;dark&apos;</code>
             {e.syntax.end}
           </p>
-          {exogenous.length > 0 && <p className="ca-muted ca-small">{e.noEquation(t.list(exogenous.map((v) => v.id)))}</p>}
+          {exogenous.length > 0 && <p className="ca-muted ca-small">
+              <Rich text={e.noEquation(t.list(exogenous.map((v) => v.id)))} ids={draftIds} />
+            </p>}
           <ul className="ca-editor-eqs">
             {endogenous.map((v) => {
               const issue = compiled.errors.equations[v.key]
@@ -405,7 +413,9 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
               const errId = `${uid}-eq-${v.key}`
               return (
                 <li key={v.key} className="ca-editor-eq" data-cycle={inCycle ? 'true' : undefined}>
-                  <span className="ca-mono ca-editor-eq-lhs">{v.id} =</span>
+                  <span className="ca-mono ca-editor-eq-lhs">
+                    <Ident id={v.id} /> =
+                  </span>
                   <input
                     className="ca-mono"
                     aria-label={e.equationOf(v.id)}
@@ -418,7 +428,7 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
                   />
                   {err !== undefined && (
                     <p className="ca-field-error" id={errId}>
-                      {err}
+                      <Rich text={err} ids={draftIds} />
                     </p>
                   )}
                 </li>
@@ -426,7 +436,9 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
             })}
           </ul>
           {compiled.errors.cycle !== undefined && compiled.errors.model !== undefined && (
-            <p className="ca-field-error">{say(compiled.errors.model)}</p>
+            <p className="ca-field-error">
+              <Rich text={say(compiled.errors.model)} ids={draftIds} />
+            </p>
           )}
         </Disclosure>
 
@@ -450,7 +462,9 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
                 return (
                   <li key={v.key}>
                     <label className="ca-field">
-                      <span className="ca-field-label ca-mono">{v.id}</span>
+                      <span className="ca-field-label ca-mono">
+                        <Ident id={v.id} />
+                      </span>
                       <select
                         aria-label={e.valueOf(v.id)}
                         value={draft.context[v.key] ?? texts[0]}
@@ -463,7 +477,11 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
                         ))}
                       </select>
                     </label>
-                    {err !== undefined && <p className="ca-field-error">{err}</p>}
+                    {err !== undefined && (
+                      <p className="ca-field-error">
+                        <Rich text={err} ids={draftIds} />
+                      </p>
+                    )}
                   </li>
                 )
               }
@@ -474,7 +492,7 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
                   {targets.map((t, i) => (
                     <label key={t} className="ca-field">
                       <span className="ca-field-label ca-mono">
-                        P({v.id}={t})
+                        {isIdent(v.id) ? <Formula text={`P(${v.id}=${t})`} /> : `P(${v.id}=${t})`}
                       </span>
                       <input
                         type="number"
@@ -491,7 +509,11 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
                       />
                     </label>
                   ))}
-                  {err !== undefined && <p className="ca-field-error">{err}</p>}
+                  {err !== undefined && (
+                    <p className="ca-field-error">
+                      <Rich text={err} ids={draftIds} />
+                    </p>
+                  )}
                 </li>
               )
             })}
@@ -504,7 +526,9 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
             {draft.variables.map((v) => (
               <li key={v.key}>
                 <label className="ca-field">
-                  <span className="ca-field-label ca-mono">{v.id}</span>
+                  <span className="ca-field-label ca-mono">
+                    <Ident id={v.id} />
+                  </span>
                   <select
                     aria-label={e.normalOf(v.id)}
                     value={draft.normality[v.key] ?? ''}

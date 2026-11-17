@@ -2,6 +2,7 @@ import { DEFAULT_URL, authorYear, authorYearEn, bibtex, watermarkLine } from './
 import type { Locale } from './i18n.ts'
 import { DEFAULT_LOCALE, messagesFor } from './i18n.ts'
 import { saveFile } from './download.ts'
+import { SUB_DY, SUB_IDENT, SUB_SIZE, ZWSP } from './subscript.ts'
 import { textWidth } from './view-model.ts'
 
 /**
@@ -295,12 +296,6 @@ export interface ExportOptions {
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
-
-/** `X_Y` identifiers: the head and the subscript, at word boundaries. */
-const SUB_IDENT = /(?<![A-Za-z0-9_])([A-Za-z]+)_([A-Za-z0-9]+)(?![A-Za-z0-9_])/g
-const SUB_DY = '0.25em'
-const SUB_SIZE = '70%'
-const ZWSP = '\u200b'
 
 /** Escaped text with `X_Y` identifiers drawn as X with a smaller, lowered Y (dy pairs, which every SVG renderer honours). */
 function withSubscripts(escaped: string): string {

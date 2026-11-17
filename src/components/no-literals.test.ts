@@ -9,6 +9,8 @@ const ALLOWED: Readonly<Record<string, readonly string[]>> = {
   'view-model.ts': ['，。：；（）「」？！…—＝／、《》・'],
   // Value lists may be typed with full-width commas and the enumeration comma.
   'editor/draft.ts': ['，、'],
+  // Sentence-ending punctuation: where a sentence starts, to tell the article A from the variable A.
+  'typeset-text.ts': ['。！？「'],
 }
 
 const CJK = /[　-〿㐀-䶿一-鿿＀-￯]+/g

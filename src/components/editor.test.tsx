@@ -25,7 +25,8 @@ const open = (name: string): void => {
 }
 
 const type = (label: string | RegExp, value: string): void => {
-  fireEvent.change(screen.getByLabelText(label), { target: { value } })
+  // A typeset label (role=math) repeats the plain text in its aria-label: pick the field.
+  fireEvent.change(screen.getByLabelText(label, { selector: 'input, select, textarea' }), { target: { value } })
 }
 
 describe('ModelEditor', () => {
@@ -85,7 +86,7 @@ describe('ModelEditor', () => {
     render(<ModelEditor initial="rock-throwing" />)
     open('式子')
     type('SH 的式子', 'BS')
-    expect(screen.getByRole('alert').textContent).toMatch(/式子繞成一圈：(SH → BS → SH|BS → SH → BS)/)
+    expect(screen.getByRole('alert').textContent).toMatch(/式子繞成一圈：(SH ?→ ?BS ?→ ?SH|BS ?→ ?SH ?→ ?BS)/)
   })
 
   it('loads a case as a starting point and moves nodes with the arrow keys', () => {

@@ -6,6 +6,7 @@ import type { UiNotation } from './notation.ts'
 import { useMessages } from './i18n.ts'
 import { OkIcon, Tag } from './parts.tsx'
 import { Tex } from './Tex.tsx'
+import { Rich } from './typeset.tsx'
 import { bracketText, doText, equationIds, equationRows, label, outcomeVariable } from './view-model.ts'
 
 export interface EquationsProps {
@@ -38,7 +39,7 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
               <Tex tex={renderExpr(statementExpr, 'latex')} text={statement} />
             </code>
             <span className="ca-eq-note">
-              {t.afterDoNote(doText(interventions), label(c.model, y, t.locale), formatValue(v ?? ''))}
+              <Rich text={t.afterDoNote(doText(interventions), label(c.model, y, t.locale), formatValue(v ?? ''))} ids={c.model.byId} />
             </span>
             <span className="ca-eq-holds">
               <OkIcon size={18} />
@@ -97,7 +98,9 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
           <code className="ca-eq-worked">
             {r.worked !== undefined && <Tex tex={r.workedLatex ?? r.worked} text={r.worked} />}
           </code>
-          <span className="ca-eq-note">{r.note}</span>
+          <span className="ca-eq-note">
+            <Rich text={r.note} ids={c.model.byId} />
+          </span>
         </div>
       ))}
     </div>

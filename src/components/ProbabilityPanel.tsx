@@ -15,6 +15,7 @@ import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { DocProblems, Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
+import { Formula, Ident, Rich } from './typeset.tsx'
 import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
 import { originCitations, originSources, seeDoPair } from './verdict-rows.ts'
@@ -101,7 +102,9 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
             const p = sliders[id] ?? 0
             return (
               <li key={id} className="ca-slider-row">
-                <span className="ca-slider-var ca-mono">{id}</span>
+                <span className="ca-slider-var ca-mono">
+                  <Ident id={id} />
+                </span>
                 <label className="ca-slider-label" htmlFor={`ca-slider-${c.data.id}-${id}`}>
                   {t.sliderLabel(label(c.model, id, t.locale))}
                 </label>
@@ -344,17 +347,23 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
       <div className="ca-compare">
         <div className="ca-compare-side" data-side="see">
           <div className="ca-box-head">
-            <Tag tone="outline">{t.observing(pair.observe)}</Tag>
+            <Tag tone="outline">
+              <Rich text={t.observing(pair.observe)} ids={c.model.byId} />
+            </Tag>
           </div>
           <div className="ca-graph-wrap">{see === undefined ? <p className="ca-muted">{t.zeroObservation}</p> : seeGraph(t)}</div>
           <div className="ca-compare-result">
             <div>
-              <code className="ca-mono ca-muted ca-small">{seeExpr}</code>
+              <code className="ca-mono ca-muted ca-small">
+                <Formula text={seeExpr} />
+              </code>
               <p className="ca-big ca-mono" data-testid="see-value">
                 {probText(seeValue)}
               </p>
             </div>
-            <p className="ca-compare-text">{t.seeText(obsPhrase)}</p>
+            <p className="ca-compare-text">
+              <Rich text={t.seeText(obsPhrase)} ids={c.model.byId} />
+            </p>
           </div>
         </div>
         <div className="ca-compare-side is-cf" data-side="do">
@@ -362,19 +371,23 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
             <div className="ca-tags">
               <Tag tone="slate">{t.afterDo}</Tag>
               <Tag tone="accent" mono>
-                {doText(pair.intervene)}
+                <Formula text={doText(pair.intervene)} />
               </Tag>
             </div>
           </div>
           <div className="ca-graph-wrap">{doGraph(t)}</div>
           <div className="ca-compare-result">
             <div>
-              <code className="ca-mono ca-muted ca-small">{doExpr}</code>
+              <code className="ca-mono ca-muted ca-small">
+                <Formula text={doExpr} />
+              </code>
               <p className="ca-big ca-mono" data-testid="do-value">
                 {probText(doValue)}
               </p>
             </div>
-            <p className="ca-compare-text">{t.doText(doPhrase)}</p>
+            <p className="ca-compare-text">
+              <Rich text={t.doText(doPhrase)} ids={c.model.byId} />
+            </p>
           </div>
         </div>
       </div>

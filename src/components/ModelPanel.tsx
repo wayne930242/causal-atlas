@@ -14,6 +14,7 @@ import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
+import { Formula } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
 import { doText, probLegend } from './view-model.ts'
 
@@ -85,7 +86,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
             <>
               <Tag tone="slate">{t.afterDo}</Tag>
               <span className="ca-do-chip ca-mono">
-                {doText(interventions)}
+                <Formula text={doText(interventions)} />
                 {onInterventions !== undefined && (
                   <button
                     type="button"

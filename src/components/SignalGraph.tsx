@@ -7,6 +7,7 @@ import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, rectBox, shifted, textBox } from './graph-labels.ts'
 import { useMessages } from './i18n.ts'
+import { sub } from './svg-text.tsx'
 import { assignmentText, edgeLive, edgePolarity, gridLayout, label, probText, shownEdges, textWidth } from './view-model.ts'
 
 export interface SignalGraphProps {
@@ -244,7 +245,7 @@ export function SignalGraph(props: SignalGraphProps) {
           <line x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />
           <circle cx={x2 + 5 * ux} cy={y2 + 5 * uy} r={5} className={`ca-inhibit ${live ? 'is-live' : ''}`} />
           <text x={inhibitLabel.x} y={inhibitLabel.y} className={`ca-svg-small ca-svg-bold ca-mono ${live ? '' : 'ca-fill-muted'}`}>
-            {text}
+            {sub(text)}
           </text>
         </g>
       )
@@ -331,7 +332,7 @@ export function SignalGraph(props: SignalGraphProps) {
       <>
         {fillMeans !== '' && (
           <tspan className="ca-svg-small ca-fill-muted" data-fill-means={fillMeans.trim()}>
-            {fillMeans}
+            {sub(fillMeans)}
           </tspan>
         )}
         {probText(pv ?? Number.NaN)}
@@ -400,7 +401,7 @@ export function SignalGraph(props: SignalGraphProps) {
             <g transform={`translate(${doTagLeft ? -R - 12 - doW : R + 12} ${-R - 10})`}>
               <rect width={doW} height={22} className="ca-fill-accent" />
               <text x={doW / 2} y={15.5} textAnchor="middle" className="ca-mono ca-svg-small ca-svg-bold ca-fill-on-accent">
-                {doText}
+                {sub(doText)}
               </text>
             </g>
           </>
@@ -411,7 +412,7 @@ export function SignalGraph(props: SignalGraphProps) {
           </text>
         )}
         <text y={labelY} textAnchor="middle" className="ca-svg-label">
-          <tspan className="ca-mono ca-svg-bold">{id}</tspan> {name}
+          <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan> {name}
         </text>
         {prob &&
           (numberRight ? (
@@ -469,7 +470,7 @@ export function SignalGraph(props: SignalGraphProps) {
           <g transform={`translate(${hull.x} ${hull.y + hull.h + 6})`}>
             <rect width={textWidth(hull.text, 12) + 18} height={22} className="ca-amber-tag" />
             <text x={8} y={15.5} className="ca-svg-small ca-svg-bold ca-fill-amber">
-              {hull.text}
+              {sub(hull.text)}
             </text>
           </g>
         </g>

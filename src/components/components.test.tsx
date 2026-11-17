@@ -30,7 +30,7 @@ describe('CausalPlayground', () => {
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('cut')
     expect(node(container, 'BH').getAttribute('data-value')).toBe('1')
     expect(node(container, 'BS').getAttribute('data-value')).toBe('1')
-    expect(screen.getAllByText('do(SH=0)').length).toBeGreaterThan(0)
+    expect(container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text')).toBe('do(SH=0)')
 
     // Keyboard: Enter on the same node releases it.
     fireEvent.keyDown(screen.getByRole('button', { name: /^SH 小蘇擊中/ }), { key: 'Enter' })

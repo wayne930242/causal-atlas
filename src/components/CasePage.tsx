@@ -8,6 +8,7 @@ import { useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
 import { Arrow, Progress } from './parts.tsx'
+import { Ident, Rich } from './typeset.tsx'
 import { ProbabilityPanelFor } from './ProbabilityPanel.tsx'
 import { Verdicts } from './Verdicts.tsx'
 import { intuitionSummary, seeDoPair, shortSources } from './verdict-rows.ts'
@@ -149,12 +150,12 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
               <p key={i}>
                 {p.map((s) => (
                   <span key={s.text} className="ca-story-sentence">
-                    {s.text}
+                    <Rich text={s.text} ids={c.model.byId} narrative />
                     {s.tags.length > 0 && (
                       <span className="ca-story-tags" aria-label={t.storyTags(t.list(s.tags))}>
                         {s.tags.map((id) => (
                           <span key={id} className="ca-story-tag ca-mono" aria-hidden="true">
-                            {id}
+                            <Ident id={id} />
                           </span>
                         ))}
                       </span>
@@ -166,13 +167,17 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
           </section>
           {step >= 2 && (
             <section className="ca-explain" aria-label={t.explanation} data-reveal="explanation">
-              <p>{c.data.explanation[t.locale]}</p>
+              <p>
+                <Rich text={c.data.explanation[t.locale]} ids={c.model.byId} />
+              </p>
             </section>
           )}
           {notes.length > 0 && (
             <section className="ca-stepnote" data-reveal={`step-${step}`}>
               {notes.map((n) => (
-                <p key={n}>{n}</p>
+                <p key={n}>
+                  <Rich text={n} ids={c.model.byId} />
+                </p>
               ))}
             </section>
           )}
