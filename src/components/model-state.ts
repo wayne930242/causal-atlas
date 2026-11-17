@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
-import type { Assignment, Edge } from '../engine/index.ts'
+import type { Assignment, Edge, Value } from '../engine/index.ts'
 import { evaluate, getVariable } from '../engine/index.ts'
 import type { UiNotation } from './notation.ts'
 import { flipValue, marginals, shownVariables, targetValue } from './view-model.ts'
@@ -30,6 +30,14 @@ export function solve(c: LoadedCase, interventions: Assignment): ModelWorld {
     probs: marginals(c.model, c.prior, { do: interventions }).p,
     removedEdges: c.model.edges.filter((e) => cut.has(e.to)),
   }
+}
+
+/** The interventions with `id` set to `value`, or released when `value` is undefined. */
+export function withValue(interventions: Assignment, id: string, value: Value | undefined): Assignment {
+  const next: Record<string, Value> = { ...interventions }
+  if (value === undefined) delete next[id]
+  else next[id] = value
+  return next
 }
 
 /** Click on a node: set it to the other value, or release it. */

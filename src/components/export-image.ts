@@ -228,11 +228,11 @@ const ACADEMIC_RULES: readonly Rule[] = [
 
 const DROP_ATTRS = /^(class|role|tabindex|aria-.*|data-.*|style)$/i
 
-/** A copy of `svg` with classes resolved to literal attributes; focus rings and ARIA removed. */
+/** A copy of `svg` with classes resolved to literal attributes; focus rings, the open value control and ARIA removed. */
 export function inlineSvg(svg: SVGSVGElement, palette: Palette, style: ExportStyle = 'color'): SVGSVGElement {
   const rules = style === 'academic' ? [...RULES, ...ACADEMIC_RULES] : RULES
   const clone = svg.cloneNode(true) as SVGSVGElement
-  for (const ring of [...clone.querySelectorAll('.ca-focus-ring')]) ring.remove()
+  for (const ring of [...clone.querySelectorAll('.ca-focus-ring, .ca-do-pop-box')]) ring.remove()
   const all = [clone, ...clone.querySelectorAll('*')]
   for (const el of all) {
     const tag = el.tagName.toLowerCase()

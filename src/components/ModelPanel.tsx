@@ -7,7 +7,7 @@ import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { messagesFor, useMessages } from './i18n.ts'
 import type { ModelWorld } from './model-state.ts'
-import { toggled } from './model-state.ts'
+import { toggled, withValue } from './model-state.ts'
 import { useNarrow } from './use-narrow.ts'
 import { CopyLatex, Equations } from './Equations.tsx'
 import type { UiNotation } from './notation.ts'
@@ -51,6 +51,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
       removedEdges={world.removedEdges}
       witness={witness}
       onToggle={!interactive || onInterventions === undefined ? undefined : (id) => onInterventions(toggled(c, interventions, world, id))}
+      onSetValue={!interactive || onInterventions === undefined ? undefined : (id, value) => onInterventions(withValue(interventions, id, value))}
       title={title ?? m.graphTitle(c.data.title[m.locale])}
       onMove={interactive ? onMove : undefined}
     />

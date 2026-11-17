@@ -128,6 +128,9 @@ export type DraftIssue =
 
 type DraftWording = { readonly [K in DraftIssue['code']]: (issue: Extract<DraftIssue, { code: K }>) => string }
 
+/** What a click on a node does: set or release a boolean one; choose or adjust the value of a multi-valued one. */
+export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust'
+
 const ZH = {
   locale: 'zh-TW' as Locale,
   problems: ZH_PROBLEMS,
@@ -249,10 +252,23 @@ const ZH = {
   nodeValue: (value: string): string => `值 ${value}`,
   nodeAria: (id: string, name: string, state: string, forced: string | undefined, before: string | undefined): string =>
     `${id} ${name}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${before === undefined ? '' : `，原本 ${before}`}`,
-  nodeHint: (toggle: 'set' | 'release' | undefined, movable: boolean): string =>
-    [toggle === undefined ? '' : toggle === 'release' ? '按一下取消干預' : '按一下套上干預', movable ? '拖曳或用方向鍵移動' : '']
+  nodeHint: (toggle: NodeToggle | undefined, movable: boolean): string =>
+    [
+      toggle === undefined
+        ? ''
+        : toggle === 'release'
+          ? '按一下取消干預'
+          : toggle === 'choose'
+            ? '按一下選擇要設成的值'
+            : toggle === 'adjust'
+              ? '按一下改選干預的值或放開'
+              : '按一下套上干預',
+      movable ? '拖曳或用方向鍵移動' : '',
+    ]
       .filter((h) => h !== '')
       .join('；'),
+  doRelease: '放開',
+  doPickLabel: (id: string, name: string): string => `${id} ${name}：選擇干預的值`,
   withHint: (aria: string, hint: string): string => (hint === '' ? aria : `${aria}。${hint}`),
   setDirectly: (parents: readonly string[], value: string): string =>
     `${parents.length === 0 ? '' : `切斷 ${parents.join("、")}，`}直接設成 ${value}`,
@@ -305,7 +321,7 @@ const ZH = {
   },
 
   // playground
-  playgroundHint: '點圖上的節點，可以點擊切換設定值。',
+  playgroundHint: '點圖上的節點，套上或放開干預；值不只兩個的節點，可以選要設成哪個值。',
   presets: '預設的干預',
   docInvalid: '這份模型文件無法顯示：',
 
@@ -592,9 +608,22 @@ const EN: Messages = {
   nodeAria: (id, name, state, forced, before) =>
     `${id} ${name}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${before === undefined ? '' : `, was ${before}`}`,
   nodeHint: (toggle, movable) =>
-    [toggle === undefined ? '' : toggle === 'release' ? 'click to release the intervention' : 'click to intervene', movable ? 'drag or use the arrow keys to move' : '']
+    [
+      toggle === undefined
+        ? ''
+        : toggle === 'release'
+          ? 'click to release the intervention'
+          : toggle === 'choose'
+            ? 'click to choose the value to set it to'
+            : toggle === 'adjust'
+              ? 'click to change the value or release it'
+              : 'click to intervene',
+      movable ? 'drag or use the arrow keys to move' : '',
+    ]
       .filter((h) => h !== '')
       .join('; '),
+  doRelease: 'Release',
+  doPickLabel: (id, name) => `${id} ${name}: value to set it to`,
   withHint: (aria, hint) => (hint === '' ? aria : `${aria}. ${hint.charAt(0).toUpperCase()}${hint.slice(1)}`),
   setDirectly: (parents, value) => `${parents.length === 0 ? '' : `ignores ${enList(parents)}; `}set directly to ${value}`,
   afterDoNote: (doText, label, value) => `After ${doText}, ${label}: ${value}`,
@@ -643,7 +672,7 @@ const EN: Messages = {
     again: 'Start again',
   },
 
-  playgroundHint: 'Click a node on the graph to set it to another value; click it again to release it.',
+  playgroundHint: 'Click a node on the graph to intervene on it, and again to release it; on a node with more than two values, pick the value to set.',
   presets: 'Preset interventions',
   docInvalid: 'This model document cannot be shown:',
 

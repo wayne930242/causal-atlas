@@ -1,11 +1,12 @@
-import type { KeyboardEvent, PointerEvent } from 'react'
-import { useId, useRef, useState } from 'react'
+import type { KeyboardEvent, PointerEvent, ReactNode } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
-import type { Assignment, Edge } from '../engine/index.ts'
+import type { Assignment, Edge, Value } from '../engine/index.ts'
 import { getVariable } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, rectBox, shifted, textBox } from './graph-labels.ts'
+import type { NodeToggle } from './i18n.ts'
 import { useMessages } from './i18n.ts'
 import { sub } from './svg-text.tsx'
 import { assignmentText, edgeLive, edgePolarity, gridLayout, label, probText, shownEdges, textWidth } from './view-model.ts'
@@ -27,7 +28,10 @@ export interface SignalGraphProps {
   readonly removedEdges: readonly Edge[]
   /** Variables a witness holds fixed: an amber hull. */
   readonly witness?: Assignment
+  /** Click on a node: toggles a boolean one; a multi-valued one opens the value control when `onSetValue` is given. */
   readonly onToggle?: (id: string) => void
+  /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
+  readonly onSetValue?: (id: string, value: Value | undefined) => void
   readonly title: string
   /** Narrower columns, for two graphs side by side. */
   readonly compact?: boolean
@@ -72,7 +76,7 @@ function clampPath(r: number): string {
 
 /** Direction 1 「訊號圖」: value nodes, signal edges, do() clamps and cut edges. */
 export function SignalGraph(props: SignalGraphProps) {
-  const { c, shown, values, original, probs, probNotes, observed = [], interventions, removedEdges, witness, onToggle, onMove } =
+  const { c, shown, values, original, probs, probNotes, observed = [], interventions, removedEdges, witness, onToggle, onSetValue, onMove } =
     props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -80,6 +84,32 @@ export function SignalGraph(props: SignalGraphProps) {
   const [drag, setDrag] = useState<Drag | undefined>(undefined)
   // After a drag, the browser may still send a click to the node: ignore clicks until this time.
   const suppressUntil = useRef(0)
+  const [picking, setPicking] = useState<string | undefined>(undefined)
+  const popRef = useRef<HTMLDivElement>(null)
+  const sliderRef = useRef<HTMLInputElement>(null)
+  const focusNode = (id: string): void => svgRef.current?.querySelector<SVGGElement>(`[data-node="${id}"]`)?.focus()
+  useEffect(() => {
+    if (picking === undefined) return
+    sliderRef.current?.focus()
+    const outside = (e: Event): void => {
+      const target = e.target
+      if (!(target instanceof Element)) return
+      // A press on a node is that node's own click (it closes this control, or opens another).
+      if (popRef.current?.contains(target) === true || target.closest('[data-node]') !== null) return
+      setPicking(undefined)
+    }
+    const escape = (e: globalThis.KeyboardEvent): void => {
+      if (e.key !== 'Escape') return
+      setPicking(undefined)
+      focusNode(picking)
+    }
+    document.addEventListener('pointerdown', outside)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('pointerdown', outside)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [picking])
   const prob = probs !== undefined
   const R = prob ? 34 : 30
   const COL = props.compact === true ? 132 : 220
@@ -307,11 +337,17 @@ export function SignalGraph(props: SignalGraphProps) {
       : t.nodeValue(text)
     const aria = t.nodeAria(id, name, state, intervened ? formatValue(forced) : undefined, changed ? formatValue(before) : undefined)
     const interactive = onToggle !== undefined || onMove !== undefined
+    // A multi-valued node does not flip: a click opens a control to pick the value.
+    const picks = onToggle !== undefined && onSetValue !== undefined && !boolean
+    const activate = (): void => {
+      if (picks) setPicking(picking === id ? undefined : id)
+      else onToggle?.(id)
+    }
     const arrows: Record<string, [number, number]> = { ArrowLeft: [-0.5, 0], ArrowRight: [0.5, 0], ArrowUp: [0, -0.5], ArrowDown: [0, 0.5] }
     const onKey = (event: KeyboardEvent<SVGGElement>): void => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        onToggle?.(id)
+        activate()
         return
       }
       const step = arrows[event.key]
@@ -322,9 +358,11 @@ export function SignalGraph(props: SignalGraphProps) {
     }
     const onClick = (): void => {
       if (Date.now() < suppressUntil.current) return
-      onToggle?.(id)
+      activate()
     }
-    const hint = t.nodeHint(onToggle === undefined ? undefined : intervened ? 'release' : 'set', onMove !== undefined)
+    const toggle: NodeToggle | undefined =
+      onToggle === undefined ? undefined : picks ? (intervened ? 'adjust' : 'choose') : intervened ? 'release' : 'set'
+    const hint = t.nodeHint(toggle, onMove !== undefined)
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
     // A non-boolean node's fill is P(V = its first value): say which value.
     const fillMeans = prob && variable.domain.kind === 'finite' ? `${id}=${String(variable.domain.values[0])} ` : ''
@@ -355,7 +393,9 @@ export function SignalGraph(props: SignalGraphProps) {
           ? {
               role: 'button',
               tabIndex: 0,
-              'aria-pressed': onToggle !== undefined ? intervened : undefined,
+              'aria-pressed': onToggle !== undefined && !picks ? intervened : undefined,
+              'aria-haspopup': picks ? 'dialog' : undefined,
+              'aria-expanded': picks ? picking === id : undefined,
               'aria-label': t.withHint(aria, hint),
               onClick,
               onKeyDown: onKey,
@@ -442,6 +482,57 @@ export function SignalGraph(props: SignalGraphProps) {
     )
   })
 
+  const pickPop = (): ReactNode => {
+    if (picking === undefined || onSetValue === undefined) return null
+    const p = pos.get(picking)
+    const variable = getVariable(c.model, picking)
+    if (p === undefined || variable.domain.kind !== 'finite') return null
+    const options = variable.domain.values
+    const forced = interventions[picking]
+    const shownValue = forced ?? values?.[picking]
+    const found = shownValue === undefined ? -1 : options.findIndex((o) => valuesEqual(o, shownValue))
+    const index = found < 0 ? 0 : found
+    const W = 184
+    const H = 72
+    const x = Math.max(0, Math.min(p.x - W / 2, width - W))
+    const below = p.y + R + (labelAbove(picking) ? 10 : 36) + (prob ? 44 : 0)
+    const y = below + H > height && p.y - R - 10 - H >= 0 ? p.y - R - 10 - H : below
+    const id = picking
+    const text = `${id}=${formatValue(options[index])}`
+    const commit = (i: number): void => onSetValue(id, options[i])
+    const release = (): void => {
+      onSetValue(id, undefined)
+      setPicking(undefined)
+      focusNode(id)
+    }
+    return (
+      <foreignObject className="ca-do-pop-box" x={x} y={y} width={W} height={H}>
+        <div ref={popRef} className="ca-do-pop" role="dialog" aria-label={t.doPickLabel(id, label(c.model, id, t.locale))} data-pick={id}>
+          <div className="ca-do-pop-head">
+            <output className={`ca-do-pop-value ca-mono${forced === undefined ? ' is-idle' : ''}`}>{text}</output>
+            <button type="button" className="ca-do-pop-release" disabled={forced === undefined} onClick={release}>
+              {t.doRelease}
+            </button>
+          </div>
+          <input
+            ref={sliderRef}
+            className="ca-slider ca-do-pop-slider"
+            type="range"
+            min={0}
+            max={options.length - 1}
+            step={1}
+            value={index}
+            aria-label={t.doPickLabel(id, label(c.model, id, t.locale))}
+            aria-valuetext={text}
+            onChange={(e) => commit(Number(e.currentTarget.value))}
+            // A press that does not move the thumb is still a choice: set the value it shows.
+            onClick={() => forced === undefined && commit(index)}
+          />
+        </div>
+      </foreignObject>
+    )
+  }
+
   return (
     <svg
       ref={svgRef}
@@ -477,6 +568,7 @@ export function SignalGraph(props: SignalGraphProps) {
       )}
       {edgeEls}
       {nodeEls}
+      {pickPop()}
     </svg>
   )
 }

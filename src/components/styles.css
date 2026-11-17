@@ -644,6 +644,60 @@
   stroke: var(--border);
 }
 
+/* The value control a multi-valued node opens: the chosen value, Release, and a slider over the domain. */
+.ca-do-pop-box {
+  overflow: visible;
+}
+
+.ca-do-pop {
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px 10px;
+  background: var(--background);
+  border: 1px solid var(--foreground);
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.ca-do-pop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ca-do-pop-value {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.ca-do-pop-value.is-idle {
+  color: var(--muted-foreground);
+}
+
+.ca-do-pop-release {
+  font: inherit;
+  font-size: 12px;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--foreground);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.ca-do-pop-release:disabled {
+  border-color: var(--border);
+  color: var(--muted-foreground);
+  cursor: default;
+}
+
+.ca-do-pop-slider {
+  margin: 0;
+}
+
 /* ---- case page ---- */
 
 .ca-case-head {
