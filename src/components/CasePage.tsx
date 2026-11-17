@@ -168,7 +168,7 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
         <div className={`ca-case-right${rightEmpty ? ' is-empty' : ''}`} ref={panelRef}>
           {rightEmpty ? (
             <div className="ca-placeholder" aria-hidden="true">
-              <span className="ca-muted ca-small">{t.placeholder}</span>
+              <span className="ca-placeholder-mark">{t.placeholder}</span>
             </div>
           ) : probabilistic && step >= 3 ? (
             <ProbabilityPanelFor

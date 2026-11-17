@@ -731,6 +731,18 @@
   min-height: 360px;
 }
 
+.ca-placeholder-mark {
+  font-size: 7rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ca-guide);
+}
+
+.ca-stepnav .ca-btn,
+.ca-stepnav-back {
+  white-space: nowrap;
+}
+
 .ca-case-verdicts {
   margin-top: 32px;
   padding-top: 24px;

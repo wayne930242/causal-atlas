@@ -146,13 +146,13 @@ const ZH = {
   next: {
     graph: '畫成圖',
     toProbability: '把 0／1 改成機率',
-    intervene: '動手改一條式子',
+    intervene: '干預',
     compare: '比較觀察和動手',
-    verdicts: '看各定義怎麼判',
+    verdicts: '定義評判',
   },
   startOver: '從頭再看',
   back: '上一步',
-  placeholder: '下一步把故事畫成圖',
+  placeholder: '?',
   sources: '來源',
   noteClickToIntervene: '點圖上的節點，套上干預，看其他變項怎麼重算。',
   notePreset: (doText: string, label: string, ids: string): string =>
@@ -485,13 +485,13 @@ const EN: Messages = {
   next: {
     graph: 'Draw it as a graph',
     toProbability: 'Turn 0/1 into probabilities',
-    intervene: 'Change an equation yourself',
+    intervene: 'Intervene',
     compare: 'Compare seeing and doing',
-    verdicts: 'See how each definition judges',
+    verdicts: 'Judge by each definition',
   },
   startOver: 'Start over',
   back: 'Back',
-  placeholder: 'Next, the story becomes a graph',
+  placeholder: '?',
   sources: 'Sources',
   noteClickToIntervene: 'Click a node on the graph to intervene on it, and see how the other variables are recomputed.',
   notePreset: (doText, label, ids) =>

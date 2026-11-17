@@ -68,13 +68,13 @@ describe('CasePage', () => {
     expect(container.querySelector('[data-world]')?.getAttribute('data-world')).toBe('actual')
     expect(has('[data-reveal="verdicts"]')).toBe(false)
 
-    fireEvent.click(screen.getByRole('button', { name: /動手改一條式子/ }))
+    fireEvent.click(screen.getAllByRole('button', { name: /^干預/ }).find(b => b.classList.contains('ca-btn-primary'))!)
     expect(container.querySelector('[data-world]')?.getAttribute('data-world')).toBe('do')
     expect(node(container, 'ST').getAttribute('data-intervened')).toBe('true')
     expect(node(container, 'SH').getAttribute('data-value')).toBe('0')
     expect(has('[data-reveal="verdicts"]')).toBe(false)
 
-    fireEvent.click(screen.getByRole('button', { name: /看各定義怎麼判/ }))
+    fireEvent.click(screen.getByRole('button', { name: /定義評判/ }))
     const verdicts = container.querySelector('[data-reveal="verdicts"]') as HTMLElement
     expect(verdicts).not.toBeNull()
     expect(within(verdicts).getAllByText('簡單反事實').length).toBeGreaterThan(0)
