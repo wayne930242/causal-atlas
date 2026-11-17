@@ -321,7 +321,7 @@ const ZH = {
   },
 
   // playground
-  playgroundHint: '點圖上的節點，套上或放開干預；值不只兩個的節點，可以選要設成哪個值。',
+  playgroundHint: '點圖上的節點，可以點擊切換設定值。',
   presets: '預設的干預',
   docInvalid: '這份模型文件無法顯示：',
 
