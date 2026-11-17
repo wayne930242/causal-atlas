@@ -147,7 +147,7 @@ const ZH = {
     graph: '畫成圖',
     toProbability: '把 0／1 改成機率',
     intervene: '干預',
-    compare: '比較觀察和動手',
+    compare: '比較觀察和行動',
     verdicts: '定義評判',
   },
   startOver: '從頭再看',
@@ -167,7 +167,7 @@ const ZH = {
     doOff: (name: string, text: string): string => `${name}不發生（${text}）`,
     other: (name: string, text: string): string => `${text}（${name}）`,
   },
-  noteDo: (doText: string): string => `右邊是動手設定 ${doText} 之後的機率。`,
+  noteDo: (doText: string): string => `右邊是以行動設定 ${doText} 之後的機率。`,
   noteVerdicts: '下面列出各個標準的判定，一個標準一列。',
 
   // verdicts
@@ -228,7 +228,7 @@ const ZH = {
   },
   eu: {
     edt: '：看到自己做了 a 之後，結果的機率。',
-    cdt: '：動手做 a 之後，結果的機率。',
+    cdt: '：採取行動 a 之後，結果的機率。',
     lesson: '形式系列：因果決策',
   },
 
@@ -278,7 +278,7 @@ const ZH = {
   afterObserving: (event: string): string => `觀察 ${event} 之後的機率`,
   seeText: (phrase: string): string => `看到${phrase}，會改變對其他變項的猜測，上游的也會跟著變。`,
   afterSetting: (doText: string): string => `${doText} 之後的機率`,
-  doText: (phrase: string): string => `動手讓${phrase}，指進它的箭頭被剪斷，只有下游會變。`,
+  doText: (phrase: string): string => `以行動讓${phrase}，指進它的箭頭被剪斷，只有下游會變。`,
 
   // world lanes
   lanes: {

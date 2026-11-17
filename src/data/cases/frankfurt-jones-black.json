@@ -36,7 +36,7 @@
     "agree": ["hp-original", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "J 表示 Jones 自己決定做，BL 表示 Black 介入。Black 只在 Jones 不自己決定時出手（BL = ¬J），兩者有一個成立，行動 A 就發生（A = J ∨ BL）。Jones 的決定在結果發生前切斷了 Black 這條備用的鏈，這叫做早期阻斷（early preemption）。這個案例檢驗 Jones 無法做別的事時，他的決定是否仍算行動的原因。變數與方程式依故事擬定，Frankfurt (1969) 只給文字敘述。",
+    "zh-TW": "J 表示 Jones 自己決定做，BL 表示 Black 介入。Black 只在 Jones 不自己決定時出手（BL = ¬J），兩者有一個成立，行動 A 就發生（A = J ∨ BL）。Jones 的決定在結果發生前切斷了 Black 這條備援的鏈，這叫做早期阻斷（early preemption）。這個案例檢驗 Jones 無法做別的事時，他的決定是否仍算行動的原因。變數與方程式依故事擬定，Frankfurt (1969) 只給文字敘述。",
     "en": "J is Jones deciding on his own to act, BL is Black intervening (BL = ¬J: Black steps in only if Jones does not decide on his own), and the action A occurs if either is true (A = J ∨ BL). Actually J = 1 and BL = 0. The structure is that of early preemption: Jones's decision preempts Black's backup. The but-for test says that without J Black would still have brought A about, so J is not a cause of A; the HP definitions hold BL at 0 and find J = 1 to be a cause. Frankfurt's point is that Jones remains responsible, which matches the causal result here. The variables and equations are built from the story; Frankfurt (1969) gives a prose description only."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

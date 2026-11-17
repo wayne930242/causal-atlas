@@ -27,13 +27,13 @@
     "query": { "cause": "S=1", "effect": "W=1" },
     "expected": "cause",
     "text": {
-      "zh-TW": "窗戶是小蘇打破的。小比的備用石頭沒有派上用場。",
+      "zh-TW": "窗戶是小蘇打破的。小比的備援的石頭沒有派上用場。",
       "en": "Suzy broke the window; Billy's backup never came into play, and would only have acted had she not thrown."
     },
     "agree": ["hp-original", "hp-updated", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "S 表示小蘇丟，B 表示小比丟，W 表示窗戶破。小比只在小蘇沒丟時丟（B = 1 − S），任一人丟，窗戶就破。少了 S，B 會補上，窗戶仍會破。把 B 固定在實際值 0，窗戶破不破就取決於 S。備用的因果鏈在結果發生前就被切斷，這叫做早期阻斷（early preemption）。",
+    "zh-TW": "S 表示小蘇丟，B 表示小比丟，W 表示窗戶破。小比只在小蘇沒丟時丟（B = 1 − S），任一人丟，窗戶就破。少了 S，B 會補上，窗戶仍會破。把 B 固定在實際值 0，窗戶破不破就取決於 S。備援的因果鏈在結果發生前就被切斷，這叫做早期阻斷（early preemption）。",
     "en": "The structure is that of Hitchcock's (2007) Early Preemption (A = 1, B = ¬A, D = A ∨ B), with the assassin and backup poisoning the coffee replaced by Suzy and Billy throwing rocks. S is set by an exogenous variable, B depends on S (B = 1 − S), and the window breaks if either throws. S reaches W by two routes, directly and through B. Asking only whether the window would still have broken without S gives a negative answer, because B steps in; but once B is held at its actual value (not thrown), whether the window breaks depends entirely on S. That held value is the actual one, so the original, updated and modified HP definitions all accept it, with no need for a non-actual supposition."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

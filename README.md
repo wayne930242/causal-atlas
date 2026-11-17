@@ -2,6 +2,10 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.7
+
+zh-TW wording: interventions are 「行動」 (not 「動手」) in the UI notes, and backup processes are 「備援」 in three case texts.
+
 ## 0.3.6
 
 The train-switching case keeps Halpern and Pearl’s LT/RT variant in its source note.
@@ -39,7 +43,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.3.6) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.7) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -203,9 +207,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.6 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.7 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.6) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.7) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -214,7 +218,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.6},
+  version = {0.3.7},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
