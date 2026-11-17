@@ -5,12 +5,12 @@
     "en": "Palsgraf v. Long Island R.R. (N.Y. 1928)"
   },
   "subtitle": {
-    "zh-TW": "鏈上每一環都是 but-for 條件，是否負責卻取決於對遠處原告有沒有義務、結果是否可預見。",
+    "zh-TW": "鏈上每一環都是 but-for 條件；是否負責，要看對遠處的原告有沒有義務、結果是否可預見。",
     "en": "Every link of the chain is a but-for condition; liability turns on duty to a distant plaintiff and foreseeability."
   },
   "family": "law",
   "story": {
-    "zh-TW": "鐵路職員協助趕車的乘客上車，推扶時，乘客手上的小包裹掉落。包裹裡裝的是煙火，一落地就爆炸，震動使站台遠處的磅秤倒下，砸傷 Palsgraf 太太。多數意見（Cardozo）認為職員對她沒有義務而不負責；不同意見（Andrews）採較廣的近因觀。",
+    "zh-TW": "考慮火車站月台上的情境。鐵路職員協助趕車的乘客上車，推扶時，乘客手上的小包裹掉落。包裹裡裝的是煙火，一落地就爆炸，震動使站台遠處的磅秤倒下，砸傷 Palsgraf 太太。多數意見（Cardozo）認為職員對她沒有義務，不必負責；不同意見（Andrews）採較廣的近因（proximate cause）觀點。",
     "en": "A railway guard helps a passenger who is rushing to board, and in the push the passenger's small package falls. The package holds fireworks, which explode on landing, and the shock topples a scale far down the platform onto Mrs Palsgraf. The majority (Cardozo) holds that the guard owed her no duty and is not liable; the dissent (Andrews) takes a wider view of proximate cause."
   },
   "story_tags": {
@@ -52,7 +52,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "模型為本資料集所擬，呈鏈狀：推乘客（PUSH）使包裹掉落（DROP），包裹裡是煙火（PKG）所以爆炸（EXPL），衝擊使磅秤倒下（FALL）而傷人（INJ）。事實因果層面，鏈上各環與 PKG 都是原因；引擎無法表達「對遠處原告沒有義務」或「不可預見」，只能以介入顯示：包裹裡不是煙火，推人不會傷到遠處的人（機率列）。Cardozo 與 Andrews 的分歧在模型之外。",
+    "zh-TW": "模型由本資料集擬成一條鏈：職員推乘客（PUSH），包裹掉落（DROP）；包裹裡是煙火（PKG），所以爆炸（EXPL）；爆炸的衝擊使磅秤倒下（FALL），砸傷人（INJ）。在事實層面，鏈上各環與 PKG 都是原因。義務與可預見性不在模型裡，引擎只能用干預（intervention）呈現：包裹裡不是煙火，推人就不會傷到遠處的人。Cardozo 與 Andrews 的分歧在模型之外。",
     "en": "The model is the dataset's own and chain-shaped: pushing the passenger (PUSH) makes the package fall (DROP), the package holds fireworks (PKG) so it explodes (EXPL), and the shock topples the scale (FALL) and injures the plaintiff (INJ). At the level of factual causation every link and PKG is a cause; the engine cannot express \"no duty to a distant plaintiff\" or \"unforeseeable\", and shows only by intervention that with no fireworks in the package the push would hurt no one far away (probability rows). The disagreement between Cardozo and Andrews lies outside the model."
   },
   "copy_status": {

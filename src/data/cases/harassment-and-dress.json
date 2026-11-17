@@ -5,7 +5,7 @@
     "en": "Harassment and dress (the prologue)"
   },
   "subtitle": {
-    "zh-TW": "沒有那隻手，就不會被騷擾；沒有清涼的穿著，也不會被騷擾，兩個反事實同樣成立。",
+    "zh-TW": "沒有那隻手，就沒有騷擾；沒有清涼的穿著，也沒有騷擾。兩個反事實同樣成立。",
     "en": "Without the groping hand there is no harassment, and without the revealing outfit there is none either; both counterfactuals hold."
   },
   "family": "law",
@@ -52,7 +52,7 @@
     },
     "expected": "not-cause",
     "text": {
-      "zh-TW": "騷擾要歸咎於伸手的人；把原因算在被害人的穿著上，令人不能接受。",
+      "zh-TW": "騷擾要歸咎於伸手的人。把原因算在被害人的穿著上，令人無法接受。",
       "en": "The harassment is laid at the door of the man who reached out; blaming the victim's clothing is not acceptable."
     },
     "agree": [
@@ -60,7 +60,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "對話只點出兩個反事實同時成立：男生沒伸手就沒有騷擾，小玉穿得保守些也不會被騷擾（法律人 P 勉強承認後者）。模型把「見色起意」寫成穿著與男生自身的意向共同決定伸手（HAND = DRESS·U_H），再由伸手造成騷擾；這條方程式是依對話所擬。書中此處沒有給出判準；hp-normality 的常態值是本資料集的建模：伸手違反規範，是偏差；穿著不違反任何規範，常態值取實際值。因此 but-for 與各版本的 HP 定義都把穿著算成原因，只有帶常態排序的版本把它濾掉。",
+    "zh-TW": "對話裡有兩個反事實同時成立：男生沒伸手，就沒有騷擾；小玉穿得保守些，也不會被騷擾。模型依對話擬成：穿著與男生自身的意向共同決定伸手（HAND = DRESS·U_H），伸手造成騷擾。常態（normality）設定如下：伸手違反規範，常態是不伸手；穿著不違反規範，常態取實際值。這組設定由本資料集所擬，書中沒有給判準。這個案例檢驗常態能否把穿著排除在原因之外。",
     "en": "The dialogue only establishes that two counterfactuals hold together: without the man's hand there is no harassment, and had Xiaoyu dressed more conservatively there would have been none either (the lawyer P grudgingly grants the latter). The model writes the man's taking his cue from her outfit as the outfit and his own disposition jointly producing the groping hand (HAND = DRESS·U_H), with the hand producing the harassment; this equation is assumed from the dialogue. The book gives no criterion at this point; the normality defaults for hp-normality are the dataset's own modelling: reaching out breaks a norm and is a deviation, while her clothing breaks none, so its default is its actual value. But-for and every version of the HP definition therefore count the clothing as a cause; only the version with a normality ordering filters it out."
   },
   "copy_status": {

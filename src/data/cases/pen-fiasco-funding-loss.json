@@ -2,12 +2,12 @@
   "id": "pen-fiasco-funding-loss",
   "title": { "zh-TW": "鉛筆之亂：沒筆記就丟了補助", "en": "The pencil fiasco: a lost grant" },
   "subtitle": {
-    "zh-TW": "教授拿筆算是補助落空的原因，但他要為補助落空負責嗎？",
+    "zh-TW": "教授拿筆是補助落空的原因；他是否要為補助落空負責，是另一個問題。",
     "en": "The professor's pen is a cause of the lost grant, but is the professor answerable for it?"
   },
   "family": "norms",
   "story": {
-    "zh-TW": "考慮系辦的筆案例的後續：系上規定行政人員可以拿筆，教授則須自行購買。某天早上，一位助教和一位教授各自拿走筆筒裡的一支筆，筆筒因此空了。這時秘書接到一通電話，需要記下的是經費補助申請的通知。她沒有筆可記，這則通知沒有被轉達，系上因而錯過申請，沒有拿到補助款。",
+    "zh-TW": "考慮系辦筆案例的後續。系上規定行政人員可以拿筆，教授則須自行購買。某天早上，一位助教和一位教授各自拿走筆筒裡的一支筆，筆筒因此空了。這時秘書接到一通電話，需要記下的是經費補助申請的通知。她沒有筆可記，這則通知沒有被轉達，系上因而錯過申請，沒有拿到補助款。",
     "en": "Consider a sequel to the department-office pen case. The department allows administrative staff to take pens and expects professors to buy their own. One morning an assistant and a professor each take a pen from the cup, and the cup is empty. The secretary then takes a call whose message is a notice about a funding application. With no pen to write it down, she does not pass the notice on, and the department misses the application and does not receive the grant."
   },
   "story_tags": {
@@ -35,7 +35,7 @@
     "agree": ["butfor", "hp-updated", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "在筆案例的 PO = PT·AT 之後接上一環：補助落空 GL 需要「沒筆可用」，也需要「這則訊息是補助申請通知」這個背景條件 U_N（GL = PO·U_N），形成 PT → PO → GL 的鏈。本案例的重點不在因果判定：教授拿筆是 GL 的原因，在各個定義下都成立，助教拿筆則只在不看規範的定義下成立。王鵬翔 (2025) 指出，違規者要負責的結果範圍，還要看兩個條件：該規定的目的是否包含避免這個結果，以及這個結果是否合理可預見（因果恆定性）。教授拿筆與沒筆可用的關係穩定，與補助落空的關係則依賴訊息恰好是補助通知這個少見的背景條件。這兩項條件不屬於因果模型，是責任歸屬的另一道門檻，所以資料只記錄因果判定。",
+    "zh-TW": "模型在筆案例的 PO = PT·AT 之後接上一環：補助落空 GL 需要沒筆可用，也需要這通電話恰好是補助通知（U_N），GL = PO·U_N。教授拿筆在各定義下都是 GL 的原因；助教拿筆只在不考慮規範的定義下是原因。王鵬翔 (2025) 指出，違規者要負責的結果還要符合兩個條件：規定的目的包含避免這個結果，而且結果合理可預見（因果恆定性）。這兩個條件不屬於因果模型，所以資料只記錄因果判定。",
     "en": "The model extends the pen case's PO = PT·AT by one link: the grant is lost (GL) only if the secretary has no pen and the message happens to be a funding notice, a background condition U_N (GL = PO·U_N). This gives the chain PT → PO → GL. The point of the case is not the causal verdict: the professor's pen is a cause of GL under every definition, while the assistant's pen is one only under definitions that ignore norms. Wang (2025) adds that how far a violator answers for outcomes depends on two further conditions: whether the rule's purpose includes preventing that outcome, and whether the outcome was reasonably foreseeable (causal invariance). The professor's pen and the missing pen are stably related; its relation to the lost grant depends on the unusual background condition that the message was a funding notice. Neither condition belongs to the causal model, since they are a separate threshold for responsibility, so the data record only the causal verdicts."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

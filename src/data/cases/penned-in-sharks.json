@@ -5,7 +5,7 @@
     "en": "Penned-in Sharks"
   },
   "subtitle": {
-    "zh-TW": "鯊魚被圈在欄裡，只有路人下水才會被放出；這次他要為沒救人負責。",
+    "zh-TW": "鯊魚被圈在欄裡，只有路人下水才會被放出；這次路人要為沒救人負責。",
     "en": "The sharks are penned in and would be released only if the bystander jumped in; this time he answers for not saving the child."
   },
   "family": "omission",
@@ -48,7 +48,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "草稿，頁碼由作者確認、故事為改寫：以 J 表示路人下水，RL 表示鯊魚被放出（RL = J），孩子獲救要求下水而且鯊魚沒被放出（SV = J·¬RL），DR = ¬SV。與鯊魚案例不同，鯊魚並非實際存在，but-for 仍說不下水不是原因，但 HP 固定 RL = 0 之後，不下水是原因，與 Fischer 與 Ravizza 認為路人要為此負責相符。",
+    "zh-TW": "J 表示路人下水，RL 表示鯊魚被放出（RL = J）。孩子獲救需要路人下水而且鯊魚沒被放出（SV = J·¬RL），溺斃就是沒獲救（DR = ¬SV）。依 but-for 檢驗（but-for test），不下水不是溺斃的原因。HP 定義（Halpern–Pearl definition）把 RL 固定在實際值 0 之後，不下水就成為原因，與 Fischer 與 Ravizza 認為路人要負責相符。故事是改寫，頁碼由作者確認。",
     "en": "Draft; pages confirmed by the author, story paraphrased. J is the bystander jumping in, RL is the sharks being released (RL = J), the child is saved only if he jumps in and the sharks are not released (SV = J·¬RL), and DR = ¬SV. Unlike in Sharks, the sharks are not actually there: but-for still says that staying out is not a cause, but once HP holds RL at 0, staying out is a cause, in line with Fischer and Ravizza holding the bystander responsible."
   },
   "copy_status": {

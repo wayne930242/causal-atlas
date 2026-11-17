@@ -2,7 +2,7 @@
   "id": "murder-lesion",
   "title": { "zh-TW": "謀殺病灶", "en": "The Murder Lesion" },
   "subtitle": {
-    "zh-TW": "決定開槍，本身就是腦部病灶的徵兆，而病灶會讓準頭失靈。",
+    "zh-TW": "決定開槍本身就是腦部病灶的徵兆，而病灶會讓準頭失靈。",
     "en": "Deciding to shoot is itself a sign of the lesion that spoils the aim."
   },
   "family": "decision",
@@ -29,13 +29,13 @@
     "query": { "choice": "S" },
     "expected": false,
     "text": {
-      "zh-TW": "她若開槍，多半是病灶使然，這時開槍只會射偏；不開槍才合理。",
+      "zh-TW": "瑪麗若開槍，多半是病灶使然，這時開槍只會射偏，所以不開槍才合理。",
       "en": "If she shoots it is most likely because of the lesion, and then the shot only misses; refraining is the rational choice."
     },
     "agree": ["edt"]
   },
   "explanation": {
-    "zh-TW": "外生變數是病灶 L，以及沒有病灶時仍想開槍的衝動 U_S。開槍 S 由兩者之一引起；命中 H 需要開了槍而且沒有病灶（H = S ∧ ¬L）。病灶機率低，所以對 S 作介入時命中率是 0.9，因果決策論算出開槍有利；但得知她開了槍時，那多半是病灶使然，命中率不到一成，證據決策論算出開槍不利。這與吸菸病灶相反：那一例直覺站在因果決策論一側，這一例站在證據決策論一側。Egan 給出的效用是命中 10、射偏 −10、不開槍 0；機率數字與「病灶使準頭必定失準」的簡化是為了讓模型最小而擬定的。",
+    "zh-TW": "外生變數（exogenous variable）是病灶 L，以及沒有病灶時仍想開槍的衝動 U_S。兩者任一出現，瑪麗就開槍（S）；命中 H 需要開槍而且沒有病灶（H = S ∧ ¬L）。對 S 作干預（intervention）時命中率是 0.9，因果決策論（causal decision theory）算出開槍有利。得知瑪麗開了槍時，多半是病灶使然，命中率不到一成，證據決策論（evidential decision theory）算出開槍不利。這個案例的直覺站在證據決策論一側，與吸菸病灶（smoking lesion）相反。效用取自 Egan：命中 10、射偏 −10、不開槍 0；機率數字與病灶必定使人失準的設定由本資料集所擬。",
     "en": "The exogenous variables are the lesion L and an urge to shoot that she would have even without it, U_S. Shooting S is brought about by either; a hit H needs a shot and no lesion (H = S ∧ ¬L). The lesion is improbable, so intervening on S gives a hit probability of 0.9 and causal decision theory finds shooting better; but learning that she shot is mostly learning that she has the lesion, which leaves the hit probability under one in ten, and evidential decision theory finds shooting worse. This reverses the smoking lesion: there the everyday intuition sides with causal decision theory, here with evidential decision theory. Egan's utilities are 10 for a hit, −10 for a miss and 0 for not shooting; the probabilities and the simplification that the lesion always spoils the aim are chosen to keep the model minimal."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

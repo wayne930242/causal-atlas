@@ -5,12 +5,12 @@
     "en": "The car crash and the abandoned victim"
   },
   "subtitle": {
-    "zh-TW": "傷者本來未必會死；不送醫的不作為依賴在自己先前造成的撞傷上，法院仍認定是殺人的原因。",
+    "zh-TW": "傷者本來未必會死。不送醫的不作為（omission）要靠李四自己先前造成的撞傷才致命，法院仍認定它是殺人的原因。",
     "en": "The victim need not have died; the omission to get help depends on the driver's own earlier collision, and the court still treats it as a cause of the killing."
   },
   "family": "law",
   "story": {
-    "zh-TW": "李四在速限四十公里的道路上以八十公里行駛，同向前方的行人王五左轉，李四煞車不及，把王五撞傷倒地。李四沒有送王五就醫，反而把他載到偏僻的草叢丟下，王五最後流血過多死亡。最高法院認為李四因自己的行為造成王五受傷，負有送醫急救的義務，卻棄置不救，其不作為與積極殺人負相同的刑責。",
+    "zh-TW": "考慮一起車禍的情境。李四在速限四十公里的道路上以八十公里行駛，同向前方的行人王五左轉，李四煞車不及，把王五撞傷倒地。李四沒有送王五就醫，反而把他載到偏僻的草叢丟下，王五最後流血過多死亡。最高法院認為李四因自己的行為造成王五受傷，負有送醫急救的義務，卻棄置不救，其不作為與積極殺人負相同的刑責。",
     "en": "Li drives at eighty kilometres an hour on a road with a forty limit; a pedestrian, Wang, ahead of him in the same direction turns left, and Li cannot brake in time and knocks him down. Instead of taking Wang to hospital, Li drives him to a remote patch of grass and dumps him there, and Wang finally bleeds to death. The Supreme Court held that, having injured Wang by his own act, Li was under a duty to take him for emergency care, and that abandoning him instead makes his omission as punishable as an active killing."
   },
   "story_tags": {
@@ -56,7 +56,7 @@
     },
     "expected": "cause",
     "text": {
-      "zh-TW": "李四棄置傷者、不予急救，王五的死要算在這個不作為上。",
+      "zh-TW": "李四棄置傷者、不予急救。王五的死要歸咎於這個不作為（omission）。",
       "en": "Li left the injured man unaided, and Wang's death is laid at the door of this omission."
     },
     "agree": [
@@ -68,7 +68,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "模型為本資料集依判決事實所擬：超速（SPD）與行人左轉（PED）使撞傷（HIT）發生，撞傷後若未送醫（AID = 0）則死亡。王鵬翔與王一奇（2021）分析的重點是：死亡對「未送醫」的反事實依賴，寄生在李四自己先前造成的撞傷上（刑法第 15 條第 2 項的危險前行為），機率列以介入呈現：沒有撞傷，不送醫不會有人死。常態值依規範設定：超速是偏差，送醫是常態，行人左轉不違反規範；hp-normality 因此把行人左轉濾掉，保留超速、撞傷和不送醫。",
+    "zh-TW": "模型依判決事實擬成：超速（SPD）與行人左轉（PED）造成撞傷（HIT）；撞傷後未送醫（AID = 0），王五就死亡。王鵬翔與王一奇 (2021) 的重點是：死亡對未送醫的依賴，要靠李四自己造成的撞傷才成立（刑法第 15 條第 2 項的危險前行為）。沒有撞傷，不送醫也不會有人死。常態（normality）依規範設定：超速偏離常態，送醫合乎常態，行人左轉不違反規範。帶常態的 HP 定義（Halpern–Pearl definition）因此排除行人左轉，保留超速、撞傷和不送醫。",
     "en": "The model is the dataset's own, built from the facts of the judgment: speeding (SPD) and the pedestrian's left turn (PED) bring about the collision (HIT), and a collision followed by no medical aid (AID = 0) ends in death. Wang and Wang (2021) stress that death's counterfactual dependence on the failure to take him to hospital is parasitic on the collision Li himself had caused earlier (the duty arising from prior dangerous conduct, Criminal Code art. 15(2)), which the probability row shows by intervention: with no collision, not seeking help kills no one. The normality defaults follow the norms: speeding is a deviation, taking an injured person to hospital is the default, and the pedestrian's turn breaks no norm. hp-normality therefore filters out the left turn and keeps the speeding, the collision and the failure to give aid."
   },
   "copy_status": {

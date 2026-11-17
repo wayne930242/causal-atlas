@@ -2,7 +2,7 @@
   "id": "prince-of-wales-pancakes",
   "title": { "zh-TW": "威爾斯王子與鬆餅", "en": "The Prince of Wales and the pancakes" },
   "subtitle": {
-    "zh-TW": "不澆花等於做了別的事嗎？吃鬆餅會不會也成了盆栽枯死的原因？",
+    "zh-TW": "假如不澆花等於做了別的事，吃鬆餅也會成為盆栽枯死的原因。",
     "en": "Is not watering the same as doing something else? Would eating pancakes then be a cause of the plant's death?"
   },
   "family": "omission",
@@ -27,13 +27,13 @@
     "query": { "cause": "E=1", "effect": "D=1" },
     "expected": "not-cause",
     "text": {
-      "zh-TW": "要說的是王子沒有澆花，而不是他吃了鬆餅；吃鬆餅本身與盆栽枯死無關。",
+      "zh-TW": "盆栽枯死的原因是王子沒有澆花。吃鬆餅本身與盆栽枯死無關。",
       "en": "What is blamed is his not watering, not his eating pancakes; the pancakes themselves have nothing to do with the plant's death."
     },
     "agree": []
   },
   "explanation": {
-    "zh-TW": "模型用 E 表示王子吃鬆餅（外生），W 表示王子澆花，依待辦清單 W = ¬E；盆栽枯死是沒有被澆（D = ¬W）。由於「沒澆花」在模型裡就等於「吃了鬆餅」，所有理論都把 E = 1 與 W = 0 同時算作 D = 1 的原因，直覺卻只接受後者。這正是 Sartorio 所說的「多餘的積極原因」：把不作為化約成做了別的事，會得到多餘的積極原因。王鵬翔 (2019) 以對比因果論處理：吃鬆餅而非澆花是原因，吃鬆餅而非看戲則不是。本引擎不含對比，故 agree 為空。模型依故事擬定。",
+    "zh-TW": "E 表示王子吃鬆餅（外生），W 表示王子澆花，依待辦清單 W = ¬E；盆栽沒被澆就枯死（D = ¬W）。在這個模型裡，沒澆花就等於吃了鬆餅，所以各理論都判 E = 1 與 W = 0 是 D = 1 的原因，直覺只接受後者。Sartorio 稱此為多餘的積極原因：把不作為（omission）化約成做了別的事，就會多出積極的原因。王鵬翔 (2019) 改用對比因果：吃鬆餅而非澆花是原因，吃鬆餅而非看戲則不是。引擎不處理對比，所以沒有理論與直覺一致。",
     "en": "E is the Prince eating pancakes (exogenous), W is his watering the plant, following the to-do list: W = ¬E; the plant dies if it is not watered (D = ¬W). Since not watering is the same event as eating pancakes in the model, every theory counts E = 1 and W = 0 alike as causes of D = 1, while the intuition accepts only the latter. This is Sartorio's problem of unwanted positive causes: reducing an omission to doing something else yields superfluous positive causes. Wang (2019) answers with contrastive causation: eating pancakes rather than watering is a cause, eating pancakes rather than going to the theatre is not. The engine has no contrasts, so agree is empty. The model is built from the story."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
