@@ -2,6 +2,11 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.4
+
+Two case families are renamed: 不作為 → 不作為與責任 (Omission and responsibility) and 常態與規範 → 規範與預設值
+(Norms and defaults).
+
 ## 0.3.3
 
 The editor's case list keeps one filter chip for all host models (label from the new optional `modelsLabel`
@@ -26,7 +31,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.3.3) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.4) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -190,9 +195,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.3 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.4 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.3) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.4) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -201,7 +206,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.3},
+  version = {0.3.4},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

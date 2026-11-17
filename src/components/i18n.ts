@@ -137,7 +137,7 @@ const ZH = {
   sourceList: (items: readonly string[]): string => items.join('；'),
 
   // case page
-  family: { actual: '實際因果', omission: '不作為', norms: '常態與規範', law: '法律', decision: '因果決策' },
+  family: { actual: '實際因果', omission: '不作為與責任', norms: '規範與預設值', law: '法律', decision: '因果決策' },
   stepOf: (step: number, total: number): string => `第 ${step} 步，共 ${total} 步`,
   story: '故事',
   storyTags: (ids: string): string => `對應變項 ${ids}`,
@@ -476,7 +476,7 @@ const EN: Messages = {
   list: enList,
   sourceList: (items) => items.join('; '),
 
-  family: { actual: 'Actual causation', omission: 'Omission', norms: 'Norms and normality', law: 'Law', decision: 'Causal decision theory' },
+  family: { actual: 'Actual causation', omission: 'Omission and responsibility', norms: 'Norms and defaults', law: 'Law', decision: 'Causal decision theory' },
   stepOf: (step, total) => `Step ${step} of ${total}`,
   story: 'Story',
   storyTags: (ids) => `Variables ${ids}`,
