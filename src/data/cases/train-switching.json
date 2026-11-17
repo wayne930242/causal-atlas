@@ -94,8 +94,8 @@
       "role": "origin",
       "pages": "pp. 26–27 (Example 5.4, arXiv cs/0011012v3 manuscript pagination; quotes Hall 2000)",
       "note": {
-        "zh-TW": "Halpern 與 Pearl 在例 5.4 引述 Hall (2000) 的轉軌故事並建模。三變數版與兩條軌道各一變數的版本得到不同的判斷。",
-        "en": "Hall's (2000) switching story is quoted and modeled in Halpern and Pearl's Example 5.4: the three-variable version and the version with one variable per track receive different verdicts."
+        "zh-TW": "Halpern 與 Pearl 在例 5.4 引述 Hall (2000) 的轉軌故事並建模。三變數版與兩條軌道各一變數的版本得到不同的判斷。Halpern 與 Pearl 用 LT、RT 兩個變數（火車走了左軌／右軌），也判扳道是抵站的原因，並認為表示法的改變就是故事的改變。",
+        "en": "Hall's (2000) switching story is quoted and modeled in Halpern and Pearl's Example 5.4: the three-variable version and the version with one variable per track receive different verdicts. Halpern and Pearl used two variables LT and RT (the train is on the left or right track), also found the flip a cause of arrival, and held that a change of representation is a change of story."
       },
       "verified": true
     },
