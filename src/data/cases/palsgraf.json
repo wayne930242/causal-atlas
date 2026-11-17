@@ -1,0 +1,331 @@
+{
+  "id": "palsgraf",
+  "title": {
+    "zh-TW": "Palsgraf 案：煙火包裹與倒下的磅秤",
+    "en": "Palsgraf v. Long Island R.R. (N.Y. 1928)"
+  },
+  "subtitle": {
+    "zh-TW": "鏈上每一環都是 but-for 條件，是否負責卻取決於對遠處原告有沒有義務、結果是否可預見。",
+    "en": "Every link of the chain is a but-for condition; liability turns on duty to a distant plaintiff and foreseeability."
+  },
+  "family": "law",
+  "story": {
+    "zh-TW": "鐵路職員協助趕車的乘客上車，推扶時，乘客手上的小包裹掉落。包裹裡裝的是煙火，一落地就爆炸，震動使站台遠處的磅秤倒下，砸傷 Palsgraf 太太。多數意見（Cardozo）認為職員對她沒有義務而不負責；不同意見（Andrews）採較廣的近因觀。",
+    "en": "A railway guard helps a passenger who is rushing to board, and in the push the passenger's small package falls. The package holds fireworks, which explode on landing, and the shock topples a scale far down the platform onto Mrs Palsgraf. The majority (Cardozo) holds that the guard owed her no duty and is not liable; the dissent (Andrews) takes a wider view of proximate cause."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "鐵路職員協助趕車的乘客上車，推扶時，乘客手上的小包裹掉落。",
+        "variables": [
+          "PUSH",
+          "DROP"
+        ]
+      },
+      {
+        "sentence": "包裹裡裝的是煙火，一落地就爆炸，震動使站台遠處的磅秤倒下，砸傷 Palsgraf 太太。",
+        "variables": [
+          "PKG",
+          "EXPL",
+          "FALL",
+          "INJ"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "A railway guard helps a passenger who is rushing to board, and in the push the passenger's small package falls.",
+        "variables": [
+          "PUSH",
+          "DROP"
+        ]
+      },
+      {
+        "sentence": "The package holds fireworks, which explode on landing, and the shock topples a scale far down the platform onto Mrs Palsgraf.",
+        "variables": [
+          "PKG",
+          "EXPL",
+          "FALL",
+          "INJ"
+        ]
+      }
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型為本資料集所擬，呈鏈狀：推乘客（PUSH）使包裹掉落（DROP），包裹裡是煙火（PKG）所以爆炸（EXPL），衝擊使磅秤倒下（FALL）而傷人（INJ）。事實因果層面，鏈上各環與 PKG 都是原因；引擎無法表達「對遠處原告沒有義務」或「不可預見」，只能以介入顯示：包裹裡不是煙火，推人不會傷到遠處的人（機率列）。Cardozo 與 Andrews 的分歧在模型之外。",
+    "en": "The model is the dataset's own and chain-shaped: pushing the passenger (PUSH) makes the package fall (DROP), the package holds fireworks (PKG) so it explodes (EXPL), and the shock topples the scale (FALL) and injures the plaintiff (INJ). At the level of factual causation every link and PKG is a cause; the engine cannot express \"no duty to a distant plaintiff\" or \"unforeseeable\", and shows only by intervention that with no fireworks in the package the push would hurt no one far away (probability rows). The disagreement between Cardozo and Andrews lies outside the model."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Palsgraf v. Long Island Railroad Co., 248 N.Y. 339, 162 N.E. 99 (N.Y. 1928).",
+      "key": "palsgraf1928",
+      "role": "origin",
+      "note": {
+        "zh-TW": "依 Caselaw Access Project 的 248 N.Y. 全文（帶頁碼標記）核對：事實見頁 340–341；Cardozo 的多數意見以「對遠處原告沒有義務」、危險不在合理預見範圍內為據，見頁 341–345；Andrews 的不同意見從近因立論，見頁 347–356，頁 356 指出沒有爆炸她就不會受傷。",
+        "en": "Checked against the Caselaw Access Project text of 248 N.Y. (with page markers): facts on pp. 340–341; Cardozo's majority rests on no duty to the distant plaintiff and the hazard lying outside reasonable apprehension, pp. 341–345; Andrews's dissent argues from proximate cause, pp. 347–356, noting on p. 356 that except for the explosion she would not have been injured."
+      },
+      "verified": true,
+      "pages": "248 N.Y. 339–356"
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_PUSH",
+        "label": {
+          "zh-TW": "職員的行為",
+          "en": "Guard's conduct"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_PKG",
+        "label": {
+          "zh-TW": "包裹的內容",
+          "en": "The package's contents"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "PUSH",
+        "label": {
+          "zh-TW": "職員推扶乘客",
+          "en": "The guard pushes the passenger"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "PKG",
+        "label": {
+          "zh-TW": "包裹裝的是煙火",
+          "en": "The package holds fireworks"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "DROP",
+        "label": {
+          "zh-TW": "包裹掉落",
+          "en": "The package falls"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "EXPL",
+        "label": {
+          "zh-TW": "煙火爆炸",
+          "en": "The fireworks explode"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "FALL",
+        "label": {
+          "zh-TW": "遠處的磅秤倒下",
+          "en": "A distant scale falls"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "INJ",
+        "label": {
+          "zh-TW": "Palsgraf 太太受傷",
+          "en": "Mrs Palsgraf is injured"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "PUSH": "U_PUSH",
+      "PKG": "U_PKG",
+      "DROP": "PUSH",
+      "EXPL": "DROP and PKG",
+      "FALL": "EXPL",
+      "INJ": "FALL"
+    }
+  },
+  "context": {
+    "U_PUSH": 1,
+    "U_PKG": 1
+  },
+  "normality": {
+    "PUSH": 0,
+    "PKG": 0,
+    "DROP": 0,
+    "EXPL": 0,
+    "FALL": 0,
+    "INJ": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "PUSH=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "PUSH=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "PUSH=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "PUSH=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "PUSH=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "PKG=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "PKG=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "PKG=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "EXPL=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "EXPL=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "EXPL=1",
+        "effect": "INJ=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "INJ=1",
+        "do": {
+          "PUSH": 1,
+          "PKG": 0
+        }
+      },
+      "expected": 0,
+      "note": "Without fireworks in the package the push injures no one far away."
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "INJ=1",
+        "do": {
+          "PUSH": 0,
+          "PKG": 1
+        }
+      },
+      "expected": 0,
+      "note": "Fireworks alone, with no push, injure no one."
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "包裹裡不是煙火",
+        "en": "No fireworks in the package"
+      },
+      "interventions": {
+        "PKG": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "職員沒有推乘客",
+        "en": "The guard does not push"
+      },
+      "interventions": {
+        "PUSH": 0
+      }
+    }
+  ],
+  "layout": {
+    "PUSH": [
+      0,
+      0
+    ],
+    "PKG": [
+      1,
+      1
+    ],
+    "DROP": [
+      1,
+      0
+    ],
+    "EXPL": [
+      2,
+      0.5
+    ],
+    "FALL": [
+      3,
+      0.5
+    ],
+    "INJ": [
+      4,
+      0.5
+    ]
+  }
+}
