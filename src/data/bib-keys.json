@@ -2,6 +2,7 @@
   "inBib": [
     "beebee2004causing",
     "egan2007counterexamples",
+    "fischer1998responsibility",
     "frankfurt1969alternate",
     "hall2004two",
     "halpern2005causes",
@@ -13,7 +14,8 @@
     "sartorio2005asymmetry",
     "wang2019omission",
     "wang2021parasitic",
-    "wang2025causality"
+    "wang2025causality",
+    "wang2026overdetermination"
   ],
   "notInBib": [
     "eells-1982",
