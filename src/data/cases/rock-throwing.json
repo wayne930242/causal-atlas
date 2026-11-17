@@ -38,13 +38,15 @@
       "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
       "key": "halpern2005causes",
       "role": "treatment",
-      "verified": false
+      "pages": "arXiv cs/0011012v3 pagination, not BJPS 843–887: pp. 16–17 (Suzy and Billy; the model with BH and SH)",
+      "verified": true
     },
     {
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
       "key": "halpern2016actual",
       "role": "treatment",
-      "verified": false
+      "pages": "30–31 (Example 2.3.3, the rock-throwing example and the equations SH = ST, BH = BT ∧ ¬SH)",
+      "verified": true
     },
     {
       "citation": "Hall, N. (2004). Two concepts of causation. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
@@ -54,7 +56,8 @@
         "zh-TW": "小蘇（Suzy）與小比（Billy）的丟石頭例子取自 Hall (2004)；它屬於晚期先發制人（late preemption），不是 Lewis (1986) 討論的早期先發制人：小比的石頭仍在途中，備援的因果鏈沒有在結果發生前被切斷（Hall 2004 §3.3）。",
         "en": "The rock-throwing example with Suzy and Billy is from Hall (2004); it is a case of late preemption (Hall 2004 §3.3), not the early preemption Lewis (1986) discussed: Billy's rock is still in flight, so the backup process is not cut before the effect occurs."
       },
-      "verified": false
+      "pages": "§3.3 (Late pre-emption); read in the author manuscript, whose pages do not map to the MIT pagination 225–276",
+      "verified": true
     }
   ],
   "model": {

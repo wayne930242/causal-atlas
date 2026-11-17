@@ -36,13 +36,15 @@
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
       "key": "halpern2016actual",
       "role": "treatment",
-      "verified": false
+      "pages": "11 (the conjunctive and disjunctive models), 28 (Example 2.3.1, conjunctive case)",
+      "verified": true
     },
     {
       "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
       "key": "halpern2005causes",
       "role": "origin",
-      "verified": false
+      "pages": "arXiv cs/0011012v3 pagination, not BJPS 843–887: pp. 11–14 (Example 3.2, the conjunctive scenario; two arsonists' matches in place of lightning and match)",
+      "verified": true
     }
   ],
   "model": {

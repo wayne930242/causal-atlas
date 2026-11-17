@@ -1,0 +1,96 @@
+{
+  "id": "murder-lesion",
+  "title": { "zh-TW": "謀殺病灶", "en": "The Murder Lesion" },
+  "subtitle": {
+    "zh-TW": "決定開槍，本身就是腦部病灶的徵兆，而病灶會讓準頭失靈。",
+    "en": "Deciding to shoot is itself a sign of the lesion that spoils the aim."
+  },
+  "family": "decision",
+  "story": {
+    "zh-TW": "考慮瑪麗正在決定要不要向對手阿爾弗雷德開槍的情境。她長期練習，槍枝精良，因此認為若開槍，多半會命中。命中對她極為有利，射偏則後果很糟，不開槍則一切照舊。她同時知道，有一種腦部病灶既容易引發行刺的念頭，也會使人在扣扳機的關鍵時刻手抖而失準，而且開過槍的人多半帶有這種病灶。",
+    "en": "Consider Mary, who is deciding whether to shoot her rival Alfred. She has trained for years and her rifle is in good order, so she thinks that if she were to shoot she would very probably hit. A hit would be very good for her, a miss very bad, and not shooting leaves things as they are. She also knows of a brain lesion that both prompts murder attempts and makes the hand shake at the critical moment, and most people who shoot have it."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "考慮瑪麗正在決定要不要向對手阿爾弗雷德開槍的情境。", "variables": ["S"] },
+      { "sentence": "命中對她極為有利，射偏則後果很糟，不開槍則一切照舊。", "variables": ["H"] },
+      { "sentence": "她同時知道，有一種腦部病灶既容易引發行刺的念頭，也會使人在扣扳機的關鍵時刻手抖而失準，而且開過槍的人多半帶有這種病灶。", "variables": ["L", "U_S"] }
+    ],
+    "en": [
+      { "sentence": "Consider Mary, who is deciding whether to shoot her rival Alfred.", "variables": ["S"] },
+      { "sentence": "A hit would be very good for her, a miss very bad, and not shooting leaves things as they are.", "variables": ["H"] },
+      {
+        "sentence": "She also knows of a brain lesion that both prompts murder attempts and makes the hand shake at the critical moment, and most people who shoot have it.",
+        "variables": ["L", "U_S"]
+      }
+    ]
+  },
+  "intuition": {
+    "query": { "choice": "S" },
+    "expected": false,
+    "text": {
+      "zh-TW": "她若開槍，多半是病灶使然，這時開槍只會射偏；不開槍才合理。",
+      "en": "If she shoots it is most likely because of the lesion, and then the shot only misses; refraining is the rational choice."
+    },
+    "agree": ["edt"]
+  },
+  "explanation": {
+    "zh-TW": "外生變數是病灶 L，以及沒有病灶時仍想開槍的衝動 U_S。開槍 S 由兩者之一引起；命中 H 需要開了槍而且沒有病灶（H = S ∧ ¬L）。病灶機率低，所以對 S 作介入時命中率是 0.9，因果決策論算出開槍有利；但得知她開了槍時，那多半是病灶使然，命中率不到一成，證據決策論算出開槍不利。這與吸菸病灶相反：那一例直覺站在因果決策論一側，這一例站在證據決策論一側。Egan 給出的效用是命中 10、射偏 −10、不開槍 0；機率數字與「病灶使準頭必定失準」的簡化是為了讓模型最小而擬定的。",
+    "en": "The exogenous variables are the lesion L and an urge to shoot that she would have even without it, U_S. Shooting S is brought about by either; a hit H needs a shot and no lesion (H = S ∧ ¬L). The lesion is improbable, so intervening on S gives a hit probability of 0.9 and causal decision theory finds shooting better; but learning that she shot is mostly learning that she has the lesion, which leaves the hit probability under one in ten, and evidential decision theory finds shooting worse. This reverses the smoking lesion: there the everyday intuition sides with causal decision theory, here with evidential decision theory. Egan's utilities are 10 for a hit, −10 for a miss and 0 for not shooting; the probabilities and the simplification that the lesion always spoils the aim are chosen to keep the model minimal."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Egan, A. (2007). Some counterexamples to causal decision theory. Philosophical Review, 116(1), 93–114.",
+      "key": "egan2007counterexamples",
+      "role": "origin",
+      "pages": "97 (case and intuition), 98–100 (credences c(S→H) > .5, c(S→H|S) < .5 and the values 10, −10, 0), 107–108 (ratifiability), 111 (neither option ratifiable)",
+      "note": {
+        "zh-TW": "p. 97 註 3：有些人對這一例沒有明確的直覺，Egan 認為只要心理病態者按鈕成立即可。",
+        "en": "Egan notes on p. 97 (n. 3) that some readers lack a clear intuition about this case and that the Psychopath Button alone suffices for his argument."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "L", "label": { "zh-TW": "腦部病灶", "en": "Brain lesion" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_S", "label": { "zh-TW": "無病灶時想開槍", "en": "Urge to shoot without the lesion" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "S", "label": { "zh-TW": "開槍", "en": "Shoots" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "H", "label": { "zh-TW": "命中", "en": "Hits" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "S": "L or U_S", "H": "S and not L" }
+  },
+  "priors": { "independent": { "L": 0.1, "U_S": 0.01 } },
+  "decision": { "variable": "S", "utility": { "variables": ["S", "H"], "rows": [[1, 1, 10], [1, 0, -10], [0, 0, 0]] } },
+  "verdicts": [
+    { "theory": "probability", "query": { "event": "S=1" }, "expected": 0.109, "tolerance": 1e-9, "note": "Egan p. 99 n. 6: c(S) must stay below .5 for the credences to cohere." },
+    { "theory": "probability", "query": { "event": "H=1", "do": { "S": 1 } }, "expected": 0.9, "tolerance": 1e-9, "note": "Her credence that if she shot she would hit, c(S→H) > .5 (p. 99)." },
+    { "theory": "probability", "query": { "event": "H=1", "given": "S=1" }, "expected": 0.08256880733944956, "tolerance": 1e-9, "note": "c(H|S) < .5 (p. 99 n. 7)." },
+    { "theory": "probability", "query": { "event": "L=1", "given": "S=1" }, "expected": 0.9174311926605506, "tolerance": 1e-9, "note": "Shooting is strong evidence of the lesion." },
+    { "theory": "edt", "query": { "expectedUtility": 1 }, "expected": -8.348623853211011, "tolerance": 1e-6 },
+    { "theory": "edt", "query": { "expectedUtility": 0 }, "expected": 0, "tolerance": 1e-9 },
+    { "theory": "cdt", "query": { "expectedUtility": 1 }, "expected": 8, "tolerance": 1e-9 },
+    { "theory": "cdt", "query": { "expectedUtility": 0 }, "expected": 0, "tolerance": 1e-9 },
+    { "theory": "edt", "query": { "choice": "S" }, "expected": false, "note": "EDT refrains." },
+    { "theory": "cdt", "query": { "choice": "S" }, "expected": true, "note": "CDT shoots (Egan p. 100)." },
+    {
+      "theory": "counterfactual",
+      "query": { "evidence": "S=1", "do": { "S": 1 }, "event": "H=1" },
+      "expected": 0.08256880733944956,
+      "tolerance": 1e-9,
+      "note": "Once she takes herself to be about to shoot, shooting looks bad even causally: unratifiable (Egan pp. 107–108)."
+    },
+    {
+      "theory": "counterfactual",
+      "query": { "evidence": "S=0", "do": { "S": 1 }, "event": "H=1" },
+      "expected": 1,
+      "note": "Once she takes herself to refrain she has no lesion and a shot would hit: refraining is unratifiable too (Egan p. 111)."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "開槍", "en": "Shoot" }, "interventions": { "S": 1 } },
+    { "label": { "zh-TW": "不開槍", "en": "Hold fire" }, "interventions": { "S": 0 } }
+  ],
+  "layout": { "L": [1, 0], "S": [0, 1], "H": [2, 1] }
+}

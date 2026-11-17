@@ -41,13 +41,22 @@
       "citation": "Egan, A. (2007). Some counterexamples to causal decision theory. Philosophical Review, 116(1), 93–114.",
       "key": "egan2007counterexamples",
       "role": "treatment",
-      "verified": false
+      "pages": "94 and n. 1 (the Smoking Lesion as a standard medical Newcomb problem), 95–96 (how EDT and CDT value smoking), 108 (not smoking is unratifiable)",
+      "verified": true
+    },
+    {
+      "citation": "Lewis, D. (1981). Causal decision theory. Australasian Journal of Philosophy, 59(1), 5–30.",
+      "key": "lewis1981causal",
+      "role": "treatment",
+      "pages": "9–10 (§4: the medical Newcomb problems with eggs, smoking and a dread lesion; n. 6 credits Skyrms and Nozick)",
+      "verified": true
     },
     {
       "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.). Cambridge University Press.",
       "key": "pearl2009causality",
       "role": "treatment",
-      "verified": false
+      "pages": "108–109 (§4.1.1: evidential expected utility treats the act as evidence; the do-based utility does not; the smoking lesion is not named)",
+      "verified": true
     },
     {
       "citation": "Skyrms, B. (1980). Causal Necessity. Yale University Press.",

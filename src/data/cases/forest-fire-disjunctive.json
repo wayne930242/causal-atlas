@@ -39,19 +39,22 @@
       "citation": "Halpern, J. Y. (2015). A modification of the Halpern–Pearl definition of causality. In Proceedings of the 24th International Joint Conference on Artificial Intelligence (IJCAI 2015).",
       "key": "halpern2015modification",
       "role": "treatment",
-      "verified": false
+      "pages": "arXiv 1505.00162 pagination, not IJCAI: p. 4 (Example 3.1, the forest fire; modified definition), p. 5 (the naive model is isomorphic to the disjunctive forest fire)",
+      "verified": true
     },
     {
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
       "key": "halpern2016actual",
       "role": "treatment",
-      "verified": false
+      "pages": "11 (the conjunctive and disjunctive models), 28–29 (Example 2.3.1, disjunctive case under the original, updated and modified definitions)",
+      "verified": true
     },
     {
       "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
       "key": "halpern2005causes",
       "role": "origin",
-      "verified": false
+      "pages": "arXiv cs/0011012v3 pagination, not BJPS 843–887: p. 5 (Example 2.1, a fire caused by lightning or a match), pp. 11–14 (Example 3.2, the disjunctive scenario)",
+      "verified": true
     }
   ],
   "model": {

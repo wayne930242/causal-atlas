@@ -31,6 +31,27 @@
       "key": "nozick-1969",
       "role": "origin",
       "verified": false
+    },
+    {
+      "citation": "Gibbard, A., & Harper, W. L. (1978). Counterfactuals and two kinds of expected utility. In C. A. Hooker, J. J. Leach, & E. F. McClennen (Eds.), Foundations and Applications of Decision Theory, vol. 1 (pp. 125–162). Reidel.",
+      "key": "gibbard1978counterfactuals",
+      "role": "treatment",
+      "pages": "Read in the 1976 discussion paper DP194, §10, pp. 41–43 (the case with the $1,000 transparent box, the $1,000,000 opaque box and a reliable predictor; the two expected utilities). The 1978 chapter's pagination was not checked.",
+      "verified": true
+    },
+    {
+      "citation": "Lewis, D. (1981). Causal decision theory. Australasian Journal of Philosophy, 59(1), 5–30.",
+      "key": "lewis1981causal",
+      "role": "treatment",
+      "pages": "9–10 (§4: Newcomb problems, the original case and the medical versions; n. 5 cites Nozick 1969)",
+      "verified": true
+    },
+    {
+      "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.). Cambridge University Press.",
+      "key": "pearl2009causality",
+      "role": "treatment",
+      "pages": "108–109 (§4.1.1: Newcomb's paradox as the confusion between acts and actions; do(x) against conditioning)",
+      "verified": true
     }
   ],
   "model": {
