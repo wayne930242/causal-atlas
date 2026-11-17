@@ -516,8 +516,21 @@ export function textWidth(s: string, size: number): number {
   return w
 }
 
+/**
+ * A probability as text: two decimals, except that a value within 0.01 of 0 or 1 (and not exactly
+ * 0 or 1) gets enough decimals to show two significant digits of its distance from that end, so
+ * 0.0001 reads 0.0001 and 0.9999 reads 0.9999 rather than 0.00 and 1.00 (trailing zeros past the
+ * second decimal are dropped). Below 1e-6 from an end
+ * it reads as a bound.
+ */
 export function probText(p: number): string {
-  return Number.isNaN(p) ? '—' : p.toFixed(2)
+  if (Number.isNaN(p)) return '—'
+  if (p <= 0 || p >= 1) return p.toFixed(2)
+  const gap = Math.min(p, 1 - p)
+  if (gap >= 0.01) return p.toFixed(2)
+  if (gap < 1e-6) return p < 0.5 ? '<0.000001' : '>0.999999'
+  const digits = Math.ceil(-Math.log10(gap) - 1e-9) + 1
+  return p.toFixed(Math.min(digits, 7)).replace(/(\.\d\d\d*?)0+$/, '$1')
 }
 
 /** Legend for probability readouts (the value legend is `t.valueLegend`): fill for 0/1 variables, bars for the others. */
