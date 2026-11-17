@@ -5,12 +5,12 @@
     "en": "The styrofoam on the arcade"
   },
   "subtitle": {
-    "zh-TW": "最高法院說堆保麗龍「按一般情形」不會燒傷人；有沒有因果、該不該賠，是兩個問題。",
+    "zh-TW": "最高法院說堆保麗龍「按一般情形」不會燒傷人。有沒有因果與該不該賠，是兩個問題。",
     "en": "The Supreme Court held that stacking styrofoam would not \"in the ordinary course\" burn anyone; whether it was a cause and whether it must pay are two questions."
   },
   "family": "law",
   "story": {
-    "zh-TW": "甲把易燃的保麗龍堆放在騎樓，乙在樓梯口焚燒冥紙。火苗碰到保麗龍而起火，丙因此被燒傷。最高法院認為，保麗龍不會自行燃燒，單純堆置保麗龍按一般情形不適於發生燒傷他人的結果，因此甲不必賠償丙。",
+    "zh-TW": "考慮騎樓起火的情境。甲把易燃的保麗龍堆放在騎樓，乙在樓梯口焚燒冥紙。火苗碰到保麗龍而起火，丙因此被燒傷。最高法院認為，保麗龍不會自行燃燒，單純堆置保麗龍按一般情形不適於發生燒傷他人的結果，因此甲不必賠償丙。",
     "en": "Jia stacks flammable styrofoam on an arcade walkway while Yi burns joss paper at the foot of the stairs. A spark reaches the styrofoam, it catches fire, and Bing is burned. The Supreme Court reasoned that styrofoam does not burn by itself and that merely stacking it is not, in the ordinary course, apt to burn anyone, so Jia owes Bing nothing."
   },
   "story_tags": {
@@ -60,7 +60,7 @@
     "agree": []
   },
   "explanation": {
-    "zh-TW": "模型取自王鵬翔（2025）對案情的重述：保麗龍堆置（STY）與焚燒冥紙（PAPER）同時具備才會起火（FIRE），起火造成燒傷（BURN）；方程式為本資料集所擬。事實層次的各個理論都把兩人的行為算成原因，包括帶常態排序的版本（此處採法院的看法：焚燒冥紙是罕見事件，常態值為 0；甲違反注意義務，常態值同為 0）。法院排除責任的依據是「相當因果關係」，要求行為與結果的關係在常態背景下仍成立；機率列以介入算出：背景正常（沒人燒冥紙）時，只堆保麗龍不會有人被燒傷。陳聰富主張焚燒冥紙在臺灣社會並不罕見（王鵬翔 2025，頁 264），若採這個常態排序，結論會反過來；引擎的事實因果判斷不受這個分歧影響。",
+    "zh-TW": "堆置保麗龍（STY）與焚燒冥紙（PAPER）同時具備才會起火（FIRE），起火造成燒傷（BURN）。案情依王鵬翔（2025）的重述，方程式為本資料集所擬。依法院的看法，焚燒冥紙罕見，甲違反注意義務，兩者的預設值（default）都是 0。法院所說的相當因果關係，要求行為在常態背景下仍會導致結果。陳聰富主張焚燒冥紙在臺灣並不罕見（王鵬翔 2025，頁 264），採這個看法則結論相反。",
     "en": "The model follows Wang Peng-hsiang's (2025) retelling of the case: styrofoam stacked on the walkway (STY) and joss paper burnt at the stairs (PAPER) together start the fire (FIRE), which burns the plaintiff (BURN); the equations are the dataset's own. At the level of fact every theory counts both acts as causes, including the version with a normality ordering (here the court's view: burning joss paper there is rare, so its default is 0, and Jia breached a duty of care, so that default is 0 too). The court's ground for excluding liability is \"adequate causation\", which requires the link between act and result to survive in a normal background; the probability rows compute it by intervention: with a normal background (nobody burning joss paper) stacking styrofoam alone burns no one. The jurist Chen Tsung-fu argued that burning joss paper is not rare in Taiwanese society (Wang 2025, p. 264); with that ordering the conclusion would reverse. The engine's factual causal verdicts do not depend on this disagreement."
   },
   "copy_status": {
@@ -73,7 +73,7 @@
       "key": "wang2025causality",
       "role": "origin",
       "note": {
-        "zh-TW": "第伍節（結果責任的範圍）。案情與最高法院 75 年台上字第 462 號民事判決的引述見頁 263（含註 23 對相當因果關係的說明）；陳聰富（2007）的相反看法見頁 264。《因果論辯》第 7 章亦處理此案，頁碼未能核對。",
+        "zh-TW": "第伍節（結果責任的範圍）。案情與最高法院 75 年台上字第 462 號民事判決的引述見頁 263，註 23 說明相當因果關係。陳聰富（2007）的相反看法見頁 264。《因果論辯》第 7 章亦處理此案，頁碼未能核對。",
         "en": "Section 5 (scope of liability for outcomes). The facts and the quotation from Supreme Court civil judgment 75 Tai-Shang 462 are on p. 263 (note 23 explains adequate causation); Chen Tsung-fu's (2007) opposing view is on p. 264. Chapter 7 of the book (Causal dialectics) also treats the case; its page could not be checked."
       },
       "pages": "263–264",

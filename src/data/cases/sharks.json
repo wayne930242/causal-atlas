@@ -2,18 +2,18 @@
   "id": "sharks",
   "title": { "zh-TW": "鯊魚：不知情的旁觀者", "en": "Sharks: the unwitting bystander" },
   "subtitle": {
-    "zh-TW": "旁觀者有意不救溺水的孩子，但水裡的鯊魚本來就會讓救援失敗。",
+    "zh-TW": "路人有意不救溺水的孩子，可是水裡的鯊魚本來就會讓救援失敗。",
     "en": "A bystander deliberately does not rescue a drowning child, but sharks in the water would have defeated any rescue."
   },
   "family": "omission",
   "story": {
-    "zh-TW": "考慮孩童溺水的情境。一名路人走過海灘，看見孩子溺水，自認跳下水就能救起孩子，卻有意留在岸上，孩子因此淹死。路人並不知道水裡有鯊魚；假如他跳下去，鯊魚會攻擊他，使他救不了孩子。",
+    "zh-TW": "考慮孩童溺水的情境。一名路人走過海灘，看見孩子溺水，自認跳下水就能救起孩子，卻有意留在岸上，孩子因此淹死。路人並不知道水裡有鯊魚。假如他跳下去，鯊魚會攻擊他，使他救不了孩子。",
     "en": "Consider a drowning child. A man walking along a beach sees the child in trouble, believes he could save the child by jumping in, and deliberately stays on the shore. The child drowns. The man does not know that the water is infested with sharks; had he jumped in, the sharks would have attacked him and he could not have saved the child."
   },
   "story_tags": {
     "zh-TW": [
       { "sentence": "一名路人走過海灘，看見孩子溺水，自認跳下水就能救起孩子，卻有意留在岸上，孩子因此淹死。", "variables": ["J", "SV", "DR"] },
-      { "sentence": "路人並不知道水裡有鯊魚；假如他跳下去，鯊魚會攻擊他，使他救不了孩子。", "variables": ["SK"] }
+      { "sentence": "路人並不知道水裡有鯊魚。假如他跳下去，鯊魚會攻擊他，使他救不了孩子。", "variables": ["SK"] }
     ],
     "en": [
       {
@@ -30,13 +30,13 @@
     "query": { "cause": "J=0", "effect": "DR=1" },
     "expected": "not-cause",
     "text": {
-      "zh-TW": "他沒有嘗試救人，這一點要負責；但孩子的死不該算在這個不作為頭上，因為跳下去也救不了。",
+      "zh-TW": "路人要為沒有嘗試救人負責。孩子的死不該歸咎於這個不作為，因為跳下去也救不了。",
       "en": "He is answerable for not trying, but the child's death is not laid at the door of that omission, since jumping in would not have helped."
     },
     "agree": ["butfor"]
   },
   "explanation": {
-    "zh-TW": "模型用 J 表示路人跳水，SK 表示水裡有鯊魚（由背景 U_SK 決定的內生變數，路人不知情），孩子獲救要求路人跳水而且沒有鯊魚（SV = J·¬SK），孩子溺斃則是沒有獲救（DR = ¬SV）。實際情境是 J = 0、SK = 1。鯊魚只讓救援失敗，並不使路人沒有跳水，所以路人沒跳不是死亡的 but-for 原因。這個模型是依故事擬定的，文獻只給出敘述，沒有給出方程式。引擎的結果是：只有 but-for 與直覺一致。死亡的條件是「沒跳」或「有鯊魚」，兩者各自就足夠（DR = ¬J ∨ SK），所以 HP 的各種定義都不把「沒跳」單獨排除。這只因為鯊魚在本模型裡是內生變數，可以在反事實中被拿掉；若把鯊魚當成背景（外生，即 Halpern 2016 例 3.2.1 p. 82 提到、p. 91 稱為「有點激烈」的做法），HP 各版本都判「沒跳」不是原因，與 Sartorio 一致。在現在的模型中，原定義把它算作原因，修正版與常態版則把它算作原因的一部分，與沒有跳水就不必負死亡之責的直覺有距離。",
+    "zh-TW": "J 表示路人跳水，SK 表示水裡有鯊魚，路人不知情。孩子獲救的條件是路人跳水而且沒有鯊魚（SV = J·¬SK），沒獲救就溺斃（DR = ¬SV）。實際為 J = 0、SK = 1。方程式依故事擬定，文獻只有敘述。本模型把鯊魚當作內生變數（endogenous variable），可以在反事實中拿掉。假如把鯊魚改成外生（Halpern 2016 p. 82，p. 91 稱為「有點激烈」），則 HP 各版本都判沒跳不是原因。",
     "en": "J is the bystander jumping in and SK is the sharks being in the water (an endogenous variable set by the background U_SK; he does not know of them). The child is saved only if he jumps and there are no sharks (SV = J·¬SK), and the child drowns if not saved (DR = ¬SV). The actual situation is J = 0, SK = 1. The sharks defeat a rescue but do not stop him from jumping, so his staying ashore is not a but-for cause of the death. The literature gives the story only, not equations, so the model is built here to carry it. The engine finds that only the but-for test agrees with the intuition. Death occurs if he does not jump or the sharks are present, and either alone suffices (DR = ¬J ∨ SK), so none of the HP definitions sets the omission aside. That holds only because the sharks are an endogenous variable that can be counterfactually removed; with the sharks as background (exogenous, the move Halpern 2016 Ex. 3.2.1 names on p. 82 and calls \"somewhat draconian\" on p. 91), every HP variant agrees with Sartorio that the omission is not a cause. In the model as built, the original counts it as a cause, and the modified and normality-based definitions count it as part of a cause, which sits uneasily with the intuition that he is not answerable for the death."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -47,7 +47,7 @@
       "role": "origin",
       "pages": "460–461, 469–470, 474–475",
       "note": {
-        "zh-TW": "Sartorio 在 p.460 給出 Sharks 的敘述，註 1 註明此案取自 Fischer 與 Ravizza (1998: 125)；p.461 說明直覺：路人要為沒有嘗試救人負責，卻不必為孩子的死負責。她的主張是因果上的，不只關於責任：pp. 469–470 說沒跳水不是孩子死亡的原因（NA (Causal)，p. 470），pp. 474–475 再說在 Sharks 中這個不作為沒有造成結果。",
+        "zh-TW": "Sartorio 在 p.460 給出 Sharks 的敘述，註 1 註明此案取自 Fischer 與 Ravizza (1998: 125)。p.461 說明直覺：路人要為沒有嘗試救人負責，不必為孩子的死負責。她的主張是因果上的，不只關於責任。pp. 469–470 說沒跳水不是孩子死亡的原因（NA (Causal)，p. 470），pp. 474–475 再說在 Sharks 中這個不作為沒有造成結果。",
         "en": "Sartorio states the Sharks case on p. 460, with note 1 crediting it to Fischer and Ravizza (1998: 125); p. 461 gives the intuition: he is responsible for not trying but not for the child's death. Her claim is causal, not only about responsibility: pp. 469–470 say his failure to jump in is not a cause of the death (NA (Causal), p. 470), and pp. 474–475 say that in Sharks the omission does not cause the outcome."
       },
       "verified": true
@@ -58,7 +58,7 @@
       "role": "treatment",
       "pages": "pp. 82–83 (Example 3.2.1), p. 91",
       "note": {
-        "zh-TW": "HP 把不作為當作行動處理；把阻斷因素改成外生是 p. 82 提到的一種做法，p. 91 稱之為「有點激烈」。",
+        "zh-TW": "HP 把不作為（omission）當作行動處理。p. 82 提到把阻斷因素改成外生的做法，p. 91 稱之為「有點激烈」。",
         "en": "HP treat omissions like actions; making the blocker exogenous is one move named on p. 82, called \"somewhat draconian\" on p. 91."
       },
       "verified": true

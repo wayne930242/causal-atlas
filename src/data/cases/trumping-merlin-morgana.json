@@ -5,25 +5,25 @@
     "en": "Trumping: the first spell of the day counts"
   },
   "subtitle": {
-    "zh-TW": "兩道咒語都要把王子變成青蛙，法則規定每天的第一道才算數。",
+    "zh-TW": "兩道咒語都要把王子變成青蛙，法則規定每天只有第一道算數。",
     "en": "Two spells would turn the prince into a frog, and the law of magic says only the first of the day counts."
   },
   "family": "actual",
   "story": {
-    "zh-TW": "在一個魔法世界裡，有一條法則：每天施放的第一道咒語，會在當晚午夜成真。梅林在中午施咒，要把王子變成青蛙；摩根娜在傍晚六點也施了同樣的咒語，是那天的第二道。午夜，王子變成了青蛙。",
+    "zh-TW": "考慮魔法世界的情境。這個世界有一條法則：每天施放的第一道咒語，會在當晚午夜成真。梅林在中午施咒，要把王子變成青蛙。摩根娜在傍晚六點也施了同樣的咒語，是那天的第二道。午夜，王子變成了青蛙。",
     "en": "In a world of magic there is a law that the first spell cast on a given day comes true at midnight. Merlin casts a spell at noon to turn the prince into a frog; Morgana casts the same spell at six in the evening, the second of the day. At midnight the prince becomes a frog."
   },
   "story_tags": {
     "zh-TW": [
       {
-        "sentence": "在一個魔法世界裡，有一條法則：每天施放的第一道咒語，會在當晚午夜成真。",
+        "sentence": "這個世界有一條法則：每天施放的第一道咒語，會在當晚午夜成真。",
         "variables": [
           "MerE",
           "MorE"
         ]
       },
       {
-        "sentence": "梅林在中午施咒，要把王子變成青蛙；摩根娜在傍晚六點也施了同樣的咒語，是那天的第二道。",
+        "sentence": "梅林在中午施咒，要把王子變成青蛙。摩根娜在傍晚六點也施了同樣的咒語，是那天的第二道。",
         "variables": [
           "Mer",
           "Mor"
@@ -68,7 +68,7 @@
     },
     "expected": "not-cause",
     "text": {
-      "zh-TW": "法則只認當天第一道咒語，摩根娜的咒語沒有發揮作用；是梅林把王子變成青蛙。",
+      "zh-TW": "法則只認當天第一道咒語，摩根娜的咒語沒有作用。王子是梅林變成青蛙的。",
       "en": "The law counts only the first spell of the day, so Morgana's spell did nothing; Merlin turned the prince into a frog."
     },
     "agree": [
@@ -80,7 +80,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "同一個故事有兩種建模，在模型中並排出現。粗略模型只有 Mer（梅林在中午施咒）、Mor（摩根娜在傍晚施咒）與 FC：青蛙出現只要有人施咒。這個模型對兩人完全對稱，沒有表達「當天第一道才算數」這條法則，所以原始與更新版 HP 定義都判兩人皆是原因；修正版只接受實際值，把兩人的咒語合起來才是一個原因，各自只是原因的一部分（Halpern 與 Pearl 2005 例 5.5）。細緻模型加入 MerE、MorE，表示各自的咒語是否生效：梅林施了咒就生效，摩根娜要在梅林沒施咒時才生效（MorE = Mor ∧ ¬Mer），結構與丟石頭案例裡的 SH、BH 相同。青蛙出現取決於哪一道生效。這時摩根娜的咒語不再是原因：把 MorE 固定在實際值 0，她的咒語就不可能產生差別（HP 原文說它不滿足 AC2(b)）。MerE、MorE 的方程式是依這條法則寫出的，Halpern 與 Pearl 只畫了圖 9 而沒有寫出方程式。原文讓 Mer、Mor 各有三個值（沒施咒、早上、傍晚），本案把兩人施咒的時刻寫進變數的定義，改用兩值變數。用 HP05 的三值變數時，不論平手時怎麼算，定義 3.1 本身就會讓摩根娜成為原因（見證：梅林改在傍晚、摩根娜改在中午，MorE 固定為 0）；HP05 p. 28 漏看了這一點。要排除這個見證，需要 HP05 的「容許設定」限制（§5，p. 24），本站沒有建模這項限制，所以本案用兩值變數。Schaffer (2000) 的重點是這種阻斷沒有切斷任何因果過程，單看過程的理論也解釋不了；Halpern 與 Pearl 的回答是：答案取決於建模者有沒有把優先規則寫進方程式。",
+    "zh-TW": "模型並排放兩種建模。粗略模型只有 Mer、Mor 與 FC，有人施咒就出現青蛙，兩人對稱，沒有寫進法則。細緻模型加入 MerE、MorE，表示各自的咒語是否生效。摩根娜的咒語只在梅林沒施咒時生效（MorE = Mor ∧ ¬Mer），與丟石頭案例的 SH、BH 結構相同。Halpern 與 Pearl (2005) 只畫了圖 9，方程式依法則寫出。原文的 Mer、Mor 有三個值，本案把施咒時刻寫進變數，改用兩值變數，因為本站沒有建模 HP05 的「容許設定」限制（§5，p. 24）。",
     "en": "The same story is modeled twice, side by side. The coarse model has only Mer (Merlin casts at noon), Mor (Morgana casts at six) and FC: the prince becomes a frog if anyone casts. It treats the two wizards completely symmetrically and does not express the law that the first spell of the day counts, so the original and updated HP definitions call both casts causes; the modified definition accepts only actual values, takes the two casts together as one cause, and makes each alone only part of a cause (Halpern and Pearl 2005, Ex. 5.5). The fine model adds MerE and MorE for whether each spell is effective: Merlin's is effective if he casts, and Morgana's only if Merlin does not (MorE = Mor ∧ ¬Mer), the same structure as SH and BH in the rock-throwing case. The frog depends on whichever spell is effective. Morgana's spell is then no longer a cause: with MorE held at its actual value 0, her spell cannot make a difference (the original says it fails AC2(b)). The equations for MerE and MorE are written from the law; Halpern and Pearl show only the graph in Figure 9 and give no equations. The original gives Mer and Mor three values each (no spell, morning, evening); this case writes the casting times into the variable definitions and uses two-valued variables instead. With HP05's three-valued variables, Def. 3.1 itself makes Morgana a cause, whatever happens on a tie (witness: Merlin at evening, Morgana at noon, MorE held at 0). HP05 p. 28 overlooks this. Excluding the witness needs HP05's allowable-settings restriction (§5, p. 24), which this site does not model, so the case uses two-valued variables. Schaffer's (2000) point is that this preemption cuts no causal process, so theories of causal processes cannot explain it either; Halpern and Pearl's answer is that the verdict depends on whether the modeler wrote the priority rule into the equations."
   },
   "copy_status": {

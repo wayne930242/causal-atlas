@@ -5,12 +5,12 @@
   "en": "Eleven voters: a landslide of 11–0"
  },
  "subtitle": {
-  "zh-TW": "十一票全投給同一人，沒有任何一票是關鍵，卻每一票都算原因。",
+  "zh-TW": "十一票全投給同一人，沒有任何一票是關鍵，可是每一票都算原因。",
   "en": "All eleven votes go to one candidate; no single vote is pivotal, yet each counts as a cause."
  },
  "family": "actual",
  "story": {
-  "zh-TW": "十一位投票人要選出一位當選人，過半數即當選。B 先生以十一票對零票勝出。拿掉任何一位投給他的人，他仍然當選。把情境換成六票對五票，每一位投給他的人都是關鍵：少一票，他就落選。",
+  "zh-TW": "考慮投票的情境。十一位投票人要選出一位當選人，過半數即當選。B 先生以十一票對零票勝出。拿掉任何一位投給他的人，他仍然當選。假如換成六票對五票，則每一位投給他的人都是關鍵：少一票，他就落選。",
   "en": "Eleven voters choose between two candidates, and a majority wins. Mr. B wins by eleven votes to none. Remove any single voter for him and he still wins. Change the scene to six votes to five, and every voter for him is pivotal: one vote fewer and he loses."
  },
  "story_tags": {
@@ -70,7 +70,7 @@
   },
   "expected": "cause",
   "text": {
-   "zh-TW": "每一位投給 B 先生的人都促成了他的當選，只是在大勝中，單獨一票的分量比險勝時輕得多。",
+   "zh-TW": "每一位投給 B 先生的人都促成了他的當選。在大勝中，單獨一票的分量比險勝時輕得多。",
    "en": "Every voter for Mr. B helped him win, though in a landslide a single vote weighs much less than in a narrow win."
   },
   "agree": [
@@ -79,7 +79,7 @@
   ]
  },
  "explanation": {
-  "zh-TW": "X1 到 X11 各代表一位投票人，投給 B 先生為 1；O 表示 B 先生當選，條件是至少六票。引擎的方程式只支援布林運算，所以多出兩個計票變數：T1 計前六位的票數，T2 計後五位的票數，O 在兩者合計至少六時成立。它們只是記帳，不屬於故事。情境是 11–0：單看反事實依賴，沒有任何一票是原因；原始與更新版 HP 定義在「另外五人改投」的假設下讓某一票成為關鍵，因此每位投票人都是原因；修正版 HP 定義不容許這種改動，只有任一組六位投票人合起來才是原因，每位投票人只算原因的一部分（Halpern 2016 例 2.3.2）。責任度的算法是 1/(N+1)，N 是要先改變的其他票數：11–0 時每位投票人是 1/6，6–5 時每位是 1（Chockler 與 Halpern 2004 例 3.3）。責任度不是引擎計算的理論之一，6–5 也不是這個案例設定的情境；showcase 的第一項（後五位改投 G 先生）可以看到 6–5：B 先生仍然當選。",
+  "zh-TW": "X1 到 X11 各代表一位投票人，投給 B 先生為 1。O 表示 B 先生當選，條件是至少六票。引擎的方程式只支援布林運算，所以另設兩個計票變數：T1 計前六位、T2 計後五位，兩者合計至少六時 O 成立。這兩個變數只用來記帳，不屬於故事。實際情境是 11–0（Halpern 2016 例 2.3.2）。showcase 的第一項讓後五位改投 G 先生，呈現 6–5 的情境。",
   "en": "X1 to X11 stand for the eleven voters, with 1 meaning a vote for Mr. B; O says Mr. B wins, which takes at least six votes. The engine's equations support only Boolean operations, so there are two tally variables: T1 counts the votes of the first six voters, T2 counts those of the last five, and O holds when the two total at least six. They are bookkeeping and not part of the story. The context is 11–0: by plain counterfactual dependence no single vote is a cause. The original and updated HP definitions make a vote pivotal under the supposition that five other voters switch, so every voter is a cause; the modified HP definition allows no such change, and only a group of six voters together forms a cause, each voter being part of a cause (Halpern 2016, Ex. 2.3.2). Degree of responsibility is 1/(N+1), where N is the number of other votes that must change first: 1/6 for each voter at 11–0, and 1 for each at 6–5 (Chockler and Halpern 2004, Ex. 3.3). Responsibility is not one of the engine's theories, and the 6–5 scene is not this case's context; the first showcase item (the last five voters switch to Mr. G) shows it, with Mr. B still winning 6–5."
  },
  "copy_status": {
@@ -93,7 +93,7 @@
    "role": "origin",
    "pages": "pp. 1–2 (introduction) and p. 8 (Example 3.3; arXiv cs/0312038 manuscript pagination)",
    "note": {
-    "zh-TW": "例 3.3 的十一位投票人、變數 X1…X11 與 O，以及 11–0 時責任度 1/6、6–5 時責任度 1 都出自這裡。",
+    "zh-TW": "例 3.3 的十一位投票人、變數 X1…X11 與 O，以及責任度 11–0 時 1/6、6–5 時 1，都出自這裡。",
     "en": "The eleven voters, the variables X1…X11 and O, and the degrees of responsibility 1/6 at 11–0 and 1 at 6–5 are from Example 3.3."
    },
    "verified": true
