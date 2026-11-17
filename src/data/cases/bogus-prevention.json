@@ -1,0 +1,260 @@
+{
+  "id": "bogus-prevention",
+  "title": {
+    "zh-TW": "假阻止：刺客改變心意，保鏢仍加了解藥",
+    "en": "Bogus prevention: the assassin relents, the bodyguard adds the antidote anyway"
+  },
+  "subtitle": {
+    "zh-TW": "咖啡裡本來沒有毒，解藥沒有救到任何人，卻通過了只看方程式的檢驗。",
+    "en": "There was no poison in the coffee and the antidote saved no one, yet it passes a test that looks only at the equations."
+  },
+  "family": "actual",
+  "story": {
+    "zh-TW": "刺客身上帶著致命的毒藥，臨時改變心意，沒有下毒。保鏢不知道這件事，照常在咖啡裡加了解藥。被害人喝下咖啡，平安無事。",
+    "en": "An assassin carries a lethal poison but changes his mind at the last moment and does not use it. The bodyguard, unaware of this, adds an antidote to the coffee as usual. The victim drinks the coffee and is unharmed."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "刺客身上帶著致命的毒藥，臨時改變心意，沒有下毒。",
+        "variables": [
+          "A"
+        ]
+      },
+      {
+        "sentence": "保鏢不知道這件事，照常在咖啡裡加了解藥。",
+        "variables": [
+          "B"
+        ]
+      },
+      {
+        "sentence": "被害人喝下咖啡，平安無事。",
+        "variables": [
+          "VS"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "An assassin carries a lethal poison but changes his mind at the last moment and does not use it.",
+        "variables": [
+          "A"
+        ]
+      },
+      {
+        "sentence": "The bodyguard, unaware of this, adds an antidote to the coffee as usual.",
+        "variables": [
+          "B"
+        ]
+      },
+      {
+        "sentence": "The victim drinks the coffee and is unharmed.",
+        "variables": [
+          "VS"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "B=1",
+      "effect": "VS=1"
+    },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "咖啡裡本來就沒有毒，被害人的生命從頭到尾沒有受到威脅，解藥沒有救到任何人。",
+      "en": "There was no poison in the coffee, so the victim's life was never at risk and the antidote saved no one."
+    },
+    "agree": [
+      "butfor",
+      "hp-normality"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "A 表示刺客下毒，B 表示保鏢加解藥，被害人存活的條件是沒有毒，或有解藥（VS = max(1 − A, B)）。這組方程式與選言式森林大火同構，只要定義只看方程式，就會給出同樣的判斷：原始與更新版 HP 定義都判保鏢加解藥是原因，理由是「如果刺客下了毒，被害人就取決於解藥」。Hitchcock (2007) 與 Halpern、Hitchcock (2015) 因而把它當成「同構問題」的例子，並引入常態排序：下毒與加解藥都不是常態（A、B 的預設值為 0），見證世界（A = 1、B = 0）與實際世界（A = 0、B = 1）各自偏離常態，彼此不可比較，所以保鏢不是原因；代價是刺客沒下毒也不再是原因。修正版 HP 定義本身只接受實際值，判保鏢是原因的一部分（要與「刺客沒下毒」合起來），常態排序把這一點也取消。Halpern (2016) 另提一種不靠常態的建模：加入「毒被中和」變數 PN = A ∧ B。",
+    "en": "A stands for the assassin poisoning the coffee and B for the bodyguard adding the antidote; the victim survives if there is no poison or there is antidote (VS = max(1 − A, B)). These equations are isomorphic to those of the disjunctive forest fire, so any definition that looks only at the equations gives the same answer in both: the original and updated HP definitions call the antidote a cause, on the ground that if the assassin had poisoned the coffee, the victim's survival would depend on the antidote. Hitchcock (2007) and Halpern and Hitchcock (2015) present it as an instance of the problem of isomorphism and bring in a normality ordering: poisoning and adding antidote are both abnormal (A and B default to 0), so the witness world (A = 1, B = 0) and the actual world (A = 0, B = 1) are each abnormal in a different way and are incomparable, which makes the bodyguard a non-cause; the price is that the assassin's refraining is no longer a cause either. The modified HP definition by itself accepts only actual values and makes the antidote part of a cause (together with the assassin not poisoning); the normality ordering removes even that. Halpern (2016) also proposes a way to model the case without normality, by adding a variable PN = A ∧ B for the poison being neutralized."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Hitchcock, C. (2007). Prevention, preemption, and the principle of sufficient reason. The Philosophical Review, 116(4), 495–532.",
+      "key": "hitchcock2007prevention",
+      "role": "origin",
+      "pages": "p. 523 (Bogus Prevention: A = 0, B = 1, D = A & ~B)",
+      "note": {
+        "zh-TW": "Hitchcock 把這個案例歸功於 Hiddleston (2005, p. 31)，文中用 D 表示被害人死亡，D = A & ~B。本案採 Halpern 與 Hitchcock (2015) 的寫法，以 VS 表示存活。",
+        "en": "Hitchcock credits the case to Hiddleston (2005, p. 31) and writes D for the victim's death, D = A & ~B. This case follows Halpern and Hitchcock (2015) in using VS for survival."
+      },
+      "verified": true
+    },
+    {
+      "citation": "Halpern, J. Y., & Hitchcock, C. (2015). Graded causation and defaults. The British Journal for the Philosophy of Science, 66(2), 413–457.",
+      "key": "halpern2015graded",
+      "role": "treatment",
+      "pages": "p. 14 (Example 4.1) and pp. 28–29 (§7.4; arXiv 1309.1226 manuscript pagination)",
+      "note": {
+        "zh-TW": "方程式 VS = max(1 − A, B) 與常態假設（A、B 通常為 0）取自 §7.4。",
+        "en": "The equation VS = max(1 − A, B) and the normality assumption (A and B typically take the value 0) are from §7.4."
+      },
+      "verified": true
+    },
+    {
+      "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
+      "key": "halpern2016actual",
+      "role": "treatment",
+      "pages": "pp. 88–90 (Example 3.4.1)",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_A",
+        "label": {
+          "zh-TW": "刺客的意圖",
+          "en": "Assassin's resolve"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_B",
+        "label": {
+          "zh-TW": "保鏢的習慣",
+          "en": "Bodyguard's routine"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A",
+        "label": {
+          "zh-TW": "刺客下毒",
+          "en": "Assassin poisons the coffee"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "B",
+        "label": {
+          "zh-TW": "保鏢加解藥",
+          "en": "Bodyguard adds antidote"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "VS",
+        "label": {
+          "zh-TW": "被害人存活",
+          "en": "Victim survives"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "A": "U_A",
+      "B": "U_B",
+      "VS": "not A or B"
+    }
+  },
+  "context": {
+    "U_A": 0,
+    "U_B": 1
+  },
+  "normality": {
+    "A": 0,
+    "B": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "B=1",
+        "effect": "VS=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "B=1",
+        "effect": "VS=1"
+      },
+      "expected": "cause",
+      "note": "Witness: set A to 1; then survival depends on the antidote."
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "B=1",
+        "effect": "VS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "B=1",
+        "effect": "VS=1"
+      },
+      "expected": "part-of-cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "B=1",
+        "effect": "VS=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "A=0",
+        "effect": "VS=1"
+      },
+      "expected": "not-cause"
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "刺客下了毒",
+        "en": "The assassin poisons the coffee"
+      },
+      "interventions": {
+        "A": 1
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "刺客下了毒，保鏢沒加解藥",
+        "en": "Poison, no antidote"
+      },
+      "interventions": {
+        "A": 1,
+        "B": 0
+      }
+    }
+  ],
+  "layout": {
+    "A": [
+      0,
+      0
+    ],
+    "B": [
+      0,
+      1
+    ],
+    "VS": [
+      1,
+      0.5
+    ]
+  }
+}

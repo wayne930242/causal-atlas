@@ -1,0 +1,302 @@
+{
+  "id": "double-prevention-bomber",
+  "title": {
+    "zh-TW": "雙重阻止：小比擊落敵機，小蘇炸毀目標",
+    "en": "Double prevention: Billy shoots down the enemy, Suzy destroys the target"
+  },
+  "subtitle": {
+    "zh-TW": "小比阻止了敵機，敵機本來會阻止轟炸；小比與轟炸之間沒有直接的連結。",
+    "en": "Billy stops the enemy pilot, who would have stopped the bombing; nothing links Billy to the bombing directly."
+  },
+  "family": "actual",
+  "story": {
+    "zh-TW": "戰爭期間，小蘇駕駛轟炸機要去炸毀一座敵方目標，小比駕駛戰鬥機單獨為她護航。一架敵機出現，小比眼尖，立刻逼近扣下扳機，敵機起火墜落。小蘇的任務沒有受到任何干擾，照計畫炸毀了目標。小比若沒有開火，敵機就會閃過他，擊落小蘇，轟炸就不會成功。",
+    "en": "In wartime, Suzy flies a bomber to destroy an enemy target, and Billy flies a fighter as her only escort. An enemy plane appears; Billy spots it, closes in and pulls the trigger, and the enemy plane goes down in flames. Suzy's mission is undisturbed, and she destroys the target as planned. Had Billy not fired, the enemy pilot would have eluded him and shot Suzy down, and the bombing would not have happened."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "戰爭期間，小蘇駕駛轟炸機要去炸毀一座敵方目標，小比駕駛戰鬥機單獨為她護航。",
+        "variables": [
+          "SPS",
+          "BPT"
+        ]
+      },
+      {
+        "sentence": "一架敵機出現，小比眼尖，立刻逼近扣下扳機，敵機起火墜落。",
+        "variables": [
+          "BPT",
+          "LE"
+        ]
+      },
+      {
+        "sentence": "小蘇的任務沒有受到任何干擾，照計畫炸毀了目標。",
+        "variables": [
+          "LSS",
+          "SST",
+          "TD"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "In wartime, Suzy flies a bomber to destroy an enemy target, and Billy flies a fighter as her only escort.",
+        "variables": [
+          "SPS",
+          "BPT"
+        ]
+      },
+      {
+        "sentence": "An enemy plane appears; Billy spots it, closes in and pulls the trigger, and the enemy plane goes down in flames.",
+        "variables": [
+          "BPT",
+          "LE"
+        ]
+      },
+      {
+        "sentence": "Suzy's mission is undisturbed, and she destroys the target as planned.",
+        "variables": [
+          "LSS",
+          "SST",
+          "TD"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "BPT=1",
+      "effect": "TD=1"
+    },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "要是小比沒有開火，轟炸就不會成功；任務能成功，他應當分到一部分功勞。",
+      "en": "Had Billy not fired, the bombing would not have happened; he deserves part of the credit for the mission's success."
+    },
+    "agree": [
+      "butfor",
+      "hp-original",
+      "hp-updated",
+      "hp-modified"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型取自 Halpern 與 Pearl (2005) 例 4.4 的圖 6：BPT（小比扣扳機）阻止 LE（敵機閃過小比），LE 使 LSS（敵機擊落小蘇）成立，LSS 阻止 SST（小蘇向目標投彈），SST 使 TD（目標被炸毀）成立；SPS 是小蘇原本就打算轟炸的計畫。BPT 到 TD 是一條由兩次阻止串成的鏈：BPT = 1 使 LE = 0，LE = 0 使 LSS = 0，LSS = 0 使 SST 得以發生。這個結構不需要任何特別的反事實手段，這裡所有的反事實理論都判小比的射擊是轟炸成功的原因，單純的反事實依賴就夠了。HP 兩人也承認這個結論有不自然之處：照同一套定義，BPT = 1 也是 SST = 1 的原因，彷彿小比成了小蘇「本來就打算做」的事的原因，因此他們加上 SPS，讓小蘇的意圖也成為原因。爭議在於這類因果是否要求兩者之間有一條連續的物理過程：Hall (2004) 指出小比與小蘇相隔甚遠，兩人之間沒有任何物理連結，所以以「連結」為核心的理論傾向否認小比是原因；依賴為核心的理論（包括這裡所有的反事實定義）則承認。這個分歧是過程理論與依賴理論的分歧，引擎只能計算後者。",
+    "en": "The model is Figure 6 of Halpern and Pearl (2005, Ex. 4.4): BPT (Billy pulls the trigger) prevents LE (the enemy eludes Billy), LE brings about LSS (the enemy shoots Suzy), LSS prevents SST (Suzy shoots at the target), and SST brings about TD (target destroyed); SPS is Suzy's plan to attack the target all along. From BPT to TD is a chain of two preventions: BPT = 1 makes LE = 0, LE = 0 makes LSS = 0, and LSS = 0 lets SST occur. The structure needs no special counterfactual device, and every counterfactual theory here says Billy's shot is a cause of the bombing's success; plain but-for dependence suffices. Halpern and Pearl concede that the verdict has an odd side: by the same definition BPT = 1 is also a cause of SST = 1, as if Billy caused something Suzy planned to do anyway, so they add SPS to make Suzy's intention a cause as well. The dispute is whether such causation requires a continuous physical process between the two: Hall (2004) stresses that Billy and Suzy are far apart and no physical connection links them, so theories built on connection tend to deny that Billy is a cause, while dependence theories, including every counterfactual definition used here, accept it. That is a dispute between process and dependence theories, and the engine can compute only the latter."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Hall, N. (2004). Two concepts of causation. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
+      "key": "hall2004two",
+      "role": "origin",
+      "pages": "pp. 10–11 (§4.1 Example, author manuscript pagination)",
+      "note": {
+        "zh-TW": "Hall (2004) §4.1 提出 Suzy 與 Billy 的轟炸機案例，並稱之為雙重阻止。",
+        "en": "Hall (2004, §4.1) introduces the bomber example with Suzy and Billy and calls it double prevention."
+      },
+      "verified": true
+    },
+    {
+      "citation": "Halpern, J. Y., & Pearl, J. (2005). Causes and explanations: A structural-model approach. Part I: Causes. British Journal for the Philosophy of Science, 56(4), 843–887.",
+      "key": "halpern2005causes",
+      "role": "treatment",
+      "pages": "pp. 22–23 (Example 4.4, arXiv cs/0011012v3 manuscript pagination)",
+      "note": {
+        "zh-TW": "變數 BPT、LE、LSS、SST、TD 與 SPS 取自例 4.4 的圖 6；方程式是依文字描述的因果鏈寫出（文中只畫圖）。",
+        "en": "The variables BPT, LE, LSS, SST, TD and SPS are from Figure 6 of Ex. 4.4; the equations are written from the described causal chain (the paper gives only the graph)."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_BPT",
+        "label": {
+          "zh-TW": "小比的反應",
+          "en": "Billy's reaction"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_SPS",
+        "label": {
+          "zh-TW": "小蘇的任務安排",
+          "en": "Suzy's orders"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BPT",
+        "label": {
+          "zh-TW": "小比扣扳機",
+          "en": "Billy pulls the trigger"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "LE",
+        "label": {
+          "zh-TW": "敵機閃過小比",
+          "en": "Enemy eludes Billy"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "LSS",
+        "label": {
+          "zh-TW": "敵機擊落小蘇",
+          "en": "Enemy shoots Suzy"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SPS",
+        "label": {
+          "zh-TW": "小蘇打算轟炸",
+          "en": "Suzy plans to bomb"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SST",
+        "label": {
+          "zh-TW": "小蘇向目標投彈",
+          "en": "Suzy bombs the target"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "TD",
+        "label": {
+          "zh-TW": "目標被炸毀",
+          "en": "Target destroyed"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "BPT": "U_BPT",
+      "LE": "not BPT",
+      "LSS": "LE",
+      "SPS": "U_SPS",
+      "SST": "SPS and not LSS",
+      "TD": "SST"
+    }
+  },
+  "context": {
+    "U_BPT": 1,
+    "U_SPS": 1
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "BPT=1",
+        "effect": "TD=1"
+      },
+      "expected": "cause",
+      "note": "Without Billy's shot, the enemy shoots Suzy down."
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "BPT=1",
+        "effect": "TD=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "BPT=1",
+        "effect": "TD=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "BPT=1",
+        "effect": "TD=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "SPS=1",
+        "effect": "TD=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "BPT=1",
+        "effect": "SST=1"
+      },
+      "expected": "cause",
+      "note": "The odd consequence Halpern and Pearl note."
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "小比沒開火",
+        "en": "Billy does not fire"
+      },
+      "interventions": {
+        "BPT": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "小比沒開火，敵機被別人攔下",
+        "en": "Billy does not fire; the enemy is stopped otherwise"
+      },
+      "interventions": {
+        "BPT": 0,
+        "LE": 0
+      }
+    }
+  ],
+  "layout": {
+    "BPT": [
+      0,
+      0
+    ],
+    "LE": [
+      1,
+      0
+    ],
+    "LSS": [
+      2,
+      0
+    ],
+    "SPS": [
+      2,
+      1
+    ],
+    "SST": [
+      3,
+      0.5
+    ],
+    "TD": [
+      4,
+      0.5
+    ]
+  }
+}
