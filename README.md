@@ -56,7 +56,25 @@ shown inline, context values or priors, normality defaults, and node positions b
 keys). It starts from any bundled case or a blank model, exports and imports JSON validated by
 `modelDocSchema` (a whole case file also imports), and shares the model in the URL hash as
 `#model=1.<base64url(deflate-raw(JSON))>`; the leading `1` is the format version. Props: `initial`
-(case id or `blank`), `hash`, `shareHref(value)`, `exportUrl`, `locale`.
+(case id, `extraModels` id or `blank`), `hash`, `shareHref(value)`, `exportUrl`, `locale`, `caseLinks`,
+`extraModels`.
+
+The model list groups the bundled cases by family and the host's models by group, with a filter box
+(Enter loads the first match, Escape clears it). Choosing a case shows a panel above the model: title,
+story, intuition, what the model encodes, a table of each verdict in the case file with the engine's
+result beside it, and the sources with their pages (URLs and DOIs in a citation become links).
+
+```tsx
+<ModelEditor
+  caseLinks={{ 'rock-throwing': [{ title: '形式 08：先發制人', href: '/blog/formal-08/' }] }}
+  extraModels={[{ id: 'm08-rock-coarse', title: '丟石頭的粗模型', group: '第 8 講', doc, links: [...] }]}
+/>
+```
+
+- `caseLinks`: per case id, links listed in its panel under 「講義中用到這個案例」.
+- `extraModels`: `{ id, title, group?, doc, links? }`; `title` and `group` are a string or
+  `{ 'zh-TW', en }`, `doc` is a model document as `CausalPlayground` takes it. Choosing one loads the
+  document (an invalid one starts blank and shows its problem codes) and shows its title and `links`.
 
 A custom model need not go through the editor. `CausalPlayground`, `ProbabilityPanel` and `WorldLanes`
 take `doc` (a `modelDocSchema` value, e.g. one exported from the editor) instead of `caseId`;

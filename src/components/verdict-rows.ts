@@ -1,9 +1,11 @@
 import type { LoadedCase } from '../data/load.ts'
+import { checkVerdict } from '../data/load.ts'
+import type { CaseVerdict } from '../data/schema.ts'
 import type { Assignment, CausalTheory, CausalVerdict, Value } from '../engine/index.ts'
 import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Messages } from './i18n.ts'
-import { assignmentText, bracketText, flipValue, label } from './view-model.ts'
+import { assignmentText, bracketText, flipValue, label, probText } from './view-model.ts'
 
 /** Verdict rows computed by the engine, with short plain-language sentences in the table's language. */
 
@@ -253,4 +255,94 @@ export function originSources(t: Messages, c: LoadedCase): string {
 /** Full citations of the case's origin sources, for the academic export's citation reminder. */
 export function originCitations(c: LoadedCase): string[] {
   return c.data.sources.filter((s) => s.role === 'origin').map((s) => s.citation)
+}
+
+/** One row of the editor's verdict table: what the case file records and what the engine computes. */
+export interface VerdictTableRow {
+  readonly theory: CaseVerdict['theory']
+  readonly name: string
+  /** The question; typeset whole when `formula`, else as a sentence naming ids. */
+  readonly query: string
+  readonly formula: boolean
+  readonly expected: string
+  readonly engine: string
+  /** Raw values for data attributes: the expected value and the engine's, as `checkVerdict` gives them. */
+  readonly rawExpected: string
+  readonly rawEngine: string
+  readonly ok: boolean
+}
+
+const numberText = (x: number): string => (Number.isInteger(x) ? String(x) : x.toFixed(2))
+
+/** Every verdict of the case, recomputed by the engine, in the case file's order. */
+export function verdictTable(t: Messages, c: LoadedCase): VerdictTableRow[] {
+  const e = t.editor
+  const decision = c.decision
+  let decided: ReturnType<typeof evaluateDecision> | undefined
+  const act = (a: Value): string => `${decision?.act ?? ''}=${formatValue(a)}`
+  return c.data.verdicts.map((v): VerdictTableRow => {
+    let name: string
+    let query: string
+    let formula = true
+    let show: (value: Value) => string = (value) => (typeof value === 'number' ? numberText(value) : formatValue(value))
+    switch (v.theory) {
+      case 'butfor':
+      case 'hp-original':
+      case 'hp-updated':
+      case 'hp-modified':
+      case 'hp-normality':
+        name = t.theory[v.theory]
+        query = `${causeText(v.query.cause)} ⇒ ${v.query.effect}`
+        show = (value) => t.verdict[value as CausalVerdict] ?? String(value)
+        break
+      case 'probability': {
+        const q = v.query
+        const cond = [q.do === undefined ? '' : `do(${assignmentText(q.do)})`, q.given ?? ''].filter((s) => s !== '')
+        name = t.probability
+        query = `P(${q.event}${cond.length === 0 ? '' : ` | ${cond.join(', ')}`})`
+        show = (value) => (typeof value === 'number' ? probText(value) : String(value))
+        break
+      }
+      case 'counterfactual':
+        name = e.counterfactual
+        query = `P(${bracketText(v.query.do)}(${v.query.event})${v.query.evidence === undefined ? '' : ` | ${v.query.evidence}`})`
+        show = (value) => (typeof value === 'number' ? probText(value) : String(value))
+        break
+      case 'edt':
+      case 'cdt': {
+        name = t.decisionName[v.theory]
+        formula = false
+        const q = v.query
+        if ('choice' in q) {
+          query = e.bestAct(q.choice)
+          show = act
+        } else {
+          query = e.expectedUtilityOf(act(q.expectedUtility))
+        }
+        break
+      }
+    }
+    try {
+      const check = checkVerdict(c, v)
+      let engine = show(check.actual)
+      if ((v.theory === 'edt' || v.theory === 'cdt') && 'choice' in v.query && decision !== undefined && c.prior !== undefined) {
+        decided ??= evaluateDecision(c.model, c.prior, decision)
+        const choice = v.theory === 'edt' ? decided.edtChoice : decided.cdtChoice
+        if (choice.length !== 1) engine = e.tie(t.list(choice.map(act)))
+      }
+      return {
+        theory: v.theory,
+        name,
+        query,
+        formula,
+        expected: show(check.expected),
+        engine,
+        rawExpected: String(check.expected),
+        rawEngine: String(check.actual),
+        ok: check.ok,
+      }
+    } catch {
+      return { theory: v.theory, name, query, formula, expected: show(v.expected), engine: e.verdictTable.failed, rawExpected: String(v.expected), rawEngine: '', ok: false }
+    }
+  })
 }

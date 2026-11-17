@@ -2,12 +2,15 @@ import type { ChangeEvent } from 'react'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { caseIds, getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
-import { decodeShare, encodeShare, parseModelJson, schemaProblems, shareFromHash } from '../data/model-doc.ts'
+import { caseToDoc, decodeShare, encodeShare, parseModelJson, sameModel, schemaProblems, shareFromHash } from '../data/model-doc.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import { modelDocSchema } from '../data/schema.ts'
 import type { Assignment, Problem, Value } from '../engine/index.ts'
 import { coerceToDomain } from '../engine/index.ts'
+import { CaseInfo, ModelInfo } from './CaseInfo.tsx'
 import { saveFile } from './download.ts'
+import type { ExtraModel, LessonLink } from './editor/catalog.ts'
+import { catalog, modelKey, textIn } from './editor/catalog.ts'
 import type { Draft, DraftMode, DraftVariable } from './editor/draft.ts'
 import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './editor/draft.ts'
 import type { Locale, Messages } from './i18n.ts'
@@ -15,6 +18,7 @@ import { LocaleScope, draftIssueMessage, errorMessage, problemMessage, useMessag
 import type { ModelWorld } from './model-state.ts'
 import { solve } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
+import { ModelPicker } from './ModelPicker.tsx'
 import type { UiNotation } from './notation.ts'
 import { Disclosure, DocProblems, Segmented } from './parts.tsx'
 import { Formula, Ident, Rich } from './typeset.tsx'
@@ -23,7 +27,7 @@ import { isIdent } from './typeset-text.ts'
 export interface ModelEditorProps {
   /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
   readonly defaultNotation?: UiNotation
-  /** Starting model: a bundled case id or `blank`. Default `rock-throwing`. */
+  /** Starting model: a bundled case id, an `extraModels` id, or `blank`. Default `rock-throwing`. */
   readonly initial?: string
   /**
    * Starting model as a document (a `modelDocSchema` value); wins over `initial`, so the editor
@@ -40,14 +44,36 @@ export interface ModelEditorProps {
   readonly exportUrl?: string
   /** Interface language; also the title a bundled case starts with. Default: the surrounding LocaleProvider's, else zh-TW. */
   readonly locale?: Locale
+  /** Links per bundled case id, listed in the case panel as 講義中用到這個案例 (e.g. the lessons that use it). */
+  readonly caseLinks?: Readonly<Record<string, readonly LessonLink[]>>
+  /**
+   * The host's own models (e.g. lesson models), listed after the bundled cases under their `group`.
+   * Choosing one loads its `doc` (validated; an invalid one starts blank and shows its problems) and
+   * shows its title and `links` above the model.
+   */
+  readonly extraModels?: readonly ExtraModel[]
 }
 
-function startDraft(initial: string, t: Messages, initialDoc?: ModelDoc): { readonly draft: Draft; readonly problems: readonly Problem[] } {
-  if (initialDoc !== undefined) {
-    const parsed = modelDocSchema.safeParse(initialDoc, { reportInput: true })
-    if (parsed.success) return { draft: draftFromImport(parsed.data), problems: [] }
-    return { draft: blankDraft(t.editor.defaultTitle), problems: schemaProblems(parsed.error) }
-  }
+export type { ExtraModel, LessonLink } from './editor/catalog.ts'
+
+interface Start {
+  readonly draft: Draft
+  readonly problems: readonly Problem[]
+  /** The extra model it started from. */
+  readonly picked?: string
+}
+
+/** A draft from a host model's document; an invalid document gives a blank draft and its problems. */
+function startFromDoc(doc: ModelDoc, t: Messages, picked?: string): Start {
+  const parsed = modelDocSchema.safeParse(doc, { reportInput: true })
+  if (parsed.success) return { draft: draftFromImport(parsed.data), problems: [], picked }
+  return { draft: blankDraft(t.editor.defaultTitle), problems: schemaProblems(parsed.error), picked }
+}
+
+function startDraft(initial: string, t: Messages, extras: readonly ExtraModel[], initialDoc?: ModelDoc): Start {
+  if (initialDoc !== undefined) return startFromDoc(initialDoc, t)
+  const extra = caseIds.includes(initial) ? undefined : extras.find((m) => m.id === initial)
+  if (extra !== undefined) return startFromDoc(extra.doc, t, extra.id)
   return { draft: startFromCase(initial, t), problems: [] }
 }
 
@@ -88,11 +114,26 @@ export function ModelEditor({ locale, ...props }: ModelEditorProps) {
   )
 }
 
-function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, exportUrl, defaultNotation }: Omit<ModelEditorProps, 'locale'>) {
+const NO_EXTRAS: readonly ExtraModel[] = []
+
+function EditorBody({
+  initial = 'rock-throwing',
+  initialDoc,
+  hash,
+  shareHref,
+  exportUrl,
+  defaultNotation,
+  caseLinks,
+  extraModels = NO_EXTRAS,
+}: Omit<ModelEditorProps, 'locale'>) {
   const t = useMessages()
   const e = t.editor
-  const [start] = useState(() => startDraft(initial, t, initialDoc))
+  const [start] = useState(() => startDraft(initial, t, extraModels, initialDoc))
   const [draft, setDraft] = useState<Draft>(start.draft)
+  // The extra model on screen, if one was chosen; any other way of replacing the draft clears it.
+  const [picked, setPicked] = useState<string | undefined>(start.picked)
+  // Problems of the document the editor started from or the extra model chosen.
+  const [docProblems, setDocProblems] = useState<readonly Problem[]>(start.problems)
   const [interventions, setInterventions] = useState<Assignment>({})
   const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
   // What reading the share link went wrong with; worded at render, so it follows the language.
@@ -137,6 +178,8 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
         if (result.ok) {
           setDraft(draftFromImport(result.doc))
           setInterventions({})
+          setPicked(undefined)
+          setDocProblems([])
           setLoadErrors([])
         } else setLoadErrors(result.errors.map((p) => ({ problem: p })))
       })
@@ -151,7 +194,28 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
   const replace = (next: Draft): void => {
     setDraft(next)
     setInterventions({})
+    setPicked(undefined)
+    setDocProblems([])
   }
+  const pick = (key: string): void => {
+    const extra = extraModels.find((m) => modelKey(m.id) === key)
+    if (extra !== undefined) {
+      const next = startFromDoc(extra.doc, t, extra.id)
+      setDraft(next.draft)
+      setInterventions({})
+      setPicked(extra.id)
+      setDocProblems(next.problems)
+      return
+    }
+    replace(key === 'blank' || !caseIds.includes(key) ? blankDraft(e.defaultTitle) : draftFromCase(getCase(key), t.locale))
+  }
+  const groups = useMemo(() => catalog(t, extraModels), [t, extraModels])
+  const pickedModel = picked === undefined ? undefined : extraModels.find((m) => m.id === picked)
+  const caseId = picked === undefined && draft.from !== undefined && caseIds.includes(draft.from) ? draft.from : undefined
+  const edited = useMemo(
+    () => caseId !== undefined && (compiled.doc === undefined || !sameModel(compiled.doc, caseToDoc(getCase(caseId), t.locale))),
+    [caseId, compiled.doc, t.locale],
+  )
   const update = (patch: Partial<Draft>): void => setDraft((d) => ({ ...d, ...patch }))
   const setVariable = (key: string, patch: Partial<DraftVariable>): void =>
     setDraft((d) => {
@@ -226,33 +290,16 @@ function EditorBody({ initial = 'rock-throwing', initialDoc, hash, shareHref, ex
   return (
     <div className="ca-root not-prose ca-editor" lang={t.locale}>
       <div className="ca-editor-bar">
-        <label className="ca-field">
-          <span className="ca-field-label">{e.startFrom}</span>
-          <select
-            aria-label={e.startFrom}
-            value={draft.from ?? ''}
-            onChange={(ev) => {
-              const id = ev.currentTarget.value
-              if (id === '') return
-              replace(id === 'blank' ? blankDraft(e.defaultTitle) : draftFromCase(getCase(id), t.locale))
-            }}
-          >
-            <option value="">{e.chooseCase}</option>
-            <option value="blank">{e.blank}</option>
-            {caseIds.map((id) => (
-              <option key={id} value={id}>
-                {getCase(id).data.title[t.locale]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ModelPicker groups={groups} value={pickedModel !== undefined ? modelKey(pickedModel.id) : (caseId ?? '')} onPick={pick} />
         <label className="ca-field ca-field-grow">
           <span className="ca-field-label">{e.title}</span>
           <input aria-label={e.title} value={draft.title} onChange={(ev) => update({ title: ev.currentTarget.value })} />
         </label>
       </div>
 
-      {start.problems.length > 0 && <DocProblems problems={start.problems} />}
+      {docProblems.length > 0 && <DocProblems problems={docProblems} />}
+      {caseId !== undefined && <CaseInfo c={getCase(caseId)} links={caseLinks?.[caseId]} edited={edited} />}
+      {pickedModel !== undefined && <ModelInfo title={textIn(pickedModel.title, t.locale)} links={pickedModel.links} />}
       {loadErrors.length > 0 && (
         <div className="ca-editor-errors" role="alert">
           <p>{e.shareUnreadable}</p>

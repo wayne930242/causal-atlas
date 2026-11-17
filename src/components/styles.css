@@ -1496,3 +1496,129 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ---- model editor: model list and case panel ---- */
+
+.ca-editor-pick {
+  display: flex;
+  flex: 2 1 420px;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: end;
+}
+
+.ca-editor-pick select {
+  width: 100%;
+}
+
+.ca-editor-case {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+}
+
+.ca-editor-case header {
+  display: grid;
+  gap: 4px;
+}
+
+.ca-editor-case-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.ca-editor-case-side {
+  display: grid;
+  gap: 20px;
+}
+
+.ca-editor-intuition {
+  margin-top: 16px;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.ca-editor-intuition-text {
+  margin-left: 0.5em;
+}
+
+.ca-editor-verdicts,
+.ca-editor-sources,
+.ca-editor-case-links {
+  display: grid;
+  gap: 8px;
+}
+
+.ca-table-wrap {
+  overflow-x: auto;
+}
+
+.ca-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ca-table :where(th, td) {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ca-table thead th {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ca-table tbody th {
+  font-weight: 600;
+}
+
+.ca-table td.ca-mono {
+  white-space: nowrap;
+}
+
+.ca-table tr[data-ok="false"] td {
+  color: var(--accent);
+}
+
+.ca-table-ok {
+  text-align: center;
+}
+
+.ca-editor-sources ul,
+.ca-editor-case-links ul {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ca-editor-sources li {
+  overflow-wrap: anywhere;
+}
+
+.ca-editor-pages {
+  margin-left: 0.5em;
+  font-weight: 600;
+}
+
+.ca-editor-source-note {
+  display: block;
+  margin-top: 2px;
+}
+
+@media (max-width: 760px) {
+  .ca-editor-case {
+    padding: 14px;
+  }
+
+  .ca-editor-case-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

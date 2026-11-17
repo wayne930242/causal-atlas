@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react'
 import { getCase } from '../data/index.ts'
-import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
-import type { Locale, Messages } from './i18n.ts'
+import type { Locale } from './i18n.ts'
 import { LocaleScope, useMessages } from './i18n.ts'
 import { useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
 import { Arrow, Progress } from './parts.tsx'
-import { Ident, Rich } from './typeset.tsx'
+import { Story } from './Story.tsx'
+import { Rich } from './typeset.tsx'
 import { ProbabilityPanelFor } from './ProbabilityPanel.tsx'
 import { Verdicts } from './Verdicts.tsx'
 import { intuitionSummary, seeDoPair, shortSources } from './verdict-rows.ts'
@@ -34,27 +34,6 @@ export interface CasePageProps {
 }
 
 const TOTAL = 4
-
-interface StorySentence {
-  readonly text: string
-  readonly tags: readonly string[]
-}
-
-/** The story in paragraphs of two sentences; a sentence named in story_tags carries its variable ids. */
-function storyParagraphs(t: Messages, c: LoadedCase): StorySentence[][] {
-  const tags = c.data.story_tags?.[t.locale] ?? []
-  return t
-    .sentences(c.data.story[t.locale])
-    .map((s) => s.trim())
-    .filter((s) => s !== '')
-    .reduce<StorySentence[][]>((paras, text, i) => {
-      const own = tags.filter((t) => text.includes(t.sentence.trim())).flatMap((t) => t.variables)
-      const sentence = { text, tags: [...new Set(own)] }
-      if (i % 2 === 0) paras.push([sentence])
-      else paras[paras.length - 1].push(sentence)
-      return paras
-    }, [])
-}
 
 /** Each step opens on the notation that shows its point: logic, then arithmetic under do(), then [X←x]. */
 function notationFor(step: number, fixed?: UiNotation): UiNotation {
@@ -145,26 +124,7 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
       </p>
       <div className="ca-case-body">
         <div className="ca-case-left">
-          <section className="ca-story" aria-label={t.story}>
-            {storyParagraphs(t, c).map((p, i) => (
-              <p key={i}>
-                {p.map((s) => (
-                  <span key={s.text} className="ca-story-sentence">
-                    <Rich text={s.text} ids={c.model.byId} narrative />
-                    {s.tags.length > 0 && (
-                      <span className="ca-story-tags" aria-label={t.storyTags(t.list(s.tags))}>
-                        {s.tags.map((id) => (
-                          <span key={id} className="ca-story-tag ca-mono" aria-hidden="true">
-                            <Ident id={id} />
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </p>
-            ))}
-          </section>
+          <Story c={c} />
           {step >= 2 && (
             <section className="ca-explain" aria-label={t.explanation} data-reveal="explanation">
               <p>
