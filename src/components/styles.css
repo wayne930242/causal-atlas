@@ -650,6 +650,33 @@
   margin-bottom: 32px;
 }
 
+/* Embedded in an article (heading={false}): frame the case so its story
+   reads as a separate figure, not as the host's own prose. */
+.ca-case.is-embedded {
+  padding: 0 24px 24px;
+  border: 1px solid var(--border);
+  background: var(--ca-soft);
+}
+
+.ca-case-caption {
+  margin: 0 -24px 24px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--muted-foreground);
+}
+
+.ca-case-caption-title {
+  color: var(--foreground);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.ca-case.is-embedded .ca-story {
+  font-size: 15px;
+}
+
 .ca-case-body {
   display: grid;
   grid-template-columns: minmax(0, 552fr) minmax(0, 744fr);
@@ -1080,6 +1107,15 @@
 /* ---- narrow screens ---- */
 
 @media (max-width: 760px) {
+  .ca-case.is-embedded {
+    padding: 0 14px 16px;
+  }
+
+  .ca-case-caption {
+    margin: 0 -14px 16px;
+    padding: 8px 14px;
+  }
+
   .ca-case-body {
     display: flex;
     flex-direction: column;

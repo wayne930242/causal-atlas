@@ -175,3 +175,13 @@ describe('WorldLanes', () => {
     expect(container.querySelector('[data-diff-cell="BS"]')?.getAttribute('data-diff-kind')).toBe('same')
   })
 })
+
+describe('CasePage embedded', () => {
+  it('frames itself with a caption when heading is off', () => {
+    const { container } = render(<CasePage caseId="gardener-queen" heading={false} />)
+    const root = container.querySelector('article.ca-case')
+    expect(root?.classList.contains('is-embedded')).toBe(true)
+    expect(container.querySelector('.ca-case-caption')?.textContent).toContain('園丁')
+    expect(container.querySelector('.ca-case-head')).toBeNull()
+  })
+})

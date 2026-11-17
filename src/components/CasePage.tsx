@@ -109,7 +109,18 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
   const notes = stepNote()
   const rightEmpty = step === 1
   return (
-    <article className="ca-root not-prose ca-case" data-case={c.data.id} data-step={step} lang={t.locale}>
+    <article
+      className={`ca-root not-prose ca-case${heading ? '' : ' is-embedded'}`}
+      data-case={c.data.id}
+      data-step={step}
+      lang={t.locale}
+    >
+      {!heading && (
+        <p className="ca-case-caption ca-mono">
+          CASE <span aria-hidden="true">·</span> {t.family[c.data.family]} <span aria-hidden="true">·</span>{' '}
+          <span className="ca-case-caption-title">{c.data.title[t.locale]}</span>
+        </p>
+      )}
       {heading && (
         <header className="ca-case-head">
           <p className="ca-kicker ca-mono">
