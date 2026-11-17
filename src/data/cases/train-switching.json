@@ -80,8 +80,8 @@
     ]
   },
   "explanation": {
-    "zh-TW": "同一個事件在模型裡出現兩次，各自代表一種建模。粗略模型只有 F（扳道）、T（走哪條軌）、A（抵站）：不論 T 是哪一個值，A 都是 1，所以所有理論都判扳道不是抵站的原因，只是走哪條軌的原因（Halpern 與 Pearl 2005 例 5.4；Halpern 2016 例 2.3.6）。細緻模型改用 LB、RB 記錄左右軌是否被堵住，抵站與否取決於火車走的那一條有沒有被堵（AB = F·¬LB ∨ ¬F·¬RB）。這時「左軌被堵」成為可以想像的異常情境：在這個情境下，扳道決定了火車到不到站，因此原始與更新版 HP 定義判扳道是抵站的原因；修正版 HP 定義只接受實際值，扳道單獨不是原因，只算原因的一部分，要與「右軌沒被堵」合起來才成為一個原因；加上常態排序後連這個部分原因的身分也沒有了（Halpern 2016 例 3.4.3 的說法是扳道不是原因，引擎另外算出修正版下它屬於部分原因）。Halpern 與 Pearl (2005) 自己用的是 LT、RT 兩個變數（火車走了左軌／右軌），也得到「是原因」的結論，並認為表示法的改變就是故事的改變。",
-    "en": "The same event appears twice in the model, once per way of modeling it. The coarse model has only F (flip), T (track) and A (arrival): A is 1 whatever the value of T, so every theory says the flip is not a cause of arrival, only of which track was taken (Halpern and Pearl 2005, Ex. 5.4; Halpern 2016, Ex. 2.3.6). The fine model records with LB and RB whether the left and right tracks are blocked, and arrival depends on whether the track actually taken is free (AB = F·¬LB ∨ ¬F·¬RB). A blocked left track is then an imaginable abnormal situation, in which the flip decides whether the train arrives; so the original and updated HP definitions call the flip a cause of arrival. The modified definition accepts only actual values: the flip alone is not a cause, only part of one, which it forms together with \"the right track is not blocked\"; adding a normality ordering removes even that (Halpern 2016, Ex. 3.4.3 says the flip is not a cause; the engine additionally finds that under the modified definition it is part of a cause). Halpern and Pearl (2005) themselves used two variables LT and RT (the train is on the left or right track), reached the verdict \"cause\" as well, and held that a change of representation is a change of story."
+    "zh-TW": "同一個事件在模型裡出現兩次，各自代表一種建模。粗略模型只有 F（扳道）、T（走哪條軌）、A（抵站）：不論 T 是哪一個值，A 都是 1，所以所有理論都判扳道不是抵站的原因，只是走哪條軌的原因（Halpern 與 Pearl 2005 例 5.4；Halpern 2016 例 2.3.6）。細緻模型改用 LB、RB 記錄左右軌是否被堵住，抵站與否取決於火車走的那一條有沒有被堵（扳道走右軌、不扳走左軌：AB = F·¬RB ∨ ¬F·¬LB）。這時「左軌被堵」成為可以想像的異常情境：在這個情境下，扳道決定了火車到不到站，因此原始與更新版 HP 定義判扳道是抵站的原因；修正版 HP 定義只接受實際值，扳道單獨不是原因，只算原因的一部分，要與「左軌（沒走的那條）沒被堵」合起來才成為一個原因；加上常態排序後連這個部分原因的身分也沒有了。定義 2.2.1 本身就讓 F=1 ∧ LB=0 成為原因，所以扳道是原因的一部分；Halpern 2016（例 3.4.3）只討論 F=1 單獨是不是原因（比較他在 p. 88 對假性阻止的說法：保鑣下解藥不是原因，但是原因的一部分）。Halpern 與 Pearl (2005) 自己用的是 LT、RT 兩個變數（火車走了左軌／右軌），也得到「是原因」的結論，並認為表示法的改變就是故事的改變。",
+    "en": "The same event appears twice in the model, once per way of modeling it. The coarse model has only F (flip), T (track) and A (arrival): A is 1 whatever the value of T, so every theory says the flip is not a cause of arrival, only of which track was taken (Halpern and Pearl 2005, Ex. 5.4; Halpern 2016, Ex. 2.3.6). The fine model records with LB and RB whether the left and right tracks are blocked, and arrival depends on whether the track actually taken is free (the flip sends the train right, no flip sends it left: AB = F·¬RB ∨ ¬F·¬LB). A blocked left track is then an imaginable abnormal situation, in which the flip decides whether the train arrives; so the original and updated HP definitions call the flip a cause of arrival. The modified definition accepts only actual values: the flip alone is not a cause, only part of one, which it forms together with \"the left (untaken) track is not blocked\"; adding a normality ordering removes even that. Def. 2.2.1 itself makes F=1 ∧ LB=0 a cause, so the flip is part of a cause; Halpern 2016 (Ex. 3.4.3) discusses only whether F=1 alone is a cause (compare his bogus-prevention remark, p. 88: the bodyguard's antidote is not a cause but is part of one). Halpern and Pearl (2005) themselves used two variables LT and RT (the train is on the left or right track), reached the verdict \"cause\" as well, and held that a change of representation is a change of story."
   },
   "copy_status": {
     "zh-TW": "draft",
@@ -103,10 +103,10 @@
       "citation": "Halpern, J. Y. (2016). Actual Causality. MIT Press.",
       "key": "halpern2016actual",
       "role": "treatment",
-      "pages": "pp. 38–39 (Example 2.3.6), p. 90 (Example 3.4.3)",
+      "pages": "pp. 38–39 (Example 2.3.6), p. 88, p. 90 (Example 3.4.3)",
       "note": {
-        "zh-TW": "本案的 LB、RB 方程式取自例 2.3.6：A = (F ∧ ¬LB) ∨ (¬F ∧ ¬RB)。",
-        "en": "The LB and RB equation of this case is taken from Ex. 2.3.6: A = (F ∧ ¬LB) ∨ (¬F ∧ ¬RB)."
+        "zh-TW": "本案的 LB、RB 方程式改編自例 2.3.6，刻意與書上印的 A = (F ∧ ¬LB) ∨ (¬F ∧ ¬RB) 不同：書中故事讓扳道把火車送上右軌，印出的方程式卻送上左軌，見證句「LB = 1」也與該方程式矛盾；這裡改成 AB = (F ∧ ¬RB) ∨ (¬F ∧ ¬LB)，讓方程式、故事與見證一致。",
+        "en": "The LB and RB equation is adapted from Ex. 2.3.6 and deliberately departs from the printed A = (F ∧ ¬LB) ∨ (¬F ∧ ¬RB): the book's story sends the train right when the switch is flipped, but the printed equation sends it left, and its witness sentence \"LB = 1\" contradicts that equation. Here AB = (F ∧ ¬RB) ∨ (¬F ∧ ¬LB), so equation, story and witness agree."
       },
       "verified": true
     },
@@ -208,7 +208,7 @@
       "A": "T or not T",
       "LB": "U_LB",
       "RB": "U_RB",
-      "AB": "(F and not LB) or (not F and not RB)"
+      "AB": "(F and not RB) or (not F and not LB)"
     }
   },
   "context": {
@@ -307,7 +307,7 @@
     {
       "theory": "hp-modified",
       "query": {
-        "cause": "F=1 and RB=0",
+        "cause": "F=1 and LB=0",
         "effect": "AB=1"
       },
       "expected": "cause"

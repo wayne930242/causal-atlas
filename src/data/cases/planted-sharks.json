@@ -36,8 +36,8 @@
     "agree": ["butfor", "hp-original", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "在鯊魚案例的模型上加一個變數 R：昨天放了鯊魚（外生，實際為 1），鯊魚在水裡就是 R（SK = R）。路人只在水裡沒有鯊魚時才會下水（J = ¬SK），因此今天他沒有下水（J = 0）。孩子獲救要求下水而且沒有鯊魚（SV = J·¬SK），溺斃就是沒有獲救（DR = ¬SV）。Sartorio 的論證是：責任經由因果傳遞，放鯊魚是孩子死亡的原因，而今天不下水不是，因為下水也救不了。引擎證實前半：R = 1 是 DR = 1 的 but-for 原因。後半在 but-for 下成立，但原定義的 HP 允許把 SK 設成 0，會把「沒下水」也算成原因。本模型的方程式與變數是依故事擬定的。",
-    "en": "The model extends the Sharks model with R, releasing the sharks yesterday (exogenous, actually 1); the sharks are in the water exactly when R holds (SK = R). The bystander enters the water only when there are no sharks (J = ¬SK), so today he does not (J = 0). The child is saved only if he jumps in and there are no sharks (SV = J·¬SK), and drowns if not saved (DR = ¬SV). Sartorio's argument is that responsibility transmits through causation: releasing the sharks is a cause of the death, while today's staying out is not, since jumping in would not have helped. The engine confirms the first half: R = 1 is a but-for cause of DR = 1. The second half holds under but-for, but the original HP definition may set SK to 0 and so counts staying out as a cause as well. The variables and equations are built from the story here; the literature gives no equations."
+    "zh-TW": "在鯊魚案例的模型上加一個變數 R：昨天放了鯊魚（外生，實際為 1），鯊魚在水裡就是 R（SK = R）。路人只在水裡沒有鯊魚時才會下水（J = ¬SK），因此今天他沒有下水（J = 0）。孩子獲救要求下水而且沒有鯊魚（SV = J·¬SK），溺斃就是沒有獲救（DR = ¬SV）。Sartorio 的論證是：責任經由因果傳遞，放鯊魚是孩子死亡的原因，而今天不下水不是，因為下水也救不了。引擎證實前半：R = 1 是 DR = 1 的 but-for 原因。後半在 but-for 下成立，但原定義的 HP 允許撤回放鯊魚（R = 0），鯊魚就不在水裡，於是把「沒下水」也算成原因；更新版 HP 用同一個見證，結果相同。本模型的方程式與變數是依故事擬定的。",
+    "en": "The model extends the Sharks model with R, releasing the sharks yesterday (exogenous, actually 1); the sharks are in the water exactly when R holds (SK = R). The bystander enters the water only when there are no sharks (J = ¬SK), so today he does not (J = 0). The child is saved only if he jumps in and there are no sharks (SV = J·¬SK), and drowns if not saved (DR = ¬SV). Sartorio's argument is that responsibility transmits through causation: releasing the sharks is a cause of the death, while today's staying out is not, since jumping in would not have helped. The engine confirms the first half: R = 1 is a but-for cause of DR = 1. The second half holds under but-for, but the original HP definition may undo the release (R = 0), so the sharks are absent, and it counts staying out as a cause as well; the updated definition does the same with the same witness. The variables and equations are built from the story here; the literature gives no equations."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [
@@ -73,6 +73,7 @@
     { "theory": "hp-normality", "query": { "cause": "R=1", "effect": "DR=1" }, "expected": "cause" },
     { "theory": "butfor", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "not-cause" },
     { "theory": "hp-original", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "cause", "note": "Same witness as the original definition: R set to 0." },
     { "theory": "hp-modified", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "not-cause" },
     { "theory": "hp-normality", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "not-cause" }
   ],

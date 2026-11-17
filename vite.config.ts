@@ -12,5 +12,8 @@ export default defineConfig({
   test: {
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     environment: 'node',
+    // Whole-page renders of the 11-voter case evaluate every HP variant over 11 binary
+    // voters and take several seconds each on a loaded machine.
+    testTimeout: 30_000,
   },
 })

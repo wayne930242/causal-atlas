@@ -1,0 +1,278 @@
+{
+  "id": "summers-v-tice",
+  "title": {
+    "zh-TW": "兩個獵人同時開槍",
+    "en": "Summers v. Tice (Cal. 1948)"
+  },
+  "subtitle": {
+    "zh-TW": "一顆子彈打中眼睛，卻無法確定是誰的；每位被告的必要性機率各只有一半。",
+    "en": "One shot hits the eye and nobody can say whose; each defendant's probability of necessity is one half."
+  },
+  "family": "law",
+  "story": {
+    "zh-TW": "原告與兩位被告一起打獵。兩位被告都朝原告的方向開槍，一顆彈丸打進原告的眼睛，另一顆打中上唇。法院無法確定眼睛那顆出自誰的槍，判兩位被告都要負全部的賠償責任，並把舉證責任轉給被告。",
+    "en": "The plaintiff goes quail hunting with the two defendants. Both defendants fire in his direction, one pellet lodging in his eye and another in his upper lip. The court cannot tell whose gun fired the pellet in the eye and holds both defendants liable for the whole damage, shifting the burden of proof to them."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "兩位被告都朝原告的方向開槍，一顆彈丸打進原告的眼睛，另一顆打中上唇。",
+        "variables": [
+          "SA",
+          "SB",
+          "HA",
+          "HB",
+          "INJ"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "Both defendants fire in his direction, one pellet lodging in his eye and another in his upper lip.",
+        "variables": [
+          "SA",
+          "SB",
+          "HA",
+          "HB",
+          "INJ"
+        ]
+      }
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型為本資料集所擬：兩人都開槍（SA、SB），各自的子彈是否擊中眼睛由外生變數決定（HA = SA·U_HA，HB = SB·U_HB），眼睛受傷（INJ）只要任一顆擊中。證據上兩人無從區分，因此先驗取「恰好一顆擊中，兩人各一半」。結果：給定受傷，A 的子彈擊中的機率是 0.5；若 A 沒開槍，受傷不會發生的機率也是 0.5，B 對稱。這與 SEP 對案情的描述一致（每人只有 50% 的機率）；對「不知是誰」，引擎只能給機率，不能判定單一事實因果，法律以舉證責任轉移處理。原案另有一顆打中上唇，此處略去。",
+    "en": "The model is the dataset's own: both fire (SA, SB), and whether each one's pellet reaches the eye is set by an exogenous variable (HA = SA·U_HA, HB = SB·U_HB); the eye injury (INJ) occurs if either pellet hits. The two defendants are evidentially indistinguishable, so the prior is \"exactly one pellet hits, each defendant with probability one half\". Result: given the injury, the probability that A's pellet hit is 0.5; and the probability that the injury would not have occurred had A not fired is also 0.5, symmetrically for B. This matches the SEP's description (each defendant has only a 50% probability); for \"whose, unknown\" the engine can give probabilities but cannot fix a single actual cause, which the law handles by shifting the burden of proof. The second pellet, in the lip, is left out."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Summers v. Tice, 33 Cal.2d 80, 199 P.2d 1 (Cal. 1948).",
+      "key": "summers1948tice",
+      "role": "origin",
+      "note": {
+        "zh-TW": "已讀 West 版全文（P.2d 頁 1–5）：事實見頁 1–2，舉證責任轉移見頁 4–5。書目庫沒有這個判決的條目，需新增（建議鍵 summers1948tice）。",
+        "en": "Read in the West text (P.2d pp. 1–5): facts on pp. 1–2, burden shift on pp. 4–5. The bibliography has no entry for this judgment; one must be added (suggested key summers1948tice)."
+      },
+      "pages": "199 P.2d 1–5",
+      "verified": true
+    },
+    {
+      "citation": "Honoré, T., & Gardner, J. (2010). Causation in the law. In E. N. Zalta (Ed.), The Stanford Encyclopedia of Philosophy.",
+      "key": "honore2010causationlaw",
+      "role": "reference",
+      "note": {
+        "zh-TW": "§5 描述同一案情並指出每人只有 50% 的機率。",
+        "en": "§5 describes the same facts and the 50% point."
+      },
+      "pages": "§5",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_SA",
+        "label": {
+          "zh-TW": "甲的行為",
+          "en": "A's conduct"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_SB",
+        "label": {
+          "zh-TW": "乙的行為",
+          "en": "B's conduct"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_HA",
+        "label": {
+          "zh-TW": "甲的彈丸是否會命中",
+          "en": "Whether A's pellet would hit"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_HB",
+        "label": {
+          "zh-TW": "乙的彈丸是否會命中",
+          "en": "Whether B's pellet would hit"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SA",
+        "label": {
+          "zh-TW": "甲朝原告開槍",
+          "en": "A fires toward the plaintiff"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SB",
+        "label": {
+          "zh-TW": "乙朝原告開槍",
+          "en": "B fires toward the plaintiff"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "HA",
+        "label": {
+          "zh-TW": "甲的彈丸打中眼睛",
+          "en": "A's pellet hits the eye"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "HB",
+        "label": {
+          "zh-TW": "乙的彈丸打中眼睛",
+          "en": "B's pellet hits the eye"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "INJ",
+        "label": {
+          "zh-TW": "原告眼睛受傷",
+          "en": "The plaintiff's eye is injured"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "SA": "U_SA",
+      "SB": "U_SB",
+      "HA": "SA and U_HA",
+      "HB": "SB and U_HB",
+      "INJ": "HA or HB"
+    }
+  },
+  "priors": {
+    "joint": {
+      "variables": [
+        "U_SA",
+        "U_SB",
+        "U_HA",
+        "U_HB"
+      ],
+      "rows": [
+        [
+          1,
+          1,
+          1,
+          0,
+          0.5
+        ],
+        [
+          1,
+          1,
+          0,
+          1,
+          0.5
+        ]
+      ]
+    }
+  },
+  "verdicts": [
+    {
+      "theory": "probability",
+      "query": {
+        "event": "HA=1",
+        "given": "INJ=1"
+      },
+      "expected": 0.5,
+      "note": "Given the injury, A's pellet is the one that hit with probability one half."
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "HB=1",
+        "given": "INJ=1"
+      },
+      "expected": 0.5,
+      "note": "Symmetric for B."
+    },
+    {
+      "theory": "counterfactual",
+      "query": {
+        "do": {
+          "SA": 0
+        },
+        "event": "INJ=0",
+        "evidence": "INJ=1"
+      },
+      "expected": 0.5,
+      "note": "Probability of necessity of A's shot."
+    },
+    {
+      "theory": "counterfactual",
+      "query": {
+        "do": {
+          "SB": 0
+        },
+        "event": "INJ=0",
+        "evidence": "INJ=1"
+      },
+      "expected": 0.5,
+      "note": "Probability of necessity of B's shot."
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "甲沒開槍",
+        "en": "A does not fire"
+      },
+      "interventions": {
+        "SA": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "乙沒開槍",
+        "en": "B does not fire"
+      },
+      "interventions": {
+        "SB": 0
+      }
+    }
+  ],
+  "layout": {
+    "SA": [
+      0,
+      0
+    ],
+    "SB": [
+      0,
+      1
+    ],
+    "HA": [
+      1,
+      0
+    ],
+    "HB": [
+      1,
+      1
+    ],
+    "INJ": [
+      2,
+      0.5
+    ]
+  }
+}

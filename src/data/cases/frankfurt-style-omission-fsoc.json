@@ -38,10 +38,10 @@
       "citation": "Sartorio, C. (2005). A new asymmetry between actions and omissions. Noûs, 39(3), 460–482.",
       "key": "sartorio2005asymmetry",
       "role": "origin",
-      "pages": "462, 464–465",
+      "pages": "462, 464–467",
       "note": {
-        "zh-TW": "p.462 定義 FSOC；pp.464–465 論證死亡是由「沒有決定下水」而非「決定不下水」造成。",
-        "en": "P. 462 defines FSOC; pp. 464–465 argue that the death is caused by the failure to decide to jump in, not by the decision not to jump in."
+        "zh-TW": "p.462 定義 FSOC；pp.464–465 論證死亡是由「沒有決定下水」而非「決定不下水」造成。本模型把「沒有決定不下水」等同「決定下水」（DJ = ¬D ∧ ¬NS），這是 pp.466–467 所說「非常果斷的人」的補充設定；Sartorio 在那裡承認反事實依賴，但否認那是因果。",
+        "en": "P. 462 defines FSOC; pp. 464–465 argue that the death is caused by the failure to decide to jump in, not by the decision not to jump in. The model equates not deciding not to jump with deciding to jump (DJ = ¬D ∧ ¬NS), the \"very decisive type of person\" filling-in of pp. 466–467, where Sartorio grants the counterfactual dependence but denies it is causation."
       },
       "verified": true
     }
