@@ -1,0 +1,81 @@
+{
+  "id": "sharks",
+  "title": { "zh-TW": "鯊魚：不知情的旁觀者", "en": "Sharks: the unwitting bystander" },
+  "subtitle": {
+    "zh-TW": "旁觀者有意不救溺水的孩子，但水裡的鯊魚本來就會讓救援失敗。",
+    "en": "A bystander deliberately does not rescue a drowning child, but sharks in the water would have defeated any rescue."
+  },
+  "family": "omission",
+  "story": {
+    "zh-TW": "考慮孩童溺水的情境。一名路人走過海灘，看見孩子溺水，自認跳下水就能救起孩子，卻有意留在岸上，孩子因此淹死。路人並不知道水裡有鯊魚；假如他跳下去，鯊魚會攻擊他，使他救不了孩子。",
+    "en": "Consider a drowning child. A man walking along a beach sees the child in trouble, believes he could save the child by jumping in, and deliberately stays on the shore. The child drowns. The man does not know that the water is infested with sharks; had he jumped in, the sharks would have attacked him and he could not have saved the child."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "一名路人走過海灘，看見孩子溺水，自認跳下水就能救起孩子，卻有意留在岸上，孩子因此淹死。", "variables": ["J", "SV", "DR"] },
+      { "sentence": "路人並不知道水裡有鯊魚；假如他跳下去，鯊魚會攻擊他，使他救不了孩子。", "variables": ["SK"] }
+    ],
+    "en": [
+      {
+        "sentence": "A man walking along a beach sees the child in trouble, believes he could save the child by jumping in, and deliberately stays on the shore. The child drowns.",
+        "variables": ["J", "SV", "DR"]
+      },
+      {
+        "sentence": "The man does not know that the water is infested with sharks; had he jumped in, the sharks would have attacked him and he could not have saved the child.",
+        "variables": ["SK"]
+      }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "J=0", "effect": "DR=1" },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "他沒有嘗試救人，這一點要負責；但孩子的死不該算在這個不作為頭上，因為跳下去也救不了。",
+      "en": "He is answerable for not trying, but the child's death is not laid at the door of that omission, since jumping in would not have helped."
+    },
+    "agree": ["butfor"]
+  },
+  "explanation": {
+    "zh-TW": "模型用 J 表示路人跳水，SK 表示水裡有鯊魚（外生，路人不知情），孩子獲救要求路人跳水而且沒有鯊魚（SV = J·¬SK），孩子溺斃則是沒有獲救（DR = ¬SV）。實際情境是 J = 0、SK = 1。鯊魚只讓救援失敗，並不使路人沒有跳水，所以路人沒跳不是死亡的 but-for 原因。這個模型是依故事擬定的，文獻只給出敘述，沒有給出方程式。引擎的結果是：只有 but-for 與直覺一致。死亡的條件是「沒跳」或「有鯊魚」，兩者各自就足夠（DR = ¬J ∨ SK），所以 HP 的各種定義都不把「沒跳」單獨排除：原定義把它算作原因，修正版與常態版則把它算作原因的一部分，與沒有跳水就不必負死亡之責的直覺有距離。",
+    "en": "J is the bystander jumping in and SK is the sharks being in the water (exogenous; he does not know of them). The child is saved only if he jumps and there are no sharks (SV = J·¬SK), and the child drowns if not saved (DR = ¬SV). The actual situation is J = 0, SK = 1. The sharks defeat a rescue but do not stop him from jumping, so his staying ashore is not a but-for cause of the death. The literature gives the story only, not equations, so the model is built here to carry it. The engine finds that only the but-for test agrees with the intuition. Death occurs if he does not jump or the sharks are present, and either alone suffices (DR = ¬J ∨ SK), so none of the HP definitions sets the omission aside: the original counts it as a cause, and the modified and normality-based definitions count it as part of a cause, which sits uneasily with the intuition that he is not answerable for the death."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Sartorio, C. (2005). A new asymmetry between actions and omissions. Noûs, 39(3), 460–482.",
+      "key": "sartorio2005asymmetry",
+      "role": "origin",
+      "pages": "460–461",
+      "note": {
+        "zh-TW": "Sartorio 在 p.460 給出 Sharks 的敘述，註 1 註明此案取自 Fischer 與 Ravizza (1998: 125)；p.461 說明直覺：路人要為沒有嘗試救人負責，卻不必為孩子的死負責。",
+        "en": "Sartorio states the Sharks case on p. 460, with note 1 crediting it to Fischer and Ravizza (1998: 125); p. 461 gives the intuition: he is responsible for not trying but not for the child's death."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_J", "label": { "zh-TW": "路人的決定", "en": "Bystander's decision" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_SK", "label": { "zh-TW": "水裡有無鯊魚", "en": "Whether sharks are present" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "J", "label": { "zh-TW": "路人跳水", "en": "Bystander jumps in" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "SK", "label": { "zh-TW": "水裡有鯊魚", "en": "Sharks in the water" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "SV", "label": { "zh-TW": "孩子獲救", "en": "Child is saved" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "DR", "label": { "zh-TW": "孩子溺斃", "en": "Child drowns" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "J": "U_J", "SK": "U_SK", "SV": "J and not SK", "DR": "not SV" }
+  },
+  "context": { "U_J": 0, "U_SK": 1 },
+  "normality": { "J": 1, "SK": 0, "SV": 1, "DR": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "not-cause" },
+    { "theory": "hp-original", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "part-of-cause" },
+    { "theory": "hp-normality", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "part-of-cause" }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "路人跳水", "en": "The bystander jumps in" }, "interventions": { "J": 1 } },
+    { "label": { "zh-TW": "水裡沒有鯊魚", "en": "No sharks in the water" }, "interventions": { "SK": 0 } },
+    { "label": { "zh-TW": "路人跳水而且沒有鯊魚", "en": "He jumps in and there are no sharks" }, "interventions": { "J": 1, "SK": 0 } }
+  ],
+  "layout": { "J": [0, 0], "SK": [0, 1], "SV": [1, 0.5], "DR": [2, 0.5] }
+}

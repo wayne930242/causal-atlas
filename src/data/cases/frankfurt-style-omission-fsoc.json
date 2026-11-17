@@ -1,0 +1,74 @@
+{
+  "id": "frankfurt-style-omission-fsoc",
+  "title": { "zh-TW": "Frankfurt 式不作為", "en": "A Frankfurt-style omission case" },
+  "subtitle": {
+    "zh-TW": "沒有鯊魚，但神經科學家守在一旁；他沒有出手，孩子仍然沒被救。",
+    "en": "No sharks, but a neuroscientist watches; he never acts, and the child is still not saved."
+  },
+  "family": "omission",
+  "story": {
+    "zh-TW": "考慮溺水孩童的另一個情境。路人看見孩子溺水，自認能救，卻自由地決定不下水。這次水裡沒有鯊魚，但一位邪惡的神經科學家監看著路人的大腦：只要路人動搖，他就會讓路人決定不下水。結果科學家沒有出手，路人憑自己的決定留在岸上，孩子溺斃。",
+    "en": "Consider another drowning case. A bystander sees the child, thinks he could save him, and freely decides not to jump in. This time there are no sharks, but an evil neuroscientist is monitoring the bystander's brain: if the bystander wavered, he would make him decide not to jump. The neuroscientist does not act; the bystander stays ashore on his own decision, and the child drowns."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "路人看見孩子溺水，自認能救，卻自由地決定不下水。", "variables": ["D"] },
+      { "sentence": "但一位邪惡的神經科學家監看著路人的大腦：只要路人動搖，他就會讓路人決定不下水。", "variables": ["NS", "DJ"] },
+      { "sentence": "結果科學家沒有出手，路人憑自己的決定留在岸上，孩子溺斃。", "variables": ["F"] }
+    ],
+    "en": [
+      { "sentence": "A bystander sees the child, thinks he could save him, and freely decides not to jump in.", "variables": ["D"] },
+      {
+        "sentence": "but an evil neuroscientist is monitoring the bystander's brain: if the bystander wavered, he would make him decide not to jump.",
+        "variables": ["NS", "DJ"]
+      },
+      {
+        "sentence": "The neuroscientist does not act; the bystander stays ashore on his own decision, and the child drowns.",
+        "variables": ["F"]
+      }
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型用 D 表示路人自己決定不下水，NS 表示神經科學家介入（NS = ¬D），DJ 表示最後決定下水（DJ = ¬D·¬NS）。水裡沒有鯊魚，所以只要決定下水孩子就能獲救，孩子沒被救就是沒有決定下水（F = ¬DJ）。實際是 D = 1、NS = 0。由於 NS = ¬D，DJ 恆為 0，路人無法決定下水。結構與 Frankfurt 的 Jones 與 Black 案例相同。Sartorio 主張：孩子的死不是由「決定不下水」造成，而是由「沒有決定下水」造成。引擎的結果是：「沒有決定下水」（DJ = 0）是 but-for 原因，「決定不下水」（D = 1）不是；HP 固定 NS = 0 之後，D = 1 也是原因，與 Sartorio 對 D 的看法不同。直覺上路人是否要為死亡負責，Sartorio 認為有爭議，所以本案不列直覺。模型依故事擬定。",
+    "en": "D is the bystander deciding on his own not to jump in, NS is the neuroscientist intervening (NS = ¬D), and DJ is the bystander's ending up deciding to jump (DJ = ¬D·¬NS). There are no sharks, so deciding to jump would save the child, and the child is not saved when he does not decide to jump (F = ¬DJ). Actually D = 1 and NS = 0. Since NS = ¬D, DJ is always 0: he cannot come to decide to jump. The structure is that of Frankfurt's Jones and Black. Sartorio holds that the child's death is caused not by the decision not to jump but by the failure to decide to jump. The engine finds that the failure to decide to jump (DJ = 0) is a but-for cause and the decision not to jump (D = 1) is not; once HP holds NS at 0, D = 1 is a cause too, unlike Sartorio's view of D. Sartorio treats the intuition about responsibility here as contested, so no intuition is listed. The model is built from the story."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Sartorio, C. (2005). A new asymmetry between actions and omissions. Noûs, 39(3), 460–482.",
+      "key": "sartorio2005asymmetry",
+      "role": "origin",
+      "pages": "462, 464–465",
+      "note": {
+        "zh-TW": "p.462 定義 FSOC；pp.464–465 論證死亡是由「沒有決定下水」而非「決定不下水」造成。",
+        "en": "P. 462 defines FSOC; pp. 464–465 argue that the death is caused by the failure to decide to jump in, not by the decision not to jump in."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_D", "label": { "zh-TW": "路人自己的傾向", "en": "Bystander's own inclination" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "D", "label": { "zh-TW": "路人自己決定不下水", "en": "Bystander decides on his own not to jump" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "NS", "label": { "zh-TW": "神經科學家介入", "en": "Neuroscientist intervenes" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "DJ", "label": { "zh-TW": "路人決定下水", "en": "Bystander decides to jump" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "F", "label": { "zh-TW": "孩子沒被救", "en": "Child is not saved" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "D": "U_D", "NS": "not D", "DJ": "not D and not NS", "F": "not DJ" }
+  },
+  "context": { "U_D": 1 },
+  "normality": { "D": 0, "NS": 0, "DJ": 1, "F": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "D=1", "effect": "F=1" }, "expected": "not-cause" },
+    { "theory": "hp-modified", "query": { "cause": "D=1", "effect": "F=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "D=1", "effect": "F=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "DJ=0", "effect": "F=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "DJ=0", "effect": "F=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "DJ=0", "effect": "F=1" }, "expected": "cause" }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "路人不自己決定不下水", "en": "He does not decide against jumping on his own" }, "interventions": { "D": 0 } },
+    { "label": { "zh-TW": "路人決定下水", "en": "He decides to jump" }, "interventions": { "DJ": 1 } }
+  ],
+  "layout": { "D": [0, 0], "NS": [1, 1], "DJ": [2, 0.5], "F": [3, 0.5] }
+}

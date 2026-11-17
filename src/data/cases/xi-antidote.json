@@ -1,0 +1,81 @@
+{
+  "id": "xi-antidote",
+  "title": { "zh-TW": "習近平沒給解藥", "en": "The head of state who does not give the antidote" },
+  "subtitle": {
+    "zh-TW": "同樣握有解藥而沒給，保鏢是死因，與市長毫無職責關係的國家元首不是。",
+    "en": "Both hold an antidote and neither gives it, yet the bodyguard's omission is a cause and that of a head of state with no duty to the mayor is not."
+  },
+  "family": "omission",
+  "story": {
+    "zh-TW": "考慮市長中毒的情境。殺手在市長喝的咖啡裡下毒。保鏢帶著可以中和毒性的解藥，沒有給市長服用；一位與市長毫無職責關係的國家元首也帶著同樣的解藥，同樣沒有給。市長死亡。只要保鏢或元首任何一人給了解藥，市長都不會死。",
+    "en": "Consider a poisoned mayor again. An assassin puts poison in the mayor's coffee. The bodyguard carries an antidote that would neutralise it and does not give it to the mayor; a head of state who has no duty toward the mayor also carries such an antidote and does not give it either. The mayor dies. Had the bodyguard or the head of state given the antidote, the mayor would not have died."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "殺手在市長喝的咖啡裡下毒。", "variables": ["A"] },
+      { "sentence": "保鏢帶著可以中和毒性的解藥，沒有給市長服用；", "variables": ["B"] },
+      { "sentence": "一位與市長毫無職責關係的國家元首也帶著同樣的解藥，同樣沒有給。", "variables": ["C"] },
+      { "sentence": "市長死亡。", "variables": ["D"] }
+    ],
+    "en": [
+      { "sentence": "An assassin puts poison in the mayor's coffee.", "variables": ["A"] },
+      { "sentence": "The bodyguard carries an antidote that would neutralise it and does not give it to the mayor;", "variables": ["B"] },
+      { "sentence": "a head of state who has no duty toward the mayor also carries such an antidote and does not give it either.", "variables": ["C"] },
+      { "sentence": "The mayor dies.", "variables": ["D"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "C=0", "effect": "D=1" },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "元首沒有保護市長的職責，沒給解藥是意料中的事，不會被當成死因。",
+      "en": "The head of state has no duty to protect the mayor; his not giving the antidote is what one would expect and is not counted a cause."
+    },
+    "agree": ["hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "模型是王一奇與王鵬翔 (2021) 的 Om+（保鏢加主席案例）：A = 1 表示殺手下毒，B = 1 表示保鏢沒給解藥（偏差值），C = 1 表示元首給解藥（實際為 0），D = A·B·¬C。原文以中國國家主席為例，此處改稱國家元首。保鏢有護主職責，在毒已下的情況下沒給是偏差值；元首沒有職責，沒給是常態，給了才出人意料（C 的常態為 0）。只有 B 到 D 的網絡自足，所以只有保鏢的不作為是典型原因。引擎的結果與此一致：but-for 與 HP 修正版都把 C = 0 算作原因（過度生成），只有常態版因為 C = 1 的世界比實際世界更不尋常而排除它。",
+    "en": "The model is Om+ of Wang and Wang (2021), the 'bodyguard plus chairman' case: A = 1 is the assassin poisoning the coffee, B = 1 is the bodyguard withholding the antidote (the deviant value), C = 1 is the head of state giving the antidote (actually 0), and D = A·B·¬C. The source uses the Chairman of China as its example; a generic head of state is used here. The bodyguard has a duty to protect, so once the poison is in, withholding is the deviant value; the head of state has no such duty, so not giving is the default and giving would be the surprise (C is normally 0). Only the network from B to D is self-contained, so only the bodyguard's omission is a paradigmatic cause. The engine agrees: but-for and the modified HP definition count C = 0 as a cause (over-generation), and only the normality-based definition excludes it, because the world in which C = 1 is less normal than the actual one."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Wang, P.-H., & Wang, L. (2021). Parasitic counterfactual dependence and paradigmatic causation [Jisheng de fanshishi yilai yu dianxing yinguo guanxi; in Chinese]. Journal of Philosophy, National Chengchi University, 45, 39–90.",
+      "key": "wang2021parasitic",
+      "role": "origin",
+      "pages": "75–77",
+      "note": {
+        "zh-TW": "p.75 給出 Om+ 的方程式（澆花版 D = A·B·¬C）；p.76 給出主席案例（不作為），說明保鏢加主席的 Om+ 與 C 的意義；p.77 討論 A 與 D 的依賴是否寄生。",
+        "en": "P. 75 gives the equations of Om+ (the watering version, D = A·B·¬C); p. 76 gives the Chairman case (omission) and explains Om+ for the bodyguard plus Chairman; p. 77 discusses whether the dependence of D on A is parasitic."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_A", "label": { "zh-TW": "殺手的行動", "en": "Assassin's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_B", "label": { "zh-TW": "保鏢的行動", "en": "Bodyguard's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_C", "label": { "zh-TW": "元首的行動", "en": "Head of state's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "A", "label": { "zh-TW": "殺手下毒", "en": "Assassin poisons the coffee" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "B", "label": { "zh-TW": "保鏢沒給解藥", "en": "Bodyguard withholds the antidote" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "C", "label": { "zh-TW": "元首給解藥", "en": "Head of state gives the antidote" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "D", "label": { "zh-TW": "市長死亡", "en": "Mayor dies" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "A": "U_A", "B": "U_B", "C": "U_C", "D": "A and B and not C" }
+  },
+  "context": { "U_A": 1, "U_B": 1, "U_C": 0 },
+  "normality": { "A": 0, "B": 0, "C": 0, "D": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "C=0", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "C=0", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "C=0", "effect": "D=1" }, "expected": "not-cause" },
+    { "theory": "butfor", "query": { "cause": "B=1", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "B=1", "effect": "D=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "B=1", "effect": "D=1" }, "expected": "cause" }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "元首給了解藥", "en": "The head of state gives the antidote" }, "interventions": { "C": 1 } },
+    { "label": { "zh-TW": "保鏢給了解藥", "en": "The bodyguard gives the antidote" }, "interventions": { "B": 0 } }
+  ],
+  "layout": { "A": [0, 0], "B": [0, 1], "C": [0, 2], "D": [1, 1] }
+}

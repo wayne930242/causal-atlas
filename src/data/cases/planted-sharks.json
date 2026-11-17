@@ -1,0 +1,84 @@
+{
+  "id": "planted-sharks",
+  "title": { "zh-TW": "自己放了鯊魚", "en": "Planted Sharks" },
+  "subtitle": {
+    "zh-TW": "鯊魚是旁觀者昨天自己放的，這次他要為孩子的死負責。",
+    "en": "The sharks are there because the bystander released them yesterday, so this time he answers for the death."
+  },
+  "family": "omission",
+  "story": {
+    "zh-TW": "考慮與鯊魚案例相近的情境。孩子溺水，路人不去救，但這回水裡的鯊魚是他昨天疏忽放進去的；他沒有任何理由放鯊魚，也有充分理由不該放。今天他看見孩子溺水，知道鯊魚在水裡，認為下水救人只是白費，所以沒有下水。",
+    "en": "Consider a situation close to the Sharks case. A child is drowning and the bystander does not try to save him, but this time the sharks are in the water because he negligently released them yesterday; he had no good reason to release them and good reason not to. Today he sees the child drowning, knows the sharks are there, takes a rescue to be pointless, and stays out of the water."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "但這回水裡的鯊魚是他昨天疏忽放進去的；他沒有任何理由放鯊魚，也有充分理由不該放。", "variables": ["R", "SK"] },
+      { "sentence": "今天他看見孩子溺水，知道鯊魚在水裡，認為下水救人只是白費，所以沒有下水。", "variables": ["J", "SV", "DR"] }
+    ],
+    "en": [
+      {
+        "sentence": "but this time the sharks are in the water because he negligently released them yesterday; he had no good reason to release them and good reason not to.",
+        "variables": ["R", "SK"]
+      },
+      {
+        "sentence": "Today he sees the child drowning, knows the sharks are there, takes a rescue to be pointless, and stays out of the water.",
+        "variables": ["J", "SV", "DR"]
+      }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "R=1", "effect": "DR=1" },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "鯊魚是他放的，孩子的死可以追溯到這個行動；他因此要為沒有救人負責。",
+      "en": "He put the sharks there, so the death traces back to his act; that is why he answers for not saving the child."
+    },
+    "agree": ["butfor", "hp-original", "hp-modified", "hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "在鯊魚案例的模型上加一個變數 R：昨天放了鯊魚（外生，實際為 1），鯊魚在水裡就是 R（SK = R）。路人只在水裡沒有鯊魚時才會下水（J = ¬SK），因此今天他沒有下水（J = 0）。孩子獲救要求下水而且沒有鯊魚（SV = J·¬SK），溺斃就是沒有獲救（DR = ¬SV）。Sartorio 的論證是：責任經由因果傳遞，放鯊魚是孩子死亡的原因，而今天不下水不是，因為下水也救不了。引擎證實前半：R = 1 是 DR = 1 的 but-for 原因。後半在 but-for 下成立，但原定義的 HP 允許把 SK 設成 0，會把「沒下水」也算成原因。本模型的方程式與變數是依故事擬定的。",
+    "en": "The model extends the Sharks model with R, releasing the sharks yesterday (exogenous, actually 1); the sharks are in the water exactly when R holds (SK = R). The bystander enters the water only when there are no sharks (J = ¬SK), so today he does not (J = 0). The child is saved only if he jumps in and there are no sharks (SV = J·¬SK), and drowns if not saved (DR = ¬SV). Sartorio's argument is that responsibility transmits through causation: releasing the sharks is a cause of the death, while today's staying out is not, since jumping in would not have helped. The engine confirms the first half: R = 1 is a but-for cause of DR = 1. The second half holds under but-for, but the original HP definition may set SK to 0 and so counts staying out as a cause as well. The variables and equations are built from the story here; the literature gives no equations."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Sartorio, C. (2005). A new asymmetry between actions and omissions. Noûs, 39(3), 460–482.",
+      "key": "sartorio2005asymmetry",
+      "role": "origin",
+      "pages": "469–470",
+      "note": {
+        "zh-TW": "p.469 給出 Planted Sharks 的敘述與論證 (7)–(12)；p.469–470 說明為什麼不下水本身不是死亡的原因。",
+        "en": "P. 469 states Planted Sharks and the argument (7)–(12); pp. 469–470 explain why his not jumping in is not itself a cause of the death."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_R", "label": { "zh-TW": "昨天是否放鯊魚", "en": "Whether he releases the sharks" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "R", "label": { "zh-TW": "昨天放了鯊魚", "en": "Releases the sharks yesterday" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "SK", "label": { "zh-TW": "水裡有鯊魚", "en": "Sharks in the water" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "J", "label": { "zh-TW": "路人下水", "en": "Bystander jumps in" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "SV", "label": { "zh-TW": "孩子獲救", "en": "Child is saved" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "DR", "label": { "zh-TW": "孩子溺斃", "en": "Child drowns" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "R": "U_R", "SK": "R", "J": "not SK", "SV": "J and not SK", "DR": "not SV" }
+  },
+  "context": { "U_R": 1 },
+  "normality": { "R": 0, "SK": 0, "J": 1, "SV": 1, "DR": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "R=1", "effect": "DR=1" }, "expected": "cause" },
+    { "theory": "hp-original", "query": { "cause": "R=1", "effect": "DR=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "R=1", "effect": "DR=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "R=1", "effect": "DR=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "not-cause" },
+    { "theory": "hp-original", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "not-cause" },
+    { "theory": "hp-normality", "query": { "cause": "J=0", "effect": "DR=1" }, "expected": "not-cause" }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "昨天沒有放鯊魚", "en": "He did not release the sharks" }, "interventions": { "R": 0 } },
+    { "label": { "zh-TW": "鯊魚在水裡，路人仍下水", "en": "Sharks are there, yet he jumps in" }, "interventions": { "J": 1 } }
+  ],
+  "layout": { "R": [0, 0], "SK": [1, 0], "J": [1, 1], "SV": [2, 0.5], "DR": [3, 0.5] }
+}
