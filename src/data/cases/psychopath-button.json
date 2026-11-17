@@ -1,0 +1,89 @@
+{
+  "id": "psychopath-button",
+  "title": { "zh-TW": "心理病態者按鈕", "en": "The Psychopath Button" },
+  "subtitle": {
+    "zh-TW": "只有心理病態者才會想按下這個按鈕，按下的衝動本身就是壞消息。",
+    "en": "Only a psychopath would press this button, so the urge to press is itself bad news."
+  },
+  "family": "decision",
+  "story": {
+    "zh-TW": "考慮保羅正在決定要不要按下「殺光所有心理病態者」按鈕的情境。他認為世界上沒有心理病態者會好得多，但更看重自己活著，寧可活在有心理病態者的世界，也不願死去。他相當確信，只有心理病態者才會去按這樣的按鈕。",
+    "en": "Consider Paul, who is deciding whether to press a button that kills all psychopaths. He thinks a world without psychopaths would be much better, but he values his own life more and would rather live among psychopaths than die. He is quite confident that only a psychopath would press such a button."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "考慮保羅正在決定要不要按下「殺光所有心理病態者」按鈕的情境。", "variables": ["PRESS"] },
+      { "sentence": "他相當確信，只有心理病態者才會去按這樣的按鈕。", "variables": ["PSY", "U_P", "DIE"] }
+    ],
+    "en": [
+      { "sentence": "Consider Paul, who is deciding whether to press a button that kills all psychopaths.", "variables": ["PRESS"] },
+      { "sentence": "He is quite confident that only a psychopath would press such a button.", "variables": ["PSY", "U_P", "DIE"] }
+    ]
+  },
+  "intuition": {
+    "query": { "choice": "PRESS" },
+    "expected": false,
+    "text": {
+      "zh-TW": "想按的人多半是心理病態者，按下去自己也會死；不按才合理。",
+      "en": "Whoever wants to press is probably a psychopath and would die of it; refraining is the rational choice."
+    },
+    "agree": ["edt"]
+  },
+  "explanation": {
+    "zh-TW": "外生變數是保羅是不是心理病態者 PSY，以及非心理病態者偶爾也想按的衝動 U_P。按下按鈕 PRESS 由兩者之一引起；保羅死亡 DIE 需要他按了而且他是心理病態者。保羅原本認為自己是心理病態者的機率很低，所以對 PRESS 作介入時多半是非病態者按下、全世界的病態者消失，因果決策論算出按下有利。但得知自己按了，幾乎就是得知自己是病態者，證據決策論算出按下會死。Egan 沒有給數字；效用（活著且病態者全消失 10、死亡 −100、不按 0）與機率都是為了讓模型最小而擬定。Egan 指出，這一例比謀殺病灶更少人有異議。",
+    "en": "The exogenous variables are whether Paul is a psychopath, PSY, and an occasional urge to press even in a non-psychopath, U_P. Pressing PRESS is brought about by either; Paul's death DIE needs that he pressed and that he is a psychopath. Paul starts out thinking it very unlikely that he is a psychopath, so intervening on PRESS most likely means a non-psychopath presses and the psychopaths disappear, and causal decision theory finds pressing better. But learning that he pressed is nearly learning that he is a psychopath, and evidential decision theory finds that pressing means death. Egan gives no numbers; the utilities (alive with the psychopaths gone 10, death −100, not pressing 0) and the probabilities are chosen to keep the model minimal. Egan notes that this case draws fewer dissenters than the Murder Lesion."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Egan, A. (2007). Some counterexamples to causal decision theory. Philosophical Review, 116(1), 93–114.",
+      "key": "egan2007counterexamples",
+      "role": "origin",
+      "pages": "97 (case, intuition and n. 3), 98 (the needed low credence in being a psychopath), 107 (ratifiability), 109 (neither option ratifiable)",
+      "note": {
+        "zh-TW": "p. 98 說明：CDT 要建議按下，保羅原本認為自己是心理病態者的機率必須夠低；這個情境由 David Braddon-Mitchell 提出（p. 97 註 2）。",
+        "en": "Egan (p. 98) notes that for causal decision theory to advise pressing, Paul's prior credence that he is a psychopath must be low enough; the case was suggested by David Braddon-Mitchell (p. 97, n. 2)."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "PSY", "label": { "zh-TW": "保羅是心理病態者", "en": "Paul is a psychopath" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_P", "label": { "zh-TW": "非病態者也想按", "en": "Urge to press without being a psychopath" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "PRESS", "label": { "zh-TW": "按下按鈕", "en": "Presses the button" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "DIE", "label": { "zh-TW": "保羅死亡", "en": "Paul dies" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "PRESS": "PSY or U_P", "DIE": "PRESS and PSY" }
+  },
+  "priors": { "independent": { "PSY": 0.05, "U_P": 0.005 } },
+  "decision": { "variable": "PRESS", "utility": { "variables": ["PRESS", "DIE"], "rows": [[1, 1, -100], [1, 0, 10], [0, 0, 0]] } },
+  "verdicts": [
+    { "theory": "probability", "query": { "event": "PSY=1", "given": "PRESS=1" }, "expected": 0.9132420091324188, "tolerance": 1e-9, "note": "Pressing is strong evidence of being a psychopath." },
+    { "theory": "probability", "query": { "event": "DIE=1", "do": { "PRESS": 1 } }, "expected": 0.05, "tolerance": 1e-9, "note": "Intervening on the press leaves PSY at its prior." },
+    { "theory": "edt", "query": { "expectedUtility": 1 }, "expected": -90.45662100456607, "tolerance": 1e-6 },
+    { "theory": "edt", "query": { "expectedUtility": 0 }, "expected": 0, "tolerance": 1e-9 },
+    { "theory": "cdt", "query": { "expectedUtility": 1 }, "expected": 4.5, "tolerance": 1e-9 },
+    { "theory": "cdt", "query": { "expectedUtility": 0 }, "expected": 0, "tolerance": 1e-9 },
+    { "theory": "edt", "query": { "choice": "PRESS" }, "expected": false, "note": "EDT refrains." },
+    { "theory": "cdt", "query": { "choice": "PRESS" }, "expected": true, "note": "CDT presses (Egan p. 98)." },
+    {
+      "theory": "counterfactual",
+      "query": { "evidence": "PRESS=1", "do": { "PRESS": 1 }, "event": "DIE=1" },
+      "expected": 0.9132420091324188,
+      "tolerance": 1e-9,
+      "note": "Once Paul takes himself to be about to press, pressing looks fatal: unratifiable (Egan p. 107)."
+    },
+    {
+      "theory": "counterfactual",
+      "query": { "evidence": "PRESS=0", "do": { "PRESS": 1 }, "event": "DIE=1" },
+      "expected": 0,
+      "note": "Once Paul takes himself to refrain he is no psychopath and pressing would be safe: refraining is unratifiable too (Egan p. 109)."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "按下按鈕", "en": "Press the button" }, "interventions": { "PRESS": 1 } },
+    { "label": { "zh-TW": "不按", "en": "Do not press" }, "interventions": { "PRESS": 0 } }
+  ],
+  "layout": { "PSY": [1, 0], "PRESS": [0, 1], "DIE": [2, 1] }
+}

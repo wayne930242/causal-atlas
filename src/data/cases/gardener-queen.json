@@ -38,14 +38,17 @@
     {
       "citation": "Beebee, H. (2004). Causing and nothingness. In J. Collins, N. Hall, & L. A. Paul (Eds.), Causation and Counterfactuals. MIT Press.",
       "key": "beebee2004causing",
-      "role": "origin",
-      "verified": false
+      "role": "treatment",
+      "pages": "292–293 (Smith, who failed to water her office plants, against Brown, who has no connection to them)",
+      "note": {"zh-TW": "Beebee 全文（pp. 291–308）沒有園丁與英國女王的例子；她用 Smith 與 Brown 做同樣的對比，並主張不作為不是原因。", "en": "Beebee's chapter (pp. 291–308) has no gardener or Queen example; she draws the same contrast with Smith and Brown and holds that omissions are not causes."},
+      "verified": true
     },
     {
       "citation": "Halpern, J. Y., & Hitchcock, C. (2015). Graded causation and defaults. British Journal for the Philosophy of Science, 66(2), 413–457.",
       "key": "halpern2015graded",
       "role": "treatment",
-      "verified": false
+      "pages": "arXiv 1309.1226v1 pagination, not BJPS 413–457: p. 2 (the flower-watering example), pp. 22–23 (§7.1 Omissions: the four positions on omissions and the normality rankings)",
+      "verified": true
     },
     {
       "citation": "McGrath, S. (2005). Causation by omission: a dilemma. Philosophical Studies, 123(1–2), 125–148.",

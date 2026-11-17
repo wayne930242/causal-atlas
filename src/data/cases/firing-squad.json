@@ -36,7 +36,8 @@
       "citation": "Pearl, J. (2009). Causality: Models, Reasoning, and Inference (2nd ed.), §7.1.2. Cambridge University Press.",
       "key": "pearl2009causality",
       "role": "treatment",
-      "verified": false
+      "pages": "207–209 (§7.1.2, Example 1: the two-man firing squad, Figure 7.1, sentences S1–S4)",
+      "verified": true
     },
     {
       "citation": "Pearl, J. (2000). Causality: Models, Reasoning, and Inference, ch. 7. Cambridge University Press.",
