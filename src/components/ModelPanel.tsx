@@ -47,6 +47,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
       values={world.values}
       original={world.original}
       probs={world.probs}
+      dists={world.dists}
       interventions={interventions}
       removedEdges={world.removedEdges}
       witness={witness}

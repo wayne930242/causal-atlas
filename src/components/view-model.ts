@@ -361,6 +361,8 @@ export function priorWithSliders(c: LoadedCase, sliders: Readonly<Record<string,
 export interface Marginals {
   /** P(V = target) per variable. */
   readonly p: Readonly<Record<string, number>>
+  /** Non-boolean variables: P(V = value) for each value, in domain order. */
+  readonly dist: Readonly<Record<string, readonly number[]>>
   /** P(given); 1 without an observation. */
   readonly evidence: number
 }
@@ -373,7 +375,11 @@ export function marginals(
 ): Marginals {
   const given = query.given === undefined ? undefined : toFormula(model, query.given)
   const sums: Record<string, number> = {}
-  for (const v of model.variables) sums[v.id] = 0
+  const perValue: Record<string, number[]> = {}
+  for (const v of model.variables) {
+    sums[v.id] = 0
+    if (v.domain.kind === 'finite') perValue[v.id] = v.domain.values.map(() => 0)
+  }
   let evidence = 0
   for (const { context, p } of enumerateContexts(model, prior)) {
     const world = evaluate(model, context, query.do ?? {}).values
@@ -381,12 +387,38 @@ export function marginals(
     evidence += p
     for (const v of model.variables) {
       const value = world[v.id]
-      if (value !== undefined && valuesEqual(value, targetValue(v))) sums[v.id] += p
+      if (value === undefined) continue
+      if (valuesEqual(value, targetValue(v))) sums[v.id] += p
+      if (v.domain.kind === 'finite') {
+        const at = v.domain.values.findIndex((o) => valuesEqual(o, value))
+        if (at >= 0) perValue[v.id][at] += p
+      }
     }
   }
   const out: Record<string, number> = {}
   for (const [id, s] of Object.entries(sums)) out[id] = evidence > 0 ? s / evidence : Number.NaN
-  return { p: out, evidence }
+  const dist: Record<string, readonly number[]> = {}
+  for (const [id, row] of Object.entries(perValue)) dist[id] = row.map((s) => (evidence > 0 ? s / evidence : Number.NaN))
+  return { p: out, dist, evidence }
+}
+
+/** Geometry of one node's per-value bars (a chart `width` wide, `barW` bars every `pitch`, in px). */
+export interface BarLayout {
+  readonly pitch: number
+  readonly barW: number
+  readonly width: number
+  /** False when the value labels would touch: only the first and last are written. */
+  readonly labelsFit: boolean
+}
+
+export const BAR_MAX_WIDTH = 126
+
+/** Lay out one bar per value, in `size`-px labels, within BAR_MAX_WIDTH. */
+export function barLayout(labels: readonly string[], size: number): BarLayout {
+  const widest = Math.max(0, ...labels.map((l) => textWidth(l, size)))
+  const wanted = Math.max(14, Math.ceil(widest) + 5)
+  const pitch = Math.min(wanted, BAR_MAX_WIDTH / Math.max(1, labels.length))
+  return { pitch, barW: Math.max(3, Math.min(12, pitch - 5)), width: pitch * labels.length, labelsFit: pitch >= widest + 2 }
 }
 
 /** Estimated text width in px: CJK and full-width punctuation are one em, the rest about 0.6 em. */
@@ -403,8 +435,9 @@ export function probText(p: number): string {
   return Number.isNaN(p) ? '—' : p.toFixed(2)
 }
 
-/** Legend for probability fill (the value legend is `t.valueLegend`); names the convention for non-boolean variables when any is drawn. */
+/** Legend for probability readouts (the value legend is `t.valueLegend`): fill for 0/1 variables, bars for the others. */
 export function probLegend(t: Messages, model: CausalModel, shown: readonly string[]): string {
-  const finite = shown.some((id) => getVariable(model, id).domain.kind === 'finite')
-  return finite ? t.probLegendFinite : t.probLegend
+  const finite = shown.filter((id) => getVariable(model, id).domain.kind === 'finite').length
+  if (finite === 0) return t.probLegend
+  return finite === shown.length ? t.probLegendBars : t.probLegendFinite
 }

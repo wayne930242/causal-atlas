@@ -232,7 +232,7 @@ const DROP_ATTRS = /^(class|role|tabindex|aria-.*|data-.*|style)$/i
 export function inlineSvg(svg: SVGSVGElement, palette: Palette, style: ExportStyle = 'color'): SVGSVGElement {
   const rules = style === 'academic' ? [...RULES, ...ACADEMIC_RULES] : RULES
   const clone = svg.cloneNode(true) as SVGSVGElement
-  for (const ring of [...clone.querySelectorAll('.ca-focus-ring, .ca-do-pop-box')]) ring.remove()
+  for (const ring of [...clone.querySelectorAll('.ca-focus-ring, .ca-do-pop-box, .ca-bars title')]) ring.remove()
   const all = [clone, ...clone.querySelectorAll('*')]
   for (const el of all) {
     const tag = el.tagName.toLowerCase()

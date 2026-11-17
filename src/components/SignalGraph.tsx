@@ -5,11 +5,11 @@ import type { Assignment, Edge, Value } from '../engine/index.ts'
 import { getVariable } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Anchor, Box, Placed } from './graph-labels.ts'
-import { around, firstClear, rectBox, shifted, textBox } from './graph-labels.ts'
+import { around, firstClear, intersects, placePop, rectBox, segmentHitsBox, shifted, textBox } from './graph-labels.ts'
 import type { NodeToggle } from './i18n.ts'
 import { useMessages } from './i18n.ts'
 import { sub } from './svg-text.tsx'
-import { assignmentText, edgeLive, edgePolarity, gridLayout, label, probText, shownEdges, textWidth } from './view-model.ts'
+import { assignmentText, barLayout, edgeLive, edgePolarity, gridLayout, label, probText, shownEdges, textWidth } from './view-model.ts'
 
 export interface SignalGraphProps {
   readonly c: LoadedCase
@@ -20,6 +20,8 @@ export interface SignalGraphProps {
   readonly original?: Assignment
   /** Probability mode: P(V = 1) per variable. */
   readonly probs?: Readonly<Record<string, number>>
+  /** Probability mode: P(V = value) in domain order for each non-boolean variable; drawn as one bar per value. */
+  readonly dists?: Readonly<Record<string, readonly number[]>>
   /** Probability mode: a short note under each number. */
   readonly probNotes?: Readonly<Record<string, string>>
   /** Observed variables (drawn with a second ring). */
@@ -50,6 +52,41 @@ interface Drag {
 }
 
 const SNAP = 0.25
+/** Per-value bars: tallest bar, the gap above it, and the label size. */
+const BAR_H = 24
+const BAR_GAP = 8
+const BAR_LABEL = 11
+const BARS_EXTRA = 28
+
+/** Where a node's bar chart sits, relative to the node's centre, and the note under it. */
+interface Chart {
+  readonly x0: number
+  readonly baseline: number
+  /** The chart with its value labels, and the note under it when there is one. */
+  readonly box: Box
+  readonly noteX: number
+  readonly noteAnchor: Anchor
+}
+
+const CHART_DIRS = ['E', 'S', 'W', 'N', 'SE', 'NE', 'SW', 'NW'] as const
+type ChartDir = (typeof CHART_DIRS)[number]
+
+/** The chart of width `width` next to a node of radius `r` in direction `dir`; `below` is the top of the space under the node. */
+function chartAt(dir: ChartDir, width: number, r: number, below: number, noted: boolean): Chart {
+  const h = BAR_H + BAR_LABEL + 6
+  const total = h + (noted ? 18 : 0)
+  const d = r * 0.7 + 8
+  const centred = dir === 'S' || dir === 'N'
+  const x0 = centred ? -width / 2 : dir.includes('E') ? (dir === 'E' ? r + 12 : d) : dir === 'W' ? -r - 12 - width : -d - width
+  const top = dir === 'E' || dir === 'W' ? -h / 2 : dir === 'S' ? below : dir === 'N' ? -r - 8 - total : dir.includes('S') ? d : -d - total
+  return {
+    x0,
+    baseline: top + BAR_H,
+    box: rectBox(x0, top, width, total),
+    noteX: centred ? 0 : x0,
+    noteAnchor: centred ? 'middle' : 'start',
+  }
+}
 
 function snap(v: number): number {
   return Math.round(v / SNAP) * SNAP
@@ -76,7 +113,7 @@ function clampPath(r: number): string {
 
 /** Direction 1 「訊號圖」: value nodes, signal edges, do() clamps and cut edges. */
 export function SignalGraph(props: SignalGraphProps) {
-  const { c, shown, values, original, probs, probNotes, observed = [], interventions, removedEdges, witness, onToggle, onSetValue, onMove } =
+  const { c, shown, values, original, probs, dists, probNotes, observed = [], interventions, removedEdges, witness, onToggle, onSetValue, onMove } =
     props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -125,7 +162,8 @@ export function SignalGraph(props: SignalGraphProps) {
   const multiRow = maxRow > minRow
   const width = PAD_X * 2 + (maxCol - minCol) * COL
   const hasWitness = witness !== undefined && Object.keys(witness).length > 0
-  const extraBottom = (prob ? 44 : 0) + (hasWitness ? 40 : 0)
+  const barred = (id: string): boolean => prob && getVariable(c.model, id).domain.kind === 'finite'
+  const extraBottom = (prob ? 44 + (shown.some(barred) ? BARS_EXTRA : 0) : 0) + (hasWitness ? 40 : 0)
   const height = PAD_Y * 2 + (maxRow - minRow) * ROW + extraBottom
   const pos = new Map<string, Point>()
   for (const [id, p] of grid) {
@@ -166,6 +204,53 @@ export function SignalGraph(props: SignalGraphProps) {
   const cut = new Set(removedEdges.map((e) => `${e.from}>${e.to}`))
   const edges = shownEdges(c.model.edges, shown)
 
+  // A multi-valued node's bars go beside or below it: the first spot (E, S, W, ...) no edge, node,
+  // label, do tag or earlier chart touches, inside the graph; else the one touching least.
+  const charts = new Map<string, Chart | undefined>()
+  const chartBoxes: Box[] = []
+  const chartOf = (id: string): Chart | undefined => {
+    if (charts.has(id)) return charts.get(id)
+    let chart: Chart | undefined
+    const variable = getVariable(c.model, id)
+    const p = pos.get(id)
+    if (barred(id) && variable.domain.kind === 'finite' && p !== undefined) {
+      const chartW = barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width
+      const above = labelAbove(id)
+      const noted = probNotes?.[id] !== undefined
+      const others: Box[] = []
+      for (const other of shown) {
+        const q = pos.get(other)
+        if (q === undefined) continue
+        const otherAbove = labelAbove(other)
+        const labelY = otherAbove ? -R - 16 : R + 24
+        const name = label(c.model, other, t.locale)
+        others.push(shifted(textBox(0, labelY, 'middle', textWidth(`${other} ${name}`, 14), 14), q.x, q.y))
+        if (other !== id) others.push(around(q.x, q.y, R + 3))
+      }
+      if (interventions[id] !== undefined) {
+        const w = textWidth(`${id}←${formatValue(interventions[id])}`, 12) + 18
+        others.push(shifted(rectBox((grid.get(id)?.col ?? 0) === maxCol ? -R - 12 - w : R + 12, -R - 10, w, 22), p.x, p.y))
+      }
+      const options = CHART_DIRS.map((dir) => chartAt(dir, chartW, R, above ? R + 4 : R + 24 + BAR_GAP, noted))
+      const touches = (o: Chart): number => {
+        const box = shifted(o.box, p.x, p.y)
+        let n = 0
+        if (box.x0 < 0 || box.y0 < 0 || box.x1 > width || box.y1 > height) n += 1
+        for (const e of edges) {
+          const a = pos.get(e.from)
+          const b = pos.get(e.to)
+          if (a !== undefined && b !== undefined && segmentHitsBox(a, b, box)) n += 1
+        }
+        for (const b of [...others, ...chartBoxes]) if (intersects(box, b, 0)) n += 1
+        return n
+      }
+      chart = options.reduce((best, o) => (touches(o) < touches(best) ? o : best))
+      chartBoxes.push(shifted(chart.box, p.x, p.y))
+    }
+    charts.set(id, chart)
+    return chart
+  }
+
   // What a floating edge label must stay clear of: every node, its labels, its do tag; and the
   // edge labels already placed.
   const obstacles: Box[] = []
@@ -176,7 +261,12 @@ export function SignalGraph(props: SignalGraphProps) {
     const labelY = above ? -R - 16 : R + 24
     const name = label(c.model, id, t.locale)
     const local: Box[] = [around(0, 0, R + 6), textBox(0, labelY, 'middle', textWidth(`${id} ${name}`, 14), 14)]
-    if (prob) {
+    const chart = chartOf(id)
+    if (chart !== undefined) {
+      local.push(chart.box)
+      const note = probNotes?.[id]
+      if (note !== undefined) local.push(textBox(chart.noteX, chart.baseline + BAR_LABEL + 16, chart.noteAnchor, textWidth(note, 12), 12))
+    } else if (prob) {
       const note = probNotes?.[id]
       if (above) {
         local.push(textBox(R + 12, -2, 'start', 80, 16))
@@ -332,8 +422,14 @@ export function SignalGraph(props: SignalGraphProps) {
     const above = labelAbove(id)
     const name = label(c.model, id, t.locale)
     const pv = probs?.[id]
+    // A non-boolean node shows one bar per value, so each value gets its own number.
+    const bars = barred(id) && variable.domain.kind === 'finite' ? variable.domain.values : undefined
+    const dist = dists?.[id]
+    const barText = (i: number): string => `P(${id}=${formatValue((bars ?? [])[i])})=${probText(dist?.[i] ?? Number.NaN)}`
     const state = prob
-      ? `P(${id}${boolean ? '=1' : `=${String(variable.domain.kind === 'finite' ? variable.domain.values[0] : '')}`}) ${probText(pv ?? Number.NaN)}`
+      ? bars !== undefined
+        ? bars.map((_, i) => barText(i)).join(', ')
+        : `P(${id}=1) ${probText(pv ?? Number.NaN)}`
       : t.nodeValue(text)
     const aria = t.nodeAria(id, name, state, intervened ? formatValue(forced) : undefined, changed ? formatValue(before) : undefined)
     const interactive = onToggle !== undefined || onMove !== undefined
@@ -364,18 +460,7 @@ export function SignalGraph(props: SignalGraphProps) {
       onToggle === undefined ? undefined : picks ? (intervened ? 'adjust' : 'choose') : intervened ? 'release' : 'set'
     const hint = t.nodeHint(toggle, onMove !== undefined)
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
-    // A non-boolean node's fill is P(V = its first value): say which value.
-    const fillMeans = prob && variable.domain.kind === 'finite' ? `${id}=${String(variable.domain.values[0])} ` : ''
-    const numberText = (
-      <>
-        {fillMeans !== '' && (
-          <tspan className="ca-svg-small ca-fill-muted" data-fill-means={fillMeans.trim()}>
-            {sub(fillMeans)}
-          </tspan>
-        )}
-        {probText(pv ?? Number.NaN)}
-      </>
-    )
+    const numberText = probText(pv ?? Number.NaN)
     const labelY = above ? -R - 16 : R + 24
     const numberRight = prob && above
     const doTagLeft = (grid.get(id)?.col ?? 0) === maxCol
@@ -411,15 +496,17 @@ export function SignalGraph(props: SignalGraphProps) {
               <circle r={R} />
             </clipPath>
             <circle r={R} className="ca-fill-bg" />
-            <rect
-              x={-R}
-              y={R - level}
-              width={2 * R}
-              height={level}
-              className="ca-fill-fg"
-              clipPath={`url(#${uid}-cp-${id})`}
-              data-level={pv === undefined ? '' : pv.toFixed(4)}
-            />
+            {bars === undefined && (
+              <rect
+                x={-R}
+                y={R - level}
+                width={2 * R}
+                height={level}
+                className="ca-fill-fg"
+                clipPath={`url(#${uid}-cp-${id})`}
+                data-level={pv === undefined ? '' : pv.toFixed(4)}
+              />
+            )}
             <circle r={R} className="ca-node-outline" />
           </>
         ) : (
@@ -454,7 +541,50 @@ export function SignalGraph(props: SignalGraphProps) {
         <text y={labelY} textAnchor="middle" className="ca-svg-label">
           <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan> {name}
         </text>
-        {prob &&
+        {bars !== undefined && chartOf(id) !== undefined ? (
+          (() => {
+            const labels = bars.map(formatValue)
+            const layout = barLayout(labels, BAR_LABEL)
+            const chart = chartOf(id) as Chart
+            const note = probNotes?.[id]
+            return (
+              <>
+                <g className="ca-bars" data-bars={id} transform={`translate(${chart.x0} ${chart.baseline})`}>
+                  <line x1={0} x2={layout.width} y1={0} y2={0} className="ca-hair" />
+                  {labels.map((text, i) => {
+                    const p = dist?.[i]
+                    const known = p !== undefined && !Number.isNaN(p)
+                    const h = known ? (p > 0 ? Math.max(1, p * BAR_H) : 0) : 0
+                    const cx = i * layout.pitch + layout.pitch / 2
+                    const edge = i === 0 || i === labels.length - 1
+                    return (
+                      <g key={text} data-bar={text} data-p={known ? p.toFixed(4) : ''}>
+                        <title>{barText(i)}</title>
+                        <rect x={cx - layout.barW / 2} y={-h} width={layout.barW} height={h} className="ca-fill-fg" />
+                        {(layout.labelsFit || edge) && (
+                          <text x={cx} y={BAR_LABEL + 2} textAnchor="middle" className="ca-mono ca-svg-tiny ca-fill-muted">
+                            {text}
+                          </text>
+                        )}
+                      </g>
+                    )
+                  })}
+                </g>
+                {note !== undefined && (
+                  <text
+                    x={chart.noteX}
+                    y={chart.baseline + BAR_LABEL + 16}
+                    textAnchor={chart.noteAnchor}
+                    className="ca-svg-small ca-fill-muted"
+                  >
+                    {note}
+                  </text>
+                )}
+              </>
+            )
+          })()
+        ) : (
+          prob &&
           (numberRight ? (
             <>
               <text x={R + 12} y={-2} className="ca-mono ca-svg-num">
@@ -477,7 +607,8 @@ export function SignalGraph(props: SignalGraphProps) {
                 </text>
               )}
             </>
-          ))}
+          ))
+        )}
       </g>
     )
   })
@@ -494,9 +625,8 @@ export function SignalGraph(props: SignalGraphProps) {
     const index = found < 0 ? 0 : found
     const W = 184
     const H = 72
-    const x = Math.max(0, Math.min(p.x - W / 2, width - W))
-    const below = p.y + R + (labelAbove(picking) ? 10 : 36) + (prob ? 44 : 0)
-    const y = below + H > height && p.y - R - 10 - H >= 0 ? p.y - R - 10 - H : below
+    // Beside the node, centred on it, so the nodes under it stay visible; the do tag sits above that line.
+    const { x, y } = placePop(p, R, { w: W, h: H }, { w: width, h: height }, 16)
     const id = picking
     const text = `${id}=${formatValue(options[index])}`
     const commit = (i: number): void => onSetValue(id, options[i])

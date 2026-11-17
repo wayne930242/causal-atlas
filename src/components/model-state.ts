@@ -12,6 +12,8 @@ export interface ModelWorld {
   readonly original?: Assignment
   /** P(V=1) after do(), for a case without an actual context. */
   readonly probs?: Readonly<Record<string, number>>
+  /** P(V = value) per value for each non-boolean variable, alongside `probs`. */
+  readonly dists?: Readonly<Record<string, readonly number[]>>
   readonly removedEdges: readonly Edge[]
 }
 
@@ -25,9 +27,11 @@ export function solve(c: LoadedCase, interventions: Assignment): ModelWorld {
   }
   if (c.prior === undefined) throw new Error(`case ${c.data.id} has neither a context nor a prior`)
   const cut = new Set(Object.keys(interventions))
+  const m = marginals(c.model, c.prior, { do: interventions })
   return {
     shown,
-    probs: marginals(c.model, c.prior, { do: interventions }).p,
+    probs: m.p,
+    dists: m.dist,
     removedEdges: c.model.edges.filter((e) => cut.has(e.to)),
   }
 }

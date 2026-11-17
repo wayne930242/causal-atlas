@@ -110,10 +110,12 @@ describe('CasePage display fields', () => {
     expect(container.querySelector('[data-reveal="step-4"]')?.textContent).toContain('簡單反事實和直覺不一致')
   })
 
-  it('labels the value a non-boolean fill stands for', () => {
+  it('draws a non-boolean node as one labelled bar per value, not a fill', () => {
     const { container } = render(<ProbabilityPanel caseId="newcomb" />)
-    expect(container.querySelector('[data-node="A"] [data-fill-means]')?.getAttribute('data-fill-means')).toBe('A=one')
-    expect(container.textContent).toContain('數字前標出填色代表的值')
+    const a = container.querySelector('[data-node="A"]') as Element
+    expect([...a.querySelectorAll('[data-bar]')].map((b) => b.getAttribute('data-bar'))).toEqual(['one', 'two'])
+    expect(a.querySelector('[data-level]')).toBeNull()
+    expect(container.textContent).toContain('多值變項每個值一根長條')
   })
 })
 

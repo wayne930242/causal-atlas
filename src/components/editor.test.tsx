@@ -67,8 +67,11 @@ describe('ModelEditor', () => {
     type('A 的式子', "if U then 'bright' else 'dark'")
     fireEvent.click(screen.getByRole('button', { name: '機率' }))
     type('P(U=1)', '0.25')
-    const level = node(container, 'A').querySelector('[data-level]')?.getAttribute('data-level')
-    expect(Number(level)).toBeCloseTo(0.75)
+    // A has two values now: a bar for each, dark 0.75 and bright 0.25.
+    const bar = (value: string): number =>
+      Number(node(container, 'A').querySelector(`[data-bar="${value}"]`)?.getAttribute('data-p'))
+    expect(bar('dark')).toBeCloseTo(0.75)
+    expect(bar('bright')).toBeCloseTo(0.25)
   })
 
   it('shows a parse error under the equation and keeps the last good graph', () => {

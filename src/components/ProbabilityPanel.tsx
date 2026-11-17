@@ -166,7 +166,8 @@ export function ProbabilityPanelFor({
   const [mode, setMode] = useState<'value' | 'probability'>('probability')
   const shown = useMemo(() => shownVariables(c), [c])
   const prior = useMemo(() => priorWithSliders(c, sliders), [c, sliders])
-  const base = useMemo(() => marginals(c.model, prior).p, [c, prior])
+  const baseM = useMemo(() => marginals(c.model, prior), [c, prior])
+  const base = baseM.p
   const onSlider = (id: string, p: number): void => setSliders((s) => ({ ...s, [id]: p }))
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
@@ -189,6 +190,7 @@ export function ProbabilityPanelFor({
       shown={shown}
       values={values}
       probs={showValues ? undefined : base}
+      dists={showValues ? undefined : baseM.dist}
       interventions={{}}
       removedEdges={[]}
       title={m.probGraphTitle(c.data.title[m.locale])}
@@ -258,14 +260,18 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
   const observedId = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(pair.observe)?.[1] ?? ''
   const doId = Object.keys(pair.intervene)[0] ?? ''
   let see: Record<string, number> | undefined
+  let seeDist: Readonly<Record<string, readonly number[]>> = {}
   let seeValue = Number.NaN
   try {
-    see = { ...marginals(c.model, prior, { given: pair.observe }).p }
+    const seen = marginals(c.model, prior, { given: pair.observe })
+    see = { ...seen.p }
+    seeDist = seen.dist
     seeValue = probability(c.model, prior, { event: pair.event, given: pair.observe }).value
   } catch {
     see = undefined
   }
-  const doP = marginals(c.model, prior, { do: pair.intervene }).p
+  const doM = marginals(c.model, prior, { do: pair.intervene })
+  const doP = doM.p
   const doValue = probability(c.model, prior, { event: pair.event, do: pair.intervene }).value
   const cut = new Set(Object.keys(pair.intervene))
   const removed = c.model.edges.filter((e) => cut.has(e.to))
@@ -279,6 +285,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
         c={c}
         shown={shown}
         probs={see}
+        dists={seeDist}
         probNotes={notesAgainst(m, base, see, shown, observedId, m.observed)}
         observed={[observedId]}
         compact
@@ -292,6 +299,7 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
       c={c}
       shown={shown}
       probs={doP}
+      dists={doM.dist}
       probNotes={notesAgainst(m, base, doP, shown, doId, m.setByDo)}
       interventions={pair.intervene as Assignment}
       removedEdges={removed}

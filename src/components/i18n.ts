@@ -277,7 +277,8 @@ const ZH = {
   readCausal: '讀法：[X←x](Y=y) 是把 X 設成 x 之後，Y 等於 y。',
   valueLegend: '實心＝發生（1）　空心＝沒發生（0）',
   probLegend: '填色的高度＝等於 1 的機率',
-  probLegendFinite: '填色的高度＝等於 1 的機率；非 0／1 的變項，數字前標出填色代表的值',
+  probLegendFinite: '填色的高度＝等於 1 的機率；多值變項每個值一根長條，高度＝取該值的機率',
+  probLegendBars: '每個值一根長條，高度＝取該值的機率',
 
   // probability panel
   unchanged: '不變',
@@ -631,7 +632,8 @@ const EN: Messages = {
   readCausal: 'How to read it: [X←x](Y=y) says that once X is set to x, Y equals y.',
   valueLegend: 'Filled = happened (1)   Hollow = did not happen (0)',
   probLegend: 'Fill height = probability of 1',
-  probLegendFinite: 'Fill height = probability of 1; for a variable that is not 0/1, the value the fill stands for is shown before the number',
+  probLegendFinite: 'Fill height = probability of 1; a many-valued variable has one bar per value, height = probability of that value',
+  probLegendBars: 'One bar per value, height = probability of that value',
 
   unchanged: 'unchanged',
   probEquations: 'Equations and probabilities',
