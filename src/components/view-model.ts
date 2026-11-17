@@ -260,7 +260,9 @@ export function equationRows(
       if (expr !== undefined) {
         const arith = toArith(model, expr)
         const result = evalArith(arith, values)
-        worked = `= ${renderArith(substitute(arith, values), 'text')} = ${String(result)}`
+        const plugged = renderArith(substitute(arith, values), 'text')
+        // A bare parent (C = U) substitutes straight to the result; skip the repeat.
+        worked = plugged === String(result) ? `= ${plugged}` : `= ${plugged} = ${String(result)}`
       }
     }
     return { id, text, worked, intervened: false, note: label(model, id, t.locale) }
