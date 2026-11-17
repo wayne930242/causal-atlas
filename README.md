@@ -2,6 +2,10 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.5
+
+The zh-TW case texts are rewritten: shorter stories and explanations, glossary terms with English at first use. Cases embedded in an article (`heading={false}`) get a framed caption bar. Case-page step labels are shorter (干預, 定義評判) and the empty first-step panel shows a large “?”. The do() note reads 「切斷 X，直接設成 v」.
+
 ## 0.3.4
 
 Two case families are renamed: 不作為 → 不作為與責任 (Omission and responsibility) and 常態與規範 → 規範與預設值
@@ -31,7 +35,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.3.4) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.5) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -195,9 +199,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.4 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.5 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.4) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.5) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -206,7 +210,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.4},
+  version = {0.3.5},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
