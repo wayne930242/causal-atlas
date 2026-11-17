@@ -2,6 +2,9 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.11
+Label and readout sit together under each node; repeated ids in labels are dropped; bars scale to the most likely value. In probability mode a boolean node takes a P(X=1) slider: 0 and 1 are do(X=0)/do(X=1), values between are a stochastic intervention (Pearl 2009, pp. 113-114).
+
 ## 0.3.10
 Multi-valued nodes show one bar per value; the do() value popover opens beside the node.
 
@@ -52,7 +55,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.3.10) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.11) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -216,9 +219,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.10 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.11 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.10) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.11) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -227,7 +230,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.10},
+  version = {0.3.11},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
