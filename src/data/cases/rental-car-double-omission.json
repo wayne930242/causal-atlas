@@ -1,0 +1,201 @@
+{
+  "id": "rental-car-double-omission",
+  "title": {
+    "zh-TW": "租車公司與承租人的雙重不作為",
+    "en": "Rental car double omission"
+  },
+  "subtitle": {
+    "zh-TW": "兩個不作為必須同時避免，傷害才不會發生：是過度決定，還是阻斷？",
+    "en": "Both omissions had to be avoided for the injury to be avoided: overdetermination or preemption?"
+  },
+  "family": "omission",
+  "story": {
+    "zh-TW": "考慮租車的情境。租車公司沒有發現、也沒有修好車上有瑕疵的煞車。租車的駕駛在行人出現時沒有踩煞車，行人受傷。只有公司修好煞車並且駕駛踩下煞車，行人才不會受傷。",
+    "en": "Consider a car rental. The rental company fails to discover and repair the car's defective brakes. The driver who has rented the car does not press the brakes when a pedestrian appears, and the pedestrian is injured. The injury would have been avoided only if the company had repaired the brakes and the driver had pressed them."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "租車公司沒有發現、也沒有修好車上有瑕疵的煞車。",
+        "variables": [
+          "R"
+        ]
+      },
+      {
+        "sentence": "租車的駕駛在行人出現時沒有踩煞車，行人受傷。",
+        "variables": [
+          "P",
+          "I"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "The rental company fails to discover and repair the car's defective brakes.",
+        "variables": [
+          "R"
+        ]
+      },
+      {
+        "sentence": "The driver who has rented the car does not press the brakes when a pedestrian appears, and the pedestrian is injured.",
+        "variables": [
+          "P",
+          "I"
+        ]
+      }
+    ]
+  },
+  "explanation": {
+    "zh-TW": "草稿：R 表示公司修好煞車，P 表示駕駛踩煞車，I = ¬R ∨ ¬P。實際為 R = 0、P = 0。摘要說這個案例可框成對稱的過度決定（每個不作為各自就足以使傷害發生），也可框成阻斷（一個不作為切斷另一個通向傷害的過程）；本模型採前一種框架，後一種需要加入時間順序與因果過程的變數。",
+    "en": "Draft: R is the company repairing the brakes, P is the driver pressing them, and I = ¬R ∨ ¬P. Actually R = 0 and P = 0. The abstract says the case can be framed as symmetric overdetermination (each omission alone suffices for the injury) or as preemption (one omission cuts off the process leading from the other); this model takes the first frame, and the second would need variables for temporal order and causal process."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Wang, P.-H., & Wang, L. (2026). Overdetermination or preemption? Framing a double-omission case in structural causal models [Conference abstract]. 2026 Taiwan Causal Inference Symposium, Academia Sinica, Taipei, December 15–16.",
+      "key": "wang2026overdetermination",
+      "role": "origin",
+      "verified": true,
+      "pages": "abstract, paras. 1–2",
+      "note": {
+        "zh-TW": "出處為會議摘要（作者同意以摘要為出處）；案例敘述與兩種框架見摘要第 1–2 段。",
+        "en": "The source is the conference abstract, used as the source with the author's approval; the case and the two frames are in paragraphs 1–2 of the abstract."
+      }
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_R",
+        "label": {
+          "zh-TW": "公司的作為",
+          "en": "Company's conduct"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_P",
+        "label": {
+          "zh-TW": "駕駛的作為",
+          "en": "Driver's conduct"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "R",
+        "label": {
+          "zh-TW": "公司修好煞車",
+          "en": "Company repairs the brakes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "P",
+        "label": {
+          "zh-TW": "駕駛踩煞車",
+          "en": "Driver presses the brakes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "I",
+        "label": {
+          "zh-TW": "行人受傷",
+          "en": "Pedestrian is injured"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "R": "U_R",
+      "P": "U_P",
+      "I": "not R or not P"
+    }
+  },
+  "context": {
+    "U_R": 0,
+    "U_P": 0
+  },
+  "normality": {
+    "R": 1,
+    "P": 1,
+    "I": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "R=0",
+        "effect": "I=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "R=0",
+        "effect": "I=1"
+      },
+      "expected": "part-of-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "P=0",
+        "effect": "I=1"
+      },
+      "expected": "part-of-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "R=0 and P=0",
+        "effect": "I=1"
+      },
+      "expected": "cause"
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "公司修好煞車",
+        "en": "The company repairs the brakes"
+      },
+      "interventions": {
+        "R": 1
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "兩者都做",
+        "en": "Both do their part"
+      },
+      "interventions": {
+        "R": 1,
+        "P": 1
+      }
+    }
+  ],
+  "layout": {
+    "R": [
+      0,
+      0
+    ],
+    "P": [
+      0,
+      1
+    ],
+    "I": [
+      1,
+      0.5
+    ]
+  }
+}

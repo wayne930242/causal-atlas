@@ -1,0 +1,95 @@
+{
+  "id": "yard-vs-pitch-dodge",
+  "title": { "zh-TW": "院子裡躲球與球場上守門員躲球", "en": "Dodging a ball in the yard and on the pitch" },
+  "subtitle": {
+    "zh-TW": "同樣是閃開一顆球，小明不必負責，守門員大明卻要。",
+    "en": "The same dodge, but Xiao-ming is not blamed while the goalkeeper Da-ming is."
+  },
+  "family": "omission",
+  "story": {
+    "zh-TW": "考慮兩個對照的情境。在院子裡，小雄踢球，小明閃開，球砸破了玻璃窗；若小明沒閃開而站在原地，就會擋下球。在足球場上，大雄踢球射門，守門員大明閃開，球進門得分；若大明沒閃開而擋球，球就進不了門。",
+    "en": "Consider two contrasting situations. In a yard, Xiao-xiong kicks a ball, Xiao-ming steps aside, and the ball smashes a window; had Xiao-ming stood his ground he would have stopped it. On a football pitch, Da-xiong kicks at goal, the goalkeeper Da-ming steps aside, and the ball goes in; had Da-ming blocked it, it would not have gone in."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "在院子裡，小雄踢球，小明閃開，球砸破了玻璃窗；若小明沒閃開而站在原地，就會擋下球。", "variables": ["K1", "D1", "W"] },
+      { "sentence": "在足球場上，大雄踢球射門，守門員大明閃開，球進門得分；若大明沒閃開而擋球，球就進不了門。", "variables": ["K2", "D2", "G"] }
+    ],
+    "en": [
+      {
+        "sentence": "In a yard, Xiao-xiong kicks a ball, Xiao-ming steps aside, and the ball smashes a window; had Xiao-ming stood his ground he would have stopped it.",
+        "variables": ["K1", "D1", "W"]
+      },
+      {
+        "sentence": "On a football pitch, Da-xiong kicks at goal, the goalkeeper Da-ming steps aside, and the ball goes in; had Da-ming blocked it, it would not have gone in.",
+        "variables": ["K2", "D2", "G"]
+      }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "D1=1", "effect": "W=1" },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "小明閃開是人之常情，窗戶破了不會算在他頭上；要負責的是朝窗戶踢球的人。",
+      "en": "Stepping aside is what anyone would do; the broken window is not laid to Xiao-ming but to whoever kicked the ball at it."
+    },
+    "agree": ["hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "兩個情境並排放在同一個模型裡。院子：K1 是小雄踢球，D1 是小明閃開，窗戶破 W = K1·D1；球場：K2 是大雄踢球，D2 是大明閃開，球進門 G = K2·D2。兩邊都是閃開才讓球通過。簡單的反事實分析把 D1 = 1 與 D2 = 1 都算作原因，但直覺只把 D2 = 1 算作原因。差別來自規範：守門員應該擋球，閃開是偏差；院子裡的人沒有擋球的義務，閃開是常態；同樣，朝窗戶踢球是偏差（K1 的常態為 0），球員射門則是常態（K2 的常態為 1）。引擎的常態版因此只保留 D2 = 1 與 K1 = 1。這些變數與方程式依故事擬定，鄧育仁 (2022) 並無方程式。",
+    "en": "The two situations sit side by side in one model. Yard: K1 is Xiao-xiong kicking, D1 is Xiao-ming stepping aside, and the window breaks if W = K1·D1. Pitch: K2 is Da-xiong kicking, D2 is Da-ming stepping aside, and the goal is scored if G = K2·D2. In both, the ball gets through only if the person steps aside. The simple counterfactual analysis counts both D1 = 1 and D2 = 1 as causes, while the intuition counts only D2 = 1. The difference comes from norms: a goalkeeper is supposed to block, so stepping aside is deviant, whereas nobody in a yard is obliged to block, so stepping aside is the default; likewise kicking at a window is deviant (K1 is normally 0), while a player shooting is normal (K2 is normally 1). The normality-based definition therefore keeps only D2 = 1 and K1 = 1. The variables and equations are built from the story; Teng (2022) gives no equations."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Wang, P.-H. (2025). The linkage between causation and responsibility: a normative perspective [Yinguo yu zeren de liandong; in Chinese]. EurAmerica, 55(2), 227–271.",
+      "key": "wang2025causality",
+      "role": "origin",
+      "pages": "232–233",
+      "note": {
+        "zh-TW": "p.232 轉述鄧育仁 (2022: 212–213) 的院子情境與球場情境；p.233 說明兩者的因果與責任判斷為何不同：守門員的角色規範。鄧育仁《公民哲學》原書未取得，此處據王鵬翔的轉述。",
+        "en": "P. 232 relays the yard and pitch situations from Teng (2022: 212–213); p. 233 explains why the causal and responsibility judgments differ: the goalkeeper's role norm. Teng's book itself was not available; this follows Wang's report."
+      },
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_K1", "label": { "zh-TW": "小雄的決定", "en": "Xiao-xiong's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_D1", "label": { "zh-TW": "小明的決定", "en": "Xiao-ming's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_K2", "label": { "zh-TW": "大雄的決定", "en": "Da-xiong's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_D2", "label": { "zh-TW": "大明的決定", "en": "Da-ming's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "K1", "label": { "zh-TW": "小雄踢球", "en": "Xiao-xiong kicks" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "D1", "label": { "zh-TW": "小明閃開", "en": "Xiao-ming steps aside" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "W", "label": { "zh-TW": "窗戶被砸破", "en": "Window is smashed" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "K2", "label": { "zh-TW": "大雄射門", "en": "Da-xiong shoots" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "D2", "label": { "zh-TW": "守門員大明閃開", "en": "Goalkeeper Da-ming steps aside" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "G", "label": { "zh-TW": "球進門得分", "en": "Goal is scored" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": {
+      "K1": "U_K1",
+      "D1": "U_D1",
+      "W": "K1 and D1",
+      "K2": "U_K2",
+      "D2": "U_D2",
+      "G": "K2 and D2"
+    }
+  },
+  "context": { "U_K1": 1, "U_D1": 1, "U_K2": 1, "U_D2": 1 },
+  "normality": { "K1": 0, "D1": 1, "W": 0, "K2": 1, "D2": 0, "G": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "D1=1", "effect": "W=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "D1=1", "effect": "W=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "D1=1", "effect": "W=1" }, "expected": "not-cause" },
+    { "theory": "hp-normality", "query": { "cause": "K1=1", "effect": "W=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "D2=1", "effect": "G=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "D2=1", "effect": "G=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "D2=1", "effect": "G=1" }, "expected": "cause" },
+    { "theory": "hp-normality", "query": { "cause": "K2=1", "effect": "G=1" }, "expected": "not-cause" }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "小明站在原地擋球", "en": "Xiao-ming stands his ground" }, "interventions": { "D1": 0 } },
+    { "label": { "zh-TW": "守門員擋球", "en": "The goalkeeper blocks" }, "interventions": { "D2": 0 } }
+  ],
+  "layout": { "K1": [0, 0], "D1": [0, 1], "W": [1, 0.5], "K2": [0, 2.5], "D2": [0, 3.5], "G": [1, 3] }
+}

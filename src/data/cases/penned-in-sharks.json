@@ -1,0 +1,190 @@
+{
+  "id": "penned-in-sharks",
+  "title": {
+    "zh-TW": "被圈住的鯊魚",
+    "en": "Penned-in Sharks"
+  },
+  "subtitle": {
+    "zh-TW": "鯊魚被圈在欄裡，只有路人下水才會被放出；這次他要為沒救人負責。",
+    "en": "The sharks are penned in and would be released only if the bystander jumped in; this time he answers for not saving the child."
+  },
+  "family": "omission",
+  "story": {
+    "zh-TW": "考慮鯊魚案例的變體。路人看見孩子溺水，有意不下水，孩子溺斃。水裡此刻沒有鯊魚，鯊魚被圈在圍欄中；但有人準備好，一旦路人試圖下水救人，就把鯊魚放出來。路人沒有下水，鯊魚從頭到尾沒有被放出。",
+    "en": "Consider a variant of the Sharks case. A bystander sees a child drowning, deliberately does not jump in, and the child drowns. At the moment there are no sharks loose; they are held in a pen, and someone stands ready to release them if the bystander tries to rescue the child. He does not jump in, and the sharks are never released."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "路人看見孩子溺水，有意不下水，孩子溺斃。",
+        "variables": [
+          "J",
+          "SV",
+          "DR"
+        ]
+      },
+      {
+        "sentence": "水裡此刻沒有鯊魚，鯊魚被圈在圍欄中；但有人準備好，一旦路人試圖下水救人，就把鯊魚放出來。",
+        "variables": [
+          "RL"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "A bystander sees a child drowning, deliberately does not jump in, and the child drowns.",
+        "variables": [
+          "J",
+          "SV",
+          "DR"
+        ]
+      },
+      {
+        "sentence": "At the moment there are no sharks loose; they are held in a pen, and someone stands ready to release them if the bystander tries to rescue the child.",
+        "variables": [
+          "RL"
+        ]
+      }
+    ]
+  },
+  "explanation": {
+    "zh-TW": "草稿，頁碼由作者確認、故事為改寫：以 J 表示路人下水，RL 表示鯊魚被放出（RL = J），孩子獲救要求下水而且鯊魚沒被放出（SV = J·¬RL），DR = ¬SV。與鯊魚案例不同，鯊魚並非實際存在，but-for 仍說不下水不是原因，但 HP 固定 RL = 0 之後，不下水是原因，與 Fischer 與 Ravizza 認為路人要為此負責相符。",
+    "en": "Draft; pages confirmed by the author, story paraphrased. J is the bystander jumping in, RL is the sharks being released (RL = J), the child is saved only if he jumps in and the sharks are not released (SV = J·¬RL), and DR = ¬SV. Unlike in Sharks, the sharks are not actually there: but-for still says that staying out is not a cause, but once HP holds RL at 0, staying out is a cause, in line with Fischer and Ravizza holding the bystander responsible."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Fischer, J. M., & Ravizza, M. (1998). Responsibility and Control: A Theory of Moral Responsibility. Cambridge University Press.",
+      "key": "fischer1998responsibility",
+      "role": "origin",
+      "pages": "125, 138",
+      "verified": true,
+      "note": {
+        "zh-TW": "頁碼 125、138 由作者確認，本處未直接閱讀這兩頁；故事是變體的改寫，不是原文引述。與 Sartorio (2005) 的 Sharks 與 FSOC 敘述核對過，其中沒有圍欄版本。",
+        "en": "Pages 125 and 138 were confirmed by the author, not read here; the story is a paraphrased variant, not a quotation. Checked against Sartorio (2005) Sharks and FSOC, which do not contain the pen version."
+      }
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_J",
+        "label": {
+          "zh-TW": "路人的決定",
+          "en": "Bystander's decision"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "J",
+        "label": {
+          "zh-TW": "路人下水",
+          "en": "Bystander jumps in"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "RL",
+        "label": {
+          "zh-TW": "鯊魚被放出",
+          "en": "Sharks are released"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SV",
+        "label": {
+          "zh-TW": "孩子獲救",
+          "en": "Child is saved"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "DR",
+        "label": {
+          "zh-TW": "孩子溺斃",
+          "en": "Child drowns"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "J": "U_J",
+      "RL": "J",
+      "SV": "J and not RL",
+      "DR": "not SV"
+    }
+  },
+  "context": {
+    "U_J": 0
+  },
+  "normality": {
+    "J": 1,
+    "RL": 0,
+    "SV": 1,
+    "DR": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "J=0",
+        "effect": "DR=1"
+      },
+      "expected": "not-cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "J=0",
+        "effect": "DR=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "J=0",
+        "effect": "DR=1"
+      },
+      "expected": "cause"
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "路人下水",
+        "en": "The bystander jumps in"
+      },
+      "interventions": {
+        "J": 1
+      }
+    }
+  ],
+  "layout": {
+    "J": [
+      0,
+      0
+    ],
+    "RL": [
+      1,
+      1
+    ],
+    "SV": [
+      2,
+      0.5
+    ],
+    "DR": [
+      3,
+      0.5
+    ]
+  }
+}
