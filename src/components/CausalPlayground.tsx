@@ -74,13 +74,14 @@ function PlaygroundFor({
   defaultNotation,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase }) {
   const t = useMessages()
-  const { interventions, setInterventions, notation, setNotation, world } = useModel(c, initialInterventions, defaultNotation)
+  const { interventions, stochastic, setInterventions, setDo, notation, setNotation, world } = useModel(c, initialInterventions, defaultNotation)
+  const soft = Object.keys(stochastic).length > 0
   const buttons = presetButtons(c, presets, t.locale)
   return (
     <div className="ca-root not-prose ca-playground" data-case={c.data.id} lang={t.locale}>
       <div className="ca-panel">
-        <GraphBox c={c} world={world} interventions={interventions} onInterventions={setInterventions} legend exportUrl={exportUrl} />
-        <EquationBox c={c} world={world} interventions={interventions} notation={notation} onNotation={setNotation} />
+        <GraphBox c={c} world={world} interventions={interventions} stochastic={stochastic} onDo={setDo} legend exportUrl={exportUrl} />
+        <EquationBox c={c} world={world} interventions={interventions} stochastic={stochastic} notation={notation} onNotation={setNotation} />
       </div>
       <div className="ca-playground-foot">
         <p className="ca-hint">{t.playgroundHint}</p>
@@ -91,7 +92,7 @@ function PlaygroundFor({
                 key={s.text}
                 type="button"
                 className="ca-btn ca-btn-outline"
-                aria-pressed={assignmentText(s.interventions) === assignmentText(interventions)}
+                aria-pressed={!soft && assignmentText(s.interventions) === assignmentText(interventions)}
                 onClick={() => setInterventions(s.interventions)}
               >
                 <Rich text={s.text} ids={c.model.byId} />

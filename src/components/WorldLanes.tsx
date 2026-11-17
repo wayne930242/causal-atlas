@@ -24,9 +24,11 @@ import {
   doText,
   edgeLive,
   edgePolarity,
+  idWithName,
   label,
   outcomeVariable,
   shownEdges,
+  shortLabel,
   shownVariables,
   textWidth,
 } from './view-model.ts'
@@ -181,7 +183,7 @@ function WorldLanesFor({
     const right = Math.max(RIGHT, Math.ceil(40 + Math.max(...lanes.map((l) => textWidth(outcomeNote(l), 13))) + 10))
     const colX = new Map(shown.map((id, i) => [id, left + i * STEP]))
     const width = left + (n - 1) * STEP + right
-    const longLabels = shown.some((id) => textWidth(`${id} ${label(c.model, id, m.locale)}`, 13) > STEP - 2)
+    const longLabels = shown.some((id) => textWidth(idWithName(id, shortLabel(c.model, id, m.locale)), 13) > STEP - 2)
     const head = longLabels ? HEAD + 16 : HEAD
 
     // Place long edges above or below the row so arcs on one side do not overlap.
@@ -437,7 +439,7 @@ function WorldLanesFor({
         </defs>
         {shown.map((id) => {
           const x = colX.get(id) ?? 0
-          const name = label(c.model, id, m.locale)
+          const name = shortLabel(c.model, id, m.locale)
           return longLabels ? (
             <text key={id} x={x} y={24} textAnchor="middle" className="ca-svg-label">
               <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
@@ -447,7 +449,8 @@ function WorldLanesFor({
             </text>
           ) : (
             <text key={id} x={x} y={29} textAnchor="middle" className="ca-svg-label">
-              <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan> {name}
+              <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
+              {name === '' ? null : ` ${name}`}
             </text>
           )
         })}

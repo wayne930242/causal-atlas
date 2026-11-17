@@ -17,7 +17,7 @@ import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, new
 import { hashFragment, readHashState, replaceHash } from './editor/url-state.ts'
 import type { Locale, Messages } from './i18n.ts'
 import { LocaleScope, draftIssueMessage, errorMessage, problemMessage, useMessages } from './i18n.ts'
-import type { ModelWorld } from './model-state.ts'
+import type { DoState, ModelWorld } from './model-state.ts'
 import { solve } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
@@ -45,7 +45,7 @@ export interface ModelEditorProps {
   /**
    * Keep the page address in step with the model on screen (default true): `#case=<id>` while a
    * bundled case or host model is unedited, `#model=<share value>` once edited (debounced), with
-   * `&do=…` for the interventions. Uses `history.replaceState`, so no history entries or scrolling.
+   * `&do=…` for the interventions (and `&pdo=…` for stochastic ones). Uses `history.replaceState`, so no history entries or scrolling.
    */
   readonly syncUrl?: boolean
   /** Builds the share link from the encoded model. Default: this page with `#model=<value>`. */
@@ -129,6 +129,23 @@ function validInterventions(c: LoadedCase, interventions: Assignment): Assignmen
   return out
 }
 
+/**
+ * Stochastic interventions that still name a boolean endogenous variable not set otherwise, in a
+ * model drawn with probabilities (one without an actual context).
+ */
+function validStochastic(c: LoadedCase, state: DoState, hard: Assignment): DoState['stochastic'] {
+  if (c.context !== undefined) return {}
+  const out: Record<string, number> = {}
+  for (const [id, p] of Object.entries(state.stochastic)) {
+    const v = c.model.byId.get(id)
+    if (v === undefined || v.kind === 'exogenous' || v.domain.kind !== 'boolean' || id in hard || !(p > 0 && p < 1)) continue
+    out[id] = p
+  }
+  return out
+}
+
+const NO_DO: DoState = { interventions: {}, stochastic: {} }
+
 function priorsFor(v: DraftVariable): number[] {
   const n = valueTexts(v).length
   return v.domain === 'boolean' ? [0.5] : Array.from({ length: n }, () => 1 / Math.max(n, 1))
@@ -168,7 +185,7 @@ function EditorBody({
   const [picked, setPicked] = useState<string | undefined>(start.picked)
   // Problems of the document the editor started from or the extra model chosen.
   const [docProblems, setDocProblems] = useState<readonly Problem[]>(start.problems)
-  const [interventions, setInterventions] = useState<Assignment>({})
+  const [doState, setDoState] = useState<DoState>(NO_DO)
   // The draft as a case or extra model was loaded, and its id: while the draft is still this very
   // object, the address names the id instead of encoding the model.
   const [base, setBase] = useState<{ readonly draft: Draft; readonly id: string } | undefined>(() =>
@@ -196,45 +213,46 @@ function EditorBody({
   const { world, runtimeError, active } = useMemo((): {
     readonly world?: ModelWorld
     readonly runtimeError?: string
-    readonly active: Assignment
+    readonly active: DoState
   } => {
-    if (shown === undefined) return { active: {} }
-    const valid = validInterventions(shown, interventions)
+    if (shown === undefined) return { active: NO_DO }
+    const hard = validInterventions(shown, doState.interventions)
+    const valid: DoState = { interventions: hard, stochastic: validStochastic(shown, doState, hard) }
     try {
-      return { world: solve(shown, valid), active: valid }
+      return { world: solve(shown, valid.interventions, valid.stochastic), active: valid }
     } catch (error) {
       return { runtimeError: e.cannotCompute(errorMessage(error, t)), active: valid }
     }
-  }, [shown, interventions, e, t])
+  }, [shown, doState, e, t])
 
   // The state the address already shows: changes to anything else rewrite it.
-  const synced = useRef<{ draft: Draft; interventions: Assignment }>({ draft: start.draft, interventions })
+  const synced = useRef<{ draft: Draft; doState: DoState }>({ draft: start.draft, doState })
   // The state the writing effect last ran with: only a change is written, so a re-run of the
   // effect with the state of an earlier render (Strict Mode on mount) never rewrites the address.
-  const seen = useRef<{ draft: Draft; interventions: Assignment }>({ draft: start.draft, interventions })
+  const seen = useRef<{ draft: Draft; doState: DoState }>({ draft: start.draft, doState })
   const ownsUrl = syncUrl && hash === undefined
 
-  const showNamed = (next: Start, doNext: Assignment): void => {
+  const showNamed = (next: Start, doNext: DoState): void => {
     setDraft(next.draft)
-    setInterventions(doNext)
+    setDoState(doNext)
     setPicked(next.picked)
     setDocProblems(next.problems)
     setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
     setLoadErrors([])
-    synced.current = { draft: next.draft, interventions: doNext }
+    synced.current = { draft: next.draft, doState: doNext }
   }
 
   // Write the address: a name at once, an encoded model once the edits pause. It acts on a new
   // draft or new interventions only; `base` and the document change with the draft.
   const doc = compiled.doc
   useEffect(() => {
-    const changed = draft !== seen.current.draft || interventions !== seen.current.interventions
-    seen.current = { draft, interventions }
+    const changed = draft !== seen.current.draft || doState !== seen.current.doState
+    seen.current = { draft, doState }
     if (!ownsUrl || !changed) return
-    if (draft === synced.current.draft && interventions === synced.current.interventions) return
+    if (draft === synced.current.draft && doState === synced.current.doState) return
     if (base !== undefined && draft === base.draft) {
-      synced.current = { draft, interventions }
-      replaceHash(hashFragment({ caseId: base.id }, interventions))
+      synced.current = { draft, doState }
+      replaceHash(hashFragment({ caseId: base.id }, doState.interventions, doState.stochastic))
       return
     }
     // A draft with errors leaves the address at the last model that built.
@@ -244,8 +262,8 @@ function EditorBody({
       encodeShare(doc)
         .then((model) => {
           if (!live) return
-          synced.current = { draft, interventions }
-          replaceHash(hashFragment({ model }, interventions))
+          synced.current = { draft, doState }
+          replaceHash(hashFragment({ model }, doState.interventions, doState.stochastic))
         })
         .catch(() => {
           // too large to share: the address keeps the last model it could carry
@@ -255,7 +273,7 @@ function EditorBody({
       live = false
       window.clearTimeout(timer)
     }
-  }, [ownsUrl, draft, interventions, base, doc])
+  }, [ownsUrl, draft, doState, base, doc])
 
   // What reading the address needs, without re-reading it when a host passes new arrays.
   const reading = useRef({ t, extraModels })
@@ -274,7 +292,7 @@ function EditorBody({
             if (!live) return
             if (result.ok) {
               const next = draftFromImport(result.doc)
-              showNamed({ draft: next, problems: [] }, wanted.interventions)
+              showNamed({ draft: next, problems: [] }, { interventions: wanted.interventions, stochastic: wanted.stochastic })
             } else setLoadErrors(result.errors.map((p) => ({ problem: p })))
           })
           .catch((error: unknown) => {
@@ -285,7 +303,7 @@ function EditorBody({
       // An unknown id keeps what is on screen.
       const { t: now, extraModels: extras } = reading.current
       if (wanted.caseId !== undefined && knownName(wanted.caseId, extras)) {
-        showNamed(startNamed(wanted.caseId, now, extras), wanted.interventions)
+        showNamed(startNamed(wanted.caseId, now, extras), { interventions: wanted.interventions, stochastic: wanted.stochastic })
       }
     }
     if (hash !== undefined) read(hash)
@@ -300,7 +318,7 @@ function EditorBody({
 
   const replace = (next: Draft): void => {
     setDraft(next)
-    setInterventions({})
+    setDoState(NO_DO)
     setPicked(undefined)
     setDocProblems([])
     setBase(undefined)
@@ -309,7 +327,7 @@ function EditorBody({
     const extra = extraModels.find((m) => modelKey(m.id) === key)
     const next = extra !== undefined ? startFromDoc(extra.doc, t, extra.id) : startNamed(key, t, NO_EXTRAS)
     setDraft(next.draft)
-    setInterventions({})
+    setDoState(NO_DO)
     setPicked(next.picked)
     setDocProblems(next.problems)
     setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
@@ -458,13 +476,21 @@ function EditorBody({
                   <GraphBox
                     c={shown}
                     world={world}
-                    interventions={active}
-                    onInterventions={setInterventions}
+                    interventions={active.interventions}
+                    stochastic={active.stochastic}
+                    onDo={setDoState}
                     onMove={move}
                     legend
                     exportUrl={exportUrl}
                   />
-                  <EquationBox c={shown} world={world} interventions={active} notation={notation} onNotation={setNotation} />
+                  <EquationBox
+                    c={shown}
+                    world={world}
+                    interventions={active.interventions}
+                    stochastic={active.stochastic}
+                    notation={notation}
+                    onNotation={setNotation}
+                  />
                 </div>
               ) : (
                 <div className="ca-placeholder ca-editor-empty">

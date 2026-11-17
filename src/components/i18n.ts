@@ -128,8 +128,11 @@ export type DraftIssue =
 
 type DraftWording = { readonly [K in DraftIssue['code']]: (issue: Extract<DraftIssue, { code: K }>) => string }
 
-/** What a click on a node does: set or release a boolean one; choose or adjust the value of a multi-valued one. */
-export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust'
+/**
+ * What a click on a node does: set or release a boolean one; choose or adjust the value of a
+ * multi-valued one; choose or adjust P*(X=1) of a boolean one in probability mode.
+ */
+export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb'
 
 const ZH = {
   locale: 'zh-TW' as Locale,
@@ -250,8 +253,8 @@ const ZH = {
   cut: '切斷',
   was: (value: string): string => `原本 ${value}`,
   nodeValue: (value: string): string => `值 ${value}`,
-  nodeAria: (id: string, name: string, state: string, forced: string | undefined, before: string | undefined): string =>
-    `${id} ${name}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${before === undefined ? '' : `，原本 ${before}`}`,
+  nodeAria: (who: string, state: string, forced: string | undefined, before: string | undefined): string =>
+    `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${before === undefined ? '' : `，原本 ${before}`}`,
   nodeHint: (toggle: NodeToggle | undefined, movable: boolean): string =>
     [
       toggle === undefined
@@ -262,23 +265,31 @@ const ZH = {
             ? '按一下選擇要設成的值'
             : toggle === 'adjust'
               ? '按一下改選干預的值或放開'
-              : '按一下套上干預',
+              : toggle === 'chooseProb'
+                ? '按一下設定干預後等於 1 的機率'
+                : toggle === 'adjustProb'
+                  ? '按一下改設干預後等於 1 的機率或放開'
+                  : '按一下套上干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
       .join('；'),
   doRelease: '放開',
-  doPickLabel: (id: string, name: string): string => `${id} ${name}：選擇干預的值`,
+  doPickLabel: (who: string): string => `${who}：選擇干預的值`,
+  doProbLabel: (who: string): string => `${who}：干預後等於 1 的機率`,
+  barMax: (p: string): string => `最高 ${p}`,
   withHint: (aria: string, hint: string): string => (hint === '' ? aria : `${aria}。${hint}`),
   setDirectly: (parents: readonly string[], value: string): string =>
     `${parents.length === 0 ? '' : `切斷 ${parents.join("、")}，`}直接設成 ${value}`,
+  setByChance: (parents: readonly string[], p: string): string =>
+    `${parents.length === 0 ? '' : `切斷 ${parents.join("、")}，`}以機率 ${p} 設成 1，否則設成 0`,
   afterDoNote: (doText: string, label: string, value: string): string => `${doText} 之後，${label}：${value}`,
   readBrackets: '讀法：先做方括號裡的干預，再看圓括號裡的事成不成立。',
   readCausal: '讀法：[X←x](Y=y) 是把 X 設成 x 之後，Y 等於 y。',
   valueLegend: '實心＝發生（1）　空心＝沒發生（0）',
   probLegend: '填色的高度＝等於 1 的機率',
-  probLegendFinite: '填色的高度＝等於 1 的機率；多值變項每個值一根長條，高度＝取該值的機率',
-  probLegendBars: '每個值一根長條，高度＝取該值的機率',
+  probLegendFinite: '填色的高度＝等於 1 的機率；多值變項每個值一根長條，高度與取該值的機率成正比，最高的一根標出它的機率',
+  probLegendBars: '每個值一根長條，高度與取該值的機率成正比，最高的一根標出它的機率',
 
   // probability panel
   unchanged: '不變',
@@ -606,8 +617,8 @@ const EN: Messages = {
   cut: 'cut',
   was: (value) => `was ${value}`,
   nodeValue: (value) => `value ${value}`,
-  nodeAria: (id, name, state, forced, before) =>
-    `${id} ${name}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${before === undefined ? '' : `, was ${before}`}`,
+  nodeAria: (who, state, forced, before) =>
+    `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${before === undefined ? '' : `, was ${before}`}`,
   nodeHint: (toggle, movable) =>
     [
       toggle === undefined
@@ -618,22 +629,30 @@ const EN: Messages = {
             ? 'click to choose the value to set it to'
             : toggle === 'adjust'
               ? 'click to change the value or release it'
-              : 'click to intervene',
+              : toggle === 'chooseProb'
+                ? 'click to set the probability of 1 by intervention'
+                : toggle === 'adjustProb'
+                  ? 'click to change the probability of 1 set by intervention, or release it'
+                  : 'click to intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
       .join('; '),
   doRelease: 'Release',
-  doPickLabel: (id, name) => `${id} ${name}: value to set it to`,
+  doPickLabel: (who) => `${who}: value to set it to`,
+  doProbLabel: (who) => `${who}: probability of 1 set by intervention`,
+  barMax: (p) => `max ${p}`,
   withHint: (aria, hint) => (hint === '' ? aria : `${aria}. ${hint.charAt(0).toUpperCase()}${hint.slice(1)}`),
   setDirectly: (parents, value) => `${parents.length === 0 ? '' : `ignores ${enList(parents)}; `}set directly to ${value}`,
+  setByChance: (parents, p) => `${parents.length === 0 ? '' : `ignores ${enList(parents)}; `}set to 1 with probability ${p}, else to 0`,
   afterDoNote: (doText, label, value) => `After ${doText}, ${label}: ${value}`,
   readBrackets: 'How to read it: first make the interventions in square brackets, then check whether what is in parentheses holds.',
   readCausal: 'How to read it: [X←x](Y=y) says that once X is set to x, Y equals y.',
   valueLegend: 'Filled = happened (1)   Hollow = did not happen (0)',
   probLegend: 'Fill height = probability of 1',
-  probLegendFinite: 'Fill height = probability of 1; a many-valued variable has one bar per value, height = probability of that value',
-  probLegendBars: 'One bar per value, height = probability of that value',
+  probLegendFinite:
+    'Fill height = probability of 1; a many-valued variable has one bar per value, height in proportion to the probability of that value, the tallest bar labelled with its probability',
+  probLegendBars: 'One bar per value, height in proportion to the probability of that value; the tallest bar is labelled with its probability',
 
   unchanged: 'unchanged',
   probEquations: 'Equations and probabilities',

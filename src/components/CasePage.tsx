@@ -194,11 +194,12 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
                 c={c}
                 world={model.world}
                 interventions={model.interventions}
-                onInterventions={
+                stochastic={model.stochastic}
+                onDo={
                   step >= 3
                     ? (n) => {
                         setWitness(undefined)
-                        model.setInterventions(n)
+                        model.setDo(n)
                       }
                     : undefined
                 }
@@ -210,6 +211,7 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
                 c={c}
                 world={model.world}
                 interventions={model.interventions}
+                stochastic={model.stochastic}
                 notation={model.notation}
                 onNotation={model.setNotation}
               />

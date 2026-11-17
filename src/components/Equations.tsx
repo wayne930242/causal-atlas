@@ -9,6 +9,7 @@ import { OkIcon, Tag } from './parts.tsx'
 import { equationsLatex } from './equations-latex.ts'
 import { Tex } from './Tex.tsx'
 import { Rich } from './typeset.tsx'
+import type { Stochastic } from './view-model.ts'
 import { bracketText, doText, equationIds, equationRows, label, outcomeVariable } from './view-model.ts'
 
 export interface EquationsProps {
@@ -17,12 +18,14 @@ export interface EquationsProps {
   readonly notation: UiNotation
   readonly values?: Assignment
   readonly interventions: Assignment
+  /** Stochastic interventions (probability mode): each one's equation is struck and replaced by a coin. */
+  readonly stochastic?: Stochastic
 }
 
 /** The model's equations in one notation at a time. */
-export function Equations({ c, shown, notation, values, interventions }: EquationsProps) {
+export function Equations({ c, shown, notation, values, interventions, stochastic }: EquationsProps) {
   const t = useMessages()
-  const ids = equationIds(c, shown, interventions)
+  const ids = equationIds(c, shown, interventions, stochastic)
   const hasDo = Object.keys(interventions).length > 0
   if (notation === 'causal') {
     if (hasDo && values !== undefined) {
@@ -74,7 +77,7 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
       </div>
     )
   }
-  const rows = equationRows(t, c, ids, notation, values, interventions, shown)
+  const rows = equationRows(t, c, ids, notation, values, interventions, shown, stochastic)
   return (
     <div className="ca-eqs" data-notation={notation} onCopy={copyAsTex}>
       {rows.map((r) => (

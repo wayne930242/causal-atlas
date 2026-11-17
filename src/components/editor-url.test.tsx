@@ -4,7 +4,7 @@ import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { encodeShare } from '../data/model-doc.ts'
 import { modelDocSchema } from '../data/schema.ts'
-import { formatDo, hashWith, parseDo, readHashState } from './editor/url-state.ts'
+import { formatDo, formatPdo, hashFragment, hashWith, parseDo, parsePdo, readHashState } from './editor/url-state.ts'
 import { ModelEditor } from './index.ts'
 
 const setUrl = (url: string): void => window.history.replaceState(null, '', url)
@@ -53,9 +53,23 @@ describe('url-state', () => {
       caseId: 'newcomb',
       model: undefined,
       interventions: { ST: 0, X: 'a,b' },
+      stochastic: {},
     })
     expect(readHashState('#/editor?lang=en&model=1.abc').model).toBe('1.abc')
     expect(parseDo(formatDo({ A: true, B: 'x:y', C: 2 }))).toEqual({ A: 1, B: 'x:y', C: 2 })
+  })
+
+  it('carries stochastic do() as pdo, apart from the hard interventions', () => {
+    expect(hashFragment({ caseId: 'fork' }, { Y: true }, { Z: 0.3 })).toBe('case=fork&do=Y:1&pdo=Z:0.30')
+    expect(hashFragment({ caseId: 'fork' }, {}, { Z: 0.3 })).toBe('case=fork&pdo=Z:0.30')
+    expect(readHashState('#case=fork&pdo=Z:0.30,W:1,V:0,U:x')).toEqual({
+      caseId: 'fork',
+      model: undefined,
+      interventions: {},
+      stochastic: { Z: 0.3 },
+    })
+    expect(parsePdo(formatPdo({ A: 0.05, B: 0.95 }))).toEqual({ A: 0.05, B: 0.95 })
+    expect(hashWith('#/editor?lang=en&case=a&pdo=Z:0.30', 'case=b')).toBe('#/editor?lang=en&case=b')
   })
 
   it('keeps a hash route and its other parameters', () => {

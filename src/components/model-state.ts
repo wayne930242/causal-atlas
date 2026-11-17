@@ -3,7 +3,14 @@ import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, Edge, Value } from '../engine/index.ts'
 import { evaluate, getVariable } from '../engine/index.ts'
 import type { UiNotation } from './notation.ts'
-import { flipValue, marginals, shownVariables, targetValue } from './view-model.ts'
+import type { Stochastic } from './view-model.ts'
+import { flipValue, mixedMarginals, shownVariables, targetValue } from './view-model.ts'
+
+/** What is set by do(): hard interventions, and stochastic ones (P*(X=1) of a boolean, 0 < p < 1). */
+export interface DoState {
+  readonly interventions: Assignment
+  readonly stochastic: Stochastic
+}
 
 export interface ModelWorld {
   readonly shown: readonly string[]
@@ -17,17 +24,21 @@ export interface ModelWorld {
   readonly removedEdges: readonly Edge[]
 }
 
-/** Solve the case under do(interventions): values when it has a context, probabilities otherwise. */
-export function solve(c: LoadedCase, interventions: Assignment): ModelWorld {
+/**
+ * Solve the case under do(interventions): values when it has a context, probabilities otherwise.
+ * `stochastic` interventions need probabilities: the world is their mixture (see `mixedMarginals`).
+ */
+export function solve(c: LoadedCase, interventions: Assignment, stochastic: Stochastic = {}): ModelWorld {
   const shown = shownVariables(c)
   if (c.context !== undefined) {
+    if (Object.keys(stochastic).length > 0) throw new Error(`case ${c.data.id} has an actual context: a stochastic do() needs probabilities`)
     const now = evaluate(c.model, c.context, interventions)
     const before = evaluate(c.model, c.context)
     return { shown, values: now.values, original: before.values, removedEdges: now.removedEdges }
   }
   if (c.prior === undefined) throw new Error(`case ${c.data.id} has neither a context nor a prior`)
-  const cut = new Set(Object.keys(interventions))
-  const m = marginals(c.model, c.prior, { do: interventions })
+  const cut = new Set([...Object.keys(interventions), ...Object.keys(stochastic)])
+  const m = mixedMarginals(c.model, c.prior, interventions, stochastic)
   return {
     shown,
     probs: m.p,
@@ -42,6 +53,28 @@ export function withValue(interventions: Assignment, id: string, value: Value | 
   if (value === undefined) delete next[id]
   else next[id] = value
   return next
+}
+
+/** P*(X=1) on a slider step, in hundredths. */
+function hundredths(p: number): number {
+  return Math.round(p * 100) / 100
+}
+
+/**
+ * do() with boolean `id` set to P*(id=1) = `p`: 0 and 1 are do(id=0) and do(id=1), a value between
+ * them a stochastic intervention, and undefined releases `id` either way.
+ */
+export function withProbability(state: DoState, id: string, p: number | undefined): DoState {
+  const interventions: Record<string, Value> = { ...state.interventions }
+  const stochastic: Record<string, number> = { ...state.stochastic }
+  delete interventions[id]
+  delete stochastic[id]
+  if (p !== undefined) {
+    const q = hundredths(Math.min(1, Math.max(0, p)))
+    if (q === 0 || q === 1) interventions[id] = q === 1
+    else stochastic[id] = q
+  }
+  return { interventions, stochastic }
 }
 
 /** Click on a node: set it to the other value, or release it. */
@@ -61,10 +94,16 @@ export function useNotation(initial: UiNotation = 'propositional'): [UiNotation,
   return useState<UiNotation>(initial)
 }
 
-/** Shared state for a graph with do(): interventions, notation and the solved world. */
+const NONE: Stochastic = {}
+
+/**
+ * Shared state for a graph with do(): interventions, notation and the solved world.
+ * `setInterventions` sets hard interventions only and clears any stochastic one; `setDo` sets both.
+ */
 export function useModel(c: LoadedCase, initial: Assignment = {}, initialNotation: UiNotation = 'propositional') {
-  const [interventions, setInterventions] = useState<Assignment>(initial)
+  const [state, setDo] = useState<DoState>(() => ({ interventions: initial, stochastic: NONE }))
   const [notation, setNotation] = useNotation(initialNotation)
-  const world = useMemo(() => solve(c, interventions), [c, interventions])
-  return { interventions, setInterventions, notation, setNotation, world }
+  const world = useMemo(() => solve(c, state.interventions, state.stochastic), [c, state])
+  const setInterventions = (interventions: Assignment): void => setDo({ interventions, stochastic: NONE })
+  return { interventions: state.interventions, stochastic: state.stochastic, setInterventions, setDo, notation, setNotation, world }
 }

@@ -130,6 +130,29 @@ export function label(model: CausalModel, id: string, locale: Locale): string {
   return getVariable(model, id).label[locale]
 }
 
+/**
+ * The label as drawn after the id: without a repeat of the id. A label equal to the id gives '';
+ * one that ends with " <id>" or starts with "<id> " loses that part ("共同原因 Z" for Z is drawn
+ * "Z 共同原因", not "Z 共同原因 Z").
+ */
+export function nameAfterId(id: string, name: string): string {
+  const text = name.trim()
+  if (text === id) return ''
+  if (text.endsWith(` ${id}`)) return text.slice(0, -id.length).trim()
+  if (text.startsWith(`${id} `)) return text.slice(id.length).trim()
+  return text
+}
+
+/** The variable's label in `locale` as drawn beside its id (see `nameAfterId`). */
+export function shortLabel(model: CausalModel, id: string, locale: Locale): string {
+  return nameAfterId(id, label(model, id, locale))
+}
+
+/** The id and its label as one line of text, `X` alone when the label only repeats it. */
+export function idWithName(id: string, name: string): string {
+  return name === '' ? id : `${id} ${name}`
+}
+
 export function valueText(value: Value | undefined): string {
   return value === undefined ? '' : formatValue(value)
 }
@@ -160,8 +183,23 @@ export function phraseOf(model: CausalModel, locale: Locale, text: string, doing
   return valuePhrase(model, locale, id, v, text, doing)
 }
 
-export function doText(a: Assignment): string {
-  return `do(${assignmentText(a)})`
+/**
+ * Stochastic interventions (Pearl 2009, pp. 113–114, a stochastic policy without conditioning):
+ * P*(X=1) for each boolean variable so set, strictly between 0 and 1. The endpoints are the
+ * ordinary do(X=0) and do(X=1) and live in the `Assignment` of hard interventions instead.
+ */
+export type Stochastic = Readonly<Record<string, number>>
+
+/** `P(X=1)=0.30` for each stochastic intervention. */
+export function stochasticText(s: Stochastic, sep = ', '): string {
+  return Object.entries(s)
+    .map(([id, p]) => `P(${id}=1)=${probText(p)}`)
+    .join(sep)
+}
+
+/** `do(X=1, P(Y=1)=0.30)`: the hard interventions, then the stochastic ones. */
+export function doText(a: Assignment, s: Stochastic = {}): string {
+  return `do(${[assignmentText(a), stochasticText(s)].filter((x) => x !== '').join(', ')})`
 }
 
 export function bracketText(a: Assignment): string {
@@ -182,10 +220,10 @@ export function flipValue(variable: Variable, value: Value): Value {
  * Endogenous variables whose equation is shown: those with at least one drawn parent, plus any
  * intervened ones (their replaced equation is shown struck through).
  */
-export function equationIds(c: LoadedCase, shown: readonly string[], interventions: Assignment = {}): string[] {
+export function equationIds(c: LoadedCase, shown: readonly string[], interventions: Assignment = {}, stochastic: Stochastic = {}): string[] {
   const set = new Set(shown)
   return c.model.endogenous.filter(
-    (id) => set.has(id) && (id in interventions || c.model.edges.some((e) => e.to === id && set.has(e.from))),
+    (id) => set.has(id) && (id in interventions || id in stochastic || c.model.edges.some((e) => e.to === id && set.has(e.from))),
   )
 }
 
@@ -244,6 +282,7 @@ export function equationRows(
   values: Assignment | undefined,
   interventions: Assignment,
   shown: readonly string[],
+  stochastic: Stochastic = {},
 ): EquationRow[] {
   const { model } = c
   const set = new Set(shown)
@@ -251,6 +290,20 @@ export function equationRows(
     const text = renderEquation(model, id, notation, 'text')
     const latex = renderEquation(model, id, notation, 'latex')
     const forced = interventions[id]
+    const soft = stochastic[id]
+    if (soft !== undefined) {
+      // A stochastic do(): the equation gives way to a coin with P(X=1) = p.
+      const parents = model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
+      return {
+        id,
+        text: `${id} ~ Bernoulli(${probText(soft)})`,
+        latex: `${renderIdent(id, 'latex')} \\sim \\mathrm{Bernoulli}(${probText(soft)})`,
+        struck: text,
+        struckLatex: latex,
+        intervened: true,
+        note: t.setByChance(parents, probText(soft)),
+      }
+    }
     if (forced !== undefined) {
       const parents = model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
       return {
@@ -400,6 +453,38 @@ export function marginals(
   const dist: Record<string, readonly number[]> = {}
   for (const [id, row] of Object.entries(perValue)) dist[id] = row.map((s) => (evidence > 0 ? s / evidence : Number.NaN))
   return { p: out, dist, evidence }
+}
+
+/**
+ * Marginals under the hard interventions `hard` and the stochastic ones `stochastic`: the mixture
+ * Σ ∏ w · P(· | do(hard, X₁=x₁, …)) over every 0/1 setting of the stochastic variables, each
+ * weighted by P*(Xᵢ=xᵢ) (Pearl 2009, pp. 113–114). Without stochastic ones it is `marginals`.
+ */
+export function mixedMarginals(model: CausalModel, prior: Prior, hard: Assignment, stochastic: Stochastic): Marginals {
+  const ids = Object.keys(stochastic)
+  if (ids.length === 0) return marginals(model, prior, { do: hard })
+  const p: Record<string, number> = {}
+  const dist: Record<string, number[]> = {}
+  for (let mask = 0; mask < 1 << ids.length; mask++) {
+    const setting: Record<string, Value> = { ...hard }
+    let weight = 1
+    ids.forEach((id, i) => {
+      const on = (mask & (1 << i)) !== 0
+      const q = stochastic[id]
+      if (getVariable(model, id).domain.kind !== 'boolean') throw new Error(`stochastic do() needs a boolean variable: ${id}`)
+      if (!(q > 0 && q < 1)) throw new Error(`stochastic do() needs 0 < P(${id}=1) < 1, got ${q}`)
+      setting[id] = on
+      weight *= on ? q : 1 - q
+    })
+    const part = marginals(model, prior, { do: setting })
+    for (const [id, v] of Object.entries(part.p)) p[id] = (p[id] ?? 0) + weight * v
+    for (const [id, row] of Object.entries(part.dist)) {
+      const acc = dist[id] ?? row.map(() => 0)
+      row.forEach((v, i) => (acc[i] += weight * v))
+      dist[id] = acc
+    }
+  }
+  return { p, dist, evidence: 1 }
 }
 
 /** Geometry of one node's per-value bars (a chart `width` wide, `barW` bars every `pitch`, in px). */

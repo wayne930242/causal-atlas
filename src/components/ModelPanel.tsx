@@ -6,8 +6,8 @@ import type { ExportSource, ExportTag } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { messagesFor, useMessages } from './i18n.ts'
-import type { ModelWorld } from './model-state.ts'
-import { toggled, withValue } from './model-state.ts'
+import type { DoState, ModelWorld } from './model-state.ts'
+import { toggled, withProbability, withValue } from './model-state.ts'
 import { useNarrow } from './use-narrow.ts'
 import { CopyLatex, Equations } from './Equations.tsx'
 import type { UiNotation } from './notation.ts'
@@ -16,13 +16,17 @@ import { Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
 import { Formula } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
+import type { Stochastic } from './view-model.ts'
 import { doText, probLegend } from './view-model.ts'
 
 export interface GraphBoxProps {
   readonly c: LoadedCase
   readonly world: ModelWorld
   readonly interventions: Assignment
-  readonly onInterventions?: (next: Assignment) => void
+  /** Stochastic interventions, P*(X=1) per boolean node (probability mode only). */
+  readonly stochastic?: Stochastic
+  /** A click on a node: the new do() state. */
+  readonly onDo?: (next: DoState) => void
   readonly witness?: Assignment
   readonly legend?: boolean
   readonly title?: string
@@ -32,10 +36,17 @@ export interface GraphBoxProps {
   readonly onMove?: (id: string, dCol: number, dRow: number) => void
 }
 
-/** The graph with its world tags; clicking a node toggles do() on it. */
-export function GraphBox({ c, world, interventions, onInterventions, witness, legend, title, exportUrl, onMove }: GraphBoxProps) {
+const NONE: Stochastic = {}
+
+/**
+ * The graph with its world tags; clicking a node toggles do() on it, or in probability mode opens a
+ * slider for P*(X=1) of a boolean node or for the value of a multi-valued one.
+ */
+export function GraphBox({ c, world, interventions, stochastic = NONE, onDo, witness, legend, title, exportUrl, onMove }: GraphBoxProps) {
   const t = useMessages()
-  const hasDo = Object.keys(interventions).length > 0
+  const hasDo = Object.keys(interventions).length > 0 || Object.keys(stochastic).length > 0
+  const state: DoState = { interventions, stochastic }
+  const doNow = doText(interventions, stochastic)
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
   const legendFor = (m: Messages): string => (world.probs !== undefined ? probLegend(m, c.model, world.shown) : m.valueLegend)
@@ -49,10 +60,18 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
       probs={world.probs}
       dists={world.dists}
       interventions={interventions}
+      stochastic={stochastic}
       removedEdges={world.removedEdges}
       witness={witness}
-      onToggle={!interactive || onInterventions === undefined ? undefined : (id) => onInterventions(toggled(c, interventions, world, id))}
-      onSetValue={!interactive || onInterventions === undefined ? undefined : (id, value) => onInterventions(withValue(interventions, id, value))}
+      onToggle={
+        !interactive || onDo === undefined ? undefined : (id) => onDo({ stochastic, interventions: toggled(c, interventions, world, id) })
+      }
+      onSetValue={
+        !interactive || onDo === undefined ? undefined : (id, value) => onDo({ stochastic, interventions: withValue(interventions, id, value) })
+      }
+      onSetProbability={
+        !interactive || onDo === undefined || world.probs === undefined ? undefined : (id, p) => onDo(withProbability(state, id, p))
+      }
       title={title ?? m.graphTitle(c.data.title[m.locale])}
       onMove={interactive ? onMove : undefined}
     />
@@ -67,7 +86,7 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
     const tags: ExportTag[] = hasDo
       ? [
           { text: m.afterDo, tone: 'slate' },
-          { text: doText(interventions), tone: 'accent', mono: true },
+          { text: doNow, tone: 'accent', mono: true },
         ]
       : [{ text: world.probs !== undefined ? m.probability : m.actualWorld, tone: 'fg' }]
     return {
@@ -88,13 +107,13 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
             <>
               <Tag tone="slate">{t.afterDo}</Tag>
               <span className="ca-do-chip ca-mono">
-                <Formula text={doText(interventions)} />
-                {onInterventions !== undefined && (
+                <Formula text={doNow} />
+                {onDo !== undefined && (
                   <button
                     type="button"
                     className="ca-do-clear"
-                    aria-label={t.removeDo(doText(interventions))}
-                    onClick={() => onInterventions({})}
+                    aria-label={t.removeDo(doNow)}
+                    onClick={() => onDo({ interventions: {}, stochastic: NONE })}
                   >
                     ×
                   </button>
@@ -106,8 +125,8 @@ export function GraphBox({ c, world, interventions, onInterventions, witness, le
           )}
         </div>
         <div className="ca-box-actions">
-          {hasDo && onInterventions !== undefined && (
-            <button type="button" className="ca-link" onClick={() => onInterventions({})}>
+          {hasDo && onDo !== undefined && (
+            <button type="button" className="ca-link" onClick={() => onDo({ interventions: {}, stochastic: NONE })}>
               {t.backToActual}
             </button>
           )}
@@ -126,20 +145,21 @@ export interface EquationBoxProps {
   readonly c: LoadedCase
   readonly world: ModelWorld
   readonly interventions: Assignment
+  readonly stochastic?: Stochastic
   readonly notation: UiNotation
   readonly onNotation: (n: UiNotation) => void
 }
 
-export function EquationBox({ c, world, interventions, notation, onNotation }: EquationBoxProps) {
+export function EquationBox({ c, world, interventions, stochastic = NONE, notation, onNotation }: EquationBoxProps) {
   const t = useMessages()
   return (
     <div className="ca-box ca-eq-box">
       <div className="ca-eq-head">
         <h3 className="ca-h3">{t.equations}</h3>
         <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
-        <CopyLatex c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} />
+        <CopyLatex c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} stochastic={stochastic} />
       </div>
-      <Equations c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} />
+      <Equations c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} stochastic={stochastic} />
     </div>
   )
 }

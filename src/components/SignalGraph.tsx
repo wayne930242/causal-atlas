@@ -9,7 +9,19 @@ import { around, firstClear, intersects, placePop, rectBox, segmentHitsBox, shif
 import type { NodeToggle } from './i18n.ts'
 import { useMessages } from './i18n.ts'
 import { sub } from './svg-text.tsx'
-import { assignmentText, barLayout, edgeLive, edgePolarity, gridLayout, label, probText, shownEdges, textWidth } from './view-model.ts'
+import type { Stochastic } from './view-model.ts'
+import {
+  assignmentText,
+  barLayout,
+  edgeLive,
+  edgePolarity,
+  gridLayout,
+  idWithName,
+  probText,
+  shortLabel,
+  shownEdges,
+  textWidth,
+} from './view-model.ts'
 
 export interface SignalGraphProps {
   readonly c: LoadedCase
@@ -27,6 +39,8 @@ export interface SignalGraphProps {
   /** Observed variables (drawn with a second ring). */
   readonly observed?: readonly string[]
   readonly interventions: Assignment
+  /** Stochastic interventions: P*(X=1) of a boolean node, 0 < p < 1 (drawn like a do(), with that probability). */
+  readonly stochastic?: Stochastic
   readonly removedEdges: readonly Edge[]
   /** Variables a witness holds fixed: an amber hull. */
   readonly witness?: Assignment
@@ -34,6 +48,11 @@ export interface SignalGraphProps {
   readonly onToggle?: (id: string) => void
   /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
   readonly onSetValue?: (id: string, value: Value | undefined) => void
+  /**
+   * Probability mode: a click on a boolean node opens a slider for P*(X=1), reported here; 0 and 1
+   * mean do(X=0) and do(X=1), undefined releases the intervention.
+   */
+  readonly onSetProbability?: (id: string, p: number | undefined) => void
   readonly title: string
   /** Narrower columns, for two graphs side by side. */
   readonly compact?: boolean
@@ -52,40 +71,67 @@ interface Drag {
 }
 
 const SNAP = 0.25
-/** Per-value bars: tallest bar, the gap above it, and the label size. */
+/** Row spacing in probability mode, where a label and its readout (bars, a note) sit under each node. */
+const ROW_PROB = 170
+/** Per-value bars: tallest bar, the gap to the label above them, and the value label size. */
 const BAR_H = 24
-const BAR_GAP = 8
+const BAR_GAP = 10
 const BAR_LABEL = 11
-const BARS_EXTRA = 28
+/** P*(X=1) slider step for a boolean node in probability mode. */
+const P_STEP = 0.05
 
-/** Where a node's bar chart sits, relative to the node's centre, and the note under it. */
-interface Chart {
+/** What sits under a node's label: nothing, one number, or one bar per value (with the largest probability). */
+type Readout =
+  | { readonly kind: 'none' }
+  | { readonly kind: 'number'; readonly noteW?: number }
+  | { readonly kind: 'bars'; readonly width: number; readonly maxW: number; readonly noteW?: number }
+
+/** A node's label and its readout as one block, in offsets from the node's centre. */
+interface Block {
+  readonly side: 'below' | 'above'
+  /** Baselines of the label, the number and the note. */
+  readonly labelY: number
+  readonly numberY: number
+  readonly noteY: number
+  /** Bars: left edge and the baseline the bars stand on. */
   readonly x0: number
   readonly baseline: number
-  /** The chart with its value labels, and the note under it when there is one. */
-  readonly box: Box
-  readonly noteX: number
-  readonly noteAnchor: Anchor
+  readonly boxes: readonly Box[]
 }
 
-const CHART_DIRS = ['E', 'S', 'W', 'N', 'SE', 'NE', 'SW', 'NW'] as const
-type ChartDir = (typeof CHART_DIRS)[number]
+const NUMBER_W = textWidth('0.00', 16) + 4
 
-/** The chart of width `width` next to a node of radius `r` in direction `dir`; `below` is the top of the space under the node. */
-function chartAt(dir: ChartDir, width: number, r: number, below: number, noted: boolean): Chart {
-  const h = BAR_H + BAR_LABEL + 6
-  const total = h + (noted ? 18 : 0)
-  const d = r * 0.7 + 8
-  const centred = dir === 'S' || dir === 'N'
-  const x0 = centred ? -width / 2 : dir.includes('E') ? (dir === 'E' ? r + 12 : d) : dir === 'W' ? -r - 12 - width : -d - width
-  const top = dir === 'E' || dir === 'W' ? -h / 2 : dir === 'S' ? below : dir === 'N' ? -r - 8 - total : dir.includes('S') ? d : -d - total
-  return {
-    x0,
-    baseline: top + BAR_H,
-    box: rectBox(x0, top, width, total),
-    noteX: centred ? 0 : x0,
-    noteAnchor: centred ? 'middle' : 'start',
+/** The block with its top edge at `top`. */
+function blockAt(top: number, side: Block['side'], labelW: number, readout: Readout): Block {
+  const labelY = top + 12
+  const boxes: Box[] = [textBox(0, labelY, 'middle', labelW, 14)]
+  let numberY = labelY
+  let noteY = labelY
+  let x0 = 0
+  let baseline = labelY
+  if (readout.kind === 'number') {
+    numberY = labelY + 22
+    noteY = numberY + 19
+    boxes.push(textBox(0, numberY, 'middle', NUMBER_W, 16))
+    if (readout.noteW !== undefined) boxes.push(textBox(0, noteY, 'middle', readout.noteW, 12))
+  } else if (readout.kind === 'bars') {
+    const chartTop = labelY + BAR_GAP
+    x0 = -readout.width / 2
+    baseline = chartTop + BAR_H
+    noteY = baseline + BAR_LABEL + 16
+    boxes.push(rectBox(x0, chartTop, readout.width, BAR_H + BAR_LABEL + 6))
+    boxes.push(textBox(x0 - 5, chartTop + 8, 'end', readout.maxW, 11))
+    if (readout.noteW !== undefined) boxes.push(textBox(0, noteY, 'middle', readout.noteW, 12))
   }
+  return { side, labelY, numberY, noteY, x0, baseline, boxes }
+}
+
+/** The block under a node of radius `r`, and the same block moved above it. */
+function blockOptions(r: number, labelW: number, readout: Readout): readonly [Block, Block] {
+  const below = blockAt(r + 12, 'below', labelW, readout)
+  const probe = blockAt(0, 'above', labelW, readout)
+  const height = Math.max(...probe.boxes.map((b) => b.y1))
+  return [below, blockAt(-r - 10 - height, 'above', labelW, readout)]
 }
 
 function snap(v: number): number {
@@ -113,8 +159,24 @@ function clampPath(r: number): string {
 
 /** Direction 1 「訊號圖」: value nodes, signal edges, do() clamps and cut edges. */
 export function SignalGraph(props: SignalGraphProps) {
-  const { c, shown, values, original, probs, dists, probNotes, observed = [], interventions, removedEdges, witness, onToggle, onSetValue, onMove } =
-    props
+  const {
+    c,
+    shown,
+    values,
+    original,
+    probs,
+    dists,
+    probNotes,
+    observed = [],
+    interventions,
+    stochastic = {},
+    removedEdges,
+    witness,
+    onToggle,
+    onSetValue,
+    onSetProbability,
+    onMove,
+  } = props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
@@ -150,7 +212,7 @@ export function SignalGraph(props: SignalGraphProps) {
   const prob = probs !== undefined
   const R = prob ? 34 : 30
   const COL = props.compact === true ? 132 : 220
-  const ROW = props.compact === true ? 112 : 120
+  const ROW = prob ? ROW_PROB : props.compact === true ? 112 : 120
   const PAD_X = props.compact === true ? 60 : 96
   const PAD_Y = 72
   const grid = gridLayout(c, shown)
@@ -159,12 +221,10 @@ export function SignalGraph(props: SignalGraphProps) {
   const maxCol = Math.max(...cells.map((p) => p.col))
   const minRow = Math.min(...cells.map((p) => p.row))
   const maxRow = Math.max(...cells.map((p) => p.row))
-  const multiRow = maxRow > minRow
   const width = PAD_X * 2 + (maxCol - minCol) * COL
   const hasWitness = witness !== undefined && Object.keys(witness).length > 0
   const barred = (id: string): boolean => prob && getVariable(c.model, id).domain.kind === 'finite'
-  const extraBottom = (prob ? 44 + (shown.some(barred) ? BARS_EXTRA : 0) : 0) + (hasWitness ? 40 : 0)
-  const height = PAD_Y * 2 + (maxRow - minRow) * ROW + extraBottom
+  const layoutHeight = PAD_Y * 2 + (maxRow - minRow) * ROW + (hasWitness ? 40 : 0)
   const pos = new Map<string, Point>()
   for (const [id, p] of grid) {
     const off = drag?.id === id ? drag : undefined
@@ -200,87 +260,79 @@ export function SignalGraph(props: SignalGraphProps) {
     const dRow = snap(drag.dy / ROW)
     if (dCol !== 0 || dRow !== 0) onMove?.(drag.id, dCol, dRow)
   }
-  const labelAbove = (id: string): boolean => multiRow && (grid.get(id)?.row ?? 0) === minRow
   const cut = new Set(removedEdges.map((e) => `${e.from}>${e.to}`))
   const edges = shownEdges(c.model.edges, shown)
+  const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
-  // A multi-valued node's bars go beside or below it: the first spot (E, S, W, ...) no edge, node,
-  // label, do tag or earlier chart touches, inside the graph; else the one touching least.
-  const charts = new Map<string, Chart | undefined>()
-  const chartBoxes: Box[] = []
-  const chartOf = (id: string): Chart | undefined => {
-    if (charts.has(id)) return charts.get(id)
-    let chart: Chart | undefined
-    const variable = getVariable(c.model, id)
-    const p = pos.get(id)
-    if (barred(id) && variable.domain.kind === 'finite' && p !== undefined) {
-      const chartW = barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width
-      const above = labelAbove(id)
-      const noted = probNotes?.[id] !== undefined
-      const others: Box[] = []
-      for (const other of shown) {
-        const q = pos.get(other)
-        if (q === undefined) continue
-        const otherAbove = labelAbove(other)
-        const labelY = otherAbove ? -R - 16 : R + 24
-        const name = label(c.model, other, t.locale)
-        others.push(shifted(textBox(0, labelY, 'middle', textWidth(`${other} ${name}`, 14), 14), q.x, q.y))
-        if (other !== id) others.push(around(q.x, q.y, R + 3))
-      }
-      if (interventions[id] !== undefined) {
-        const w = textWidth(`${id}←${formatValue(interventions[id])}`, 12) + 18
-        others.push(shifted(rectBox((grid.get(id)?.col ?? 0) === maxCol ? -R - 12 - w : R + 12, -R - 10, w, 22), p.x, p.y))
-      }
-      const options = CHART_DIRS.map((dir) => chartAt(dir, chartW, R, above ? R + 4 : R + 24 + BAR_GAP, noted))
-      const touches = (o: Chart): number => {
-        const box = shifted(o.box, p.x, p.y)
-        let n = 0
-        if (box.x0 < 0 || box.y0 < 0 || box.x1 > width || box.y1 > height) n += 1
-        for (const e of edges) {
-          const a = pos.get(e.from)
-          const b = pos.get(e.to)
-          if (a !== undefined && b !== undefined && segmentHitsBox(a, b, box)) n += 1
-        }
-        for (const b of [...others, ...chartBoxes]) if (intersects(box, b, 0)) n += 1
-        return n
-      }
-      chart = options.reduce((best, o) => (touches(o) < touches(best) ? o : best))
-      chartBoxes.push(shifted(chart.box, p.x, p.y))
-    }
-    charts.set(id, chart)
-    return chart
+  // The do tag beside an intervened node: `X←1`, or `P(X=1)=0.30` for a stochastic intervention.
+  const doTag = (id: string): { text: string; box: Box; left: boolean } | undefined => {
+    const forced = interventions[id]
+    const soft = stochastic[id]
+    if (forced === undefined && soft === undefined) return undefined
+    if (witness !== undefined && id in witness) return undefined
+    const text = forced !== undefined ? `${id}←${formatValue(forced)}` : `P(${id}=1)=${probText(soft)}`
+    const w = textWidth(text, 12) + 18
+    const left = (grid.get(id)?.col ?? 0) === maxCol
+    return { text, left, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
   }
 
-  // What a floating edge label must stay clear of: every node, its labels, its do tag; and the
-  // edge labels already placed.
-  const obstacles: Box[] = []
+  // Each node's label and readout form one block right under it; only when that block touches an
+  // edge, another node, a do tag or an earlier block, or leaves the graph's sides, does the whole
+  // block go above the node (when that touches less).
+  const placedBoxes: Box[] = []
+  const blocks = new Map<string, Block>()
+  const fixed: Box[] = []
   for (const id of shown) {
     const p = pos.get(id)
     if (p === undefined) continue
-    const above = labelAbove(id)
-    const labelY = above ? -R - 16 : R + 24
-    const name = label(c.model, id, t.locale)
-    const local: Box[] = [around(0, 0, R + 6), textBox(0, labelY, 'middle', textWidth(`${id} ${name}`, 14), 14)]
-    const chart = chartOf(id)
-    if (chart !== undefined) {
-      local.push(chart.box)
-      const note = probNotes?.[id]
-      if (note !== undefined) local.push(textBox(chart.noteX, chart.baseline + BAR_LABEL + 16, chart.noteAnchor, textWidth(note, 12), 12))
-    } else if (prob) {
-      const note = probNotes?.[id]
-      if (above) {
-        local.push(textBox(R + 12, -2, 'start', 80, 16))
-        if (note !== undefined) local.push(textBox(R + 12, 16, 'start', textWidth(note, 12), 12))
-      } else {
-        local.push(textBox(0, labelY + 22, 'middle', 80, 16))
-        if (note !== undefined) local.push(textBox(0, labelY + 41, 'middle', textWidth(note, 12), 12))
+    fixed.push(around(p.x, p.y, R + 3))
+    const tag = doTag(id)
+    if (tag !== undefined) fixed.push(shifted(tag.box, p.x, p.y))
+  }
+  for (const id of shown) {
+    const p = pos.get(id)
+    if (p === undefined) continue
+    const variable = getVariable(c.model, id)
+    const note = probNotes?.[id]
+    const noteW = note === undefined ? undefined : textWidth(note, 12)
+    let readout: Readout = { kind: 'none' }
+    if (barred(id) && variable.domain.kind === 'finite') {
+      const known = (dists?.[id] ?? []).filter((x) => !Number.isNaN(x))
+      const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known))), 11)
+      readout = { kind: 'bars', width: barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width, maxW, noteW }
+    } else if (prob) readout = { kind: 'number', noteW }
+    const labelW = textWidth(idWithName(id, nameOf(id)), 14)
+    const touches = (b: Block): number => {
+      let n = 0
+      for (const local of b.boxes) {
+        const box = shifted(local, p.x, p.y)
+        if (box.x0 < 0 || box.x1 > width) n += 1
+        for (const e of edges) {
+          const a = pos.get(e.from)
+          const q = pos.get(e.to)
+          if (a !== undefined && q !== undefined && segmentHitsBox(a, q, box)) n += 1
+        }
+        // The node's own circle and do tag never meet its block, above or below.
+        for (const o of [...fixed, ...placedBoxes]) if (intersects(box, o, 0)) n += 1
       }
+      return n
     }
-    if (interventions[id] !== undefined && !(witness !== undefined && id in witness)) {
-      const w = textWidth(`${id}←${formatValue(interventions[id])}`, 12) + 18
-      const left = (grid.get(id)?.col ?? 0) === maxCol
-      local.push(rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22))
-    }
+    const [below, above] = blockOptions(R, labelW, readout)
+    const hitsBelow = touches(below)
+    const block = hitsBelow > 0 && touches(above) < hitsBelow ? above : below
+    blocks.set(id, block)
+    for (const b of block.boxes) placedBoxes.push(shifted(b, p.x, p.y))
+  }
+
+  // What a floating edge label must stay clear of: every node, its label block, its do tag; and
+  // the edge labels already placed.
+  const obstacles: Box[] = [...placedBoxes]
+  for (const id of shown) {
+    const p = pos.get(id)
+    if (p === undefined) continue
+    const local: Box[] = [around(0, 0, R + 6)]
+    const tag = doTag(id)
+    if (tag !== undefined) local.push(tag.box)
     const before = original?.[id]
     const now = values?.[id]
     if (!prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
@@ -288,6 +340,27 @@ export function SignalGraph(props: SignalGraphProps) {
     }
     for (const b of local) obstacles.push(shifted(b, p.x, p.y))
   }
+  // The drawing grows to hold every block: above the top row, below the bottom one, and past the
+  // sides when a wide one (bars with their largest probability) reaches beyond the margin.
+  let top = 0
+  let bottom = layoutHeight
+  let left = 0
+  let right = width
+  for (const id of shown) {
+    const p = pos.get(id)
+    const block = blocks.get(id)
+    if (p === undefined || block === undefined) continue
+    for (const b of block.boxes) {
+      top = Math.min(top, p.y + b.y0 - 8)
+      bottom = Math.max(bottom, p.y + b.y1 + 12)
+      left = Math.min(left, p.x + b.x0 - 8)
+      right = Math.max(right, p.x + b.x1 + 8)
+    }
+  }
+  top = Math.floor(top)
+  left = Math.floor(left)
+  const height = Math.ceil(bottom - top)
+  const viewW = Math.ceil(right - left)
   const claim = (placed: Placed): Placed => {
     obstacles.push(placed.box)
     return placed
@@ -408,19 +481,21 @@ export function SignalGraph(props: SignalGraphProps) {
 
   const nodeEls = shown.map((id) => {
     const p = pos.get(id)
-    if (p === undefined) return null
+    const block = blocks.get(id)
+    if (p === undefined || block === undefined) return null
     const variable = getVariable(c.model, id)
     const v = values?.[id]
     const forced = interventions[id]
-    const intervened = forced !== undefined
+    const soft = stochastic[id]
+    const intervened = forced !== undefined || soft !== undefined
     const held = witness !== undefined && id in witness
     const boolean = variable.domain.kind === 'boolean'
     const filled = !prob && v === true
     const text = v === undefined ? '' : formatValue(v)
     const before = original?.[id]
     const changed = !prob && before !== undefined && v !== undefined && !valuesEqual(before, v)
-    const above = labelAbove(id)
-    const name = label(c.model, id, t.locale)
+    const name = nameOf(id)
+    const who = idWithName(id, name)
     const pv = probs?.[id]
     // A non-boolean node shows one bar per value, so each value gets its own number.
     const bars = barred(id) && variable.domain.kind === 'finite' ? variable.domain.values : undefined
@@ -431,10 +506,14 @@ export function SignalGraph(props: SignalGraphProps) {
         ? bars.map((_, i) => barText(i)).join(', ')
         : `P(${id}=1) ${probText(pv ?? Number.NaN)}`
       : t.nodeValue(text)
-    const aria = t.nodeAria(id, name, state, intervened ? formatValue(forced) : undefined, changed ? formatValue(before) : undefined)
-    const interactive = onToggle !== undefined || onMove !== undefined
-    // A multi-valued node does not flip: a click opens a control to pick the value.
-    const picks = onToggle !== undefined && onSetValue !== undefined && !boolean
+    const forcedText = forced !== undefined ? formatValue(forced) : soft !== undefined ? `P(${id}=1)=${probText(soft)}` : undefined
+    const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined)
+    // A multi-valued node does not flip: a click opens a control to pick the value. In probability
+    // mode a boolean one opens a control for P*(X=1).
+    const picksValue = onToggle !== undefined && onSetValue !== undefined && !boolean
+    const picksProb = prob && boolean && onSetProbability !== undefined
+    const picks = picksValue || picksProb
+    const interactive = onToggle !== undefined || onMove !== undefined || picks
     const activate = (): void => {
       if (picks) setPicking(picking === id ? undefined : id)
       else onToggle?.(id)
@@ -456,16 +535,22 @@ export function SignalGraph(props: SignalGraphProps) {
       if (Date.now() < suppressUntil.current) return
       activate()
     }
-    const toggle: NodeToggle | undefined =
-      onToggle === undefined ? undefined : picks ? (intervened ? 'adjust' : 'choose') : intervened ? 'release' : 'set'
+    const toggle: NodeToggle | undefined = picksProb
+      ? intervened
+        ? 'adjustProb'
+        : 'chooseProb'
+      : onToggle === undefined
+        ? undefined
+        : picksValue
+          ? intervened
+            ? 'adjust'
+            : 'choose'
+          : intervened
+            ? 'release'
+            : 'set'
     const hint = t.nodeHint(toggle, onMove !== undefined)
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
-    const numberText = probText(pv ?? Number.NaN)
-    const labelY = above ? -R - 16 : R + 24
-    const numberRight = prob && above
-    const doTagLeft = (grid.get(id)?.col ?? 0) === maxCol
-    const doText = `${id}←${formatValue(forced ?? '')}`
-    const doW = textWidth(doText, 12) + 18
+    const tag = doTag(id)
     return (
       <g
         key={id}
@@ -473,6 +558,8 @@ export function SignalGraph(props: SignalGraphProps) {
         data-node={id}
         data-value={text}
         data-intervened={intervened ? 'true' : 'false'}
+        data-do-p={soft === undefined ? undefined : soft.toFixed(2)}
+        data-block={block.side}
         transform={`translate(${p.x} ${p.y})`}
         {...(interactive
           ? {
@@ -525,12 +612,19 @@ export function SignalGraph(props: SignalGraphProps) {
         {intervened && !held && (
           <>
             <path d={clampPath(R)} className="ca-stroke-clamp" />
-            <g transform={`translate(${doTagLeft ? -R - 12 - doW : R + 12} ${-R - 10})`}>
-              <rect width={doW} height={22} className="ca-fill-accent" />
-              <text x={doW / 2} y={15.5} textAnchor="middle" className="ca-mono ca-svg-small ca-svg-bold ca-fill-on-accent">
-                {sub(doText)}
-              </text>
-            </g>
+            {tag !== undefined && (
+              <g transform={`translate(${tag.box.x0} ${tag.box.y0})`}>
+                <rect width={tag.box.x1 - tag.box.x0} height={22} className="ca-fill-accent" />
+                <text
+                  x={(tag.box.x1 - tag.box.x0) / 2}
+                  y={15.5}
+                  textAnchor="middle"
+                  className="ca-mono ca-svg-small ca-svg-bold ca-fill-on-accent"
+                >
+                  {sub(tag.text)}
+                </text>
+              </g>
+            )}
           </>
         )}
         {changed && (
@@ -538,109 +632,131 @@ export function SignalGraph(props: SignalGraphProps) {
             {t.was(formatValue(before))}
           </text>
         )}
-        <text y={labelY} textAnchor="middle" className="ca-svg-label">
-          <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan> {name}
+        <text y={block.labelY} textAnchor="middle" className="ca-svg-label">
+          <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
+          {name === '' ? null : ` ${name}`}
         </text>
-        {bars !== undefined && chartOf(id) !== undefined ? (
-          (() => {
-            const labels = bars.map(formatValue)
-            const layout = barLayout(labels, BAR_LABEL)
-            const chart = chartOf(id) as Chart
-            const note = probNotes?.[id]
-            return (
-              <>
-                <g className="ca-bars" data-bars={id} transform={`translate(${chart.x0} ${chart.baseline})`}>
-                  <line x1={0} x2={layout.width} y1={0} y2={0} className="ca-hair" />
-                  {labels.map((text, i) => {
-                    const p = dist?.[i]
-                    const known = p !== undefined && !Number.isNaN(p)
-                    const h = known ? (p > 0 ? Math.max(1, p * BAR_H) : 0) : 0
-                    const cx = i * layout.pitch + layout.pitch / 2
-                    const edge = i === 0 || i === labels.length - 1
-                    return (
-                      <g key={text} data-bar={text} data-p={known ? p.toFixed(4) : ''}>
-                        <title>{barText(i)}</title>
-                        <rect x={cx - layout.barW / 2} y={-h} width={layout.barW} height={h} className="ca-fill-fg" />
-                        {(layout.labelsFit || edge) && (
-                          <text x={cx} y={BAR_LABEL + 2} textAnchor="middle" className="ca-mono ca-svg-tiny ca-fill-muted">
-                            {text}
-                          </text>
-                        )}
-                      </g>
-                    )
-                  })}
-                </g>
-                {note !== undefined && (
-                  <text
-                    x={chart.noteX}
-                    y={chart.baseline + BAR_LABEL + 16}
-                    textAnchor={chart.noteAnchor}
-                    className="ca-svg-small ca-fill-muted"
-                  >
-                    {note}
-                  </text>
-                )}
-              </>
-            )
-          })()
-        ) : (
-          prob &&
-          (numberRight ? (
-            <>
-              <text x={R + 12} y={-2} className="ca-mono ca-svg-num">
-                {numberText}
+        {bars !== undefined
+          ? barChart(id, bars.map(formatValue), dist, block, barText)
+          : prob && (
+              <text y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num" data-readout={id}>
+                {probText(pv ?? Number.NaN)}
               </text>
-              {probNotes?.[id] !== undefined && (
-                <text x={R + 12} y={16} className="ca-svg-small ca-fill-muted">
-                  {probNotes[id]}
-                </text>
-              )}
-            </>
-          ) : (
-            <>
-              <text y={labelY + 22} textAnchor="middle" className="ca-mono ca-svg-num">
-                {numberText}
-              </text>
-              {probNotes?.[id] !== undefined && (
-                <text y={labelY + 41} textAnchor="middle" className="ca-svg-small ca-fill-muted">
-                  {probNotes[id]}
-                </text>
-              )}
-            </>
-          ))
+            )}
+        {prob && probNotes?.[id] !== undefined && (
+          <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted">
+            {probNotes[id]}
+          </text>
         )}
       </g>
     )
   })
 
+  /** One bar per value, scaled so the most likely value fills the chart's height; that probability is written beside it. */
+  function barChart(
+    id: string,
+    labels: readonly string[],
+    dist: readonly number[] | undefined,
+    block: Block,
+    barText: (i: number) => string,
+  ): ReactNode {
+    const layout = barLayout(labels, BAR_LABEL)
+    const known = (dist ?? []).filter((x) => !Number.isNaN(x))
+    const max = known.length === 0 ? Number.NaN : Math.max(...known)
+    return (
+      <g className="ca-bars" data-bars={id} transform={`translate(${block.x0} ${block.baseline})`}>
+        <line x1={0} x2={layout.width} y1={0} y2={0} className="ca-hair" />
+        {!Number.isNaN(max) && (
+          <text x={-5} y={-BAR_H + 8} textAnchor="end" className="ca-mono ca-svg-tiny ca-fill-muted" data-max={max.toFixed(4)}>
+            {t.barMax(probText(max))}
+          </text>
+        )}
+        {labels.map((text, i) => {
+          const p = dist?.[i]
+          const ok = p !== undefined && !Number.isNaN(p)
+          const h = ok && max > 0 && p > 0 ? Math.max(1, (p / max) * BAR_H) : 0
+          const cx = i * layout.pitch + layout.pitch / 2
+          const edge = i === 0 || i === labels.length - 1
+          return (
+            <g key={text} data-bar={text} data-p={ok ? p.toFixed(4) : ''}>
+              <title>{barText(i)}</title>
+              <rect x={cx - layout.barW / 2} y={-h} width={layout.barW} height={h} className="ca-fill-fg" />
+              {(layout.labelsFit || edge) && (
+                <text x={cx} y={BAR_LABEL + 2} textAnchor="middle" className="ca-mono ca-svg-tiny ca-fill-muted">
+                  {text}
+                </text>
+              )}
+            </g>
+          )
+        })}
+      </g>
+    )
+  }
+
   const pickPop = (): ReactNode => {
-    if (picking === undefined || onSetValue === undefined) return null
+    if (picking === undefined) return null
     const p = pos.get(picking)
     const variable = getVariable(c.model, picking)
-    if (p === undefined || variable.domain.kind !== 'finite') return null
-    const options = variable.domain.values
-    const forced = interventions[picking]
-    const shownValue = forced ?? values?.[picking]
-    const found = shownValue === undefined ? -1 : options.findIndex((o) => valuesEqual(o, shownValue))
-    const index = found < 0 ? 0 : found
+    if (p === undefined) return null
+    const id = picking
+    const who = idWithName(id, nameOf(id))
+    const forced = interventions[id]
+    const soft = stochastic[id]
+    let control: {
+      readonly max: number
+      readonly step: number
+      readonly index: number
+      readonly text: string
+      readonly label: string
+      readonly idle: boolean
+      readonly commit: (n: number) => void
+      readonly release: () => void
+    }
+    if (prob && variable.domain.kind === 'boolean' && onSetProbability !== undefined) {
+      // P*(X=1) in steps of P_STEP: the ends are do(X=0) and do(X=1), the rest a stochastic do().
+      const set = forced !== undefined ? (forced === true || forced === 1 ? 1 : 0) : soft
+      const shownP = set ?? Math.round((probs?.[id] ?? 0) / P_STEP) * P_STEP
+      control = {
+        max: 1,
+        step: P_STEP,
+        index: shownP,
+        text: forced !== undefined ? `${id}=${formatValue(forced)}` : `P(${id}=1)=${probText(shownP)}`,
+        label: t.doProbLabel(who),
+        idle: set === undefined,
+        commit: (n) => onSetProbability(id, n),
+        release: () => onSetProbability(id, undefined),
+      }
+    } else if (variable.domain.kind === 'finite' && onSetValue !== undefined) {
+      const options = variable.domain.values
+      const shownValue = forced ?? values?.[id]
+      const found = shownValue === undefined ? -1 : options.findIndex((o) => valuesEqual(o, shownValue))
+      const index = found < 0 ? 0 : found
+      control = {
+        max: options.length - 1,
+        step: 1,
+        index,
+        text: `${id}=${formatValue(options[index])}`,
+        label: t.doPickLabel(who),
+        idle: forced === undefined,
+        commit: (n) => onSetValue(id, options[n]),
+        release: () => onSetValue(id, undefined),
+      }
+    } else return null
     const W = 184
     const H = 72
     // Beside the node, centred on it, so the nodes under it stay visible; the do tag sits above that line.
-    const { x, y } = placePop(p, R, { w: W, h: H }, { w: width, h: height }, 16)
-    const id = picking
-    const text = `${id}=${formatValue(options[index])}`
-    const commit = (i: number): void => onSetValue(id, options[i])
+    const at = placePop({ x: p.x - left, y: p.y - top }, R, { w: W, h: H }, { w: viewW, h: height }, 16)
     const release = (): void => {
-      onSetValue(id, undefined)
+      control.release()
       setPicking(undefined)
       focusNode(id)
     }
     return (
-      <foreignObject className="ca-do-pop-box" x={x} y={y} width={W} height={H}>
-        <div ref={popRef} className="ca-do-pop" role="dialog" aria-label={t.doPickLabel(id, label(c.model, id, t.locale))} data-pick={id}>
+      <foreignObject className="ca-do-pop-box" x={at.x + left} y={at.y + top} width={W} height={H}>
+        <div ref={popRef} className="ca-do-pop" role="dialog" aria-label={control.label} data-pick={id}>
           <div className="ca-do-pop-head">
-            <output className={`ca-do-pop-value ca-mono${forced === undefined ? ' is-idle' : ''}`}>{text}</output>
-            <button type="button" className="ca-do-pop-release" disabled={forced === undefined} onClick={release}>
+            <output className={`ca-do-pop-value ca-mono${control.idle ? ' is-idle' : ''}`}>{control.text}</output>
+            <button type="button" className="ca-do-pop-release" disabled={control.idle} onClick={release}>
               {t.doRelease}
             </button>
           </div>
@@ -649,14 +765,14 @@ export function SignalGraph(props: SignalGraphProps) {
             className="ca-slider ca-do-pop-slider"
             type="range"
             min={0}
-            max={options.length - 1}
-            step={1}
-            value={index}
-            aria-label={t.doPickLabel(id, label(c.model, id, t.locale))}
-            aria-valuetext={text}
-            onChange={(e) => commit(Number(e.currentTarget.value))}
+            max={control.max}
+            step={control.step}
+            value={control.index}
+            aria-label={control.label}
+            aria-valuetext={control.text}
+            onChange={(e) => control.commit(Number(e.currentTarget.value))}
             // A press that does not move the thumb is still a choice: set the value it shows.
-            onClick={() => forced === undefined && commit(index)}
+            onClick={() => control.idle && control.commit(control.index)}
           />
         </div>
       </foreignObject>
@@ -670,8 +786,8 @@ export function SignalGraph(props: SignalGraphProps) {
       onPointerUp={onMove === undefined ? undefined : endDrag}
       onPointerCancel={onMove === undefined ? undefined : () => setDrag(undefined)}
       className="ca-graph"
-      viewBox={`0 0 ${width} ${height}`}
-      width={width}
+      viewBox={`${left} ${top} ${viewW} ${height}`}
+      width={viewW}
       height={height}
       role="group"
       aria-label={props.title}

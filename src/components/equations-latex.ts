@@ -11,9 +11,9 @@ function alignedLine(latex: string): string {
 }
 
 /** The rows on screen as one `aligned` block; struck-out originals are left out. */
-export function equationsLatex({ c, shown, notation, values, interventions }: EquationsProps): string {
+export function equationsLatex({ c, shown, notation, values, interventions, stochastic }: EquationsProps): string {
   const t = messagesFor('en')
-  const ids = equationIds(c, shown, interventions)
+  const ids = equationIds(c, shown, interventions, stochastic)
   let lines: string[]
   if (notation === 'causal') {
     const y = outcomeVariable(c)
@@ -31,7 +31,7 @@ export function equationsLatex({ c, shown, notation, values, interventions }: Eq
       )
     }
   } else {
-    lines = equationRows(t, c, ids, notation, values, interventions, shown).map((r) => alignedLine(r.latex))
+    lines = equationRows(t, c, ids, notation, values, interventions, shown, stochastic).map((r) => alignedLine(r.latex))
   }
   return `\\begin{aligned}\n${lines.join(' \\\\\n')}\n\\end{aligned}`
 }
