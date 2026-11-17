@@ -2,12 +2,12 @@
   "id": "school-lunch-poisoning",
   "title": { "zh-TW": "營養午餐餿了，只有小明沒中毒", "en": "Spoiled school lunch: only Xiaoming stays well" },
   "subtitle": {
-    "zh-TW": "同一件事，問「為什麼同學中毒」與「為什麼小明沒事」，答案取決於以什麼為預設。",
+    "zh-TW": "問「為什麼同學中毒」與問「為什麼小明沒事」，兩個答案取決於不同的預設值（default）。",
     "en": "The same event, asked two ways: why the classmates fell ill, and why Xiaoming did not."
   },
   "family": "norms",
   "story": {
-    "zh-TW": "考慮一所學校，學生平常都吃學校供應的營養午餐。某天午餐餿掉了，吃了午餐的同學集體食物中毒，只有自己帶便當的小明沒有任何症狀。",
+    "zh-TW": "考慮學校午餐的情境。學生平常都吃學校供應的營養午餐。某天午餐餿掉了，吃了午餐的同學集體食物中毒，只有自己帶便當的小明沒有任何症狀。",
     "en": "Consider a school whose pupils normally all eat the lunch the school provides. One day the lunch has spoiled, and the classmates who ate it all fall ill with food poisoning. Only Xiaoming, who brought his own lunch box, has no symptoms."
   },
   "story_tags": {
@@ -27,13 +27,13 @@
     "query": { "cause": "LUNCH_C=1", "effect": "ILL_C=1" },
     "expected": "not-cause",
     "text": {
-      "zh-TW": "問同學為什麼中毒，答案是午餐餿了，而不是他們吃了營養午餐。",
+      "zh-TW": "同學中毒的原因是午餐餿了，吃營養午餐不算原因。",
       "en": "Asked why the classmates fell ill, people answer that the lunch spoiled, not that they ate the school lunch."
     },
     "agree": ["hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型把兩個提問放進同一個世界：同學吃午餐（LUNCH_C）、小明不吃（LUNCH_M），午餐餿了（SPOIL），吃了餿午餐就中毒（ILL_C = LUNCH_C·SPOIL，ILL_M = LUNCH_M·SPOIL）。簡單反事實依賴對兩個提問都說「吃午餐」是原因：不吃就不會中毒。差別在於問題決定了拿什麼當預設（王鵬翔 2019）。問同學為什麼中毒，適用的是食品衛生規範：午餐應該乾淨、人應該健康（SPOIL = 0、ILL_C = 0），而吃營養午餐本來就是全校的常態（LUNCH_C = 1），所以只有餿掉是偏差。問小明為什麼沒中毒，要解釋的是異常的沒事，其他人都中毒了（ILL_M 的預設是 1），小明帶便當偏離了全校吃午餐的常態，所以他吃自己的便當是原因。兩個提問用相反的預設，這是本案例要說明的重點：預設不是事件的固有性質。引擎一個模型只有一組預設，這裡把兩位當事人拆成不同的變數，讓兩組預設並存。",
+    "zh-TW": "同學吃午餐（LUNCH_C），小明不吃（LUNCH_M），午餐餿了（SPOIL）。吃了餿午餐就中毒（ILL_C = LUNCH_C·SPOIL，ILL_M = LUNCH_M·SPOIL）。問同學為什麼中毒，依食品衛生規範，午餐不餿、人不中毒是預設值（default），全校吃午餐也是預設。問小明為什麼沒事，其他人都中毒了，所以 ILL_M 的預設為 1。引擎一個模型只有一組預設，所以兩人拆成不同變數，讓兩組預設並存（王鵬翔 2019）。",
     "en": "The model puts both questions in one world: the classmates eat the lunch (LUNCH_C), Xiaoming does not (LUNCH_M), the lunch has spoiled (SPOIL), and eating the spoiled lunch makes one ill (ILL_C = LUNCH_C·SPOIL, ILL_M = LUNCH_M·SPOIL). The simple counterfactual test says, for both questions, that eating the lunch is a cause: without it no one would be ill. The difference lies in what the question takes as the default (Wang 2019). Asked why the classmates fell ill, the relevant norm is food hygiene: lunch should be clean and people healthy (SPOIL = 0, ILL_C = 0), while eating the school lunch is the school-wide routine (LUNCH_C = 1), so only the spoilage is a departure. Asked why Xiaoming stayed well, what needs explaining is the unexpected good health, since everyone else fell ill (the default for ILL_M is 1), and Xiaoming's lunch box departs from the school-wide routine, so eating his own lunch is the cause. The two questions use opposite defaults, which is the point of the case: a default is not an intrinsic property of an event. The engine holds one set of defaults per model, so the two people are given separate variables and both sets of defaults coexist."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -43,7 +43,7 @@
       "key": "wang2019omission",
       "role": "origin",
       "note": {
-        "zh-TW": "〈食物中毒〉在第 318 頁；兩種提問與其對應的規範也在同頁，第 326–327 頁另以防止食物中毒為例談干預手段。",
+        "zh-TW": "〈食物中毒〉在第 318 頁，兩種提問與對應的規範也在同頁。第 326–327 頁另以防止食物中毒為例談干預手段。",
         "en": "The food-poisoning case and its two questions, with the norm each one invokes, are on p. 318; pp. 326–327 return to it when discussing how to prevent the poisoning."
       },
       "pages": "pp. 318, 326–327",

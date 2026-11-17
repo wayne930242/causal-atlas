@@ -1,14 +1,14 @@
 {
   "id": "smoking-lesion",
   "title": { "zh-TW": "吸菸病灶", "en": "Smoking lesion" },
-  "subtitle": { "zh-TW": "吸菸和癌症一起出現，但吸菸不致癌。", "en": "Smoking and cancer go together, but smoking does not cause cancer." },
+  "subtitle": { "zh-TW": "吸菸和癌症一起出現，可是吸菸不致癌。", "en": "Smoking and cancer go together, but smoking does not cause cancer." },
   "family": "decision",
   "story": {
-    "zh-TW": "假設吸菸本身不致癌，但有一種病灶同時讓人想吸菸、也讓人容易得癌症。觀察上，吸菸者得癌症的比例較高；可是若強制改變一個人吸不吸菸，他得癌症的機率不會變。那麼喜歡吸菸的人該不該吸？",
+    "zh-TW": "考慮吸菸病灶的情境。假如吸菸本身不致癌，而有一種病灶同時讓人想吸菸、也讓人容易得癌症，則吸菸者得癌症的比例較高。強制改變一個人吸不吸菸，他得癌症的機率不會變。喜歡吸菸的人應不應該吸菸，是這個案例的問題。",
     "en": "Suppose smoking itself does not cause cancer, but a lesion both makes people want to smoke and makes them prone to cancer. Smokers are observed to get cancer more often; yet forcing a person to smoke or not to smoke would not change their chance of cancer. Should someone who likes to smoke, then, smoke?"
   },
   "story_tags": {
-    "zh-TW": [{"sentence": "假設吸菸本身不致癌，但有一種病灶同時讓人想吸菸、也讓人容易得癌症。", "variables": ["L", "S", "C"]}],
+    "zh-TW": [{"sentence": "假如吸菸本身不致癌，而有一種病灶同時讓人想吸菸、也讓人容易得癌症，則吸菸者得癌症的比例較高。", "variables": ["L", "S", "C"]}],
     "en": [
       {
         "sentence": "Suppose smoking itself does not cause cancer, but a lesion both makes people want to smoke and makes them prone to cancer.",
@@ -20,13 +20,13 @@
     "query": { "choice": "S" },
     "expected": true,
     "text": {
-      "zh-TW": "吸不吸菸都改變不了你有沒有病灶；想吸就吸。",
+      "zh-TW": "吸不吸菸都改變不了有沒有病灶，想吸菸的人可以吸。",
       "en": "Smoking or not cannot change whether you have the lesion; if you want to smoke, smoke."
     },
     "agree": ["cdt"]
   },
   "explanation": {
-    "zh-TW": "病灶 L 同時影響人想不想抽菸與有沒有得癌症，抽菸本身不影響癌症。模型用 L 當共同原因，抽菸 S 與癌症 C 各自由 L 加上獨立的外生雜訊決定。這樣在 L 未知時 S 與 C 有相關，但對 S 做介入不改變 C，可用來區分證據決策論與因果決策論。",
+    "zh-TW": "病灶 L 是共同原因（common cause）。吸菸 S 與癌症 C 各自由 L 加上獨立的外生雜訊決定，S 不影響 C。L 未知時，S 與 C 相關；對 S 做干預（intervention），C 不變。這個案例用來區分證據決策論與因果決策論（causal decision theory）。",
     "en": "The lesion L affects both whether a person wants to smoke and whether they get cancer; smoking itself does not affect cancer. The model takes L as the common cause, with smoking S and cancer C each set by L plus independent exogenous noise. So while L is unknown, S and C are correlated, yet intervening on S does not change C. This separates evidential from causal decision theory."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

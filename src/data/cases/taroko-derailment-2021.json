@@ -5,12 +5,12 @@
     "en": "Taroko Express derailment (2021)"
   },
   "subtitle": {
-    "zh-TW": "準點發車與軌道位置同樣是 but-for 條件，卻不會有人把它們算成事故的原因。",
+    "zh-TW": "準點發車與軌道位置同樣是 but-for 條件，卻沒有人把它們當作事故的原因。",
     "en": "Departing on schedule and the track's location are but-for conditions as well, yet they are not counted as causes of the crash."
   },
   "family": "law",
   "story": {
-    "zh-TW": "2021 年 4 月 2 日，台鐵太魯閣號在花蓮清水隧道前出軌，造成多人死亡。事故的直接原因是列車撞上從工地邊坡滑落到軌道上的工程車。事後的評論追問，若承包商遵守工安規範、台鐵確實監督施工，結果是否會不同。然而，若該班列車提早十分鐘發車，或軌道離施工地點遠一公里，出軌同樣不會發生，卻不會有人把「準點發車」和「軌道位置」當成事故的原因。",
+    "zh-TW": "2021 年 4 月 2 日，台鐵太魯閣號在花蓮清水隧道前出軌，造成多人死亡。事故的直接原因是列車撞上從工地邊坡滑落到軌道上的工程車。事後的評論追問，假如承包商遵守工安規範、台鐵確實監督施工，結果是否不同。然而，假如該班列車提早十分鐘發車，或軌道離施工地點遠一公里，出軌同樣不會發生，卻沒有人把「準點發車」和「軌道位置」當作事故的原因。",
     "en": "On 2 April 2021 a Taroko Express of Taiwan Railway derailed in front of the Qingshui Tunnel in Hualien, and many people died. The immediate cause was the train striking a work vehicle that had slid from a construction-site slope onto the track. Commentators afterwards asked whether the outcome would have differed had the contractor kept to its safety rules and the railway supervised the work properly. Yet the derailment would equally not have happened had the train left ten minutes earlier or had the track lain a kilometre further from the site, and nobody counts \"departing on schedule\" or \"where the track runs\" as a cause of the accident."
   },
   "story_tags": {
@@ -23,14 +23,14 @@
         ]
       },
       {
-        "sentence": "事後的評論追問，若承包商遵守工安規範、台鐵確實監督施工，結果是否會不同。",
+        "sentence": "事後的評論追問，假如承包商遵守工安規範、台鐵確實監督施工，結果是否不同。",
         "variables": [
           "CT",
           "SUP"
         ]
       },
       {
-        "sentence": "然而，若該班列車提早十分鐘發車，或軌道離施工地點遠一公里，出軌同樣不會發生，卻不會有人把「準點發車」和「軌道位置」當成事故的原因。",
+        "sentence": "然而，假如該班列車提早十分鐘發車，或軌道離施工地點遠一公里，出軌同樣不會發生，卻沒有人把「準點發車」和「軌道位置」當作事故的原因。",
         "variables": [
           "TIME",
           "LOC"
@@ -68,7 +68,7 @@
     },
     "expected": "not-cause",
     "text": {
-      "zh-TW": "準點發車只是出事的背景，不會有人把事故算在它頭上。",
+      "zh-TW": "準點發車只是出事的背景，事故不該歸咎於它。",
       "en": "Leaving on schedule is mere background; nobody blames the accident on it."
     },
     "agree": [
@@ -76,7 +76,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "書中只給出反事實陳述，沒有方程式；以下的模型是本資料集所擬。承包商守規（CT）與台鐵監督（SUP）寫成兩道防線，兩者都失守，工程車才會滑落（V = CT·SUP）；出軌（DER）需要工程車在軌道上、列車準點發車（TIME）、軌道位置離工地夠近（LOC）三項同時成立。四個條件在實際世界都成立，因此簡單反事實分析（but-for）把它們全都算成原因。常態值只記錄有沒有違反規範：違反工安與監督義務是偏差，準點發車與軌道原位則是常態；hp-normality 因而留下前三者，濾掉後兩者。這個常態排序是本資料集的建模選擇，不是書中的論證。",
+    "zh-TW": "書中只有反事實陳述，模型為本資料集所擬。包商違規（CT）與台鐵未監督（SUP）是兩道防線，兩者都失守，工程車才會滑落（V = CT·SUP）。出軌（DER）需要工程車在軌道上、列車準點發車（TIME）、軌道離工地夠近（LOC）同時成立。預設值（default）只記錄是否違反規範：違規與未監督偏離預設，準點發車與軌道原位合乎預設。這個常態排序（normality ordering）是本資料集的建模選擇。",
     "en": "The book states only counterfactuals and gives no equations; the model below is this dataset's own. The contractor's compliance (CT) and the railway's supervision (SUP) are written as two safeguards that must both fail before the vehicle slides (V = CT·SUP); the derailment (DER) further needs the vehicle on the track, the train leaving on schedule (TIME) and the track lying close enough to the site (LOC). All four conditions hold in the actual world, so the simple counterfactual (but-for) test counts every one of them as a cause. The normality defaults record only whether a norm was broken: violating the safety rules and the supervisory duty is a deviation, whereas leaving on schedule and the track staying where it is are normal. hp-normality therefore keeps the first three and filters out the last two. This ordering is a modelling choice of the dataset, not an argument of the book."
   },
   "copy_status": {
@@ -89,7 +89,7 @@
       "key": "wang2026dialectics",
       "role": "origin",
       "note": {
-        "zh-TW": "第 1 章，§1.2。書中引用聯合報 2021-04-05 的即時短評（林河名，〈誰讓起司洞串成致命傷？〉，A4 版）；此處的方程式為本資料集所擬。",
+        "zh-TW": "第 1 章，§1.2。書中引用聯合報 2021-04-05 的即時短評（林河名，〈誰讓起司洞串成致命傷？〉，A4 版）。此處的方程式為本資料集所擬。",
         "en": "Ch. 1, §1.2. The book quotes the United Daily News short commentary of 2021-04-05 (Lin Ho-ming, A4); the equations here are the dataset's own."
       },
       "pages": "16–18",

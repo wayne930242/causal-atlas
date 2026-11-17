@@ -2,12 +2,12 @@
   "id": "snakebite-doctor",
   "title": { "zh-TW": "被毒蛇咬、醫師沒打血清", "en": "The snakebite and the doctor who omits antivenom" },
   "subtitle": {
-    "zh-TW": "醫師有義務施打血清卻沒打；他的不作為是不是死因？",
+    "zh-TW": "醫師有義務施打血清卻沒打，這個不作為（omission）是小明的死因。",
     "en": "The doctor is bound to give antivenom and does not; is the omission a cause of the death?"
   },
   "family": "omission",
   "story": {
-    "zh-TW": "考慮被毒蛇咬傷的病人。小明被毒蛇咬到，被送去急救。負責診治的醫師知道他被蛇咬，也看到中毒症狀，卻沒有為他施打抗毒血清，小明毒發身亡。",
+    "zh-TW": "考慮被毒蛇咬傷的情境。小明被毒蛇咬到，被送去急救。負責診治的醫師知道他被蛇咬，也看到中毒症狀，卻沒有為他施打抗毒血清，小明毒發身亡。",
     "en": "Consider a patient bitten by a snake. Xiao-ming is bitten by a venomous snake and rushed to hospital. The doctor in charge is told of the bite and sees the symptoms of poisoning, but does not give him antivenom, and Xiao-ming dies of the venom."
   },
   "story_tags": {
@@ -27,13 +27,13 @@
     "query": { "cause": "B=1", "effect": "D=1" },
     "expected": "cause",
     "text": {
-      "zh-TW": "問小明為什麼死，「因為醫師沒打血清」是自然的答案，醫師也要為此負責。",
+      "zh-TW": "小明的死因是醫師沒打血清，醫師也要為此負責。",
       "en": "Asked why Xiao-ming died, 'because the doctor did not give antivenom' is a natural answer, and the doctor is held answerable."
     },
     "agree": ["butfor", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型取自王一奇與王鵬翔 (2021) 的 Do：A = 1 表示小明被蛇咬，B = 1 表示醫師沒有施打血清（偏差值；B = 0 是打了，是常態），D = 1 表示小明死亡，D = A·B。這個案例和保鏢案例結構相同，兩個反事實依賴都成立：沒被咬或打了血清，小明都不會死。Hitchcock 的區分會把醫師那條視為寄生依賴；王與王指出，醫療常規要求被蛇咬的病人要打血清，所以在這個脈絡裡不打才是偏差，B 到 D 的網絡自足，醫師的不作為是典型原因。引擎的 but-for、HP 修正版與常態版都把蛇咬與不打血清算作原因。",
+    "zh-TW": "模型取自王一奇與王鵬翔 (2021) 的 Do。A = 1 表示小明被蛇咬，B = 1 表示醫師沒打血清，D = 1 表示小明死亡（D = A·B）。醫療常規要求為被蛇咬的病人打血清，所以 B 的預設值（default）是 0，不打是偏差。這個案例與保鑣案例結構相同，檢驗醫師的不作為（omission）能否算作典型原因。",
     "en": "The model is Do of Wang and Wang (2021): A = 1 is the snakebite, B = 1 is the doctor not giving antivenom (the deviant value; B = 0, giving it, is the default), D = 1 is Xiao-ming's death, and D = A·B. The structure is that of the bodyguard case, and both counterfactual dependences hold: without the bite, or with the antivenom, he would not have died. Hitchcock's distinction would class the doctor's route as parasitic dependence; Wang and Wang point out that medical practice requires antivenom for a snakebite, so in this context not giving it is the deviant value, the network from B to D is self-contained, and the omission is a paradigmatic cause. The engine's but-for test and the modified and normality-based HP definitions all count both the bite and the omission as causes."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -44,7 +44,7 @@
       "role": "origin",
       "pages": "57–59",
       "note": {
-        "zh-TW": "p.57 給出醫師案例；p.58 說明兩個反事實依賴與常規；p.59 給出模型 Do。",
+        "zh-TW": "p.57 給出醫師案例，p.58 說明兩個反事實依賴與常規，p.59 給出模型 Do。",
         "en": "P. 57 states the doctor case; p. 58 gives the two counterfactual dependences and the medical norm; p. 59 gives the model Do."
       },
       "verified": true
