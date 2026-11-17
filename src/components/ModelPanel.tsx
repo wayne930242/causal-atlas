@@ -9,7 +9,7 @@ import { messagesFor, useMessages } from './i18n.ts'
 import type { ModelWorld } from './model-state.ts'
 import { toggled } from './model-state.ts'
 import { useNarrow } from './use-narrow.ts'
-import { Equations } from './Equations.tsx'
+import { CopyLatex, Equations } from './Equations.tsx'
 import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { Segmented, Tag } from './parts.tsx'
@@ -135,6 +135,7 @@ export function EquationBox({ c, world, interventions, notation, onNotation }: E
       <div className="ca-eq-head">
         <h3 className="ca-h3">{t.equations}</h3>
         <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
+        <CopyLatex c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} />
       </div>
       <Equations c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} />
     </div>

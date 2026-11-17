@@ -6,7 +6,7 @@ import type { Assignment, CausalTheory, Edge, Value } from '../engine/index.ts'
 import { actualCause, evaluate } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import { useCaseOrDoc } from './doc-case.ts'
-import { Equations } from './Equations.tsx'
+import { CopyLatex, Equations } from './Equations.tsx'
 import { renderDetached } from './export-render.tsx'
 import type { ExportSource } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
@@ -510,7 +510,16 @@ function WorldLanesFor({
       </div>
       {showEq && (
         <div className="ca-lanes-eq">
-          <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={setNotation} />
+          <div className="ca-eq-head">
+            <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={setNotation} />
+            <CopyLatex
+              c={c}
+              shown={shown}
+              notation={notation}
+              values={visible[visible.length - 1].values}
+              interventions={visible[visible.length - 1].intervened}
+            />
+          </div>
           <Equations
             c={c}
             shown={shown}

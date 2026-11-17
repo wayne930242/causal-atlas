@@ -322,7 +322,14 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  row-gap: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.ca-copy-latex {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .ca-eqs {
@@ -1295,6 +1302,12 @@
 
 .ca-export {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ca-export > .ca-link {
+  line-height: 22.75px;
 }
 
 .ca-export-menu {

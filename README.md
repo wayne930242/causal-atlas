@@ -2,6 +2,12 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.2
+
+The equations box gets a 「複製 LaTeX」 button that copies the current notation as an `aligned` block, and
+copying a selection of rendered formulas yields their LaTeX source. The 「下載圖片」 link now lines up with its
+neighbours in the lane foot, and the notation tabs keep a gap above the first equation row.
+
 ## 0.3.1
 
 The editor lists the cases in a sidebar: a search box (either language), one chip per family or host
@@ -14,7 +20,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.3.1) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.2) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -176,9 +182,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.1 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.2 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.1) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.2) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -187,7 +193,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.1},
+  version = {0.3.2},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

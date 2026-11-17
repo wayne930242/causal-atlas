@@ -6,7 +6,7 @@ import type { Assignment } from '../engine/index.ts'
 import { evaluate, getVariable, probability } from '../engine/index.ts'
 import { graphExport, renderDetached } from './export-render.tsx'
 import { useCaseOrDoc } from './doc-case.ts'
-import { Equations } from './Equations.tsx'
+import { CopyLatex, Equations } from './Equations.tsx'
 import type { ExportPanel, ExportSource } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
@@ -91,6 +91,7 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
       <div className="ca-eq-head">
         {withHead && <h3 className="ca-h3">{t.probEquations}</h3>}
         <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
+        <CopyLatex c={c} shown={shown} notation={notation} interventions={{}} />
       </div>
       <Equations c={c} shown={shown} notation={notation} interventions={{}} />
       {ids.length === 0 ? (

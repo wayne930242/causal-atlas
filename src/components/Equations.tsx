@@ -1,3 +1,4 @@
+import { useState, type ClipboardEvent } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, Expr } from '../engine/index.ts'
 import { causalFormulas, renderExpr } from '../engine/index.ts'
@@ -5,6 +6,7 @@ import { formatValue } from '../engine/values.ts'
 import type { UiNotation } from './notation.ts'
 import { useMessages } from './i18n.ts'
 import { OkIcon, Tag } from './parts.tsx'
+import { equationsLatex } from './equations-latex.ts'
 import { Tex } from './Tex.tsx'
 import { Rich } from './typeset.tsx'
 import { bracketText, doText, equationIds, equationRows, label, outcomeVariable } from './view-model.ts'
@@ -33,7 +35,7 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
         body: { op: 'eq', left: { op: 'var', name: y }, right: { op: 'const', value: v ?? '' }, negated: false },
       }
       return (
-        <div className="ca-eqs" data-notation={notation}>
+        <div className="ca-eqs" data-notation={notation} onCopy={copyAsTex}>
           <div className="ca-eq-row ca-eq-statement">
             <code className="ca-eq-text">
               <Tex tex={renderExpr(statementExpr, 'latex')} text={statement} />
@@ -51,7 +53,7 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
       )
     }
     return (
-      <div className="ca-eqs" data-notation={notation}>
+      <div className="ca-eqs" data-notation={notation} onCopy={copyAsTex}>
         {ids.map((id) => (
           <div key={id} className="ca-eq-row">
             <code className="ca-eq-text">
@@ -74,7 +76,7 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
   }
   const rows = equationRows(t, c, ids, notation, values, interventions, shown)
   return (
-    <div className="ca-eqs" data-notation={notation}>
+    <div className="ca-eqs" data-notation={notation} onCopy={copyAsTex}>
       {rows.map((r) => (
         <div key={r.id} className="ca-eq-row" data-intervened={r.intervened ? 'true' : 'false'}>
           <code className="ca-eq-text">
@@ -104,5 +106,39 @@ export function Equations({ c, shown, notation, values, interventions }: Equatio
         </div>
       ))}
     </div>
+  )
+}
+
+/** Copying a selection that holds typeset formulas puts their LaTeX source on the clipboard. */
+function copyAsTex(e: ClipboardEvent<HTMLElement>): void {
+  const sel = window.getSelection()
+  if (sel === null || sel.rangeCount === 0 || sel.isCollapsed) return
+  const frag = sel.getRangeAt(0).cloneContents()
+  const formulas = frag.querySelectorAll<HTMLElement>('.ca-tex')
+  if (formulas.length === 0) return
+  for (const f of formulas) f.replaceWith(f.ownerDocument.createTextNode(f.dataset.tex ?? ''))
+  e.clipboardData.setData('text/plain', frag.textContent ?? '')
+  e.preventDefault()
+}
+
+/** Copies every row of the current notation as LaTeX. */
+export function CopyLatex(props: EquationsProps) {
+  const t = useMessages()
+  const [done, setDone] = useState(false)
+  const copy = (): void => {
+    void navigator.clipboard.writeText(equationsLatex(props)).then(() => {
+      setDone(true)
+      setTimeout(() => setDone(false), 2000)
+    })
+  }
+  return (
+    <span className="ca-copy-latex">
+      <button type="button" className="ca-link" onClick={copy}>
+        {t.copyLatex}
+      </button>
+      <span className="ca-small" role="status" aria-live="polite">
+        {done ? t.latexCopied : ''}
+      </span>
+    </span>
   )
 }
