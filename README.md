@@ -2,13 +2,19 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.1
+
+The editor lists the cases in a sidebar: a search box (either language), one chip per family or host
+group, and the cases grouped by family. In a narrow container the list opens from a 「選案例」 button
+as a full-height sheet. The internal `ModelPicker` select is gone (it was never exported).
+
 ## 0.3.0
 
 About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and a wide layout.
 
 ## Package
 
-`causal-atlas` (0.3.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.1) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -70,13 +76,24 @@ scrolling. A hash route such as `#/editor?lang=en` keeps its path and other para
 page with `#case=<id>` opens that case; an unknown id opens the default. With `syncUrl={false}`, or
 when the host passes `hash`, the editor only reads the address and never writes it.
 
-At 960 px of its own width and above (a container query, so the host's column decides), the editor
-puts the graph and equations on the left and the case panel and editing panels on the right.
+The layout follows the editor's own width (container queries, so the host's column decides). From
+760 px up, the case list is a sticky sidebar (240–280 px, its own scroll) to the left of the model;
+`--ca-sticky-top` (default 16 px) sets its offset under a fixed host header. Narrower, the list
+collapses into a 「選案例」 button with the current title, which opens the same list in a full-height
+modal sheet (Escape or a pick closes it and returns focus to the button). Right of the list come a
+header with the model's title and family, the graph and equations, the case panel, then the editing
+panels; when that right side is 960 px or wider, the graph and equations sit left of the case and
+editing panels.
 
-The model list groups the bundled cases by family and the host's models by group, with a filter box
-(Enter loads the first match, Escape clears it). Choosing a case shows a panel above the model: title,
-story, intuition, what the model encodes, a table of each verdict in the case file with the engine's
-result beside it, and the sources with their pages (URLs and DOIs in a citation become links).
+The case list groups the bundled cases by family and the host's models by group, each row with its
+title and subtitle, the current one marked. The search matches titles and subtitles in both
+languages, ids and group names; the chips narrow it to one family or host group, and a live region
+reads the number of matches. Keyboard: ArrowDown from the search enters the list (a `listbox`),
+arrow keys, Home and End move, Enter or Space loads, typing goes back to the search; Enter in the
+search loads the first match, Escape clears it. Choosing a case shows its panel below the model:
+story, intuition, what the model encodes, a table of each verdict in the case file with the
+engine's result beside it, and the sources with their pages (URLs and DOIs in a citation become
+links).
 
 ```tsx
 <ModelEditor
@@ -159,9 +176,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.1 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.1) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -170,7 +187,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.0},
+  version = {0.3.1},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

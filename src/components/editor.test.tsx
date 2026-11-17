@@ -95,7 +95,9 @@ describe('ModelEditor', () => {
 
   it('loads a case as a starting point and moves nodes with the arrow keys', () => {
     const { container } = render(<ModelEditor initial="rock-throwing" />)
-    type('從案例開始', 'newcomb')
+    const option = container.querySelector<HTMLElement>('.ca-editor-side [role="option"][data-key="newcomb"]')
+    if (option === null) throw new Error('no option newcomb')
+    fireEvent.click(option)
     expect(node(container, 'P')).toBeDefined()
     expect(container.querySelector('.ca-graph')?.getAttribute('data-mode')).toBe('probability')
     const before = node(container, 'M').getAttribute('transform')

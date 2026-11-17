@@ -27,14 +27,18 @@ export interface ExtraModel {
 export const modelKey = (id: string): string => `model:${id}`
 
 export interface CatalogEntry {
-  /** The select value: a case id, or `model:<id>`. */
+  /** The list value: a case id, or `model:<id>`. */
   readonly key: string
   readonly label: string
+  /** A case's subtitle in the interface language; host models have none. */
+  readonly subtitle?: string
   /** Lower-cased text the filter matches: titles in both languages, id, group. */
   readonly search: string
 }
 
 export interface CatalogGroup {
+  /** Stable among the groups: `family:<family>` for bundled cases, `group:<label>` for host models. */
+  readonly id: string
   readonly label: string
   readonly entries: readonly CatalogEntry[]
 }
@@ -49,16 +53,18 @@ export function catalog(t: Messages, extras: readonly ExtraModel[]): CatalogGrou
   for (const id of caseIds) {
     const data = getCase(id).data
     const familyLabel = t.family[data.family]
-    const entry = {
+    const entry: CatalogEntry = {
       key: id,
       label: data.title[t.locale],
-      search: [id, ...Object.values(data.title), familyLabel].join(' ').toLowerCase(),
+      subtitle: data.subtitle?.[t.locale],
+      search: [id, ...Object.values(data.title), ...Object.values(data.subtitle ?? {}), familyLabel].join(' ').toLowerCase(),
     }
     byFamily.set(data.family, [...(byFamily.get(data.family) ?? []), entry])
   }
   const groups: CatalogGroup[] = familySchema.options
     .filter((f) => byFamily.has(f))
     .map((f) => ({
+      id: `family:${f}`,
       label: t.family[f],
       entries: [...(byFamily.get(f) ?? [])].sort((a, b) => a.label.localeCompare(b.label, t.locale)),
     }))
@@ -75,7 +81,7 @@ export function catalog(t: Messages, extras: readonly ExtraModel[]): CatalogGrou
     }
     byGroup.set(label, [...(byGroup.get(label) ?? []), entry])
   }
-  for (const [label, entries] of byGroup) groups.push({ label, entries })
+  for (const [label, entries] of byGroup) groups.push({ id: `group:${label}`, label, entries })
   return groups
 }
 
@@ -88,9 +94,10 @@ export function matches(entry: CatalogEntry, query: string): boolean {
     .every((w) => entry.search.includes(w))
 }
 
-/** The groups with only the entries matching `query`; `keep` (the current choice) always stays, so the select can show it. */
-export function filterCatalog(groups: readonly CatalogGroup[], query: string, keep?: string): CatalogGroup[] {
+/** The groups (all, or only the one with id `only`) with just the entries matching `query`; empty groups drop out. */
+export function filterCatalog(groups: readonly CatalogGroup[], query: string, only?: string): CatalogGroup[] {
   return groups
-    .map((g) => ({ ...g, entries: g.entries.filter((e) => e.key === keep || matches(e, query)) }))
+    .filter((g) => only === undefined || g.id === only)
+    .map((g) => ({ ...g, entries: g.entries.filter((e) => matches(e, query)) }))
     .filter((g) => g.entries.length > 0)
 }

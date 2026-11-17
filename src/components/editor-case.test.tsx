@@ -92,24 +92,32 @@ describe('ModelEditor case panel', () => {
 
   it('keeps variable names typeset in the panel', () => {
     const out = html({ initial: 'rock-throwing' })
-    const panel = out.slice(out.indexOf('ca-editor-case'), out.indexOf('ca-panel'))
+    const panel = out.slice(out.indexOf('ca-editor-case'), out.indexOf('ca-editor-panels'))
+    expect(panel).toContain('ca-story')
     expect(panel).toContain('class="katex"')
   })
 })
 
 describe('ModelEditor model list', () => {
-  it('groups the bundled cases by family and the host’s models by their group', () => {
+  it('lists the bundled cases by family and the host’s models by their group, server-rendered', () => {
     const out = html({ initial: 'rock-throwing', extraModels })
-    expect(out).toContain('<optgroup label="實際因果"')
-    expect(out).toContain('<optgroup label="因果決策"')
-    expect(out).toContain('<optgroup label="第 8 講"')
-    expect(out).toMatch(/<option value="model:m08-rock-coarse"[^>]*>丟石頭的粗模型<\/option>/)
-    expect(out).toContain(`aria-label="${messagesFor('zh-TW').editor.filter}"`)
+    const zh = messagesFor('zh-TW').editor
+    expect(out).toContain('role="listbox"')
+    expect(out).toContain(`aria-label="${zh.caseList}"`)
+    expect(out).toContain(`aria-label="${zh.search}"`)
+    for (const label of ['實際因果', '因果決策', '第 8 講']) expect(out).toContain(`>${label}</`)
+    expect(out).toMatch(/role="option"[^>]*data-key="model:m08-rock-coarse"/)
+    expect(out).toMatch(/aria-selected="true"[^>]*data-key="rock-throwing"|data-key="rock-throwing"[^>]*aria-selected="true"/)
+    expect(out).not.toContain('<optgroup')
+    // The narrow layout's button, closed: no dialog on the server.
+    expect(out).toContain(zh.pickCase)
+    expect(out).not.toContain('role="dialog"')
+    expect(out).not.toContain('<dialog')
   })
 
   it('starts from a host model named by `initial` and shows its title and links, no story', () => {
     const out = html({ initial: 'm08-rock-coarse', extraModels })
-    expect(out).toMatch(/<option value="model:m08-rock-coarse" selected=""/)
+    expect(out).toMatch(/aria-selected="true"[^>]*data-key="model:m08-rock-coarse"|data-key="model:m08-rock-coarse"[^>]*aria-selected="true"/)
     expect(out).toMatch(/data-node="BS"/)
     expect(out).not.toMatch(/data-node="SH"/)
     expect(out).toContain('ca-editor-case')

@@ -1376,8 +1376,8 @@
   min-width: 0;
 }
 
-/* Wide: the graph and equations on the left, the case and the editing panels on the right. */
-@container ca-editor (min-width: 960px) {
+/* A wide right side: the graph and equations on the left, the case and the editing panels on the right. */
+@container ca-editor-content (min-width: 960px) {
   .ca-editor-layout {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     grid-template-rows: auto 1fr;
@@ -1417,13 +1417,6 @@
   .ca-editor .ca-table :where(th, td) {
     padding: 6px 5px;
   }
-}
-
-.ca-editor-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: end;
 }
 
 .ca-field {
@@ -1578,16 +1571,254 @@
 
 /* ---- model editor: model list and case panel ---- */
 
-.ca-editor-pick {
-  display: flex;
-  flex: 2 1 420px;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: end;
+/* The case list: a sidebar beside the model when the editor is wide, a button and a sheet when narrow. */
+
+.ca-editor-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
 }
 
-.ca-editor-pick select {
+.ca-editor-side {
+  display: none;
+}
+
+.ca-editor-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+  container: ca-editor-content / inline-size;
+}
+
+@container ca-editor (min-width: 760px) {
+  .ca-editor-shell {
+    grid-template-columns: clamp(240px, 26cqi, 280px) minmax(0, 1fr);
+  }
+
+  .ca-editor-side {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: var(--ca-sticky-top, 16px);
+    max-height: calc(100vh - 2 * var(--ca-sticky-top, 16px));
+    min-width: 0;
+  }
+
+  .ca-editor-pickbar {
+    display: none;
+  }
+}
+
+.ca-editor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.ca-editor .ca-editor-search {
   width: 100%;
+}
+
+.ca-editor-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ca-editor-chip {
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.ca-editor-chip:hover {
+  color: var(--foreground);
+  border-color: var(--foreground);
+}
+
+.ca-editor-chip[aria-pressed="true"] {
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
+}
+
+.ca-editor-list-count:empty {
+  display: none;
+}
+
+.ca-editor-options {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--border);
+  /* No top padding: options would show through above the sticky group heading. */
+  padding: 0 0 4px;
+}
+
+.ca-editor-options:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.ca-editor-optgroup + .ca-editor-optgroup,
+.ca-editor-optgroup + .ca-editor-option {
+  margin-top: 8px;
+}
+
+.ca-editor-optgroup-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 8px 2px;
+  background: var(--background);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.ca-editor-option {
+  display: grid;
+  padding: 4px 8px 4px 10px;
+  border-left: 2px solid transparent;
+  font-size: 14px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.ca-editor-option:hover {
+  background: var(--ca-soft);
+}
+
+.ca-editor-option[data-active="true"] {
+  background: var(--muted);
+}
+
+.ca-editor-options:focus-visible .ca-editor-option[data-active="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.ca-editor-option[aria-selected="true"] {
+  border-left-color: var(--accent);
+  font-weight: 700;
+}
+
+.ca-editor-option-title,
+.ca-editor-option-sub {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ca-editor-option-sub {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.ca-editor-pickbar-button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "label icon"
+    "title icon";
+  align-items: center;
+  column-gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font: inherit;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.ca-editor-pickbar-button .ca-field-label {
+  grid-area: label;
+}
+
+.ca-editor-pickbar-title {
+  grid-area: title;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ca-editor-pickbar-button .ca-icon {
+  grid-area: icon;
+}
+
+.ca-editor-sheet {
+  box-sizing: border-box;
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.ca-editor-sheet[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ca-editor-sheet::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.ca-editor-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ca-editor-head {
+  display: grid;
+  gap: 2px;
+}
+
+.ca-editor-head-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.ca-editor-notices {
+  display: grid;
+  gap: 12px;
+}
+
+.ca-editor-name input {
+  width: 100%;
+}
+
+.ca-editor-panels > .ca-editor-name {
+  display: flex;
+  margin-bottom: 8px;
 }
 
 .ca-editor-case {
@@ -1695,7 +1926,7 @@
   margin-top: 2px;
 }
 
-@container ca-editor (max-width: 760px) {
+@container ca-editor-content (max-width: 900px) {
   .ca-editor-case {
     padding: 14px;
   }

@@ -104,7 +104,10 @@ describe('REV-F003: untrusted input in the editor', () => {
 })
 
 describe('REV-F006: an imported document credits a bundled case only when it is that case', () => {
-  const startedFrom = (): HTMLSelectElement => screen.getByLabelText('從案例開始') as HTMLSelectElement
+  /** The key the sidebar's list marks as current, or '' for none. */
+  const startedFrom = (): { readonly value: string } => ({
+    value: document.querySelector<HTMLElement>('.ca-editor-side [role="option"][aria-selected="true"]')?.dataset.key ?? '',
+  })
   const rock = caseToDoc(getCase('rock-throwing'))
   const modified = { ...rock, model: { ...rock.model, equations: { ...rock.model.equations, BH: 'BT' } } }
 

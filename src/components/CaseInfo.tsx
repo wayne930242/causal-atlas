@@ -17,6 +17,8 @@ export interface CaseInfoProps {
   readonly links?: readonly LessonLink[]
   /** The model on screen no longer is the case's: say that the verdicts are the case's own. */
   readonly edited?: boolean
+  /** Show the title, family and subtitle; off where the host already heads the panel (the editor). Default true. */
+  readonly heading?: boolean
   readonly locale?: Locale
 }
 
@@ -71,7 +73,7 @@ export function CaseInfo({ locale, ...props }: CaseInfoProps) {
   )
 }
 
-function CaseInfoBody({ c, links = [], edited = false }: Omit<CaseInfoProps, 'locale'>) {
+function CaseInfoBody({ c, links = [], edited = false, heading = true }: Omit<CaseInfoProps, 'locale'>) {
   const t = useMessages()
   const e = t.editor
   const ids = c.model.byId
@@ -82,13 +84,15 @@ function CaseInfoBody({ c, links = [], edited = false }: Omit<CaseInfoProps, 'lo
   const title = c.data.title[t.locale]
   return (
     <section className="ca-editor-case" aria-label={e.casePanel(title)} data-case={c.data.id}>
-      <header>
-        <p className="ca-kicker ca-mono">
-          CASE <span aria-hidden="true">·</span> {t.family[c.data.family]}
-        </p>
-        <h2 className="ca-h2">{title}</h2>
-        {c.data.subtitle !== undefined && <p className="ca-subtitle">{c.data.subtitle[t.locale]}</p>}
-      </header>
+      {heading && (
+        <header>
+          <p className="ca-kicker ca-mono">
+            CASE <span aria-hidden="true">·</span> {t.family[c.data.family]}
+          </p>
+          <h2 className="ca-h2">{title}</h2>
+          {c.data.subtitle !== undefined && <p className="ca-subtitle">{c.data.subtitle[t.locale]}</p>}
+        </header>
+      )}
       <div className="ca-editor-case-body">
         <div className="ca-editor-case-text">
           <Story c={c} />
@@ -180,11 +184,20 @@ function CaseInfoBody({ c, links = [], edited = false }: Omit<CaseInfoProps, 'lo
 }
 
 /** The editor's panel for a host model: its title and links; it has no story. */
-export function ModelInfo({ title, links = [] }: { readonly title: string; readonly links?: readonly LessonLink[] }) {
+export function ModelInfo({
+  title,
+  links = [],
+  heading = true,
+}: {
+  readonly title: string
+  readonly links?: readonly LessonLink[]
+  /** Show the title; off where the editor already heads the panel. */
+  readonly heading?: boolean
+}) {
   const e = useMessages().editor
   return (
     <section className="ca-editor-case ca-editor-model" aria-label={e.modelPanel(title)}>
-      <h2 className="ca-h2">{title}</h2>
+      {heading && <h2 className="ca-h2">{title}</h2>}
       <Links heading={e.modelLinks} links={links} />
     </section>
   )

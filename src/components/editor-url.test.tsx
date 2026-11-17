@@ -16,6 +16,13 @@ afterEach(() => {
   setUrl('/')
 })
 
+/** Click an option of the sidebar's case list by its key. */
+const pickKey = (key: string): void => {
+  const el = document.querySelector<HTMLElement>(`.ca-editor-side [role="option"][data-key="${key}"]`)
+  if (el === null) throw new Error(`no option ${key}`)
+  fireEvent.click(el)
+}
+
 const caseShown = (): string | undefined =>
   document.querySelector<HTMLElement>('.ca-editor-case')?.dataset.case
 
@@ -67,7 +74,7 @@ describe('ModelEditor address sync', () => {
   it('picking a case writes #case=<id> without a history entry', () => {
     const before = window.history.length
     render(<ModelEditor />)
-    fireEvent.change(screen.getByLabelText('從案例開始', { selector: 'select' }), { target: { value: 'newcomb' } })
+    pickKey('newcomb')
     expect(window.location.hash).toBe('#case=newcomb')
     expect(window.location.pathname).toBe('/blog/playground/')
     expect(window.history.length).toBe(before)
@@ -75,7 +82,7 @@ describe('ModelEditor address sync', () => {
 
   it('names a host model by its id', () => {
     render(<ModelEditor extraModels={[{ id: 'm08-coarse', title: '粗模型', doc: coarse }]} />)
-    fireEvent.change(screen.getByLabelText('從案例開始', { selector: 'select' }), { target: { value: 'model:m08-coarse' } })
+    pickKey('model:m08-coarse')
     expect(window.location.hash).toBe('#case=m08-coarse')
   })
 
@@ -142,7 +149,7 @@ describe('ModelEditor address sync', () => {
   it('syncUrl={false} leaves the address alone', async () => {
     vi.useFakeTimers()
     render(<ModelEditor syncUrl={false} />)
-    fireEvent.change(screen.getByLabelText('從案例開始', { selector: 'select' }), { target: { value: 'newcomb' } })
+    pickKey('newcomb')
     fireEvent.change(screen.getByLabelText('模型名稱', { selector: 'input' }), { target: { value: '我的版本' } })
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000)
@@ -153,7 +160,7 @@ describe('ModelEditor address sync', () => {
   it('a hash prop owns the address: read, never written', () => {
     render(<ModelEditor hash="#case=newcomb" />)
     expect(caseShown()).toBe('newcomb')
-    fireEvent.change(screen.getByLabelText('從案例開始', { selector: 'select' }), { target: { value: 'rock-throwing' } })
+    pickKey('rock-throwing')
     expect(window.location.hash).toBe('')
   })
 })
