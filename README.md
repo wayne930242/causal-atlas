@@ -4,7 +4,7 @@ Interactive structural causal models and a dataset of philosophical causation an
 
 ## Package
 
-`causal-atlas` (0.2.4) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.2.5) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -24,6 +24,12 @@ import 'causal-atlas/style.css'
 <WorldLanes client:visible caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />
 <CasePage client:visible caseId="rock-throwing" locale="en" />
 ```
+
+Equations are typeset with [KaTeX](https://katex.org) on the server and in the browser. KaTeX is a
+dependency, but its stylesheet is not bundled into `style.css` (that would duplicate the copy most
+hosts already load, and drag its fonts in): load it once, for example
+`import 'katex/dist/katex.min.css'` or a `<link>` to `katex.min.css`. Without it the formulas show
+unstyled. Each formula keeps a plain-text form in `aria-label` and `data-text`.
 
 Every component speaks Traditional Chinese (`zh-TW`, the default) or English (`en`). Pass `locale` to
 one component, or wrap a page in `<LocaleProvider locale="en">`; a component's own `locale` wins. The
@@ -118,9 +124,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.2.4 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.2.5 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.2.4) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.2.5) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -129,7 +135,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.2.4},
+  version = {0.2.5},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

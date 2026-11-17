@@ -22,7 +22,7 @@ export default defineConfig({
       cssFileName: 'style',
     },
     rolldownOptions: {
-      external: [/^react(\/.*)?$/, /^react-dom(\/.*)?$/, /^zod(\/.*)?$/],
+      external: [/^react(\/.*)?$/, /^react-dom(\/.*)?$/, /^zod(\/.*)?$/, /^katex(\/.*)?$/],
     },
   },
 })

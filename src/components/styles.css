@@ -355,6 +355,15 @@
   vertical-align: 1px;
 }
 
+.ca-eq-text .ca-tex,
+.ca-eq-worked .ca-tex {
+  font-size: 1.05em;
+}
+
+.ca-eq-line {
+  display: block;
+}
+
 .ca-eq-struck {
   color: var(--muted-foreground);
   text-decoration-color: var(--accent);

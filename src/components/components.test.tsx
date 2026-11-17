@@ -41,7 +41,8 @@ describe('CausalPlayground', () => {
 
   it('switches the equations between notations', () => {
     const { container } = render(<CausalPlayground caseId="rock-throwing" />)
-    const eqs = (): string => container.querySelector('.ca-eqs')?.textContent ?? ''
+    const eqs = (): string =>
+      [...container.querySelectorAll('.ca-eqs .ca-tex')].map((e) => e.getAttribute('data-text') ?? '').join('\n')
     expect(eqs()).toContain('BH ↔ (BT ∧ ¬SH)')
     fireEvent.click(screen.getByRole('button', { name: '數學式' }))
     expect(screen.getByRole('button', { name: '數學式' }).getAttribute('aria-pressed')).toBe('true')

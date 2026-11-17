@@ -246,6 +246,7 @@ export function inlineSvg(svg: SVGSVGElement, palette: Palette, style: ExportSty
     for (const name of [...el.getAttributeNames()]) if (DROP_ATTRS.test(name)) el.removeAttribute(name)
     for (const [name, value] of Object.entries(decl)) el.setAttribute(name, value)
   }
+  subscriptTextNodes(clone)
   return clone
 }
 
@@ -293,6 +294,52 @@ export interface ExportOptions {
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+/** `X_Y` identifiers: the head and the subscript, at word boundaries. */
+const SUB_IDENT = /(?<![A-Za-z0-9_])([A-Za-z]+)_([A-Za-z0-9]+)(?![A-Za-z0-9_])/g
+const SUB_DY = '0.25em'
+const SUB_SIZE = '70%'
+const ZWSP = '\u200b'
+
+/** Escaped text with `X_Y` identifiers drawn as X with a smaller, lowered Y (dy pairs, which every SVG renderer honours). */
+function withSubscripts(escaped: string): string {
+  return escaped.replace(
+    SUB_IDENT,
+    (_m, head: string, sub: string) =>
+      `${head}<tspan dy="${SUB_DY}" font-size="${SUB_SIZE}">${sub}</tspan><tspan dy="-${SUB_DY}">${ZWSP}</tspan>`,
+  )
+}
+
+/** The same, on the text nodes of a cloned `<text>` tree. */
+function subscriptTextNodes(root: Element): void {
+  const doc = root.ownerDocument
+  const ns = 'http://www.w3.org/2000/svg'
+  const walker = doc.createTreeWalker(root, 4)
+  const nodes: Text[] = []
+  for (let n = walker.nextNode(); n !== null; n = walker.nextNode()) {
+    if (n.parentElement?.closest('text') != null && SUB_IDENT.test(n.nodeValue ?? '')) nodes.push(n as Text)
+    SUB_IDENT.lastIndex = 0
+  }
+  for (const node of nodes) {
+    const text = node.nodeValue ?? ''
+    const frag = doc.createDocumentFragment()
+    let last = 0
+    for (const m of text.matchAll(SUB_IDENT)) {
+      frag.append(text.slice(last, m.index) + m[1])
+      const sub = doc.createElementNS(ns, 'tspan')
+      sub.setAttribute('dy', SUB_DY)
+      sub.setAttribute('font-size', SUB_SIZE)
+      sub.textContent = m[2]
+      const back = doc.createElementNS(ns, 'tspan')
+      back.setAttribute('dy', `-${SUB_DY}`)
+      back.textContent = ZWSP
+      frag.append(sub, back)
+      last = m.index + m[0].length
+    }
+    frag.append(text.slice(last))
+    node.replaceWith(frag)
+  }
 }
 
 interface Box {
@@ -346,7 +393,7 @@ function tagSvg(t: ExportTag, x: number, y: number, p: Palette): string {
   const family = t.mono === true ? ` font-family="${esc(MONO)}"` : ''
   return (
     `<g transform="translate(${x} ${y})"><rect width="${w}" height="${TAG_H}" fill="${bg}"${opacity}${strokeAttr}/>` +
-    `<text x="${w / 2}" y="15.5" text-anchor="middle" font-size="${TAG_SIZE}" font-weight="700" fill="${fg}"${family}>${esc(t.text)}</text></g>`
+    `<text x="${w / 2}" y="15.5" text-anchor="middle" font-size="${TAG_SIZE}" font-weight="700" fill="${fg}"${family}>${withSubscripts(esc(t.text))}</text></g>`
   )
 }
 
@@ -407,7 +454,7 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
   const parts: string[] = []
   parts.push(`<rect width="${width}" height="${height}" fill="${p.background}"/>`)
   parts.push(
-    `<text x="${PAD}" y="${PAD + TITLE - 2}" font-size="${TITLE}" font-weight="900" fill="${p.foreground}">${esc(title)}</text>`,
+    `<text x="${PAD}" y="${PAD + TITLE - 2}" font-size="${TITLE}" font-weight="900" fill="${p.foreground}">${withSubscripts(esc(title))}</text>`,
   )
   let x = PAD + (width - PAD * 2 - contentW) / 2
   const top = PAD + headH
@@ -434,14 +481,14 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
     y += box.h
     if (panel.foot !== undefined) {
       parts.push(
-        `<text x="${x + INNER}" y="${y + 20}" font-size="13" font-weight="700" font-family="${esc(MONO)}" fill="${p.foreground}">${esc(panel.foot)}</text>`,
+        `<text x="${x + INNER}" y="${y + 20}" font-size="13" font-weight="700" font-family="${esc(MONO)}" fill="${p.foreground}">${withSubscripts(esc(panel.foot))}</text>`,
       )
     }
     x += w + GAP
   }
   let y = top + contentH
   if (source.legend !== undefined) {
-    parts.push(`<text x="${PAD}" y="${y + 19}" font-size="12" fill="${p.mutedForeground}">${esc(source.legend)}</text>`)
+    parts.push(`<text x="${PAD}" y="${y + 19}" font-size="12" fill="${p.mutedForeground}">${withSubscripts(esc(source.legend))}</text>`)
     y += legendH
   }
   if (!academic) {
@@ -449,7 +496,7 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
     parts.push(`<rect x="0" y="${wmTop}" width="${width}" height="${wmH}" fill="${p.muted}"/>`)
     lines.forEach((line, i) => {
       parts.push(
-        `<text x="${PAD}" y="${wmTop + 14 + 12 + i * 18}" font-size="${WM_SIZE}" ${i === 0 ? 'font-weight="700" ' : ''}fill="${i === 0 ? p.foreground : p.mutedForeground}">${esc(line)}</text>`,
+        `<text x="${PAD}" y="${wmTop + 14 + 12 + i * 18}" font-size="${WM_SIZE}" ${i === 0 ? 'font-weight="700" ' : ''}fill="${i === 0 ? p.foreground : p.mutedForeground}">${withSubscripts(esc(line))}</text>`,
       )
     })
   }

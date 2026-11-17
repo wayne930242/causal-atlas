@@ -10,6 +10,8 @@ import {
   holdsIn,
   renderArith,
   renderEquation,
+  renderIdent,
+  renderValue,
   toFormula,
 } from '../engine/index.ts'
 import type { Locale } from '../engine/types.ts'
@@ -226,6 +228,10 @@ export interface EquationRow {
   readonly struck?: string
   /** Arithmetic notation: the equation with the current values filled in. */
   readonly worked?: string
+  /** LaTeX forms of `text`, `struck` and `worked`, for typesetting. */
+  readonly latex: string
+  readonly struckLatex?: string
+  readonly workedLatex?: string
   readonly intervened: boolean
   readonly note: string
 }
@@ -243,18 +249,22 @@ export function equationRows(
   const set = new Set(shown)
   return ids.map((id) => {
     const text = renderEquation(model, id, notation, 'text')
+    const latex = renderEquation(model, id, notation, 'latex')
     const forced = interventions[id]
     if (forced !== undefined) {
       const parents = model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
       return {
         id,
         text: `${id} = ${formatValue(forced)}`,
+        latex: `${renderIdent(id, 'latex')} = ${renderValue(forced, 'latex')}`,
         struck: text,
+        struckLatex: latex,
         intervened: true,
         note: t.setDirectly(parents, formatValue(forced)),
       }
     }
     let worked: string | undefined
+    let workedLatex: string | undefined
     if (notation === 'arithmetic' && values !== undefined) {
       const expr = model.equations.get(id)
       if (expr !== undefined) {
@@ -263,9 +273,11 @@ export function equationRows(
         const plugged = renderArith(substitute(arith, values), 'text')
         // A bare parent (C = U) substitutes straight to the result; skip the repeat.
         worked = plugged === String(result) ? `= ${plugged}` : `= ${plugged} = ${String(result)}`
+        const pluggedLatex = renderArith(substitute(arith, values), 'latex')
+        workedLatex = plugged === String(result) ? `= ${pluggedLatex}` : `= ${pluggedLatex} = ${String(result)}`
       }
     }
-    return { id, text, worked, intervened: false, note: label(model, id, t.locale) }
+    return { id, text, latex, worked, workedLatex, intervened: false, note: label(model, id, t.locale) }
   })
 }
 

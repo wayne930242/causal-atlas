@@ -197,3 +197,18 @@ describe('academic export', () => {
   })
 })
 
+
+describe('subscripts in exported text', () => {
+  it('draws X_Y identifiers as a lowered, smaller tspan instead of an underscore', () => {
+    const NS = 'http://www.w3.org/2000/svg'
+    const svg = document.createElementNS(NS, 'svg')
+    const text = document.createElementNS(NS, 'text')
+    text.textContent = 'do(N_S1=0) and N_S1'
+    svg.append(text)
+    const out = inlineSvg(svg, ACADEMIC_PALETTE, 'academic')
+    expect(out.textContent).not.toContain('_')
+    const subs = [...out.querySelectorAll('tspan[font-size="70%"]')]
+    expect(subs.map((s) => s.textContent)).toEqual(['S1', 'S1'])
+    expect(subs[0].getAttribute('dy')).toBe('0.25em')
+  })
+})
