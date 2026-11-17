@@ -1,6 +1,9 @@
 {
   "id": "pen-case-both-permitted",
-  "title": { "zh-TW": "筆案例的變體：教授也可以拿", "en": "The pen case, both permitted" },
+  "title": {
+    "zh-TW": "筆案例的變體：教授也可以拿",
+    "en": "The pen case, both permitted"
+  },
   "subtitle": {
     "zh-TW": "規定改成教授也能拿筆，兩人的因果評分趨於接近。",
     "en": "Once professors may take pens too, the two causal ratings move toward each other."
@@ -12,22 +15,34 @@
   },
   "story_tags": {
     "zh-TW": [
-      { "sentence": "這次系上的規定是行政人員與教授都可以取用筆筒裡的筆。", "variables": ["AT", "PT"] },
-      { "sentence": "不久後秘書需要記錄一則重要訊息，才發現筆筒已經空了。", "variables": ["PO"] }
+      {
+        "sentence": "這次系上的規定是行政人員與教授都可以取用筆筒裡的筆。",
+        "variables": ["AT", "PT"]
+      },
+      {
+        "sentence": "不久後秘書需要記錄一則重要訊息，才發現筆筒已經空了。",
+        "variables": ["PO"]
+      }
     ],
     "en": [
       {
         "sentence": "this time the department's rule lets both administrative staff and professors take pens from the cup.",
         "variables": ["AT", "PT"]
       },
-      { "sentence": "Soon afterwards the secretary needs to write down an important message and finds the cup empty.", "variables": ["PO"] }
+      {
+        "sentence": "Soon afterwards the secretary needs to write down an important message and finds the cup empty.",
+        "variables": ["PO"]
+      }
     ]
   },
   "explanation": {
-    "zh-TW": "模型與原版的筆案例相同（Halpern 與 Hitchcock 2015, §7.2）：PO = PT·AT。差別只在規範：兩人拿筆都被允許，沒有哪一個拿筆是偏離預設，因此兩個見證世界同樣正常，引擎的二元預設不再區分兩人，兩人都是原因。實驗的結果是比較性的：Sytsma、Livengood 與 Rose 重做原實驗，原版中教授 4.05、助教 2.51（量尺 1 至 7）；教授的行為改為被允許後，教授降為 3.0，助教升為 3.53。助教的行為沒變，評分卻上升，顯示因果判斷有一部分是在兩個候選原因之間比較。引擎沒有分級，所以這個「升降」只能從原版與本變體的對照看出，不能由單一個判定算出。",
-    "en": "The model is the same as in the original pen case (Halpern and Hitchcock 2015, §7.2): PO = PT·AT. Only the norm differs. Taking a pen is permitted for both, so neither action departs from its default, the two witness worlds are equally normal, and the engine's binary defaults no longer separate the two: both are causes. The experimental result is comparative. Sytsma, Livengood and Rose repeated the original experiment and obtained 4.05 for the professor and 2.51 for the assistant (scale 1 to 7); when the professor's action was made permissible, the professor fell to 3.0 and the assistant rose to 3.53. The assistant's action had not changed, yet its rating rose, which suggests that causal judgment is in part a comparison between candidate causes. The engine is not graded, so that shift shows only in the contrast with the original case, not in any single verdict here."
+    "zh-TW": "模型與原版的筆案例相同（Halpern 與 Hitchcock 2015, §7.2）：PO = PT·AT。差別只在規範：規定允許兩人拿筆，所以預設值是兩人都拿（PT = 1、AT = 1）。在規範性條款下，任何一人不拿筆的見證世界都比實際世界更偏離預設，因此兩人都不是原因；簡單反事實依賴與其他 HP 定義仍把兩人判為原因。這與教授不被允許的原版不同，那裡只有教授是原因。實驗結果（Sytsma、Livengood 與 Rose 2010，量尺 1 至 7）：教授 3.0、助教 3.53，兩者都低於中點，且彼此接近；原版中教授 4.05、助教 2.51，差距明顯。規定允許兩人時，拿筆被視為常態，兩人都不被特別歸咎。",
+    "en": "The model is the same as in the original pen case (Halpern and Hitchcock 2015, §7.2): PO = PT·AT. Only the norm differs. The rule permits both to take a pen, so taking is the default for each (PT = 1, AT = 1). Under the normality clause, the witness world in which either one does not take a pen is more deviant than the actual world, so neither is a cause; the but-for test and the other HP definitions still count both. This contrasts with the original case, where the professor's taking is forbidden and only the professor is a cause. In the experiment (Sytsma, Livengood and Rose 2010, scale 1 to 7) the professor was rated 3.0 and the assistant 3.53: both below the midpoint and close together, against 4.05 and 2.51 in the original. When the rule permits both, taking is the norm and neither is singled out as the cause."
   },
-  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
   "sources": [
     {
       "citation": "Halpern, J. Y., & Hitchcock, C. (2015). Graded causation and defaults. British Journal for the Philosophy of Science, 66(2), 413–457.",
@@ -54,39 +69,170 @@
   ],
   "model": {
     "variables": [
-      { "id": "U_PT", "label": { "zh-TW": "教授的情況", "en": "Professor's circumstances" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "U_AT", "label": { "zh-TW": "助教的情況", "en": "Assistant's circumstances" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "PT", "label": { "zh-TW": "教授拿筆", "en": "Professor takes a pen" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "AT", "label": { "zh-TW": "助教拿筆", "en": "Assistant takes a pen" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "PO", "label": { "zh-TW": "秘書沒筆可用", "en": "Secretary has no pen" }, "kind": "endogenous", "domain": "boolean" }
+      {
+        "id": "U_PT",
+        "label": {
+          "zh-TW": "教授的情況",
+          "en": "Professor's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_AT",
+        "label": {
+          "zh-TW": "助教的情況",
+          "en": "Assistant's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "PT",
+        "label": {
+          "zh-TW": "教授拿筆",
+          "en": "Professor takes a pen"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "AT",
+        "label": {
+          "zh-TW": "助教拿筆",
+          "en": "Assistant takes a pen"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "PO",
+        "label": {
+          "zh-TW": "秘書沒筆可用",
+          "en": "Secretary has no pen"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
     ],
-    "equations": { "PT": "U_PT", "AT": "U_AT", "PO": "PT and AT" }
+    "equations": {
+      "PT": "U_PT",
+      "AT": "U_AT",
+      "PO": "PT and AT"
+    }
   },
-  "context": { "U_PT": 1, "U_AT": 1 },
-  "normality": { "PO": 0 },
+  "context": {
+    "U_PT": 1,
+    "U_AT": 1
+  },
+  "normality": {
+    "PT": 1,
+    "AT": 1,
+    "PO": 0
+  },
   "verdicts": [
-    { "theory": "butfor", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
-    { "theory": "butfor", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
-    { "theory": "hp-updated", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
-    { "theory": "hp-updated", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
-    { "theory": "hp-modified", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
-    { "theory": "hp-modified", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
     {
-      "theory": "hp-normality",
-      "query": { "cause": "PT=1", "effect": "PO=1" },
-      "expected": "cause",
-      "note": "No default separates the two witnesses, so both pass."
+      "theory": "butfor",
+      "query": {
+        "cause": "PT=1",
+        "effect": "PO=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "AT=1",
+        "effect": "PO=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "PT=1",
+        "effect": "PO=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "AT=1",
+        "effect": "PO=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "PT=1",
+        "effect": "PO=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "AT=1",
+        "effect": "PO=1"
+      },
+      "expected": "cause"
     },
     {
       "theory": "hp-normality",
-      "query": { "cause": "AT=1", "effect": "PO=1" },
-      "expected": "cause",
-      "note": "Contrast with the original pen case, where this is not-cause."
+      "query": {
+        "cause": "PT=1",
+        "effect": "PO=1"
+      },
+      "expected": "not-cause",
+      "note": "Both takes are the default, so each witness world (not taking) is more deviant than the actual world; neither passes AC2+(a)."
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "AT=1",
+        "effect": "PO=1"
+      },
+      "expected": "not-cause",
+      "note": "Both takes are the default, so each witness world (not taking) is more deviant than the actual world; neither passes AC2+(a)."
     }
   ],
   "showcase": [
-    { "label": { "zh-TW": "教授沒拿筆", "en": "The professor takes no pen" }, "interventions": { "PT": 0 } },
-    { "label": { "zh-TW": "助教沒拿筆", "en": "The assistant takes no pen" }, "interventions": { "AT": 0 } }
+    {
+      "label": {
+        "zh-TW": "教授沒拿筆",
+        "en": "The professor takes no pen"
+      },
+      "interventions": {
+        "PT": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "助教沒拿筆",
+        "en": "The assistant takes no pen"
+      },
+      "interventions": {
+        "AT": 0
+      }
+    }
   ],
-  "layout": { "PT": [0, 0], "AT": [0, 1], "PO": [1, 0.5] }
+  "layout": {
+    "PT": [0, 0],
+    "AT": [0, 1],
+    "PO": [1, 0.5]
+  },
+  "intuition": {
+    "query": {
+      "cause": "PT=1",
+      "effect": "PO=1"
+    },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "規定允許兩人拿筆時，教授（3.0）與助教（3.53）的因果評分（量尺 1 至 7）都低於中點，且彼此接近。",
+      "en": "When the rule permits both, the professor (3.0) and the assistant (3.53) receive causal ratings (scale 1 to 7) that both sit below the midpoint and close together."
+    },
+    "agree": ["hp-normality"]
+  }
 }

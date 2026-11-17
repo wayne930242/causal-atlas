@@ -2,9 +2,13 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.0
+
+About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and a wide layout.
+
 ## Package
 
-`causal-atlas` (0.2.6) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -155,9 +159,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.2.6 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.2.6) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -166,7 +170,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.2.6},
+  version = {0.3.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
