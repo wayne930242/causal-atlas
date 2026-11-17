@@ -2,7 +2,7 @@
   "id": "pen-case-professor-assistant",
   "title": { "zh-TW": "系辦的筆：教授與助教", "en": "The pen case: professor and assistant" },
   "subtitle": {
-    "zh-TW": "兩人各拿一支筆，筆就沒了，為什麼只怪教授？",
+    "zh-TW": "兩人各拿一支筆，筆筒就空了，一般人卻只怪教授。",
     "en": "Each took one pen and the pens ran out; why does only the professor get the blame?"
   },
   "family": "norms",
@@ -33,7 +33,7 @@
     "agree": ["hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型取自 Halpern 與 Hitchcock (2015) §7.2：PO = PT·AT，兩人都拿筆，筆筒才會空，因此簡單反事實依賴與 HP 定義都把兩人判為原因。差別來自規範：系規允許助教拿筆、不允許教授拿筆，所以預設值設為教授不拿筆（PT = 0）、助教拿筆（AT = 1）。教授不拿筆的見證世界不比實際世界更偏離預設；助教不拿筆的見證世界卻比實際世界更偏離預設，因此只有教授滿足 AC2+(a)。助教不是原因，正是 Halpern 與 Hitchcock 全有全無的 AC2+(a) 子句的結果，不是二元預設造成的；他們另外用最佳見證排序區分較強與較弱的原因（HH2015 p. 21、p. 25；Halpern 2016 pp. 86–87），引擎套用的是全有全無的 AC2+(a) 子句，沒有建模這個分級排序。",
+    "zh-TW": "模型取自 Halpern 與 Hitchcock (2015) §7.2：PO = PT·AT，兩人都拿筆，筆筒才會空。but-for 與 HP 定義（Halpern–Pearl definition）因此都判兩人是原因。系規允許助教拿筆、不允許教授拿筆，所以預設值（default value）是教授不拿（PT = 0）、助教拿（AT = 1）。檢驗一個原因時要用的反事實世界叫做見證（witness）。教授的見證不比實際世界更偏離預設，助教的見證則更偏離，所以只有教授滿足 AC2+(a)。Halpern 與 Hitchcock 另以最好的見證（best witness）排序區分原因的強弱（HH2015 p. 21、p. 25；Halpern 2016 pp. 86–87），引擎沒有建模這個排序。",
     "en": "The model is the one in Halpern and Hitchcock (2015, §7.2): PO = PT·AT, so the cup is empty only if both take a pen, and the simple counterfactual test and the HP definitions count both as causes. The difference comes from the norm: the rule allows the assistant to take a pen and forbids the professor, so the defaults are that the professor does not (PT = 0) and the assistant does (AT = 1). The witness world in which the professor does not take a pen is no less normal than the actual world; the witness world in which the assistant does not is more deviant than the actual world. Only the professor therefore satisfies AC2+(a). The assistant's not-cause verdict is what Halpern and Hitchcock's all-or-nothing AC2+(a) clause gives, not an artifact of binary defaults; they separately rank witnesses to tell stronger from weaker causes (HH2015 p. 21, p. 25; Halpern 2016 pp. 86–87). The engine applies HH's all-or-nothing AC2+(a) clause; their graded best-witness ranking is not modeled."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

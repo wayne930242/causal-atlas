@@ -2,7 +2,7 @@
   "id": "psychopath-button",
   "title": { "zh-TW": "心理病態者按鈕", "en": "The Psychopath Button" },
   "subtitle": {
-    "zh-TW": "只有心理病態者才會想按下這個按鈕，按下的衝動本身就是壞消息。",
+    "zh-TW": "只有心理病態者才會按這個按鈕，所以想按本身就是壞消息。",
     "en": "Only a psychopath would press this button, so the urge to press is itself bad news."
   },
   "family": "decision",
@@ -24,13 +24,13 @@
     "query": { "choice": "PRESS" },
     "expected": false,
     "text": {
-      "zh-TW": "想按的人多半是心理病態者，按下去自己也會死；不按才合理。",
+      "zh-TW": "想按的人多半是心理病態者，按下去保羅自己也會死，所以不按才合理。",
       "en": "Whoever wants to press is probably a psychopath and would die of it; refraining is the rational choice."
     },
     "agree": ["edt"]
   },
   "explanation": {
-    "zh-TW": "外生變數是保羅是不是心理病態者 PSY，以及非心理病態者偶爾也想按的衝動 U_P。按下按鈕 PRESS 由兩者之一引起；保羅死亡 DIE 需要他按了而且他是心理病態者。保羅原本認為自己是心理病態者的機率很低，所以對 PRESS 作介入時多半是非病態者按下、全世界的病態者消失，因果決策論算出按下有利。但得知自己按了，幾乎就是得知自己是病態者，證據決策論算出按下會死。Egan 沒有給數字；效用（活著且病態者全消失 10、死亡 −100、不按 0）與機率都是為了讓模型最小而擬定。Egan 指出，這一例比謀殺病灶更少人有異議。",
+    "zh-TW": "外生變數（exogenous variable）是保羅是否為心理病態者 PSY，以及非病態者偶爾也想按的衝動 U_P。兩者任一出現，保羅就按下按鈕（PRESS）；他按了而且是心理病態者，就會死（DIE）。保羅原本認為自己是病態者的機率很低。對 PRESS 作干預（intervention）時，多半是非病態者按下，因果決策論（causal decision theory）算出按下有利。得知自己按了，幾乎就是得知自己是病態者，證據決策論（evidential decision theory）算出按下會死。Egan 沒有給數字，效用（活著且病態者消失 10、死亡 −100、不按 0）與機率由本資料集所擬。",
     "en": "The exogenous variables are whether Paul is a psychopath, PSY, and an occasional urge to press even in a non-psychopath, U_P. Pressing PRESS is brought about by either; Paul's death DIE needs that he pressed and that he is a psychopath. Paul starts out thinking it very unlikely that he is a psychopath, so intervening on PRESS most likely means a non-psychopath presses and the psychopaths disappear, and causal decision theory finds pressing better. But learning that he pressed is nearly learning that he is a psychopath, and evidential decision theory finds that pressing means death. Egan gives no numbers; the utilities (alive with the psychopaths gone 10, death −100, not pressing 0) and the probabilities are chosen to keep the model minimal. Egan notes that this case draws fewer dissenters than the Murder Lesion."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

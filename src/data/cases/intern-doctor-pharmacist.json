@@ -2,12 +2,12 @@
   "id": "intern-doctor-pharmacist",
   "title": { "zh-TW": "住院醫師、藥師與違規的主治醫師", "en": "The intern, the pharmacist and the attending who breaks policy" },
   "subtitle": {
-    "zh-TW": "病人康復了，違規簽名的主治醫師沒有被怪罪，仍被當作康復的原因。",
+    "zh-TW": "病人康復了，沒有人該被責怪，違規簽名的主治醫師仍被當作康復的原因。",
     "en": "The patient recovers and nobody is blamed, yet the attending who broke policy is still picked out as the cause."
   },
   "family": "norms",
   "story": {
-    "zh-TW": "考慮一家醫院裡的用藥申請：住院醫師想為一位腎臟功能不佳的病人使用一種新藥，投藥前需要藥師簽名確認庫存，也需要主治醫師簽名確認藥物適合病人。藥師確認庫存足夠，立刻簽名。主治醫師知道這種藥可能有危險的副作用，院方也規定這個病症不得使用，仍然決定簽名。兩份簽名齊備，病人用了藥，很快康復，也沒有出現副作用。",
+    "zh-TW": "考慮醫院用藥申請的情境。住院醫師想為一位腎臟功能不佳的病人使用一種新藥。投藥前需要藥師簽名確認庫存，也需要主治醫師簽名確認藥物適合病人。藥師確認庫存足夠，立刻簽名。主治醫師知道這種藥可能有危險的副作用，院方也規定這個病症不得使用，仍然決定簽名。兩份簽名齊備，病人用了藥，很快康復，也沒有出現副作用。",
     "en": "Consider a drug request in a hospital. An intern wants to give a patient with kidney trouble a new drug. Before giving it, the intern needs the pharmacist's signature to confirm the stock and the attending physician's signature to confirm that the drug suits the patient. The pharmacist sees that there is enough in stock and signs at once. The attending knows that the drug may have dangerous side effects, and the hospital forbids its use for this condition, but decides to sign anyway. With both signatures in hand, the patient is given the drug, recovers quickly and shows no side effects."
   },
   "story_tags": {
@@ -32,7 +32,7 @@
     "agree": ["hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型是依故事擬的最小結構：藥物需要兩份簽名才會投下，投下後病人康復（REC = PH·AT）。兩份簽名缺一不可，所以簡單反事實依賴與 HP 定義都把兩人判為原因。規範使兩人不同：藥師依常規簽名（預設 PH = 1），主治醫師違反院方政策簽名（預設 AT = 0）。主治醫師不簽名的見證世界不比實際世界更偏離預設，藥師不簽名的見證世界則更偏離，因此只有主治醫師滿足 AC2+(a)，引擎只把他判為原因。Halpern 與 Hitchcock 及 Halpern 2016 都沒有分析這個案例，但同樣的推理適用：藥師不是原因是全有全無的 AC2+(a) 子句的結果，他們分級的最佳見證排序本站沒有建模。這個案例是 Hitchcock 與 Knobe 設計來拆開「規範違反」與「責備」的：康復是好結果，沒有人該被責備，違規的行為仍被選為原因。康復 REC 沒有設預設值，因為好結果與否不影響這個比較。",
+    "zh-TW": "模型依故事擬成：兩份簽名都有才會投藥，投藥後病人康復（REC = PH·AT）。兩份簽名缺一不可，but-for 與 HP 定義（Halpern–Pearl definition）都判兩人是原因。規範讓兩人不同：藥師依常規簽名，預設值（default value）PH = 1；主治醫師違規簽名，預設值 AT = 0。檢驗主治醫師時要用的世界不比實際世界更偏離預設，檢驗藥師時要用的世界則更偏離，所以引擎依 AC2+(a) 只判主治醫師是原因。Hitchcock 與 Knobe 設計這個案例，用來分開規範違反與責備：結果是好的，沒有人該被責備，違規的行為仍被選為原因。",
     "en": "The model is a minimal structure built from the story: the drug is given only with both signatures, and then the patient recovers (REC = PH·AT). Neither signature can be dropped, so the simple counterfactual test and the HP definitions count both signers as causes. The norm separates them: the pharmacist signs as a matter of routine (default PH = 1), while the attending signs against hospital policy (default AT = 0). The witness world in which the attending does not sign is no more deviant than the actual world, whereas the one in which the pharmacist does not sign is more deviant, so only the attending satisfies AC2+(a) and the engine makes only the attending a cause. Neither Halpern and Hitchcock nor Halpern 2016 analyse this case, but the same reasoning applies: the pharmacist's not-cause verdict is what the all-or-nothing AC2+(a) clause gives; their graded best-witness ranking is not modeled here. Hitchcock and Knobe designed the case to pull norm violation apart from blame: the recovery is good, nobody should be blamed for it, and the violating act is still picked out as the cause. REC has no default because whether the outcome is good plays no part in this comparison."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
