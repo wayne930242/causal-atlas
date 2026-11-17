@@ -1,10 +1,10 @@
 {
   "id": "gardener-queen",
   "title": { "zh-TW": "園丁與女王：不作為", "en": "The gardener and the Queen (omission)" },
-  "subtitle": { "zh-TW": "兩個人都沒澆花，為什麼只怪園丁？", "en": "Neither of them watered the flower; why blame only the gardener?" },
+  "subtitle": { "zh-TW": "兩個人都沒澆花，一般人只把花死歸咎於園丁。", "en": "Neither of them watered the flower; why blame only the gardener?" },
   "family": "omission",
   "story": {
-    "zh-TW": "園丁答應幫鄰居澆花卻沒有澆，花枯死了。英國女王當然也沒有來澆這盆花。如果任何一人澆了，花都不會死。可是我們通常只說是園丁沒澆害死了花，不說女王沒澆也是原因。",
+    "zh-TW": "考慮澆花的情境。園丁答應幫鄰居澆花卻沒有澆，花枯死了。英國女王當然也沒有來澆這盆花。假如兩人之中有一人澆了，花就不會死。然而，一般人只說園丁沒澆花害死了花，不會說女王沒澆花也是原因。",
     "en": "The gardener promised to water the neighbour's flower but did not, and the flower withered. The Queen of England, of course, did not come to water it either. Had either of them watered it, the flower would not have died. Yet we usually say that the gardener's failure to water killed the flower, not that the Queen's failure was also a cause."
   },
   "story_tags": {
@@ -24,13 +24,13 @@
     "query": { "cause": "QW=0", "effect": "D=1" },
     "expected": "not-cause",
     "text": {
-      "zh-TW": "女王本來就不會來澆這盆花，花死不該算在她頭上。",
+      "zh-TW": "女王本來就不會來澆這盆花，花死不該歸咎於她。",
       "en": "The Queen was never going to water this flower; its death should not be laid at her door."
     },
     "agree": ["hp-normality"]
   },
   "explanation": {
-    "zh-TW": "園丁與女王都可以澆花，花枯死的條件是兩人都沒澆（D = ¬GW·¬QW）。模型把「沒做某事」當作事件，用來測試各種定義對缺席（omission）的處理：園丁沒澆花算不算花枯死的原因，女王沒澆花算不算。",
+    "zh-TW": "園丁和女王都可能澆花。花枯死的條件是兩人都沒澆（D = ¬GW·¬QW）。在這個模型裡，沒做某事也算一件事，叫做不作為（omission）。這個案例用來檢驗各種定義如何處理不作為：園丁沒澆花算不算花枯死的原因，女王沒澆花又算不算。",
     "en": "Both the gardener and the Queen could water the flower, and it dies only if neither does (D = ¬GW·¬QW). The model treats not doing something as an event, to test how each definition handles omissions: does the gardener's not watering count as a cause of the flower's death, and does the Queen's?"
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -40,7 +40,7 @@
       "key": "beebee2004causing",
       "role": "treatment",
       "pages": "292–293 (Smith, who failed to water her office plants, against Brown, who has no connection to them)",
-      "note": {"zh-TW": "Beebee 全文（pp. 291–308）沒有園丁與英國女王的例子；她用 Smith 與 Brown 做同樣的對比，並主張不作為不是原因。", "en": "Beebee's chapter (pp. 291–308) has no gardener or Queen example; she draws the same contrast with Smith and Brown and holds that omissions are not causes."},
+      "note": {"zh-TW": "Beebee 全文（pp. 291–308）沒有園丁與英國女王的例子。她用 Smith 與 Brown 做同樣的對比，並主張不作為不能算原因。", "en": "Beebee's chapter (pp. 291–308) has no gardener or Queen example; she draws the same contrast with Smith and Brown and holds that omissions are not causes."},
       "verified": true
     },
     {

@@ -129,6 +129,6 @@ describe('case sources', () => {
     const text = JSON.stringify(c.data)
     expect(text).not.toMatch(/it is a case of early preemption/)
     expect(text).toContain('late preemption')
-    expect(text).toContain('晚期先發制人')
+    expect(text).toContain('晚期阻斷（late preemption）')
   })
 })

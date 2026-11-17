@@ -104,7 +104,7 @@ describe('CasePage display fields', () => {
     const group = container.querySelector('.ca-verdict-group') as HTMLElement
     const rows = [...group.querySelectorAll('.ca-verdict')]
     expect(rows[0].getAttribute('data-theory')).toBe('intuition')
-    expect(rows[0].textContent).toContain('她的石頭砸到了瓶子')
+    expect(rows[0].textContent).toContain('小蘇的石頭砸中了瓶子')
     const mismatched = rows.filter((r) => r.getAttribute('data-mismatch') === 'true').map((r) => r.getAttribute('data-theory'))
     expect(mismatched).toEqual(['butfor'])
     expect(container.querySelector('[data-reveal="step-4"]')?.textContent).toContain('簡單反事實和直覺不一致')

@@ -4,7 +4,7 @@
   "subtitle": { "zh-TW": "兩個人都丟了石頭，只有一顆砸中瓶子。", "en": "Both throw a rock; only one hits the bottle." },
   "family": "actual",
   "story": {
-    "zh-TW": "小蘇和小比各拿一顆石頭，瞄準同一個瓶子，兩人都丟了。小蘇的石頭先到，瓶子破了。小比的石頭晚一步，到的時候瓶子已經碎了。小蘇的石頭要是沒砸中，小比那顆就會砸破瓶子。一般人會說瓶子是小蘇砸破的。但少了小蘇那一顆，瓶子還是會破。",
+    "zh-TW": "小蘇和小比各拿一顆石頭，瞄準同一個瓶子，兩人都丟了。小蘇的石頭先到，瓶子破了。小比的石頭晚一步，到的時候瓶子已經碎了。假如小蘇的石頭沒有砸中，小比那顆就會砸破瓶子。一般人會說瓶子是小蘇砸破的。可是少了小蘇那一顆，瓶子還是會破。",
     "en": "Suzy and Billy each pick up a rock, aim at the same bottle, and both throw. Suzy's rock arrives first, and the bottle shatters. Billy's rock arrives a moment later, when the bottle is already broken. Had Suzy's rock missed, Billy's would have shattered the bottle. Most people say Suzy broke the bottle. Yet without Suzy's rock, the bottle would still have broken."
   },
   "story_tags": {
@@ -25,11 +25,11 @@
   "intuition": {
     "query": { "cause": "ST=1", "effect": "BS=1" },
     "expected": "cause",
-    "text": { "zh-TW": "她的石頭砸到了瓶子，小比的沒有。", "en": "Her rock hit the bottle; Billy's did not." },
+    "text": { "zh-TW": "小蘇的石頭砸中了瓶子，小比的石頭沒有。", "en": "Her rock hit the bottle; Billy's did not." },
     "agree": ["hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型把兩人的意圖當作外生變數，丟、打中、瓶子破掉是內生變數。小比打中的條件是他丟了而且小蘇沒有先打中（BH = BT·(1−SH)），這一條讓小比的石頭只能在小蘇落空時才起作用，正好刻畫先發制人。瓶子破掉只要任一人打中即可。",
+    "zh-TW": "兩人想不想丟，由模型之外給定，是外生變數（exogenous variable）。丟、擊中和瓶子破，都由方程式決定。小比擊中的條件是：他丟了，而且小蘇沒有先擊中（BH = BT·(1−SH)）。所以小比的石頭只在小蘇落空時起作用。一條因果鏈先完成，使另一條落空，這種情況叫做阻斷（preemption）。瓶子破的條件是至少一人擊中。",
     "en": "The model treats the two throwers' intentions as exogenous variables; throwing, hitting and the bottle shattering are endogenous. Billy hits only if he throws and Suzy has not already hit (BH = BT·(1−SH)); this equation lets Billy's rock act only when Suzy's misses, which is exactly what preemption is. The bottle shatters if either of them hits."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -53,7 +53,7 @@
       "key": "hall2004two",
       "role": "origin",
       "note": {
-        "zh-TW": "小蘇（Suzy）與小比（Billy）的丟石頭例子取自 Hall (2004)；它屬於晚期先發制人（late preemption），不是 Lewis (1986) 討論的早期先發制人：小比的石頭仍在途中，備援的因果鏈沒有在結果發生前被切斷（Hall 2004 §3.3）。",
+        "zh-TW": "小蘇（Suzy）與小比（Billy）丟石頭的例子取自 Hall (2004)。瓶子破的時候，小比的石頭還在半空中，備用的因果鏈在結果發生前沒有被切斷。這種情況叫做晚期阻斷（late preemption），與 Lewis (1986) 討論的早期阻斷（early preemption）不同（Hall 2004 §3.3）。",
         "en": "The rock-throwing example with Suzy and Billy is from Hall (2004); it is a case of late preemption (Hall 2004 §3.3), not the early preemption Lewis (1986) discussed: Billy's rock is still in flight, so the backup process is not cut before the effect occurs."
       },
       "pages": "§3.3 (Late pre-emption); read in the author manuscript, whose pages do not map to the MIT pagination 225–276",
