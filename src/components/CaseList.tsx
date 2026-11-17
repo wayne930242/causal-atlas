@@ -1,7 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CatalogEntry, CatalogGroup } from './editor/catalog.ts'
-import { filterCatalog, matches } from './editor/catalog.ts'
+import { HOST_CHIP, filterCatalog, matches } from './editor/catalog.ts'
 import { useMessages } from './i18n.ts'
 
 /**
@@ -18,6 +18,8 @@ export interface CaseListProps {
   readonly onPick: (key: string) => void
   /** Focus the search box on mount (the sheet does). */
   readonly autoFocus?: boolean
+  /** The one chip for all host models. Default 講義模型 / Lesson models. */
+  readonly modelsLabel?: string
 }
 
 const BLANK = 'blank'
@@ -34,7 +36,7 @@ function revealIn(list: HTMLElement | null, el: HTMLElement | null): void {
   else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight
 }
 
-export function CaseList({ groups, value, onPick, autoFocus = false }: CaseListProps) {
+export function CaseList({ groups, value, onPick, autoFocus = false, modelsLabel }: CaseListProps) {
   const e = useMessages().editor
   const uid = useId()
   const listId = `${uid}-list`
@@ -46,7 +48,13 @@ export function CaseList({ groups, value, onPick, autoFocus = false }: CaseListP
   const listRef = useRef<HTMLDivElement>(null)
 
   // A chip left over from other groups (another language, other host models) means all.
-  const family = only !== undefined && groups.some((g) => g.id === only) ? only : undefined
+  const hasHost = groups.some((g) => g.id.startsWith('group:'))
+  const chips = [
+    { id: undefined as string | undefined, label: e.allFamilies },
+    ...groups.filter((g) => g.id.startsWith('family:')),
+    ...(hasHost ? [{ id: HOST_CHIP, label: modelsLabel ?? e.lessonModels }] : []),
+  ]
+  const family = only !== undefined && chips.some((c) => c.id === only) ? only : undefined
   const shown = useMemo(() => filterCatalog(groups, query, family), [groups, query, family])
   const blankShown = family === undefined && matches({ key: BLANK, label: e.blank, search: e.blankSearch.toLowerCase() }, query)
   const order = useMemo(() => [...shown.flatMap((g) => g.entries.map((x) => x.key)), ...(blankShown ? [BLANK] : [])], [shown, blankShown])
@@ -161,7 +169,7 @@ export function CaseList({ groups, value, onPick, autoFocus = false }: CaseListP
         onKeyDown={onSearchKey}
       />
       <div className="ca-editor-chips" role="group" aria-label={e.familyFilter}>
-        {[{ id: undefined, label: e.allFamilies }, ...groups].map((g) => (
+        {chips.map((g) => (
           <button
             key={g.id ?? ''}
             type="button"
@@ -213,6 +221,7 @@ export interface CaseSheetProps {
   /** The title of the model on screen, shown on the button. */
   readonly title: string
   readonly onPick: (key: string) => void
+  readonly modelsLabel?: string
 }
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -221,7 +230,7 @@ const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), [tabindex]:not
  * The narrow layout's case list: a 選案例 button with the current title that opens the same list in a
  * modal dialog. Escape or picking closes it and focus returns to the button; Tab stays inside.
  */
-export function CaseSheet({ groups, value, title, onPick }: CaseSheetProps) {
+export function CaseSheet({ groups, value, title, onPick, modelsLabel }: CaseSheetProps) {
   const e = useMessages().editor
   const headId = useId()
   const [open, setOpen] = useState(false)
@@ -304,6 +313,7 @@ export function CaseSheet({ groups, value, title, onPick }: CaseSheetProps) {
             groups={groups}
             value={value}
             autoFocus
+            modelsLabel={modelsLabel}
             onPick={(key) => {
               onPick(key)
               setOpen(false)

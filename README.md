@@ -2,6 +2,12 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.3
+
+The editor's case list keeps one filter chip for all host models (label from the new optional `modelsLabel`
+prop, default 講義模型 / Lesson models) instead of one per `extraModels` group. Inside the list the groups
+stay as headings, in the order given, and the search still matches group names.
+
 ## 0.3.2
 
 The equations box gets a 「複製 LaTeX」 button that copies the current notation as an `aligned` block, and
@@ -20,7 +26,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.3.2) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.3) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -73,7 +79,7 @@ keys). It starts from any bundled case or a blank model, exports and imports JSO
 `modelDocSchema` (a whole case file also imports), and shares the model in the URL hash as
 `#model=1.<base64url(deflate-raw(JSON))>`; the leading `1` is the format version. Props: `initial`
 (case id, `extraModels` id or `blank`), `hash`, `syncUrl`, `shareHref(value)`, `exportUrl`, `locale`,
-`caseLinks`, `extraModels`.
+`caseLinks`, `extraModels`, `modelsLabel`.
 
 The address follows the editor (`syncUrl`, default on): `#case=<id>` while a bundled case or host
 model is unedited, `#model=…` once it is edited (written 400 ms after the last change), with
@@ -112,6 +118,8 @@ links).
 - `extraModels`: `{ id, title, group?, doc, links? }`; `title` and `group` are a string or
   `{ 'zh-TW', en }`, `doc` is a model document as `CausalPlayground` takes it. Choosing one loads the
   document (an invalid one starts blank and shows its problem codes) and shows its title and `links`.
+  The case list gives all of them one filter chip (label `modelsLabel`, default 講義模型 / Lesson models);
+  inside the list each `group` stays a heading.
 
 A custom model need not go through the editor. `CausalPlayground`, `ProbabilityPanel` and `WorldLanes`
 take `doc` (a `modelDocSchema` value, e.g. one exported from the editor) instead of `caseId`;
@@ -182,9 +190,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.2 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.3 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.2) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.3) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -193,7 +201,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.2},
+  version = {0.3.3},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

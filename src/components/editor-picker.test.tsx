@@ -68,12 +68,31 @@ describe('ModelEditor case list', () => {
     const decision = caseIds.filter((id) => getCase(id).data.family === 'decision')
     expect(keys().sort()).toEqual([...decision].sort())
     expect(count(container)).toBe(`${decision.length} 個符合`)
-    fireEvent.click(chip('第 8 講'))
+    fireEvent.click(chip('講義模型'))
     expect(keys()).toEqual(['model:m08-rock-coarse'])
     fireEvent.click(chip('全部'))
     expect(keys()).toContain('rock-throwing')
     expect(keys()).toContain('blank')
     expect(count(container)).toBe('')
+  })
+
+  it('keeps one chip for all host models, however many groups, with headings in order', () => {
+    const many = Array.from({ length: 13 }, (_, i) => ({
+      ...(extraModels[0] as (typeof extraModels)[number]),
+      id: `m-${i}`,
+      title: `模型 ${i}`,
+      group: `第 ${13 - i} 講`,
+    }))
+    render(<ModelEditor initial="rock-throwing" extraModels={many} modelsLabel="課程模型" />)
+    const chips = within(screen.getAllByRole('group', { name: '依類別篩選' })[0] as HTMLElement).getAllByRole('button')
+    const families = new Set(caseIds.map((id) => getCase(id).data.family)).size
+    expect(chips.length).toBe(families + 2)
+    fireEvent.click(chip('課程模型'))
+    expect(keys()).toEqual(many.map((m) => `model:${m.id}`))
+    const heads = [...sidebar().querySelectorAll('.ca-editor-optgroup-label')].map((h) => h.textContent)
+    expect(heads).toEqual(many.map((m) => m.group))
+    fireEvent.change(search(), { target: { value: '第 13 講' } })
+    expect(keys()).toEqual(['model:m-0'])
   })
 
   it('the search narrows across groups and matches either language', () => {

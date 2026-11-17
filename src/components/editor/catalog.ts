@@ -85,6 +85,9 @@ export function catalog(t: Messages, extras: readonly ExtraModel[]): CatalogGrou
   return groups
 }
 
+/** The chip id that stands for every host model group at once. */
+export const HOST_CHIP = 'host'
+
 /** True when the entry's text holds every word of `query`; an empty query matches everything. */
 export function matches(entry: CatalogEntry, query: string): boolean {
   return query
@@ -94,10 +97,10 @@ export function matches(entry: CatalogEntry, query: string): boolean {
     .every((w) => entry.search.includes(w))
 }
 
-/** The groups (all, or only the one with id `only`) with just the entries matching `query`; empty groups drop out. */
+/** The groups (all, or only the one with id `only`, or all host groups for HOST_CHIP) with just the entries matching `query`; empty groups drop out. */
 export function filterCatalog(groups: readonly CatalogGroup[], query: string, only?: string): CatalogGroup[] {
   return groups
-    .filter((g) => only === undefined || g.id === only)
+    .filter((g) => only === undefined || (only === HOST_CHIP ? g.id.startsWith('group:') : g.id === only))
     .map((g) => ({ ...g, entries: g.entries.filter((e) => matches(e, query)) }))
     .filter((g) => g.entries.length > 0)
 }

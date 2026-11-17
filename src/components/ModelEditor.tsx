@@ -62,6 +62,8 @@ export interface ModelEditorProps {
    * shows its title and `links` above the model.
    */
   readonly extraModels?: readonly ExtraModel[]
+  /** The case list's one filter chip for all `extraModels`. Default 講義模型 / Lesson models. */
+  readonly modelsLabel?: string
 }
 
 export type { ExtraModel, LessonLink } from './editor/catalog.ts'
@@ -155,6 +157,7 @@ function EditorBody({
   defaultNotation,
   caseLinks,
   extraModels = NO_EXTRAS,
+  modelsLabel,
   syncUrl = true,
 }: Omit<ModelEditorProps, 'locale'>) {
   const t = useMessages()
@@ -406,10 +409,10 @@ function EditorBody({
     <div className="ca-root not-prose ca-editor" lang={t.locale}>
       <div className="ca-editor-shell">
         <div className="ca-editor-side">
-          <CaseList groups={groups} value={listValue} onPick={pick} />
+          <CaseList groups={groups} value={listValue} onPick={pick} modelsLabel={modelsLabel} />
         </div>
         <div className="ca-editor-content">
-          <CaseSheet groups={groups} value={listValue} title={headTitle} onPick={pick} />
+          <CaseSheet groups={groups} value={listValue} title={headTitle} onPick={pick} modelsLabel={modelsLabel} />
           <header className="ca-editor-head">
             <div className="ca-editor-head-line">
               <h2 className="ca-h2">{headTitle}</h2>
