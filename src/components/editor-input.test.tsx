@@ -19,7 +19,11 @@ vi.mock('./model-state.ts', async (importOriginal) => {
 const decode = vi.mocked(decodeShare)
 const solved = vi.mocked(solve)
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  // The editor writes the model it shows into the address; the next test starts from none.
+  window.history.replaceState(null, '', '/')
+})
 beforeEach(() => {
   solved.mockClear()
 })

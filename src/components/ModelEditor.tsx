@@ -1,8 +1,8 @@
 import type { ChangeEvent } from 'react'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { caseIds, getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
-import { caseToDoc, decodeShare, encodeShare, parseModelJson, sameModel, schemaProblems, shareFromHash } from '../data/model-doc.ts'
+import { caseToDoc, decodeShare, encodeShare, parseModelJson, sameModel, schemaProblems } from '../data/model-doc.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import { modelDocSchema } from '../data/schema.ts'
 import type { Assignment, Problem, Value } from '../engine/index.ts'
@@ -13,6 +13,7 @@ import type { ExtraModel, LessonLink } from './editor/catalog.ts'
 import { catalog, modelKey, textIn } from './editor/catalog.ts'
 import type { Draft, DraftMode, DraftVariable } from './editor/draft.ts'
 import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './editor/draft.ts'
+import { hashFragment, readHashState, replaceHash } from './editor/url-state.ts'
 import type { Locale, Messages } from './i18n.ts'
 import { LocaleScope, draftIssueMessage, errorMessage, problemMessage, useMessages } from './i18n.ts'
 import type { ModelWorld } from './model-state.ts'
@@ -36,8 +37,17 @@ export interface ModelEditorProps {
    * An invalid document starts blank and shows its problem codes.
    */
   readonly initialDoc?: ModelDoc
-  /** Where to look for a shared model (`#model=…`); defaults to the page's hash. */
+  /**
+   * Where to look for a shared model (`#model=…`) or a case (`#case=<id>`); defaults to the page's
+   * hash. When given, the host owns the address: the editor reads this and never writes the URL.
+   */
   readonly hash?: string
+  /**
+   * Keep the page address in step with the model on screen (default true): `#case=<id>` while a
+   * bundled case or host model is unedited, `#model=<share value>` once edited (debounced), with
+   * `&do=…` for the interventions. Uses `history.replaceState`, so no history entries or scrolling.
+   */
+  readonly syncUrl?: boolean
   /** Builds the share link from the encoded model. Default: this page with `#model=<value>`. */
   readonly shareHref?: (value: string) => string
   /** Link in exported images' watermark. */
@@ -61,21 +71,36 @@ interface Start {
   readonly problems: readonly Problem[]
   /** The extra model it started from. */
   readonly picked?: string
+  /** The `#case=` id that names this draft while it is unedited; none for a document. */
+  readonly named?: string
 }
 
 /** A draft from a host model's document; an invalid document gives a blank draft and its problems. */
 function startFromDoc(doc: ModelDoc, t: Messages, picked?: string): Start {
   const parsed = modelDocSchema.safeParse(doc, { reportInput: true })
-  if (parsed.success) return { draft: draftFromImport(parsed.data), problems: [], picked }
-  return { draft: blankDraft(t.editor.defaultTitle), problems: schemaProblems(parsed.error), picked }
+  if (parsed.success) return { draft: draftFromImport(parsed.data), problems: [], picked, named: picked }
+  return { draft: blankDraft(t.editor.defaultTitle), problems: schemaProblems(parsed.error), picked, named: picked }
+}
+
+/** A bundled case, an extra model, or `blank` (also for an id that is neither). */
+function startNamed(id: string, t: Messages, extras: readonly ExtraModel[]): Start {
+  const extra = caseIds.includes(id) ? undefined : extras.find((m) => m.id === id)
+  if (extra !== undefined) return startFromDoc(extra.doc, t, extra.id)
+  const known = id !== 'blank' && caseIds.includes(id)
+  return { draft: startFromCase(id, t), problems: [], named: known ? id : 'blank' }
 }
 
 function startDraft(initial: string, t: Messages, extras: readonly ExtraModel[], initialDoc?: ModelDoc): Start {
-  if (initialDoc !== undefined) return startFromDoc(initialDoc, t)
-  const extra = caseIds.includes(initial) ? undefined : extras.find((m) => m.id === initial)
-  if (extra !== undefined) return startFromDoc(extra.doc, t, extra.id)
-  return { draft: startFromCase(initial, t), problems: [] }
+  if (initialDoc !== undefined) return { ...startFromDoc(initialDoc, t), named: undefined }
+  return startNamed(initial, t, extras)
 }
+
+/** Whether `#case=<id>` names something the editor can show. */
+const knownName = (id: string, extras: readonly ExtraModel[]): boolean =>
+  id === 'blank' || caseIds.includes(id) || extras.some((m) => m.id === id)
+
+/** How long the address waits after the last edit before it is rewritten. */
+const URL_DEBOUNCE_MS = 400
 
 function startFromCase(initial: string, t: Messages): Draft {
   if (initial === 'blank' || !caseIds.includes(initial)) return blankDraft(t.editor.defaultTitle)
@@ -91,7 +116,12 @@ function validInterventions(c: LoadedCase, interventions: Assignment): Assignmen
     try {
       out[id] = coerceToDomain(v, value)
     } catch {
-      // dropped: the domain changed
+      // A value read from the address as a number may name a text value, e.g. '2'.
+      try {
+        if (typeof value === 'number') out[id] = coerceToDomain(v, String(value))
+      } catch {
+        // dropped: the domain changed
+      }
     }
   }
   return out
@@ -125,6 +155,7 @@ function EditorBody({
   defaultNotation,
   caseLinks,
   extraModels = NO_EXTRAS,
+  syncUrl = true,
 }: Omit<ModelEditorProps, 'locale'>) {
   const t = useMessages()
   const e = t.editor
@@ -135,6 +166,11 @@ function EditorBody({
   // Problems of the document the editor started from or the extra model chosen.
   const [docProblems, setDocProblems] = useState<readonly Problem[]>(start.problems)
   const [interventions, setInterventions] = useState<Assignment>({})
+  // The draft as a case or extra model was loaded, and its id: while the draft is still this very
+  // object, the address names the id instead of encoding the model.
+  const [base, setBase] = useState<{ readonly draft: Draft; readonly id: string } | undefined>(() =>
+    start.named === undefined ? undefined : { draft: start.draft, id: start.named },
+  )
   const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
   // What reading the share link went wrong with; worded at render, so it follows the language.
   const [loadErrors, setLoadErrors] = useState<readonly unknown[]>([])
@@ -168,46 +204,112 @@ function EditorBody({
     }
   }, [shown, interventions, e, t])
 
+  // The state the address already shows: changes to anything else rewrite it.
+  const synced = useRef<{ draft: Draft; interventions: Assignment }>({ draft: start.draft, interventions })
+  // The state the writing effect last ran with: only a change is written, so a re-run of the
+  // effect with the state of an earlier render (Strict Mode on mount) never rewrites the address.
+  const seen = useRef<{ draft: Draft; interventions: Assignment }>({ draft: start.draft, interventions })
+  const ownsUrl = syncUrl && hash === undefined
+
+  const showNamed = (next: Start, doNext: Assignment): void => {
+    setDraft(next.draft)
+    setInterventions(doNext)
+    setPicked(next.picked)
+    setDocProblems(next.problems)
+    setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
+    setLoadErrors([])
+    synced.current = { draft: next.draft, interventions: doNext }
+  }
+
+  // Write the address: a name at once, an encoded model once the edits pause. It acts on a new
+  // draft or new interventions only; `base` and the document change with the draft.
+  const doc = compiled.doc
   useEffect(() => {
-    const value = shareFromHash(hash ?? (typeof window === 'undefined' ? '' : window.location.hash))
-    if (value === undefined) return
+    const changed = draft !== seen.current.draft || interventions !== seen.current.interventions
+    seen.current = { draft, interventions }
+    if (!ownsUrl || !changed) return
+    if (draft === synced.current.draft && interventions === synced.current.interventions) return
+    if (base !== undefined && draft === base.draft) {
+      synced.current = { draft, interventions }
+      replaceHash(hashFragment({ caseId: base.id }, interventions))
+      return
+    }
+    // A draft with errors leaves the address at the last model that built.
+    if (doc === undefined) return
     let live = true
-    decodeShare(value)
-      .then((result) => {
-        if (!live) return
-        if (result.ok) {
-          setDraft(draftFromImport(result.doc))
-          setInterventions({})
-          setPicked(undefined)
-          setDocProblems([])
-          setLoadErrors([])
-        } else setLoadErrors(result.errors.map((p) => ({ problem: p })))
-      })
-      .catch((error: unknown) => {
-        if (live) setLoadErrors([error])
-      })
+    const timer = window.setTimeout(() => {
+      encodeShare(doc)
+        .then((model) => {
+          if (!live) return
+          synced.current = { draft, interventions }
+          replaceHash(hashFragment({ model }, interventions))
+        })
+        .catch(() => {
+          // too large to share: the address keeps the last model it could carry
+        })
+    }, URL_DEBOUNCE_MS)
     return () => {
       live = false
+      window.clearTimeout(timer)
     }
-  }, [hash])
+  }, [ownsUrl, draft, interventions, base, doc])
+
+  // What reading the address needs, without re-reading it when a host passes new arrays.
+  const reading = useRef({ t, extraModels })
+  useEffect(() => {
+    reading.current = { t, extraModels }
+  }, [t, extraModels])
+
+  // Read the address: on mount, from `hash` when given, and on hashchange while the editor owns it.
+  useEffect(() => {
+    let live = true
+    const read = (text: string): void => {
+      const wanted = readHashState(text)
+      if (wanted.model !== undefined) {
+        decodeShare(wanted.model)
+          .then((result) => {
+            if (!live) return
+            if (result.ok) {
+              const next = draftFromImport(result.doc)
+              showNamed({ draft: next, problems: [] }, wanted.interventions)
+            } else setLoadErrors(result.errors.map((p) => ({ problem: p })))
+          })
+          .catch((error: unknown) => {
+            if (live) setLoadErrors([error])
+          })
+        return
+      }
+      // An unknown id keeps what is on screen.
+      const { t: now, extraModels: extras } = reading.current
+      if (wanted.caseId !== undefined && knownName(wanted.caseId, extras)) {
+        showNamed(startNamed(wanted.caseId, now, extras), wanted.interventions)
+      }
+    }
+    if (hash !== undefined) read(hash)
+    else if (typeof window !== 'undefined') read(window.location.hash)
+    const onHashChange = (): void => read(window.location.hash)
+    if (ownsUrl) window.addEventListener('hashchange', onHashChange)
+    return () => {
+      live = false
+      if (ownsUrl) window.removeEventListener('hashchange', onHashChange)
+    }
+  }, [hash, ownsUrl])
 
   const replace = (next: Draft): void => {
     setDraft(next)
     setInterventions({})
     setPicked(undefined)
     setDocProblems([])
+    setBase(undefined)
   }
   const pick = (key: string): void => {
     const extra = extraModels.find((m) => modelKey(m.id) === key)
-    if (extra !== undefined) {
-      const next = startFromDoc(extra.doc, t, extra.id)
-      setDraft(next.draft)
-      setInterventions({})
-      setPicked(extra.id)
-      setDocProblems(next.problems)
-      return
-    }
-    replace(key === 'blank' || !caseIds.includes(key) ? blankDraft(e.defaultTitle) : draftFromCase(getCase(key), t.locale))
+    const next = extra !== undefined ? startFromDoc(extra.doc, t, extra.id) : startNamed(key, t, NO_EXTRAS)
+    setDraft(next.draft)
+    setInterventions({})
+    setPicked(next.picked)
+    setDocProblems(next.problems)
+    setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
   }
   const groups = useMemo(() => catalog(t, extraModels), [t, extraModels])
   const pickedModel = picked === undefined ? undefined : extraModels.find((m) => m.id === picked)
@@ -297,233 +399,270 @@ function EditorBody({
         </label>
       </div>
 
-      {docProblems.length > 0 && <DocProblems problems={docProblems} />}
-      {caseId !== undefined && <CaseInfo c={getCase(caseId)} links={caseLinks?.[caseId]} edited={edited} />}
-      {pickedModel !== undefined && <ModelInfo title={textIn(pickedModel.title, t.locale)} links={pickedModel.links} />}
-      {loadErrors.length > 0 && (
-        <div className="ca-editor-errors" role="alert">
-          <p>{e.shareUnreadable}</p>
-          <ul>
-            {loadErrors
-              .map((err) => errorMessage(err, t))
-              .map((text) => (
-                <li key={text}>{text}</li>
-              ))}
-          </ul>
+      <div className="ca-editor-layout">
+        <div className="ca-editor-info">
+          {docProblems.length > 0 && <DocProblems problems={docProblems} />}
+          {caseId !== undefined && <CaseInfo c={getCase(caseId)} links={caseLinks?.[caseId]} edited={edited} />}
+          {pickedModel !== undefined && <ModelInfo title={textIn(pickedModel.title, t.locale)} links={pickedModel.links} />}
+          {loadErrors.length > 0 && (
+            <div className="ca-editor-errors" role="alert">
+              <p>{e.shareUnreadable}</p>
+              <ul>
+                {loadErrors
+                  .map((err) => errorMessage(err, t))
+                  .map((text) => (
+                    <li key={text}>{text}</li>
+                  ))}
+              </ul>
+            </div>
+          )}
         </div>
-      )}
-      {summary.length > 0 && (
-        <div className="ca-editor-errors" role="alert">
-          <p>{shown === undefined ? e.incomplete : e.lastGood}</p>
-          <ul>
-            {summary.map((e) => (
-              <li key={e}>
-                <Rich text={e} ids={draftIds} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        <div className="ca-editor-main">
+          {summary.length > 0 && (
+            <div className="ca-editor-errors" role="alert">
+              <p>{shown === undefined ? e.incomplete : e.lastGood}</p>
+              <ul>
+                {summary.map((e) => (
+                  <li key={e}>
+                    <Rich text={e} ids={draftIds} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-      {shown !== undefined && world !== undefined ? (
-        <div className="ca-panel">
-          <GraphBox
-            c={shown}
-            world={world}
-            interventions={active}
-            onInterventions={setInterventions}
-            onMove={move}
-            legend
-            exportUrl={exportUrl}
-          />
-          <EquationBox c={shown} world={world} interventions={active} notation={notation} onNotation={setNotation} />
+          {shown !== undefined && world !== undefined ? (
+            <div className="ca-panel">
+              <GraphBox
+                c={shown}
+                world={world}
+                interventions={active}
+                onInterventions={setInterventions}
+                onMove={move}
+                legend
+                exportUrl={exportUrl}
+              />
+              <EquationBox c={shown} world={world} interventions={active} notation={notation} onNotation={setNotation} />
+            </div>
+          ) : (
+            <div className="ca-placeholder ca-editor-empty">
+              <span className="ca-muted ca-small">{draft.variables.length === 0 ? e.addFirst : e.fillEquations}</span>
+            </div>
+          )}
+          <p className="ca-hint">{e.hint}</p>
         </div>
-      ) : (
-        <div className="ca-placeholder ca-editor-empty">
-          <span className="ca-muted ca-small">{draft.variables.length === 0 ? e.addFirst : e.fillEquations}</span>
-        </div>
-      )}
-      <p className="ca-hint">{e.hint}</p>
 
-      <div className="ca-editor-panels">
-        <Disclosure kicker="" title={e.variables}>
-          <ul className="ca-editor-vars">
-            {draft.variables.map((v, i) => {
-              const n = i + 1
-              const issue = compiled.errors.variables[v.key]
-              const err = issue === undefined ? undefined : say(issue)
-              const errId = `${uid}-var-${v.key}`
-              return (
-                <li key={v.key} className="ca-editor-var">
-                  <input
-                    className="ca-mono ca-input-id"
-                    aria-label={e.varId(n)}
-                    aria-invalid={err !== undefined}
-                    aria-describedby={err !== undefined ? errId : undefined}
-                    value={v.id}
-                    onChange={(ev) => setVariable(v.key, { id: ev.currentTarget.value.trim() })}
-                  />
-                  <input
-                    aria-label={e.varZh(n)}
-                    lang="zh-TW"
-                    placeholder={e.zhPlaceholder}
-                    value={v.label}
-                    onChange={(ev) => setVariable(v.key, { label: ev.currentTarget.value })}
-                  />
-                  <input
-                    aria-label={e.varEn(n)}
-                    lang="en"
-                    placeholder={e.enPlaceholder}
-                    value={v.en}
-                    onChange={(ev) => setVariable(v.key, { en: ev.currentTarget.value })}
-                  />
-                  <select
-                    aria-label={e.varKind(n)}
-                    value={v.kind}
-                    onChange={(ev) => setVariable(v.key, { kind: ev.currentTarget.value as DraftVariable['kind'] })}
-                  >
-                    <option value="exogenous">{e.exogenous}</option>
-                    <option value="endogenous">{e.endogenous}</option>
-                  </select>
-                  <select
-                    aria-label={e.varDomain(n)}
-                    value={v.domain}
-                    onChange={(ev) =>
-                      setVariable(v.key, {
-                        domain: ev.currentTarget.value as DraftVariable['domain'],
-                        values: v.values === '' ? 'a, b' : v.values,
-                      })
-                    }
-                  >
-                    <option value="boolean">{e.domainBoolean}</option>
-                    <option value="list">{e.domainList}</option>
-                  </select>
-                  {v.domain === 'list' && (
+        <div className="ca-editor-panels">
+          <Disclosure kicker="" title={e.variables}>
+            <ul className="ca-editor-vars">
+              {draft.variables.map((v, i) => {
+                const n = i + 1
+                const issue = compiled.errors.variables[v.key]
+                const err = issue === undefined ? undefined : say(issue)
+                const errId = `${uid}-var-${v.key}`
+                return (
+                  <li key={v.key} className="ca-editor-var">
+                    <input
+                      className="ca-mono ca-input-id"
+                      aria-label={e.varId(n)}
+                      aria-invalid={err !== undefined}
+                      aria-describedby={err !== undefined ? errId : undefined}
+                      value={v.id}
+                      onChange={(ev) => setVariable(v.key, { id: ev.currentTarget.value.trim() })}
+                    />
+                    <input
+                      aria-label={e.varZh(n)}
+                      lang="zh-TW"
+                      placeholder={e.zhPlaceholder}
+                      value={v.label}
+                      onChange={(ev) => setVariable(v.key, { label: ev.currentTarget.value })}
+                    />
+                    <input
+                      aria-label={e.varEn(n)}
+                      lang="en"
+                      placeholder={e.enPlaceholder}
+                      value={v.en}
+                      onChange={(ev) => setVariable(v.key, { en: ev.currentTarget.value })}
+                    />
+                    <select
+                      aria-label={e.varKind(n)}
+                      value={v.kind}
+                      onChange={(ev) => setVariable(v.key, { kind: ev.currentTarget.value as DraftVariable['kind'] })}
+                    >
+                      <option value="exogenous">{e.exogenous}</option>
+                      <option value="endogenous">{e.endogenous}</option>
+                    </select>
+                    <select
+                      aria-label={e.varDomain(n)}
+                      value={v.domain}
+                      onChange={(ev) =>
+                        setVariable(v.key, {
+                          domain: ev.currentTarget.value as DraftVariable['domain'],
+                          values: v.values === '' ? 'a, b' : v.values,
+                        })
+                      }
+                    >
+                      <option value="boolean">{e.domainBoolean}</option>
+                      <option value="list">{e.domainList}</option>
+                    </select>
+                    {v.domain === 'list' && (
+                      <input
+                        className="ca-mono"
+                        aria-label={e.varValues(n)}
+                        placeholder={e.valuesPlaceholder}
+                        value={v.values}
+                        onChange={(ev) => setVariable(v.key, { values: ev.currentTarget.value })}
+                      />
+                    )}
+                    <label className="ca-check">
+                      <input
+                        type="checkbox"
+                        aria-label={e.varShown(n)}
+                        checked={v.shown}
+                        onChange={(ev) => setVariable(v.key, { shown: ev.currentTarget.checked })}
+                      />
+                      {e.shown}
+                    </label>
+                    <button type="button" className="ca-link" aria-label={e.removeVar(n)} onClick={() => removeVariable(v.key)}>
+                      {e.remove}
+                    </button>
+                    {err !== undefined && (
+                      <p className="ca-field-error" id={errId}>
+                        <Rich text={err} ids={draftIds} />
+                      </p>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+            <button type="button" className="ca-btn ca-btn-outline" onClick={addVariable}>
+              {e.addVar}
+            </button>
+          </Disclosure>
+
+          <Disclosure kicker="" title={t.equations}>
+            <p className="ca-muted ca-small">
+              {e.syntax.lead}
+              <code>and</code>
+              {e.syntax.sep}
+              <code>or</code>
+              {e.syntax.sep}
+              <code>not</code>
+              {e.syntax.sep}
+              <code>if … then … else …</code>
+              {e.syntax.compare}
+              <code>=</code>
+              {e.syntax.quote}
+              <code>if U then &apos;bright&apos; else &apos;dark&apos;</code>
+              {e.syntax.end}
+            </p>
+            {exogenous.length > 0 && <p className="ca-muted ca-small">
+                <Rich text={e.noEquation(t.list(exogenous.map((v) => v.id)))} ids={draftIds} />
+              </p>}
+            <ul className="ca-editor-eqs">
+              {endogenous.map((v) => {
+                const issue = compiled.errors.equations[v.key]
+                const err = issue === undefined ? undefined : say(issue)
+                const inCycle = compiled.errors.cycle?.includes(v.id) === true
+                const errId = `${uid}-eq-${v.key}`
+                return (
+                  <li key={v.key} className="ca-editor-eq" data-cycle={inCycle ? 'true' : undefined}>
+                    <span className="ca-mono ca-editor-eq-lhs">
+                      <Ident id={v.id} /> =
+                    </span>
                     <input
                       className="ca-mono"
-                      aria-label={e.varValues(n)}
-                      placeholder={e.valuesPlaceholder}
-                      value={v.values}
-                      onChange={(ev) => setVariable(v.key, { values: ev.currentTarget.value })}
+                      aria-label={e.equationOf(v.id)}
+                      aria-invalid={err !== undefined || inCycle}
+                      aria-describedby={err !== undefined ? errId : undefined}
+                      value={draft.equations[v.key] ?? ''}
+                      spellCheck={false}
+                      autoComplete="off"
+                      onChange={(ev) => update({ equations: { ...draft.equations, [v.key]: ev.currentTarget.value } })}
                     />
-                  )}
-                  <label className="ca-check">
-                    <input
-                      type="checkbox"
-                      aria-label={e.varShown(n)}
-                      checked={v.shown}
-                      onChange={(ev) => setVariable(v.key, { shown: ev.currentTarget.checked })}
-                    />
-                    {e.shown}
-                  </label>
-                  <button type="button" className="ca-link" aria-label={e.removeVar(n)} onClick={() => removeVariable(v.key)}>
-                    {e.remove}
-                  </button>
-                  {err !== undefined && (
-                    <p className="ca-field-error" id={errId}>
-                      <Rich text={err} ids={draftIds} />
-                    </p>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-          <button type="button" className="ca-btn ca-btn-outline" onClick={addVariable}>
-            {e.addVar}
-          </button>
-        </Disclosure>
+                    {err !== undefined && (
+                      <p className="ca-field-error" id={errId}>
+                        <Rich text={err} ids={draftIds} />
+                      </p>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+            {compiled.errors.cycle !== undefined && compiled.errors.model !== undefined && (
+              <p className="ca-field-error">
+                <Rich text={say(compiled.errors.model)} ids={draftIds} />
+              </p>
+            )}
+          </Disclosure>
 
-        <Disclosure kicker="" title={t.equations}>
-          <p className="ca-muted ca-small">
-            {e.syntax.lead}
-            <code>and</code>
-            {e.syntax.sep}
-            <code>or</code>
-            {e.syntax.sep}
-            <code>not</code>
-            {e.syntax.sep}
-            <code>if … then … else …</code>
-            {e.syntax.compare}
-            <code>=</code>
-            {e.syntax.quote}
-            <code>if U then &apos;bright&apos; else &apos;dark&apos;</code>
-            {e.syntax.end}
-          </p>
-          {exogenous.length > 0 && <p className="ca-muted ca-small">
-              <Rich text={e.noEquation(t.list(exogenous.map((v) => v.id)))} ids={draftIds} />
-            </p>}
-          <ul className="ca-editor-eqs">
-            {endogenous.map((v) => {
-              const issue = compiled.errors.equations[v.key]
-              const err = issue === undefined ? undefined : say(issue)
-              const inCycle = compiled.errors.cycle?.includes(v.id) === true
-              const errId = `${uid}-eq-${v.key}`
-              return (
-                <li key={v.key} className="ca-editor-eq" data-cycle={inCycle ? 'true' : undefined}>
-                  <span className="ca-mono ca-editor-eq-lhs">
-                    <Ident id={v.id} /> =
-                  </span>
-                  <input
-                    className="ca-mono"
-                    aria-label={e.equationOf(v.id)}
-                    aria-invalid={err !== undefined || inCycle}
-                    aria-describedby={err !== undefined ? errId : undefined}
-                    value={draft.equations[v.key] ?? ''}
-                    spellCheck={false}
-                    autoComplete="off"
-                    onChange={(ev) => update({ equations: { ...draft.equations, [v.key]: ev.currentTarget.value } })}
-                  />
-                  {err !== undefined && (
-                    <p className="ca-field-error" id={errId}>
-                      <Rich text={err} ids={draftIds} />
-                    </p>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-          {compiled.errors.cycle !== undefined && compiled.errors.model !== undefined && (
-            <p className="ca-field-error">
-              <Rich text={say(compiled.errors.model)} ids={draftIds} />
-            </p>
-          )}
-        </Disclosure>
-
-        <Disclosure kicker="" title={e.exogenousValues}>
-          <Segmented
-            label={e.exogenousLabel}
-            options={[
-              { value: 'value', label: e.modes.value },
-              { value: 'probability', label: e.modes.probability },
-            ]}
-            value={draft.mode}
-            onChange={(mode: DraftMode) => update({ mode })}
-          />
-          <p className="ca-muted ca-small">{draft.mode === 'value' ? e.valueModeNote : e.probabilityModeNote}</p>
-          <ul className="ca-editor-values">
-            {exogenous.map((v) => {
-              const texts = valueTexts(v)
-              const issue = compiled.errors.values[v.key]
-              const err = issue === undefined ? undefined : say(issue)
-              if (draft.mode === 'value') {
+          <Disclosure kicker="" title={e.exogenousValues}>
+            <Segmented
+              label={e.exogenousLabel}
+              options={[
+                { value: 'value', label: e.modes.value },
+                { value: 'probability', label: e.modes.probability },
+              ]}
+              value={draft.mode}
+              onChange={(mode: DraftMode) => update({ mode })}
+            />
+            <p className="ca-muted ca-small">{draft.mode === 'value' ? e.valueModeNote : e.probabilityModeNote}</p>
+            <ul className="ca-editor-values">
+              {exogenous.map((v) => {
+                const texts = valueTexts(v)
+                const issue = compiled.errors.values[v.key]
+                const err = issue === undefined ? undefined : say(issue)
+                if (draft.mode === 'value') {
+                  return (
+                    <li key={v.key}>
+                      <label className="ca-field">
+                        <span className="ca-field-label ca-mono">
+                          <Ident id={v.id} />
+                        </span>
+                        <select
+                          aria-label={e.valueOf(v.id)}
+                          value={draft.context[v.key] ?? texts[0]}
+                          onChange={(ev) => update({ context: { ...draft.context, [v.key]: ev.currentTarget.value } })}
+                        >
+                          {texts.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {err !== undefined && (
+                        <p className="ca-field-error">
+                          <Rich text={err} ids={draftIds} />
+                        </p>
+                      )}
+                    </li>
+                  )
+                }
+                const ps = draft.priors[v.key] ?? priorsFor(v)
+                const targets = v.domain === 'boolean' ? ['1'] : texts
                 return (
-                  <li key={v.key}>
-                    <label className="ca-field">
-                      <span className="ca-field-label ca-mono">
-                        <Ident id={v.id} />
-                      </span>
-                      <select
-                        aria-label={e.valueOf(v.id)}
-                        value={draft.context[v.key] ?? texts[0]}
-                        onChange={(ev) => update({ context: { ...draft.context, [v.key]: ev.currentTarget.value } })}
-                      >
-                        {texts.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                  <li key={v.key} className="ca-editor-prior">
+                    {targets.map((t, i) => (
+                      <label key={t} className="ca-field">
+                        <span className="ca-field-label ca-mono">
+                          {isIdent(v.id) ? <Formula text={`P(${v.id}=${t})`} /> : `P(${v.id}=${t})`}
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={v.domain === 'boolean' ? 1 : undefined}
+                          step={0.01}
+                          aria-label={`P(${v.id}=${t})`}
+                          value={ps[i] ?? 0}
+                          onChange={(ev: ChangeEvent<HTMLInputElement>) => {
+                            const next = [...ps]
+                            next[i] = Number(ev.currentTarget.value)
+                            update({ priors: { ...draft.priors, [v.key]: next } })
+                          }}
+                        />
+                      </label>
+                    ))}
                     {err !== undefined && (
                       <p className="ca-field-error">
                         <Rich text={err} ids={draftIds} />
@@ -531,76 +670,45 @@ function EditorBody({
                     )}
                   </li>
                 )
-              }
-              const ps = draft.priors[v.key] ?? priorsFor(v)
-              const targets = v.domain === 'boolean' ? ['1'] : texts
-              return (
-                <li key={v.key} className="ca-editor-prior">
-                  {targets.map((t, i) => (
-                    <label key={t} className="ca-field">
-                      <span className="ca-field-label ca-mono">
-                        {isIdent(v.id) ? <Formula text={`P(${v.id}=${t})`} /> : `P(${v.id}=${t})`}
-                      </span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={v.domain === 'boolean' ? 1 : undefined}
-                        step={0.01}
-                        aria-label={`P(${v.id}=${t})`}
-                        value={ps[i] ?? 0}
-                        onChange={(ev: ChangeEvent<HTMLInputElement>) => {
-                          const next = [...ps]
-                          next[i] = Number(ev.currentTarget.value)
-                          update({ priors: { ...draft.priors, [v.key]: next } })
-                        }}
-                      />
-                    </label>
-                  ))}
-                  {err !== undefined && (
-                    <p className="ca-field-error">
-                      <Rich text={err} ids={draftIds} />
-                    </p>
-                  )}
+              })}
+            </ul>
+          </Disclosure>
+
+          <Disclosure kicker="" title={e.normality}>
+            <p className="ca-muted ca-small">{e.normalityNote}</p>
+            <ul className="ca-editor-values">
+              {draft.variables.map((v) => (
+                <li key={v.key}>
+                  <label className="ca-field">
+                    <span className="ca-field-label ca-mono">
+                      <Ident id={v.id} />
+                    </span>
+                    <select
+                      aria-label={e.normalOf(v.id)}
+                      value={draft.normality[v.key] ?? ''}
+                      onChange={(ev) => update({ normality: { ...draft.normality, [v.key]: ev.currentTarget.value } })}
+                    >
+                      <option value="">{e.unset}</option>
+                      {valueTexts(v).map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </li>
-              )
-            })}
-          </ul>
-        </Disclosure>
+              ))}
+            </ul>
+          </Disclosure>
 
-        <Disclosure kicker="" title={e.normality}>
-          <p className="ca-muted ca-small">{e.normalityNote}</p>
-          <ul className="ca-editor-values">
-            {draft.variables.map((v) => (
-              <li key={v.key}>
-                <label className="ca-field">
-                  <span className="ca-field-label ca-mono">
-                    <Ident id={v.id} />
-                  </span>
-                  <select
-                    aria-label={e.normalOf(v.id)}
-                    value={draft.normality[v.key] ?? ''}
-                    onChange={(ev) => update({ normality: { ...draft.normality, [v.key]: ev.currentTarget.value } })}
-                  >
-                    <option value="">{e.unset}</option>
-                    {valueTexts(v).map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </Disclosure>
-
-        <Disclosure kicker="" title={e.saveShare}>
-          <SaveShare
-            doc={compiled.doc}
-            shareHref={shareHref}
-            onImport={(doc) => replace(draftFromImport(doc))}
-          />
-        </Disclosure>
+          <Disclosure kicker="" title={e.saveShare}>
+            <SaveShare
+              doc={compiled.doc}
+              shareHref={shareHref}
+              onImport={(doc) => replace(draftFromImport(doc))}
+            />
+          </Disclosure>
+        </div>
       </div>
     </div>
   )

@@ -11,7 +11,11 @@ vi.mock('./download.ts', () => ({ saveFile: vi.fn() }))
 const saved = vi.mocked(saveFile)
 
 beforeEach(() => saved.mockReset())
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  // The editor writes the model it shows into the address; the next test starts from none.
+  window.history.replaceState(null, '', '/')
+})
 
 function node(container: HTMLElement, id: string): Element {
   const el = container.querySelector(`.ca-graph [data-node="${id}"]`)

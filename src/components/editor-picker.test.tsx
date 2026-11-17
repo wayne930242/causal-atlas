@@ -5,7 +5,11 @@ import { caseIds, getCase } from '../data/index.ts'
 import { caseToDoc } from '../data/model-doc.ts'
 import { ModelEditor } from './index.ts'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  // The editor writes the model it shows into the address; the next test starts from none.
+  window.history.replaceState(null, '', '/')
+})
 
 const coarse = { ...caseToDoc(getCase('rock-throwing')), from: undefined, title: '丟石頭的粗模型' }
 const extraModels = [

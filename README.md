@@ -56,8 +56,18 @@ shown inline, context values or priors, normality defaults, and node positions b
 keys). It starts from any bundled case or a blank model, exports and imports JSON validated by
 `modelDocSchema` (a whole case file also imports), and shares the model in the URL hash as
 `#model=1.<base64url(deflate-raw(JSON))>`; the leading `1` is the format version. Props: `initial`
-(case id, `extraModels` id or `blank`), `hash`, `shareHref(value)`, `exportUrl`, `locale`, `caseLinks`,
-`extraModels`.
+(case id, `extraModels` id or `blank`), `hash`, `syncUrl`, `shareHref(value)`, `exportUrl`, `locale`,
+`caseLinks`, `extraModels`.
+
+The address follows the editor (`syncUrl`, default on): `#case=<id>` while a bundled case or host
+model is unedited, `#model=…` once it is edited (written 400 ms after the last change), with
+`&do=ST:0,…` for the interventions, all through `history.replaceState`, so no history entries and no
+scrolling. A hash route such as `#/editor?lang=en` keeps its path and other parameters. Loading the
+page with `#case=<id>` opens that case; an unknown id opens the default. With `syncUrl={false}`, or
+when the host passes `hash`, the editor only reads the address and never writes it.
+
+At 960 px of its own width and above (a container query, so the host's column decides), the editor
+puts the graph and equations on the left and the case panel and editing panels on the right.
 
 The model list groups the bundled cases by family and the host's models by group, with a filter box
 (Enter loads the first match, Escape clears it). Choosing a case shows a panel above the model: title,

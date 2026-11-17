@@ -327,7 +327,8 @@
 
 .ca-eqs {
   display: grid;
-  grid-template-columns: max-content max-content minmax(0, 1fr);
+  /* A long formula shrinks its column and scrolls in its cell instead of widening the page. */
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content) minmax(min(9em, 30%), 1fr);
   column-gap: 24px;
   row-gap: 6px;
   align-items: baseline;
@@ -346,6 +347,16 @@
 .ca-eq-text {
   font-size: 14px;
   white-space: pre-wrap;
+}
+
+.ca-eq-text,
+.ca-eq-worked {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* Room for KaTeX's tall delimiters, which the hidden vertical overflow would clip. */
+  padding-block: 0.2em;
 }
 
 .ca-eq-row[data-intervened="true"] .ca-eq-text .ca-tag {
@@ -1338,6 +1349,74 @@
 .ca-editor {
   display: grid;
   gap: 16px;
+  /* The host decides the width: the layout follows the editor's own width, not the viewport. */
+  container: ca-editor / inline-size;
+}
+
+.ca-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.ca-editor-info,
+.ca-editor-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+.ca-editor-info:empty {
+  display: none;
+}
+
+.ca-editor-panels {
+  min-width: 0;
+}
+
+/* Wide: the graph and equations on the left, the case and the editing panels on the right. */
+@container ca-editor (min-width: 960px) {
+  .ca-editor-layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "main info"
+      "main panels";
+    align-items: start;
+  }
+
+  .ca-editor-layout:has(> .ca-editor-info:empty) {
+    grid-template-areas:
+      "main panels"
+      "main panels";
+  }
+
+  .ca-editor-main {
+    grid-area: main;
+  }
+
+  .ca-editor-info {
+    grid-area: info;
+  }
+
+  .ca-editor-panels {
+    grid-area: panels;
+  }
+
+  .ca-editor .ca-editor-case {
+    padding: 16px;
+  }
+
+  .ca-editor .ca-editor-case-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .ca-editor .ca-table :where(th, td) {
+    padding: 6px 5px;
+  }
 }
 
 .ca-editor-bar {
@@ -1554,6 +1633,8 @@
 
 .ca-table-wrap {
   overflow-x: auto;
+  /* Holds the screen-reader text of cells scrolled out of view, which would widen the page. */
+  position: relative;
 }
 
 .ca-table {
@@ -1573,6 +1654,7 @@
   color: var(--muted-foreground);
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .ca-table tbody th {
@@ -1613,7 +1695,7 @@
   margin-top: 2px;
 }
 
-@media (max-width: 760px) {
+@container ca-editor (max-width: 760px) {
   .ca-editor-case {
     padding: 14px;
   }
