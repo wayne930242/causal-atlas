@@ -1,15 +1,15 @@
 {
   "id": "forest-fire-conjunctive",
   "title": { "zh-TW": "森林大火：連言式", "en": "Forest fire (conjunctive)" },
-  "subtitle": { "zh-TW": "雷擊和火柴缺一不可。", "en": "The fire needs both the lightning and the match." },
+  "subtitle": { "zh-TW": "閃電和火柴缺一不可。", "en": "The fire needs both the lightning and the match." },
   "family": "actual",
   "story": {
-    "zh-TW": "這次森林很潮濕，雷擊和火柴必須同時出現才燒得起來。兩者都出現了，森林燒了。拿掉任何一個，森林就不會燒。",
+    "zh-TW": "這次森林很潮濕，閃電和火柴必須同時出現才燒得起來。兩者都出現了，森林燒了。拿掉任何一個，森林就不會燒。",
     "en": "This time the forest is damp: it burns only if lightning and a match occur together. Both occur, and the forest burns. Remove either one, and the forest does not burn."
   },
   "story_tags": {
     "zh-TW": [
-      { "sentence": "這次森林很潮濕，雷擊和火柴必須同時出現才燒得起來。", "variables": ["L", "MD"] },
+      { "sentence": "這次森林很潮濕，閃電和火柴必須同時出現才燒得起來。", "variables": ["L", "MD"] },
       { "sentence": "兩者都出現了，森林燒了。", "variables": ["FF"] }
     ],
     "en": [
@@ -23,11 +23,11 @@
   "intuition": {
     "query": { "cause": "L=1", "effect": "FF=1" },
     "expected": "cause",
-    "text": { "zh-TW": "少了雷擊，火就燒不起來。", "en": "Without the lightning, the fire would not have started." },
+    "text": { "zh-TW": "少了閃電，火就燒不起來。", "en": "Without the lightning, the fire would not have started." },
     "agree": ["butfor", "hp-modified"]
   },
   "explanation": {
-    "zh-TW": "雷擊與縱火者的火柴各由一個外生變數決定，森林大火需要兩者同時發生（FF = L·MD）。這是連言結構：少了任何一個，火都燒不起來，所以兩者各自是反事實依賴的原因。",
+    "zh-TW": "閃電與縱火者的火柴各由一個外生變數決定，森林大火需要兩者同時發生（FF = L·MD）。這是連言結構：少了任何一個，火都燒不起來，所以兩者各自是反事實依賴的原因。",
     "en": "The lightning and the arsonist's match are each set by an exogenous variable, and the forest fire needs both at once (FF = L·MD). This is the conjunctive structure: without either one the fire does not start, so the fire depends counterfactually on each, and each is a cause."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -49,7 +49,7 @@
     "variables": [
       {
         "id": "U_L",
-        "label": { "zh-TW": "雷擊條件", "en": "Lightning conditions" },
+        "label": { "zh-TW": "閃電條件", "en": "Lightning conditions" },
         "kind": "exogenous",
         "domain": "boolean"
       },
@@ -59,7 +59,7 @@
         "kind": "exogenous",
         "domain": "boolean"
       },
-      { "id": "L", "label": {"zh-TW": "雷擊", "en": "Lightning"}, "kind": "endogenous", "domain": "boolean" },
+      { "id": "L", "label": {"zh-TW": "閃電", "en": "Lightning"}, "kind": "endogenous", "domain": "boolean" },
       { "id": "MD", "label": {"zh-TW": "丟下火柴", "en": "Match dropped"}, "kind": "endogenous", "domain": "boolean" },
       { "id": "FF", "label": {"zh-TW": "森林大火", "en": "Forest fire"}, "kind": "endogenous", "domain": "boolean" }
     ],
@@ -78,6 +78,6 @@
       "note": "Fails AC3: either conjunct alone suffices."
     }
   ],
-  "showcase": [{"label": {"zh-TW": "沒有雷擊", "en": "No lightning"}, "interventions": {"L": 0}}],
+  "showcase": [{"label": {"zh-TW": "沒有閃電", "en": "No lightning"}, "interventions": {"L": 0}}],
   "layout": { "L": [0, 0], "MD": [0, 1], "FF": [1, 0.5] }
 }
