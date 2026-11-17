@@ -1,0 +1,388 @@
+{
+  "id": "fishing-port-joss-paper",
+  "title": {
+    "zh-TW": "漁港燒紙錢引燃油污",
+    "en": "Joss paper at the fishing port"
+  },
+  "subtitle": {
+    "zh-TW": "倒了灰燼，又沒有確認熄滅；漁船燒毀要算在她「沒有熄滅」的不作為上。",
+    "en": "She tipped out the ashes without making sure they were out; the burnt boat is laid at the door of that omission."
+  },
+  "family": "law",
+  "story": {
+    "zh-TW": "東港的阿香在漁港碼頭燒紙錢祭拜，沒有確認金紙燒盡，就把仍有火星的紙灰倒進岸邊水域，隨後離開去檳榔攤聊天。沒燒盡的紙錢引燃了水面上的油污，燒毀阿進的漁船，阿進因此請求阿香賠償。最高法院判阿香賠償，認為漁船燒毀是她沒有使紙灰完全熄滅的不作為所致。",
+    "en": "At the Donggang fishing harbour, A-hsiang burns joss paper at the quay and, without checking that the paper is burnt out, tips the still-glowing ashes into the water by the shore, then walks off to chat at a betel-nut stall. The unburnt paper sets fire to oil lying on the water and burns A-chin's fishing boat, and A-chin sues A-hsiang for compensation. The Supreme Court orders A-hsiang to pay, holding that the boat burned because of her omission to put the ashes fully out."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "東港的阿香在漁港碼頭燒紙錢祭拜，沒有確認金紙燒盡，就把仍有火星的紙灰倒進岸邊水域，隨後離開去檳榔攤聊天。",
+        "variables": [
+          "ASH",
+          "OUT"
+        ]
+      },
+      {
+        "sentence": "沒燒盡的紙錢引燃了水面上的油污，燒毀阿進的漁船，阿進因此請求阿香賠償。",
+        "variables": [
+          "OIL",
+          "FIRE",
+          "BOAT"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "At the Donggang fishing harbour, A-hsiang burns joss paper at the quay and, without checking that the paper is burnt out, tips the still-glowing ashes into the water by the shore, then walks off to chat at a betel-nut stall.",
+        "variables": [
+          "ASH",
+          "OUT"
+        ]
+      },
+      {
+        "sentence": "The unburnt paper sets fire to oil lying on the water and burns A-chin's fishing boat, and A-chin sues A-hsiang for compensation.",
+        "variables": [
+          "OIL",
+          "FIRE",
+          "BOAT"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "OUT=0",
+      "effect": "BOAT=1"
+    },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "阿香有義務確認灰燼熄滅卻沒做，漁船燒毀是這個不作為造成的。",
+      "en": "A-hsiang was bound to make sure the ashes were out and did not; the boat's burning is the result of that omission."
+    },
+    "agree": [
+      "butfor",
+      "hp-original",
+      "hp-updated",
+      "hp-modified",
+      "hp-normality"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型為本資料集依判決事實所擬：未熄的灰燼倒入水域（ASH）、沒有使灰燼熄滅（OUT = 0）、水面有油污（OIL）三者同時成立才起火（FIRE），起火燒毀漁船（BOAT）。王鵬翔與王一奇（2021）說明，漁船燒毀對「沒有熄滅」的反事實依賴，寄生在阿香倒灰這個偏差事件上：倘若沒有倒灰，或水面沒有油污，不論有沒有熄滅，船都不會燒毀（機率列）。常態值：倒灰違反漁港法，是偏差，確認熄滅是常態義務，油污視為常態背景（王與王註 19 採此假設）；hp-normality 因此把油污濾掉，保留倒灰與沒有熄滅。",
+    "en": "The model is the dataset's own, built from the facts of the judgment: tipping unextinguished ashes into the water (ASH), not putting them out (OUT = 0) and oil on the water (OIL) together start the fire (FIRE), which burns the boat (BOAT). Wang and Wang (2021) explain that the boat's counterfactual dependence on the failure to extinguish is parasitic on A-hsiang's tipping the ashes, a deviant event: had she not tipped them out, or had there been no oil, the boat would not have burned whether or not she put the ashes out (probability rows). The normality defaults: tipping ashes breaks the Fishing Port Act and is a deviation, making sure the ashes are out is the default duty, and the oil is taken as a normal background (the assumption of Wang and Wang, note 19). hp-normality therefore filters out the oil and keeps the tipping and the failure to extinguish."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Wang, P.-H., & Wang, L. (2021). Parasitic counterfactual dependence and paradigmatic causation. Philosophical Journal of National Chengchi University, 45, 39–90.",
+      "key": "wang2021parasitic",
+      "role": "origin",
+      "note": {
+        "zh-TW": "第柒節。案情與判決理由出自最高法院 90 年台上字第 1682 號民事判決（頁 81–82，註 17–18）；對依賴寄生於倒灰一事的說明在頁 82，註 19。",
+        "en": "Section 7. The facts and reasoning are from Supreme Court civil judgment 90 Tai-Shang 1682 (pp. 81–82, notes 17–18); the explanation that the dependence is parasitic on the tipping is on p. 82, note 19."
+      },
+      "pages": "81–82",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_ASH",
+        "label": {
+          "zh-TW": "阿香的行動",
+          "en": "A-hsiang's conduct"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_OUT",
+        "label": {
+          "zh-TW": "阿香是否熄滅灰燼",
+          "en": "Whether she puts the ashes out"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_OIL",
+        "label": {
+          "zh-TW": "水面的狀況",
+          "en": "The state of the water"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "ASH",
+        "label": {
+          "zh-TW": "阿香把有火星的紙灰倒入水域",
+          "en": "She tips glowing ashes into the water"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "OUT",
+        "label": {
+          "zh-TW": "阿香使紙灰完全熄滅",
+          "en": "She puts the ashes fully out"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "OIL",
+        "label": {
+          "zh-TW": "水面有油污",
+          "en": "There is oil on the water"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "FIRE",
+        "label": {
+          "zh-TW": "水面起火",
+          "en": "The water catches fire"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BOAT",
+        "label": {
+          "zh-TW": "阿進的漁船燒毀",
+          "en": "A-chin's boat burns"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "ASH": "U_ASH",
+      "OUT": "U_OUT",
+      "OIL": "U_OIL",
+      "FIRE": "ASH and not OUT and OIL",
+      "BOAT": "FIRE"
+    }
+  },
+  "context": {
+    "U_ASH": 1,
+    "U_OUT": 0,
+    "U_OIL": 1
+  },
+  "normality": {
+    "ASH": 0,
+    "OUT": 1,
+    "OIL": 1,
+    "FIRE": 0,
+    "BOAT": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "OUT=0",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "OUT=0",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "OUT=0",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "OUT=0",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "OUT=0",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause",
+      "note": "Witness world: she puts the ashes out, which is the default duty."
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "ASH=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "ASH=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "ASH=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "ASH=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "ASH=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "OIL=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "OIL=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "OIL=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "OIL=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "OIL=1",
+        "effect": "BOAT=1"
+      },
+      "expected": "not-cause",
+      "note": "Witness world: no oil on the water, which departs from the default of oil being there."
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "BOAT=1",
+        "do": {
+          "ASH": 0,
+          "OUT": 0
+        }
+      },
+      "expected": 0,
+      "note": "Without the tipping, not putting out anything burns no boat."
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "BOAT=1",
+        "do": {
+          "OIL": 0,
+          "OUT": 0
+        }
+      },
+      "expected": 0,
+      "note": "Without oil on the water, the ashes burn no boat."
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "BOAT=1",
+        "do": {
+          "ASH": 1,
+          "OUT": 1
+        }
+      },
+      "expected": 0,
+      "note": "Tipped out but fully extinguished."
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "阿香使紙灰完全熄滅",
+        "en": "She puts the ashes fully out"
+      },
+      "interventions": {
+        "OUT": 1
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "水面沒有油污",
+        "en": "There is no oil on the water"
+      },
+      "interventions": {
+        "OIL": 0
+      }
+    }
+  ],
+  "layout": {
+    "ASH": [
+      0,
+      0
+    ],
+    "OUT": [
+      0,
+      1
+    ],
+    "OIL": [
+      0,
+      2
+    ],
+    "FIRE": [
+      1,
+      1
+    ],
+    "BOAT": [
+      2,
+      1
+    ]
+  }
+}

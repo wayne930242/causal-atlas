@@ -1,0 +1,383 @@
+{
+  "id": "hit-and-abandon",
+  "title": {
+    "zh-TW": "超速撞人又棄置草叢",
+    "en": "The car crash and the abandoned victim"
+  },
+  "subtitle": {
+    "zh-TW": "傷者本來未必會死；不送醫的不作為依賴在自己先前造成的撞傷上，法院仍認定是殺人的原因。",
+    "en": "The victim need not have died; the omission to get help depends on the driver's own earlier collision, and the court still treats it as a cause of the killing."
+  },
+  "family": "law",
+  "story": {
+    "zh-TW": "李四在速限四十公里的道路上以八十公里行駛，同向前方的行人王五左轉，李四煞車不及，把王五撞傷倒地。李四沒有送王五就醫，反而把他載到偏僻的草叢丟下，王五最後流血過多死亡。最高法院認為李四因自己的行為造成王五受傷，負有送醫急救的義務，卻棄置不救，其不作為與積極殺人負相同的刑責。",
+    "en": "Li drives at eighty kilometres an hour on a road with a forty limit; a pedestrian, Wang, ahead of him in the same direction turns left, and Li cannot brake in time and knocks him down. Instead of taking Wang to hospital, Li drives him to a remote patch of grass and dumps him there, and Wang finally bleeds to death. The Supreme Court held that, having injured Wang by his own act, Li was under a duty to take him for emergency care, and that abandoning him instead makes his omission as punishable as an active killing."
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "李四在速限四十公里的道路上以八十公里行駛，同向前方的行人王五左轉，李四煞車不及，把王五撞傷倒地。",
+        "variables": [
+          "SPD",
+          "PED",
+          "HIT"
+        ]
+      },
+      {
+        "sentence": "李四沒有送王五就醫，反而把他載到偏僻的草叢丟下，王五最後流血過多死亡。",
+        "variables": [
+          "AID",
+          "DEATH"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "Li drives at eighty kilometres an hour on a road with a forty limit; a pedestrian, Wang, ahead of him in the same direction turns left, and Li cannot brake in time and knocks him down.",
+        "variables": [
+          "SPD",
+          "PED",
+          "HIT"
+        ]
+      },
+      {
+        "sentence": "Instead of taking Wang to hospital, Li drives him to a remote patch of grass and dumps him there, and Wang finally bleeds to death.",
+        "variables": [
+          "AID",
+          "DEATH"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "AID=0",
+      "effect": "DEATH=1"
+    },
+    "expected": "cause",
+    "text": {
+      "zh-TW": "李四棄置傷者、不予急救，王五的死要算在這個不作為上。",
+      "en": "Li left the injured man unaided, and Wang's death is laid at the door of this omission."
+    },
+    "agree": [
+      "butfor",
+      "hp-original",
+      "hp-updated",
+      "hp-modified",
+      "hp-normality"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型為本資料集依判決事實所擬：超速（SPD）與行人左轉（PED）使撞傷（HIT）發生，撞傷後若未送醫（AID = 0）則死亡。王鵬翔與王一奇（2021）分析的重點是：死亡對「未送醫」的反事實依賴，寄生在李四自己先前造成的撞傷上（刑法第 15 條第 2 項的危險前行為），機率列以介入呈現：沒有撞傷，不送醫不會有人死。常態值依規範設定：超速是偏差，送醫是常態，行人左轉不違反規範；hp-normality 因此把行人左轉濾掉，保留超速、撞傷和不送醫。",
+    "en": "The model is the dataset's own, built from the facts of the judgment: speeding (SPD) and the pedestrian's left turn (PED) bring about the collision (HIT), and a collision followed by no medical aid (AID = 0) ends in death. Wang and Wang (2021) stress that death's counterfactual dependence on the failure to take him to hospital is parasitic on the collision Li himself had caused earlier (the duty arising from prior dangerous conduct, Criminal Code art. 15(2)), which the probability row shows by intervention: with no collision, not seeking help kills no one. The normality defaults follow the norms: speeding is a deviation, taking an injured person to hospital is the default, and the pedestrian's turn breaks no norm. hp-normality therefore filters out the left turn and keeps the speeding, the collision and the failure to give aid."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Wang, P.-H., & Wang, L. (2021). Parasitic counterfactual dependence and paradigmatic causation. Philosophical Journal of National Chengchi University, 45, 39–90.",
+      "key": "wang2021parasitic",
+      "role": "origin",
+      "note": {
+        "zh-TW": "第柒節。案情與判決理由出自最高法院 78 年台上字第 3693 號刑事判決（頁 80 引述，註 16）；對寄生依賴的分析在頁 81。",
+        "en": "Section 7. The facts and reasoning are from Supreme Court criminal judgment 78 Tai-Shang 3693 (quoted on p. 80, note 16); the analysis of the parasitic dependence is on p. 81."
+      },
+      "pages": "80–81",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_SPD",
+        "label": {
+          "zh-TW": "李四的駕駛",
+          "en": "Li's driving"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_PED",
+        "label": {
+          "zh-TW": "王五的行動",
+          "en": "Wang's movement"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_AID",
+        "label": {
+          "zh-TW": "李四事後的作為",
+          "en": "Li's conduct afterwards"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SPD",
+        "label": {
+          "zh-TW": "李四超速",
+          "en": "Li speeds"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "PED",
+        "label": {
+          "zh-TW": "王五在前方左轉",
+          "en": "Wang turns left ahead"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "HIT",
+        "label": {
+          "zh-TW": "李四撞傷王五",
+          "en": "Li knocks Wang down"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "AID",
+        "label": {
+          "zh-TW": "李四送王五就醫",
+          "en": "Li takes Wang to hospital"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "DEATH",
+        "label": {
+          "zh-TW": "王五流血過多死亡",
+          "en": "Wang bleeds to death"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "SPD": "U_SPD",
+      "PED": "U_PED",
+      "HIT": "SPD and PED",
+      "AID": "U_AID",
+      "DEATH": "HIT and not AID"
+    }
+  },
+  "context": {
+    "U_SPD": 1,
+    "U_PED": 1,
+    "U_AID": 0
+  },
+  "normality": {
+    "SPD": 0,
+    "PED": 1,
+    "HIT": 0,
+    "AID": 1,
+    "DEATH": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "AID=0",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "AID=0",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "AID=0",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "AID=0",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "AID=0",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "SPD=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "SPD=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "SPD=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "SPD=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "SPD=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "PED=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "PED=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "PED=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "not-cause",
+      "note": "Witness world: Wang does not turn, which departs from the default; his turning breaks no norm."
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "HIT=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "HIT=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "HIT=1",
+        "effect": "DEATH=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "DEATH=1",
+        "do": {
+          "SPD": 0,
+          "AID": 0
+        }
+      },
+      "expected": 0,
+      "note": "No collision: leaving no one at the roadside kills no one."
+    },
+    {
+      "theory": "probability",
+      "query": {
+        "event": "DEATH=1",
+        "do": {
+          "SPD": 1,
+          "AID": 1
+        }
+      },
+      "expected": 0,
+      "note": "Collision, but he takes Wang to hospital."
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "李四送王五就醫",
+        "en": "Li takes Wang to hospital"
+      },
+      "interventions": {
+        "AID": 1
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "李四沒有超速",
+        "en": "Li keeps to the limit"
+      },
+      "interventions": {
+        "SPD": 0
+      }
+    }
+  ],
+  "layout": {
+    "SPD": [
+      0,
+      0
+    ],
+    "PED": [
+      0,
+      1
+    ],
+    "HIT": [
+      1,
+      0.5
+    ],
+    "AID": [
+      1,
+      1.5
+    ],
+    "DEATH": [
+      2,
+      1
+    ]
+  }
+}

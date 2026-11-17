@@ -1,0 +1,264 @@
+{
+  "id": "harassment-and-dress",
+  "title": {
+    "zh-TW": "性騷擾與穿著（楔子）",
+    "en": "Harassment and dress (the prologue)"
+  },
+  "subtitle": {
+    "zh-TW": "沒有那隻手，就不會被騷擾；沒有清涼的穿著，也不會被騷擾，兩個反事實同樣成立。",
+    "en": "Without the groping hand there is no harassment, and without the revealing outfit there is none either; both counterfactuals hold."
+  },
+  "family": "law",
+  "story": {
+    "zh-TW": "小玉常穿細肩帶搭熱褲。某天她在商店街逛街，身旁的男生伸手偷摸了她。她回宿舍向室友阿花抱怨，阿花卻說，要不是平常穿得那麼辣，就不會遇到這種事。小玉聽出阿花在怪她，阿花則說自己只是陳述「如果妳沒穿那麼辣，就不會被性騷擾」。",
+    "en": "Xiaoyu often wears camisoles and short shorts. One day, while she is shopping, a man beside her reaches out and gropes her. Back in the dorm she complains to her roommate Ahua, who answers that this would not have happened had she not dressed so provocatively. Xiaoyu hears blame in this, while Ahua insists she is only stating that \"if you had not dressed like that, you would not have been harassed.\""
+  },
+  "story_tags": {
+    "zh-TW": [
+      {
+        "sentence": "小玉常穿細肩帶搭熱褲。",
+        "variables": [
+          "DRESS"
+        ]
+      },
+      {
+        "sentence": "某天她在商店街逛街，身旁的男生伸手偷摸了她。",
+        "variables": [
+          "HAND",
+          "HARASS"
+        ]
+      }
+    ],
+    "en": [
+      {
+        "sentence": "Xiaoyu often wears camisoles and short shorts.",
+        "variables": [
+          "DRESS"
+        ]
+      },
+      {
+        "sentence": "One day, while she is shopping, a man beside her reaches out and gropes her.",
+        "variables": [
+          "HAND",
+          "HARASS"
+        ]
+      }
+    ]
+  },
+  "intuition": {
+    "query": {
+      "cause": "DRESS=1",
+      "effect": "HARASS=1"
+    },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "騷擾要歸咎於伸手的人；把原因算在被害人的穿著上，令人不能接受。",
+      "en": "The harassment is laid at the door of the man who reached out; blaming the victim's clothing is not acceptable."
+    },
+    "agree": [
+      "hp-normality"
+    ]
+  },
+  "explanation": {
+    "zh-TW": "對話只點出兩個反事實同時成立：男生沒伸手就沒有騷擾，小玉穿得保守些也不會被騷擾（法律人 P 勉強承認後者）。模型把「見色起意」寫成穿著與男生自身的意向共同決定伸手（HAND = DRESS·U_H），再由伸手造成騷擾；這條方程式是依對話所擬。書中此處沒有給出判準；hp-normality 的常態值是本資料集的建模：伸手違反規範，是偏差；穿著不違反任何規範，常態值取實際值。因此 but-for 與各版本的 HP 定義都把穿著算成原因，只有帶常態排序的版本把它濾掉。",
+    "en": "The dialogue only establishes that two counterfactuals hold together: without the man's hand there is no harassment, and had Xiaoyu dressed more conservatively there would have been none either (the lawyer P grudgingly grants the latter). The model writes the man's taking his cue from her outfit as the outfit and his own disposition jointly producing the groping hand (HAND = DRESS·U_H), with the hand producing the harassment; this equation is assumed from the dialogue. The book gives no criterion at this point; the normality defaults for hp-normality are the dataset's own modelling: reaching out breaks a norm and is a deviation, while her clothing breaks none, so its default is its actual value. But-for and every version of the HP definition therefore count the clothing as a cause; only the version with a normality ordering filters it out."
+  },
+  "copy_status": {
+    "zh-TW": "draft",
+    "en": "draft"
+  },
+  "sources": [
+    {
+      "citation": "Wang, P.-H., & Wang, L. (2026). Causal dialectics (Yinguo lunbian): Counterfactuals and the wonderland of norms. National Taiwan University Press.",
+      "key": "wang2026dialectics",
+      "role": "origin",
+      "note": {
+        "zh-TW": "第 1 章，〈楔子〉與〈法律人 P 與哲學家 K 的對話〉。正文只有楔子與對話，沒有方程式或判準；模型與常態值為本資料集所擬。",
+        "en": "Ch. 1, the prologue and the dialogue between the lawyer P and the philosopher K. The text consists of the prologue and the dialogue; it has no equations or criterion, so the model and the normality defaults are the dataset's own."
+      },
+      "pages": "7–8",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      {
+        "id": "U_DRESS",
+        "label": {
+          "zh-TW": "穿著的情況",
+          "en": "Her wardrobe"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_H",
+        "label": {
+          "zh-TW": "男生的意向",
+          "en": "The man's disposition"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "DRESS",
+        "label": {
+          "zh-TW": "小玉穿著清涼",
+          "en": "She dresses lightly"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "HAND",
+        "label": {
+          "zh-TW": "男生伸手偷摸",
+          "en": "He gropes her"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "HARASS",
+        "label": {
+          "zh-TW": "發生性騷擾",
+          "en": "Harassment occurs"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "DRESS": "U_DRESS",
+      "HAND": "DRESS and U_H",
+      "HARASS": "HAND"
+    }
+  },
+  "context": {
+    "U_DRESS": 1,
+    "U_H": 1
+  },
+  "normality": {
+    "DRESS": 1,
+    "HAND": 0,
+    "HARASS": 0
+  },
+  "verdicts": [
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "DRESS=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "DRESS=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "DRESS=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "DRESS=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "DRESS=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "not-cause",
+      "note": "Witness world: she dresses conservatively, which departs from her default, while the actual world holds the deviations HAND and HARASS."
+    },
+    {
+      "theory": "butfor",
+      "query": {
+        "cause": "HAND=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-original",
+      "query": {
+        "cause": "HAND=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-updated",
+      "query": {
+        "cause": "HAND=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-modified",
+      "query": {
+        "cause": "HAND=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause"
+    },
+    {
+      "theory": "hp-normality",
+      "query": {
+        "cause": "HAND=1",
+        "effect": "HARASS=1"
+      },
+      "expected": "cause",
+      "note": "Witness world: he keeps his hands to himself, which is more normal than the actual world."
+    }
+  ],
+  "showcase": [
+    {
+      "label": {
+        "zh-TW": "小玉穿著保守",
+        "en": "She dresses conservatively"
+      },
+      "interventions": {
+        "DRESS": 0
+      }
+    },
+    {
+      "label": {
+        "zh-TW": "男生管好自己的手",
+        "en": "He keeps his hands to himself"
+      },
+      "interventions": {
+        "HAND": 0
+      }
+    }
+  ],
+  "layout": {
+    "DRESS": [
+      0,
+      0
+    ],
+    "HAND": [
+      1,
+      0
+    ],
+    "HARASS": [
+      2,
+      0
+    ]
+  }
+}
