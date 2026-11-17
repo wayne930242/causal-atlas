@@ -4,7 +4,7 @@
   "subtitle": { "zh-TW": "閃電和火柴缺一不可。", "en": "The fire needs both the lightning and the match." },
   "family": "actual",
   "story": {
-    "zh-TW": "這次森林很潮濕，閃電和火柴必須同時出現才燒得起來。兩者都出現了，森林燒了。拿掉任何一個，森林就不會燒。",
+    "zh-TW": "考慮森林大火的情境。這次森林很潮濕，閃電和火柴必須同時出現才燒得起來。兩者都出現了，森林燒了。少了任何一個，森林就不會燒。",
     "en": "This time the forest is damp: it burns only if lightning and a match occur together. Both occur, and the forest burns. Remove either one, and the forest does not burn."
   },
   "story_tags": {
@@ -27,7 +27,7 @@
     "agree": ["butfor", "hp-modified"]
   },
   "explanation": {
-    "zh-TW": "閃電與縱火者的火柴各由一個外生變數決定，森林大火需要兩者同時發生（FF = L·MD）。這是連言結構：少了任何一個，火都燒不起來，所以兩者各自是反事實依賴的原因。",
+    "zh-TW": "L 表示閃電，MD 表示火柴被丟下，兩者由模型之外給定。森林起火要兩者同時發生（FF = L·MD），這叫做連言（conjunctive）結構。少了任何一個，火都燒不起來，所以兩者各自都是 but-for 原因。",
     "en": "The lightning and the arsonist's match are each set by an exogenous variable, and the forest fire needs both at once (FF = L·MD). This is the conjunctive structure: without either one the fire does not start, so the fire depends counterfactually on each, and each is a cause."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

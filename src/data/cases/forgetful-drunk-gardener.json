@@ -2,17 +2,17 @@
   "id": "forgetful-drunk-gardener",
   "title": { "zh-TW": "健忘的酒鬼園丁，與游泳池救生員", "en": "The forgetful drunk gardener, and the lifeguard" },
   "subtitle": {
-    "zh-TW": "承諾說他該澆花，統計說他多半會去喝酒，兩種常態指向相反。",
+    "zh-TW": "承諾說他該澆花，統計說他多半會去喝酒，兩種常態（normality）方向相反。",
     "en": "The promise says he should water the plant; statistics say he will probably go drinking."
   },
   "family": "norms",
   "story": {
-    "zh-TW": "考慮一位答應替鄰居澆花的張三。他是個健忘的酒鬼，這種人沒去澆花而跑去喝酒，在統計上才是正常的事。這次他沒有澆花，盆栽枯死了。另有一個版本：張三答應澆花，同時是游泳池的救生員，澆花的時候就不能在池邊值勤。依承諾的規範，他該去澆花；依救生員的職業規範，他在池邊值勤才是正常的。",
+    "zh-TW": "考慮澆花的情境。張三答應替鄰居澆花。他是個健忘的酒鬼，對這種人來說，沒去澆花而跑去喝酒，在統計上才是常態（normality）。這次他沒有澆花，盆栽枯死了。另一個版本裡，張三答應澆花，同時是游泳池的救生員，去澆花就不能在池邊值勤。依承諾的規範，他該去澆花。依救生員的職業規範，他該在池邊值勤。",
     "en": "Consider Zhang, who has promised a neighbour to water her plant. He is a forgetful drunk, and for such a man going off to drink instead is the statistically normal thing. This time he does not water the plant, and it withers. In another version Zhang has promised to water the plant and is also a lifeguard at a swimming pool, and he cannot be on duty at the pool while he waters. By the norm of promises he should go and water; by the lifeguard's professional norm, being on duty at the pool is what is normal."
   },
   "story_tags": {
     "zh-TW": [
-      { "sentence": "考慮一位答應替鄰居澆花的張三。", "variables": ["W"] },
+      { "sentence": "張三答應替鄰居澆花。", "variables": ["W"] },
       { "sentence": "這次他沒有澆花，盆栽枯死了。", "variables": ["W", "D"] }
     ],
     "en": [
@@ -24,13 +24,13 @@
     "query": { "cause": "W=0", "effect": "D=1" },
     "expected": "cause",
     "text": {
-      "zh-TW": "承諾是優先適用的規範：答應澆花卻沒澆，盆栽枯死就算在他頭上，即使他向來靠不住。",
+      "zh-TW": "承諾優先適用。張三答應澆花卻沒澆，盆栽枯死就歸咎於他，即使他向來靠不住。",
       "en": "The promise is the norm that takes priority: having promised to water the plant and not having done so, he is the cause of its death, however unreliable he usually is."
     },
     "agree": ["butfor", "hp-updated", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型只有兩個變數：W 為張三澆花，D 為盆栽枯死（D = ¬W）。判定的分歧不在結構，在預設值。依承諾的規範，預設是他澆花（W = 1），沒澆花是偏差，所以引擎把 W = 0 判為原因。若改採統計規範，預設變成他不澆花（W = 0），引擎的結果會翻轉為不是原因（以此預設重算驗證過）。Hitchcock 與 Knobe (2009) 主張人們把各種規範綜合成單一的常態判斷；王鵬翔 (2019) 同意在酒鬼版本裡優先適用的是承諾，但指出救生員版本沒有這樣的綜合判斷：兩套規範各自適用，沒澆花讓盆栽枯死，若他離崗去澆花，沒救人則讓泳客溺死。引擎一個模型只能取一組預設值，所以這裡取承諾優先的酒鬼版本，救生員版本只在故事中呈現。",
+    "zh-TW": "W 表示張三澆花，D 表示盆栽枯死（D = ¬W）。分歧不在結構，在預設值（default）。依承諾的規範，預設值是 W = 1，沒澆花偏離常態（normality），所以 W = 0 是原因。假如改依統計規範，預設值是 W = 0，結果就翻轉為不是原因。一個模型只能取一組預設值，所以本案取承諾優先的酒鬼版本，救生員版本只在故事中呈現。",
     "en": "The model has two variables: W, Zhang waters the plant, and D, the plant dies (D = ¬W). The disagreement is not in the structure but in the defaults. By the norm of promises the default is that he waters (W = 1), not watering is a departure, and the engine therefore counts W = 0 as a cause. If the statistical norm is used instead, the default becomes that he does not water (W = 0), and the engine's answer flips to not-a-cause (checked by recomputing with that default). Hitchcock and Knobe (2009) hold that people combine the various norms into a single judgment of normality; Wang (2019) agrees that in the drunkard version the promise takes priority, but notes that the lifeguard version admits no such combined judgment: each norm applies on its own, so not watering leaves the plant to die, and, had he left his post to water it, not rescuing would have left a swimmer to drown. The engine takes one set of defaults per model, so the drunkard version with the promise taking priority is encoded here, and the lifeguard version appears only in the story."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

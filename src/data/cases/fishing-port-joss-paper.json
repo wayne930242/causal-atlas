@@ -5,12 +5,12 @@
     "en": "Joss paper at the fishing port"
   },
   "subtitle": {
-    "zh-TW": "倒了灰燼，又沒有確認熄滅；漁船燒毀要算在她「沒有熄滅」的不作為上。",
+    "zh-TW": "阿香倒了灰燼，又沒有確認熄滅。漁船燒毀歸咎於她沒有熄滅灰燼的不作為（omission）。",
     "en": "She tipped out the ashes without making sure they were out; the burnt boat is laid at the door of that omission."
   },
   "family": "law",
   "story": {
-    "zh-TW": "東港的阿香在漁港碼頭燒紙錢祭拜，沒有確認金紙燒盡，就把仍有火星的紙灰倒進岸邊水域，隨後離開去檳榔攤聊天。沒燒盡的紙錢引燃了水面上的油污，燒毀阿進的漁船，阿進因此請求阿香賠償。最高法院判阿香賠償，認為漁船燒毀是她沒有使紙灰完全熄滅的不作為所致。",
+    "zh-TW": "考慮漁港失火的情境。東港的阿香在漁港碼頭燒紙錢祭拜，沒有確認金紙燒盡，就把仍有火星的紙灰倒進岸邊水域，隨後離開去檳榔攤聊天。沒燒盡的紙錢引燃了水面上的油污，燒毀阿進的漁船，阿進因此請求阿香賠償。最高法院判阿香賠償，理由是漁船燒毀由她沒有使紙灰完全熄滅的不作為（omission）所致。",
     "en": "At the Donggang fishing harbour, A-hsiang burns joss paper at the quay and, without checking that the paper is burnt out, tips the still-glowing ashes into the water by the shore, then walks off to chat at a betel-nut stall. The unburnt paper sets fire to oil lying on the water and burns A-chin's fishing boat, and A-chin sues A-hsiang for compensation. The Supreme Court orders A-hsiang to pay, holding that the boat burned because of her omission to put the ashes fully out."
   },
   "story_tags": {
@@ -56,7 +56,7 @@
     },
     "expected": "cause",
     "text": {
-      "zh-TW": "阿香有義務確認灰燼熄滅卻沒做，漁船燒毀是這個不作為造成的。",
+      "zh-TW": "阿香有義務確認灰燼熄滅卻沒做，漁船燒毀是這個不作為（omission）造成的。",
       "en": "A-hsiang was bound to make sure the ashes were out and did not; the boat's burning is the result of that omission."
     },
     "agree": [
@@ -68,7 +68,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "模型為本資料集依判決事實所擬：未熄的灰燼倒入水域（ASH）、沒有使灰燼熄滅（OUT = 0）、水面有油污（OIL）三者同時成立才起火（FIRE），起火燒毀漁船（BOAT）。王鵬翔與王一奇（2021）說明，漁船燒毀對「沒有熄滅」的反事實依賴，寄生在阿香倒灰這個偏差事件上：倘若沒有倒灰，或水面沒有油污，不論有沒有熄滅，船都不會燒毀（機率列）。常態值：倒灰違反漁港法，是偏差，確認熄滅是常態義務，油污視為常態背景（王與王註 19 採此假設）；hp-normality 因此把油污濾掉，保留倒灰與沒有熄滅。",
+    "zh-TW": "模型依判決事實擬定。ASH 表示未熄的灰燼倒入水域，OUT = 0 表示沒有使灰燼熄滅，OIL 表示水面有油污，三者同時成立才起火（FIRE），起火燒毀漁船（BOAT）。王鵬翔與王一奇（2021）指出，漁船燒毀對沒有熄滅的依賴，寄生在倒灰這件事上。倒灰違反漁港法，偏離常態（normality）；確認熄滅是常態義務；油污是常態背景（王與王註 19）。",
     "en": "The model is the dataset's own, built from the facts of the judgment: tipping unextinguished ashes into the water (ASH), not putting them out (OUT = 0) and oil on the water (OIL) together start the fire (FIRE), which burns the boat (BOAT). Wang and Wang (2021) explain that the boat's counterfactual dependence on the failure to extinguish is parasitic on A-hsiang's tipping the ashes, a deviant event: had she not tipped them out, or had there been no oil, the boat would not have burned whether or not she put the ashes out (probability rows). The normality defaults: tipping ashes breaks the Fishing Port Act and is a deviation, making sure the ashes are out is the default duty, and the oil is taken as a normal background (the assumption of Wang and Wang, note 19). hp-normality therefore filters out the oil and keeps the tipping and the failure to extinguish."
   },
   "copy_status": {

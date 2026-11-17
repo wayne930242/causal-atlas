@@ -2,17 +2,17 @@
   "id": "frankfurt-jones-black",
   "title": { "zh-TW": "Frankfurt 案例：Jones 與 Black", "en": "Frankfurt's case: Jones and Black" },
   "subtitle": {
-    "zh-TW": "Black 隨時準備介入，但 Jones 自己做了決定，Black 從未出手。",
+    "zh-TW": "Black 隨時準備介入。Jones 自己做了決定，Black 從未出手。",
     "en": "Black stands ready to intervene, but Jones decides on his own and Black never acts."
   },
   "family": "omission",
   "story": {
-    "zh-TW": "考慮 Jones 與 Black 的情境。Black 希望 Jones 做某件事，但不想無謂地暴露自己，所以只在看出 Jones 即將決定做別的事時才出手，並且能確保 Jones 決定去做、也真的做了 Black 要他做的事。實際上，Jones 基於自己的理由決定做這件事並且做了，Black 從頭到尾沒有出手。",
+    "zh-TW": "考慮 Jones 與 Black 的情境。Black 希望 Jones 做某件事，但不想無謂地暴露自己。假如 Black 看出 Jones 即將決定做別的事，他就會出手，確保 Jones 決定去做、也真的做了這件事。實際上，Jones 基於自己的理由決定做這件事並且做了，Black 從頭到尾沒有出手。",
     "en": "Consider Jones and Black. Black wants Jones to perform a certain action but prefers not to show his hand unnecessarily, so he acts only if he can tell that Jones is about to decide to do something else, and then he ensures that Jones decides on, and does, what Black wants. In fact Jones decides for reasons of his own to perform the action and does so, and Black never intervenes."
   },
   "story_tags": {
     "zh-TW": [
-      { "sentence": "Black 希望 Jones 做某件事，但不想無謂地暴露自己，所以只在看出 Jones 即將決定做別的事時才出手，並且能確保 Jones 決定去做、也真的做了 Black 要他做的事。", "variables": ["BL"] },
+      { "sentence": "假如 Black 看出 Jones 即將決定做別的事，他就會出手，確保 Jones 決定去做、也真的做了這件事。", "variables": ["BL"] },
       { "sentence": "實際上，Jones 基於自己的理由決定做這件事並且做了，Black 從頭到尾沒有出手。", "variables": ["J", "A"] }
     ],
     "en": [
@@ -30,13 +30,13 @@
     "query": { "cause": "J=1", "effect": "A=1" },
     "expected": "cause",
     "text": {
-      "zh-TW": "行動是 Jones 自己決定做的，Black 的待命沒有起任何作用，所以 Jones 仍要負責。",
+      "zh-TW": "行動是 Jones 自己決定做的，Black 的待命沒有起作用，所以 Jones 仍要負責。",
       "en": "Jones did it on his own decision and Black's readiness played no part, so Jones remains responsible."
     },
     "agree": ["hp-original", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型用 J 表示 Jones 自己決定做，BL 表示 Black 介入（BL = ¬J：只有 Jones 不自己決定時 Black 才出手），行動 A 發生只要其中一個為真（A = J ∨ BL）。實際是 J = 1、BL = 0。結構與早期阻斷相同：Jones 的決定阻斷了 Black 的備援。but-for 測試說沒有 J，Black 也會讓 A 發生，因此 J 不是 A 的原因；HP 的各種定義固定 BL = 0，就得出 J = 1 是原因。Frankfurt 的論點是 Jones 仍要負責，與這裡的因果結果一致。變數與方程式依故事擬定，Frankfurt (1969) 只給文字敘述。",
+    "zh-TW": "J 表示 Jones 自己決定做，BL 表示 Black 介入。Black 只在 Jones 不自己決定時出手（BL = ¬J），兩者有一個成立，行動 A 就發生（A = J ∨ BL）。Jones 的決定在結果發生前切斷了 Black 這條備用的鏈，這叫做早期阻斷（early preemption）。這個案例檢驗 Jones 無法做別的事時，他的決定是否仍算行動的原因。變數與方程式依故事擬定，Frankfurt (1969) 只給文字敘述。",
     "en": "J is Jones deciding on his own to act, BL is Black intervening (BL = ¬J: Black steps in only if Jones does not decide on his own), and the action A occurs if either is true (A = J ∨ BL). Actually J = 1 and BL = 0. The structure is that of early preemption: Jones's decision preempts Black's backup. The but-for test says that without J Black would still have brought A about, so J is not a cause of A; the HP definitions hold BL at 0 and find J = 1 to be a cause. Frankfurt's point is that Jones remains responsible, which matches the causal result here. The variables and equations are built from the story; Frankfurt (1969) gives a prose description only."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -47,7 +47,7 @@
       "role": "origin",
       "pages": "835–836",
       "note": {
-        "zh-TW": "pp.835–836 是 Jones4 與 Black 的案例（文中用 Jones4）；p.836 說 Black 不必出手時，Jones4 的道德責任不受影響。",
+        "zh-TW": "pp.835–836 是 Jones4 與 Black 的案例。p.836 說，Black 不必出手時，Jones4 的道德責任不受影響。",
         "en": "Pp. 835–836 give the case of Jones4 and Black; p. 836 says that if Black never has to show his hand, Jones4's moral responsibility is unaffected."
       },
       "verified": true
@@ -58,7 +58,7 @@
       "role": "treatment",
       "pages": "245",
       "note": {
-        "zh-TW": "p.245 的「法蘭克福式案例」是神經科學家要教授拿筆的版本，教授自己決定拿，神經科學家沒有出手。",
+        "zh-TW": "p.245 的法蘭克福式案例是神經科學家要教授拿筆的版本。教授自己決定拿筆，神經科學家沒有出手。",
         "en": "The Frankfurt-style case on p. 245 is the version in which a neuroscientist wants a professor to take a pen; the professor decides to on his own and the neuroscientist does not act."
       },
       "verified": true

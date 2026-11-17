@@ -10,7 +10,7 @@
   },
   "family": "actual",
   "story": {
-    "zh-TW": "小蘇和小比各拿一塊石頭，在同一瞬間朝窗戶丟去。兩塊石頭同時到達，每一塊單獨都足以把窗戶打破。窗戶破了。兩個人的條件完全對稱，沒有誰先、誰後。",
+    "zh-TW": "考慮丟石頭的情境。小蘇和小比各拿一塊石頭，在同一瞬間朝窗戶丟去。兩塊石頭同時打中窗戶，任一塊都足以打破窗戶。窗戶破了。兩人的處境完全對稱，沒有先後。",
     "en": "Suzy and Billy each pick up a rock and throw it at a window at the very same instant. The two rocks arrive together, and either one alone would be enough to break the window. The window breaks. The two throwers stand in exactly the same position; neither is first or second."
   },
   "story_tags": {
@@ -52,7 +52,7 @@
     },
     "expected": "cause",
     "text": {
-      "zh-TW": "她的石頭確實打中了窗戶，另一顆石頭同時到達並不會讓她的那一顆不算數。",
+      "zh-TW": "小蘇的石頭確實打中了窗戶。另一顆石頭同時打中，小蘇的石頭照樣算數。",
       "en": "Her rock did hit the window; a second rock arriving at the same moment does not stop hers from counting."
     },
     "agree": [
@@ -61,7 +61,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "模型採用 Halpern (2016) 例 2.3.3 的粗略模型 MRT：兩人各由一個外生變數決定丟不丟，窗戶破裂只要任一人丟就成立（BS = ST ∨ BT）。兩個變數在方程式中的地位完全相同，所以任何理論對兩人的判斷都一樣。與「丟石頭砸瓶子」（晚期先發制人）的差別只在於：這裡沒有 SH、BH 這兩個中間變數，因為兩顆石頭同時到達，沒有誰阻斷誰。單純的反事實依賴（but-for）會判定兩人都不是原因，原始與更新版 HP 定義各自固定另一人「沒丟」而判定兩人都是原因，修正版 HP 定義則要求兩人合起來才是一個原因，單獨的一人只算原因的一部分。Chockler 與 Halpern (2004) 例 3.4 在這個粗略模型中給小蘇的石頭的責任度是 1/2；兩人對稱，小比的也相同。",
+    "zh-TW": "模型取自 Halpern (2016) 例 2.3.3 的粗略模型。ST 表示小蘇丟，BT 表示小比丟，兩者由模型之外給定。任一人丟，窗戶就破（BS = ST ∨ BT）。ST 和 BT 在方程式中地位相同，所以每個定義對兩人的判斷都一樣。兩個各自足夠的原因同時發生，這叫做過度決定（overdetermination）。Chockler 與 Halpern (2004) 給每人的責任度是 1/2。",
     "en": "The model is the coarse model MRT of Halpern (2016, Ex. 2.3.3): each thrower's act is set by an exogenous variable, and the window breaks if either throws (BS = ST ∨ BT). The two variables play identical roles in the equations, so every theory treats the two throwers alike. It differs from the rock-throwing (late preemption) case only in lacking the intermediate variables SH and BH: the rocks arrive together, so neither blocks the other. The plain but-for test says neither throw is a cause. The original and updated HP definitions each hold the other thrower at \"did not throw\" and call both throws causes. The modified HP definition makes the two throws together one cause, and each alone only part of a cause. Chockler and Halpern (2004, Ex. 3.4) give Suzy's throw a degree of responsibility of 1/2 in this coarse model; the throwers are symmetric, so the same holds for Billy."
   },
   "copy_status": {
@@ -75,7 +75,7 @@
       "role": "origin",
       "pages": "p. 30 (Example 2.3.3, the coarse model M_RT: BS = BT ∨ ST)",
       "note": {
-        "zh-TW": "Halpern (2016) 例 2.3.3 先給出 BS = BT ∨ ST 的粗略模型，並指出其中 ST 與 BT 的角色對稱，原始與更新版 HP 定義判兩者皆為原因，修正版定義判兩者的合取為原因。",
+        "zh-TW": "Halpern (2016) 例 2.3.3 先給出粗略模型 BS = BT ∨ ST，ST 與 BT 角色對稱。原始版與更新版 HP 定義（Halpern–Pearl definition）判兩者都是原因，修正版判兩者的連言（conjunction）是原因。",
         "en": "Halpern (2016, Ex. 2.3.3) first gives the coarse model BS = BT ∨ ST, notes that ST and BT play symmetric roles, and states that the original and updated HP definitions classify both as causes while the modified definition classifies their conjunction as the cause."
       },
       "verified": true
@@ -86,7 +86,7 @@
       "role": "reference",
       "pages": "pp. 7–8 (§3.3, author manuscript pagination)",
       "note": {
-        "zh-TW": "Suzy 與 Billy 兩位丟石頭者出自 Hall (2004) §3.3，但他的版本是 Suzy 的石頭先到（晚期先發制人）；本案取兩顆石頭同時到達的對稱版本。",
+        "zh-TW": "小蘇與小比兩位丟石頭者出自 Hall (2004) §3.3。Hall 的版本是小蘇的石頭先到，屬於晚期阻斷（late preemption）。本案取兩顆石頭同時到達的對稱版本。",
         "en": "The two rock-throwers come from Hall (2004, §3.3), but his version has Suzy's rock arrive first (late preemption); this case takes the symmetric version in which the rocks arrive together."
       },
       "verified": true
@@ -104,7 +104,7 @@
       "role": "reference",
       "pages": "p. 567, n. 12",
       "note": {
-        "zh-TW": "Lewis 在註 12 說明他不討論對稱的過度決定，因為他對這類案例沒有確定的直覺。",
+        "zh-TW": "Lewis 在註 12 說，他不討論對稱的過度決定（symmetric overdetermination），因為他對這類案例沒有確定的直覺。",
         "en": "In footnote 12 Lewis says he will not discuss symmetric overdetermination, because he lacks firm naive opinions about such cases."
       },
       "verified": true

@@ -7,7 +7,7 @@
   },
   "family": "actual",
   "story": {
-    "zh-TW": "法院下令處決，隊長於是發令。兩名槍手 A 和 B 同時開槍，囚犯死亡。我們知道囚犯死了；如果 A 當時沒有開槍，囚犯會不會還活著？",
+    "zh-TW": "考慮行刑的情境。法院下令處決，隊長於是發令。兩名槍手 A 和 B 同時開槍，囚犯死亡。假如 A 當時沒有開槍，B 的子彈仍會讓囚犯死亡。",
     "en": "A court orders an execution, and the captain gives the signal. Riflemen A and B fire at the same moment, and the prisoner dies. We know the prisoner died; had A not fired, would the prisoner still be alive?"
   },
   "story_tags": {
@@ -27,7 +27,7 @@
     "agree": ["hp-original", "hp-updated"]
   },
   "explanation": {
-    "zh-TW": "法院命令 U 讓隊長發令 C，隊長發令讓槍手 A、B 都開槍，任一人開槍囚犯 D 就死。這是一個共同原因加選言的小模型，用來示範三件事：從觀察推論、介入（讓 A 開槍）與反事實（若 A 沒開槍，D 還會死嗎）的差別。",
+    "zh-TW": "法院命令 U 使隊長發令 C，隊長發令使槍手 A、B 都開槍，任一人開槍，囚犯 D 就死。這個模型同時有共同原因（common cause）和選言（disjunctive）結構。它用來示範三種推論的差別：從觀察推論、干預（intervention）讓 A 開槍，以及反事實（counterfactual）推論 A 沒開槍時 D 會不會死。",
     "en": "The court order U leads the captain to give the signal C; the signal leads both riflemen, A and B, to fire; the prisoner D dies if either fires. This small model of a common cause followed by a disjunction shows how three things differ: inference from an observation, intervention (making A fire), and the counterfactual (had A not fired, would D still have died?)."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },

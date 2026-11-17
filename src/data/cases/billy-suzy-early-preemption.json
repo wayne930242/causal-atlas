@@ -1,19 +1,19 @@
 {
   "id": "billy-suzy-early-preemption",
-  "title": { "zh-TW": "小比讓小蘇先丟：先發阻斷", "en": "Billy lets Suzy go first (early preemption)" },
+  "title": { "zh-TW": "小比讓小蘇先丟：早期阻斷", "en": "Billy lets Suzy go first (early preemption)" },
   "subtitle": {
-    "zh-TW": "小蘇丟了，小比因此沒出手；小蘇不丟，小比就會丟。",
+    "zh-TW": "小蘇丟了，小比就不丟。假如小蘇沒丟，小比就會丟。",
     "en": "Suzy throws, so Billy holds back; had she not thrown, he would have."
   },
   "family": "actual",
   "story": {
-    "zh-TW": "小比和小蘇商量好：由小蘇先丟，她若丟了，小比就不動；她若沒丟，小比才補上一顆。結果小蘇丟了，窗戶被她的石頭打破，小比的石頭一直握在手上。要是小蘇沒丟，小比會丟，窗戶照樣會破。",
+    "zh-TW": "考慮丟石頭的情境。小比和小蘇說好由小蘇先丟。假如小蘇丟了，小比就不動；假如小蘇沒丟，小比再丟。結果小蘇丟了，她的石頭打破窗戶，小比的石頭一直握在手上。假如小蘇沒丟，小比會丟，窗戶照樣會破。",
     "en": "Billy and Suzy agree that Suzy throws first. If she throws, Billy keeps his rock in his hand; if she does not, he throws his. Suzy throws, her rock breaks the window, and Billy's rock never leaves his hand. Had Suzy not thrown, Billy would have, and the window would have broken all the same."
   },
   "story_tags": {
     "zh-TW": [
-      { "sentence": "小比和小蘇商量好：由小蘇先丟，她若丟了，小比就不動；她若沒丟，小比才補上一顆。", "variables": ["S", "B"] },
-      { "sentence": "結果小蘇丟了，窗戶被她的石頭打破，小比的石頭一直握在手上。", "variables": ["W"] }
+      { "sentence": "小比和小蘇說好由小蘇先丟。", "variables": ["S", "B"] },
+      { "sentence": "結果小蘇丟了，她的石頭打破窗戶，小比的石頭一直握在手上。", "variables": ["W"] }
     ],
     "en": [
       {
@@ -27,13 +27,13 @@
     "query": { "cause": "S=1", "effect": "W=1" },
     "expected": "cause",
     "text": {
-      "zh-TW": "窗戶是小蘇打破的；小比的備援沒有發揮作用，只是在她不丟時才會出手。",
+      "zh-TW": "窗戶是小蘇打破的。小比的備用石頭沒有派上用場。",
       "en": "Suzy broke the window; Billy's backup never came into play, and would only have acted had she not thrown."
     },
     "agree": ["hp-original", "hp-updated", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型的結構與 Hitchcock (2007) 的 Early Preemption 相同（A = 1、B = ¬A、D = A ∨ B），只是把刺客與備援下毒換成小蘇與小比丟石頭。S 由外生變數決定，B 取決於 S（B = 1 − S），窗戶破裂只要任一人丟就成立。S 到 W 有兩條路：直接一條，以及經過 B 的一條。單看「少了 S 窗戶還會不會破」會得到否定的答案，因為 B 補上；但把 B 固定在它實際的值（沒丟）之後，窗戶是否破裂就完全取決於 S。這個固定值是實際值，所以原始、更新與修正三版 HP 定義都能接受，不需要借助非實際的假設。",
+    "zh-TW": "S 表示小蘇丟，B 表示小比丟，W 表示窗戶破。小比只在小蘇沒丟時丟（B = 1 − S），任一人丟，窗戶就破。少了 S，B 會補上，窗戶仍會破。把 B 固定在實際值 0，窗戶破不破就取決於 S。備用的因果鏈在結果發生前就被切斷，這叫做早期阻斷（early preemption）。",
     "en": "The structure is that of Hitchcock's (2007) Early Preemption (A = 1, B = ¬A, D = A ∨ B), with the assassin and backup poisoning the coffee replaced by Suzy and Billy throwing rocks. S is set by an exogenous variable, B depends on S (B = 1 − S), and the window breaks if either throws. S reaches W by two routes, directly and through B. Asking only whether the window would still have broken without S gives a negative answer, because B steps in; but once B is held at its actual value (not thrown), whether the window breaks depends entirely on S. That held value is the actual one, so the original, updated and modified HP definitions all accept it, with no need for a non-actual supposition."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -44,7 +44,7 @@
       "role": "origin",
       "pages": "pp. 499–500 (§3, Early Preemption and its equations EP: A = 1, B = ~A, D = A ∨ B)",
       "note": {
-        "zh-TW": "Hitchcock 的版本是 Assassin 下毒、Backup 在他不下毒時才下毒；本案把同一組方程式改成丟石頭的情境。",
+        "zh-TW": "Hitchcock 的版本是刺客（Assassin）下毒，備援者（Backup）只在刺客不下毒時下毒。本案把同一組方程式改寫成丟石頭的情境。",
         "en": "Hitchcock's version has Assassin poison the coffee and Backup poison it only if Assassin does not; this case recasts the same equations as a rock-throwing story."
       },
       "verified": true
@@ -55,7 +55,7 @@
       "role": "reference",
       "pages": "p. 567 (Preemption)",
       "note": {
-        "zh-TW": "Lewis 在 Preemption 一節說明：c1 發生並造成 e，c2 沒有造成 e 卻本會在 c1 缺席時造成 e；c1 因而是 c2 的「先發阻斷者」。",
+        "zh-TW": "Lewis 在 Preemption 一節描述：c1 發生並造成 e；c2 沒有造成 e，但假如 c1 不發生，c2 就會造成 e。這時 c1 阻斷（preempt）了 c2。",
         "en": "In the section on Preemption Lewis describes c1 occurring and causing e while c2, which would have caused e had c1 been absent, does not: c1 preempts c2."
       },
       "verified": true

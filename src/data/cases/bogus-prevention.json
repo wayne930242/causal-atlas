@@ -1,7 +1,7 @@
 {
   "id": "bogus-prevention",
   "title": {
-    "zh-TW": "假阻止：刺客改變心意，保鏢仍加了解藥",
+    "zh-TW": "假阻止：刺客改變心意，保鑣仍加了解藥",
     "en": "Bogus prevention: the assassin relents, the bodyguard adds the antidote anyway"
   },
   "subtitle": {
@@ -10,7 +10,7 @@
   },
   "family": "actual",
   "story": {
-    "zh-TW": "考慮下毒的情境。刺客身上帶著致命的毒藥，臨時改變心意，沒有下毒。保鏢不知道這件事，照常在咖啡裡加了解藥。被害人喝下咖啡，平安無事。",
+    "zh-TW": "考慮下毒的情境。刺客身上帶著致命的毒藥，臨時改變心意，沒有下毒。保鑣不知道這件事，照常在咖啡裡加了解藥。被害人喝下咖啡，平安無事。",
     "en": "An assassin carries a lethal poison but changes his mind at the last moment and does not use it. The bodyguard, unaware of this, adds an antidote to the coffee as usual. The victim drinks the coffee and is unharmed."
   },
   "story_tags": {
@@ -22,7 +22,7 @@
         ]
       },
       {
-        "sentence": "保鏢不知道這件事，照常在咖啡裡加了解藥。",
+        "sentence": "保鑣不知道這件事，照常在咖啡裡加了解藥。",
         "variables": [
           "B"
         ]
@@ -71,7 +71,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "A 表示刺客下毒，B 表示保鏢加解藥，VS 表示被害人存活。被害人存活的條件是咖啡裡沒有毒，或者加了解藥（VS = max(1 − A, B)）。這條方程式和選言（disjunctive）版森林大火的方程式形式相同。假如一個定義單憑方程式下判斷，則它對兩個案例會給出同樣的判斷。原始版與更新版 HP 定義（Halpern–Pearl definition）都判保鏢加解藥是原因，理由是：假如刺客下了毒，被害人能否存活就取決於解藥。Hitchcock (2007) 與 Halpern、Hitchcock (2015) 因此把它當作「同構問題」的例子，並引入常態排序（normality ordering）。在這個案例裡，下毒和加解藥都不合常態，所以 A、B 的預設值都是 0。檢驗保鏢時要用的世界（A = 1、B = 0）和實際世界（A = 0、B = 1）各自偏離常態，兩者無法比較，所以保鏢不算原因。代價是刺客沒下毒也不再算原因。修正版 HP 定義本身只接受實際值。它判保鏢加解藥是原因的一部分，要和「刺客沒下毒」合起來才構成原因；加上常態排序後，這個判斷也被取消。Halpern (2016) 另外提出一種不依靠常態的建模：加入「毒被中和」的變數 PN = A ∧ B。",
+    "zh-TW": "A 表示刺客下毒，B 表示保鑣加解藥，VS 表示被害人存活。被害人存活的條件是沒有毒，或者加了解藥（VS = max(1 − A, B)）。這條方程式和選言（disjunctive）版森林大火形式相同。單憑方程式判斷的定義，對兩個案例會給出同樣的判斷，這叫做同構問題（isomorphism problem）。下毒和加解藥都不合常態（normality），所以 A、B 的預設值（default）都是 0。這個案例檢驗定義能否憑常態區分這兩個案例。",
     "en": "A stands for the assassin poisoning the coffee and B for the bodyguard adding the antidote; the victim survives if there is no poison or there is antidote (VS = max(1 − A, B)). These equations are isomorphic to those of the disjunctive forest fire, so any definition that looks only at the equations gives the same answer in both: the original and updated HP definitions call the antidote a cause, on the ground that if the assassin had poisoned the coffee, the victim's survival would depend on the antidote. Hitchcock (2007) and Halpern and Hitchcock (2015) present it as an instance of the problem of isomorphism and bring in a normality ordering: poisoning and adding antidote are both abnormal (A and B default to 0), so the witness world (A = 1, B = 0) and the actual world (A = 0, B = 1) are each abnormal in a different way and are incomparable, which makes the bodyguard a non-cause; the price is that the assassin's refraining is no longer a cause either. The modified HP definition by itself accepts only actual values and makes the antidote part of a cause (together with the assassin not poisoning); the normality ordering removes even that. Halpern (2016) also proposes a way to model the case without normality, by adding a variable PN = A ∧ B for the poison being neutralized."
   },
   "copy_status": {
@@ -123,7 +123,7 @@
       {
         "id": "U_B",
         "label": {
-          "zh-TW": "保鏢的習慣",
+          "zh-TW": "保鑣的習慣",
           "en": "Bodyguard's routine"
         },
         "kind": "exogenous",
@@ -141,7 +141,7 @@
       {
         "id": "B",
         "label": {
-          "zh-TW": "保鏢加解藥",
+          "zh-TW": "保鑣加解藥",
           "en": "Bodyguard adds antidote"
         },
         "kind": "endogenous",
@@ -234,7 +234,7 @@
     },
     {
       "label": {
-        "zh-TW": "刺客下了毒，保鏢沒加解藥",
+        "zh-TW": "刺客下了毒，保鑣沒加解藥",
         "en": "Poison, no antidote"
       },
       "interventions": {

@@ -2,12 +2,12 @@
   "id": "cable-cut-three-scenarios",
   "title": { "zh-TW": "挖斷電纜三情境", "en": "Cable cut: three scenarios" },
   "subtitle": {
-    "zh-TW": "停電的責任落在誰身上，取決於誰是避免損失成本最低的人。",
+    "zh-TW": "停電的責任，落在避免損失成本最低的一方。",
     "en": "Who is picked out as the cause of the outage depends on who could have avoided the loss most cheaply."
   },
   "family": "norms",
   "story": {
-    "zh-TW": "考慮一次道路施工：建設公司的挖土機不小心挖斷了埋在路面下的電纜，電力因而中斷。公司有纜線圖，卻不知道電纜的確切位置，唯一能避免挖斷的辦法是多花 5000 歐元，改用人工挖掘。情境 A：電纜供應舊城的商店街，停電一晚使店家損失 10 萬歐元，商店街的業主幾乎不可能只花 5000 歐元就避免損失。情境 B：電纜供應一間汽車工廠，停電使生產中斷，損失 100 萬歐元，但工廠只要買一台不到 5000 歐元的緊急發電機就能應付。情境 C：電力公司鋪設電纜時，本可以用更堅固的材料避免它被挖壞，所需的錢比人工挖掘或買發電機都少，但當時沒有做。",
+    "zh-TW": "考慮道路施工的情境。建設公司的挖土機挖斷了路面下的電纜，電力中斷。公司有纜線圖，卻不知道電纜的確切位置。唯一能避免挖斷的辦法，是多花 5000 歐元改用人工挖掘。情境 A：電纜供應舊城的商店街，停電一晚使店家損失 10 萬歐元。店家幾乎無法只花 5000 歐元避免損失。情境 B：電纜供應一間汽車工廠，停電使生產中斷，損失 100 萬歐元。工廠只要買一台不到 5000 歐元的緊急發電機就能應付。情境 C：電力公司鋪設電纜時，本可以用更堅固的材料，花費比人工挖掘或買發電機都少，但沒有這樣做。",
     "en": "Consider a road-building job in which the construction company's excavator accidentally cuts a power cable buried under the road, and the power fails. The company has a map of the cables but does not know exactly where this one lies, and the only way to avoid cutting it is to spend 5,000 euros more on digging by hand. Scenario A: the cable supplies the shops of an old town street; the outage closes restaurants, hotels and cafés for a night at a total loss of 100,000 euros, and the street's owners could hardly have avoided the loss by spending 5,000 euros themselves. Scenario B: the cable supplies a car factory; the outage stops production at a loss of 1,000,000 euros, but the factory could have coped by buying an emergency generator for less than 5,000 euros. Scenario C: when the cable was laid, the power company could have used sturdier material that would have kept it from being cut, for less money than digging by hand or buying a generator, but did not."
   },
   "story_tags": {
@@ -26,13 +26,13 @@
     "query": { "cause": "DIG_A=1", "effect": "LOSS_A=1" },
     "expected": "cause",
     "text": {
-      "zh-TW": "情境 A 中只有建設公司能以不到 10 萬歐元避免損失，停電損失算在它用挖土機而非人工挖掘上。",
+      "zh-TW": "在情境 A，只有建設公司能以低於損失的成本避免損失，所以損失歸咎於它用挖土機開挖。",
       "en": "In scenario A only the construction company could cheaply avoid the loss, and the outage is put down to its digging with a machine rather than by hand."
     },
     "agree": ["butfor", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "三個情境各自佔模型的一塊，彼此互不相連，這樣三組預設可以同時存在。每一塊的結構是：挖土機開挖（DIG）而沒有其他預防時就造成損失（LOSS），預防手段是變數：情境 B 是工廠購置發電機（GEN_B），情境 C 是電力公司強化電纜（REINF_C）。判定依據王鵬翔 (2019) 的成本判準：能避免結果的手段中，成本最低的是最正常的妨礙者，沒採用它的不作為被選為原因。因此預設值設為最便宜的預防手段：A 是人工挖掘（DIG_A = 0），B 是發電機（GEN_B = 1，人工挖掘不再是預設，DIG_B = 1），C 是強化電纜（REINF_C = 1，DIG_C = 1）。結果與文獻一致：A 的原因是建設公司用挖土機，B 是工廠沒有發電機，C 是電力公司沒有強化電纜；B 與 C 中建設公司用挖土機只是簡單反事實依賴下的原因，在成本判準下被排除。其餘可能的預防手段（例如 A 的業主、B 的電力公司）文獻沒有給出成本，也沒有放進模型。",
+    "zh-TW": "三個情境在模型裡互不相連，各有一組預設值（default）。DIG 表示用挖土機開挖，LOSS 表示損失。B 的預防手段是工廠買發電機（GEN_B），C 的是電力公司強化電纜（REINF_C）。依王鵬翔 (2019) 的成本判準，成本最低的預防手段是常態（normality），沒有採用它就是原因。所以預設值是：A 人工挖掘（DIG_A = 0），B 買發電機（GEN_B = 1），C 強化電纜（REINF_C = 1）。文獻沒有給成本的其他預防手段，不放進模型。",
     "en": "The three scenarios occupy separate, unconnected blocks of one model, so that three sets of defaults can coexist. Each block has the same shape: the excavator digging (DIG), with no other precaution taken, brings about the loss (LOSS); the precautions are variables: the factory's buying a generator in scenario B (GEN_B), the power company's strengthening the cable in scenario C (REINF_C). The verdicts follow Wang's (2019) cost criterion: among the means that would avoid the outcome, the cheapest is the most normal preventer, and failing to use it is picked out as the cause. The defaults therefore make the cheapest precaution the default: hand digging in A (DIG_A = 0), the generator in B (GEN_B = 1, and hand digging is then no longer the default, DIG_B = 1), strengthening the cable in C (REINF_C = 1, DIG_C = 1). The results match the literature: in A the cause is the construction company's use of the excavator; in B it is the factory's lacking a generator; in C it is the power company's not strengthening the cable. In B and C the excavator's digging is a cause only under the simple counterfactual test and is ruled out by the cost criterion. Other possible precautions (for example by the street's owners in A or by the power company in B) are not costed in the literature and are left out of the model."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -42,7 +42,7 @@
       "key": "wang2019omission",
       "role": "origin",
       "note": {
-        "zh-TW": "案例與三個情境在第 329–330 頁，成本判準在第 328 頁，文中轉述 Schäfer 與 Ott (2004: 180) 的例子。Schäfer 與 Ott 的原書不在書目資料庫，未查，所以頁碼 180 沒有核對，也沒有列為來源。",
+        "zh-TW": "案例與三個情境在第 329–330 頁，成本判準在第 328 頁，轉述自 Schäfer 與 Ott (2004: 180)。Schäfer 與 Ott 的原書不在書目資料庫，頁碼 180 未核對，也沒有列為來源。",
         "en": "The case and its three scenarios are on pp. 329–330 and the cost criterion on p. 328; the paper relays an example of Schäfer and Ott (2004: 180). Schäfer and Ott's book is not in the bibliography and was not consulted, so p. 180 is unchecked and the book is not listed as a source."
       },
       "pages": "pp. 328–330",

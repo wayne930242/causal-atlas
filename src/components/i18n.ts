@@ -255,7 +255,7 @@ const ZH = {
       .join('；'),
   withHint: (aria: string, hint: string): string => (hint === '' ? aria : `${aria}。${hint}`),
   setDirectly: (parents: readonly string[], value: string): string =>
-    `${parents.length === 0 ? '' : `與 ${parents.join('、')} 無關，`}直接設成 ${value}`,
+    `${parents.length === 0 ? '' : `切斷 ${parents.join("、")}，`}直接設成 ${value}`,
   afterDoNote: (doText: string, label: string, value: string): string => `${doText} 之後，${label}：${value}`,
   readBrackets: '讀法：先做方括號裡的干預，再看圓括號裡的事成不成立。',
   readCausal: '讀法：[X←x](Y=y) 是把 X 設成 x 之後，Y 等於 y。',

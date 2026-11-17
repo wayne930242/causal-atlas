@@ -5,12 +5,12 @@
     "en": "The farmer and the doctor"
   },
   "subtitle": {
-    "zh-TW": "死亡對醫師不作為的依賴，寄生在農藥桶這個異常事件上，法院仍以它向醫師究責。",
+    "zh-TW": "甲的死亡依賴醫師的不作為（omission），這個依賴寄生在農藥桶砸中這件異常的事上。法院仍據此向醫師究責。",
     "en": "The dependence of death on the doctor's omission is parasitic on the abnormal barrel strike, yet the court holds the doctor liable by it."
   },
   "family": "law",
   "story": {
-    "zh-TW": "農夫甲被掉落的農藥桶砸中胸口，因胸悶、呼吸不順就醫。醫師只做了簡單的 X 光檢查，判斷沒有大礙，兩天後甲心臟破裂死亡。家屬控告醫師醫療疏失，一審法院判醫師有罪，理由是醫師若進行更多心臟檢查並讓甲留院觀察，就能發現心臟受損並加以治療，甲不會在兩天後死亡。",
+    "zh-TW": "考慮醫療疏失的情境。農夫甲被掉落的農藥桶砸中胸口，因胸悶、呼吸不順就醫。醫師只做了簡單的 X 光檢查，判斷沒有大礙，兩天後甲心臟破裂死亡。家屬控告醫師醫療疏失。一審法院判醫師有罪，理由是：假如醫師做了更多心臟檢查，並讓甲留院觀察，就能發現心臟受損並加以治療，甲不會在兩天後死亡。",
     "en": "A farmer is struck in the chest by a falling barrel of pesticide and goes to a doctor with chest pain and trouble breathing. The doctor takes only a simple X-ray, judges that nothing is seriously wrong, and two days later the farmer dies of a ruptured heart. The family accuses the doctor of medical negligence, and the trial court convicts him on the ground that, had he run further heart tests and kept the farmer in hospital, he would have found the damage and treated it, and the farmer would not have died two days later."
   },
   "story_tags": {
@@ -52,7 +52,7 @@
     },
     "expected": "cause",
     "text": {
-      "zh-TW": "要向醫師究責，依據的就是他沒做該做的檢查與治療，導致甲死亡。",
+      "zh-TW": "醫師沒做該做的檢查與治療，導致甲死亡，所以要向醫師究責。",
       "en": "To hold the doctor liable at all, the court relies on his not doing the examination and treatment due, which led to the death."
     },
     "agree": [
@@ -64,7 +64,7 @@
     ]
   },
   "explanation": {
-    "zh-TW": "王鵬翔與王一奇（2021）指出，農夫案例與醫師案例（被毒蛇咬）有相同的因果結構，模型 Do 為 A = 1、B = 1、D = A·B：A 是異常事件（農藥桶砸中），B 是醫師違反醫療常規的不作為，兩者同時成立才有死亡。死亡對 B 的反事實依賴因此寄生在 A 上：沒有農藥桶（BARREL = 0），不做檢查（NOEXAM = 1）也不會死，機率列以介入呈現。Hitchcock（2007）對這種寄生的依賴是否為因果持保留，王與王論證在醫療規範下它仍是典型因果；法律實務同樣把它當因果，作為追究醫師責任的前提。引擎裡的所有理論都算 NOEXAM = 1 為原因，沒有一個專門標記「寄生」。",
+    "zh-TW": "BARREL 表示農藥桶砸中甲，NOEXAM 表示醫師沒做該做的檢查，兩者同時成立甲才會死（DEATH = BARREL·NOEXAM）。假如沒有農藥桶砸中，醫師不做檢查，甲也不會死。所以死亡對醫師不作為（omission）的依賴，寄生在農藥桶這件異常的事上。王鵬翔與王一奇（2021）指出，這與醫師被毒蛇咬案例的結構相同。這個案例檢驗寄生的依賴算不算原因，法律實務把它當原因。",
     "en": "Wang and Wang (2021) point out that the farmer case has the same causal structure as the doctor case (a snakebite); their model Do reads A = 1, B = 1, D = A·B, where A is the abnormal event (the barrel strike), B is the doctor's omission in breach of medical standards, and death needs both. Death's counterfactual dependence on B is therefore parasitic on A: with no barrel (BARREL = 0), skipping the examination (NOEXAM = 1) would cause no death, which the probability row shows by intervention. Hitchcock (2007) is reserved on whether such a parasitic dependence is causal; Wang and Wang argue that under medical norms it is still a typical cause, and legal practice likewise treats it as causal, as the precondition for holding the doctor liable. Every theory in the engine counts NOEXAM = 1 as a cause; none has a special flag for \"parasitic\"."
   },
   "copy_status": {

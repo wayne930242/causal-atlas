@@ -1,19 +1,19 @@
 {
   "id": "bodyguard-omission",
-  "title": { "zh-TW": "保鏢沒給解藥", "en": "The bodyguard who withholds the antidote" },
+  "title": { "zh-TW": "保鑣沒給解藥", "en": "The bodyguard who withholds the antidote" },
   "subtitle": {
-    "zh-TW": "殺手下毒是死因沒有爭議；保鏢帶著解藥卻沒給，算不算原因？",
+    "zh-TW": "殺手下毒害死市長，這點沒有爭議。保鑣帶著解藥卻沒給，是否也算原因，則有爭議。",
     "en": "The assassin's poisoning is plainly a cause; is the bodyguard's keeping the antidote back one too?"
   },
   "family": "omission",
   "story": {
-    "zh-TW": "考慮市長中毒的情境。殺手在市長喝的咖啡裡下毒。保鏢身上帶著可以中和毒性的解藥，卻沒有讓市長服用，市長因此死亡。假如殺手沒有下毒，或者保鏢給了解藥，市長都不會死。",
+    "zh-TW": "考慮市長中毒的情境。殺手在市長喝的咖啡裡下毒。保鑣身上帶著可以中和毒性的解藥，卻沒有讓市長服用，市長因此死亡。假如殺手沒有下毒，或者保鑣給了解藥，市長都不會死。",
     "en": "Consider a poisoned mayor. An assassin puts poison in the mayor's coffee. The bodyguard carries an antidote that would neutralise the poison but does not give it to the mayor, and the mayor dies. Had the assassin not poisoned the coffee, or had the bodyguard given the antidote, the mayor would not have died."
   },
   "story_tags": {
     "zh-TW": [
       { "sentence": "殺手在市長喝的咖啡裡下毒。", "variables": ["A"] },
-      { "sentence": "保鏢身上帶著可以中和毒性的解藥，卻沒有讓市長服用，市長因此死亡。", "variables": ["B", "D"] }
+      { "sentence": "保鑣身上帶著可以中和毒性的解藥，卻沒有讓市長服用，市長因此死亡。", "variables": ["B", "D"] }
     ],
     "en": [
       { "sentence": "An assassin puts poison in the mayor's coffee.", "variables": ["A"] },
@@ -33,7 +33,7 @@
     "agree": ["butfor", "hp-modified", "hp-normality"]
   },
   "explanation": {
-    "zh-TW": "模型取自 Hitchcock (2007) 的 Om：A = 1 表示殺手下毒，B = 1 表示保鏢給解藥（實際為 0），市長死亡是 D = A·¬B。兩個反事實依賴都成立：沒有下毒或給了解藥，市長都不會死。Hitchcock 認為前者自足，後者寄生於殺手下毒，是否算因果他不表態。王一奇與王鵬翔 (2021) 指出，保鏢有護主的職責，在毒已下的情況下給解藥才是常態，沒給反而是偏差，這條網絡也可以自足，於是保鏢的不作為是典型原因。本案的常態值採王與王的看法（B 的常態為 1）；若改採 Hitchcock 的預設（B 的常態為 0），常態版會把保鏢的不作為排除。引擎的 but-for 與兩種 HP 都把兩者算作原因。",
+    "zh-TW": "A 表示殺手下毒，B 表示保鑣給解藥（實際為 0），市長死亡的條件是 D = A·¬B。假如殺手沒下毒，或保鑣給了解藥，市長都不會死。保鑣有護主的職責，所以依王一奇與王鵬翔 (2021)，B 的預設值（default）設為 1，沒給解藥偏離常態（normality）。假如改用 Hitchcock (2007) 的預設值 0，常態版 HP 定義就不再把保鑣的不作為（omission）算作原因。",
     "en": "The model is Hitchcock's (2007) Om: A = 1 is the assassin poisoning the coffee, B = 1 is the bodyguard giving the antidote (actually 0), and the mayor dies if D = A·¬B. Both counterfactual dependences hold: without the poison, or with the antidote, the mayor would not have died. Hitchcock takes the first to be self-contained and the second to be parasitic on the assassin's act, and takes no stand on whether it is causal. Wang and Wang (2021) point out that a bodyguard has a duty to protect, so once the poison is in, giving the antidote is the normal course and withholding it the deviant one; that network can then be self-contained too, and the bodyguard's omission is a paradigmatic cause. The normality values here follow Wang and Wang (B is normally 1); with Hitchcock's default (B normally 0) the normality-based definition would exclude the bodyguard's omission. But-for and both HP variants count the two as causes."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
@@ -44,7 +44,7 @@
       "role": "origin",
       "pages": "504–505, 513",
       "note": {
-        "zh-TW": "p.504 給出 Omission 案例與模型 Om；p.505 說明兩個依賴的直覺差異，保鏢的不作為寄生在殺手的行動上；p.513 把寄生的依賴定義為非自足網絡中的反事實依賴。",
+        "zh-TW": "p.504 給出 Omission 案例與模型 Om。p.505 說明兩個依賴的直覺差異：保鑣的不作為（omission）寄生在殺手的行動上。p.513 把寄生的依賴定義為非自足網絡中的反事實依賴。",
         "en": "P. 504 states the Omission case and its model Om; p. 505 explains the intuitive difference, with the bodyguard's inaction parasitic on the assassin's act; p. 513 defines parasitic dependence as dependence in a network that is not self-contained."
       },
       "verified": true
@@ -55,7 +55,7 @@
       "role": "treatment",
       "pages": "43, 47, 60–61",
       "note": {
-        "zh-TW": "p.43 引述保鏢案例（不作為）；p.47 給出模型 Om；pp.60–61 論證保鏢有護主職責，其不作為是偏差值，網絡自足。",
+        "zh-TW": "p.43 引述保鑣的不作為（omission）案例；p.47 給出模型 Om。pp.60–61 論證保鑣有護主職責，所以他的不作為偏離常態（normality），網絡自足。",
         "en": "P. 43 quotes the bodyguard case (omission); p. 47 gives the model Om; pp. 60–61 argue that the bodyguard has a duty to protect, so his omission is a deviant value and the network is self-contained."
       },
       "verified": true
@@ -65,16 +65,16 @@
       "key": "wang2019omission",
       "role": "treatment",
       "pages": "320",
-      "note": { "zh-TW": "p.320 的〈不中用的保鏢〉轉述 Hitchcock (2007: 504)。", "en": "P. 320, 'the useless bodyguard', relays Hitchcock (2007: 504)." },
+      "note": { "zh-TW": "p.320 的〈不中用的保鑣〉轉述 Hitchcock (2007: 504)。", "en": "P. 320, 'the useless bodyguard', relays Hitchcock (2007: 504)." },
       "verified": true
     }
   ],
   "model": {
     "variables": [
       { "id": "U_A", "label": { "zh-TW": "殺手的行動", "en": "Assassin's choice" }, "kind": "exogenous", "domain": "boolean" },
-      { "id": "U_B", "label": { "zh-TW": "保鏢的行動", "en": "Bodyguard's choice" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_B", "label": { "zh-TW": "保鑣的行動", "en": "Bodyguard's choice" }, "kind": "exogenous", "domain": "boolean" },
       { "id": "A", "label": { "zh-TW": "殺手下毒", "en": "Assassin poisons the coffee" }, "kind": "endogenous", "domain": "boolean" },
-      { "id": "B", "label": { "zh-TW": "保鏢給解藥", "en": "Bodyguard gives the antidote" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "B", "label": { "zh-TW": "保鑣給解藥", "en": "Bodyguard gives the antidote" }, "kind": "endogenous", "domain": "boolean" },
       { "id": "D", "label": { "zh-TW": "市長死亡", "en": "Mayor dies" }, "kind": "endogenous", "domain": "boolean" }
     ],
     "equations": { "A": "U_A", "B": "U_B", "D": "A and not B" }
@@ -95,7 +95,7 @@
     }
   ],
   "showcase": [
-    { "label": { "zh-TW": "保鏢給了解藥", "en": "The bodyguard gives the antidote" }, "interventions": { "B": 1 } },
+    { "label": { "zh-TW": "保鑣給了解藥", "en": "The bodyguard gives the antidote" }, "interventions": { "B": 1 } },
     { "label": { "zh-TW": "殺手沒下毒", "en": "The assassin does not poison the coffee" }, "interventions": { "A": 0 } }
   ],
   "layout": { "A": [0, 0], "B": [0, 1], "D": [1, 0.5] }
