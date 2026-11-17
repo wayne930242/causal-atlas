@@ -1,0 +1,114 @@
+{
+  "id": "pen-case-professor-assistant",
+  "title": { "zh-TW": "系辦的筆：教授與助教", "en": "The pen case: professor and assistant" },
+  "subtitle": {
+    "zh-TW": "兩人各拿一支筆，筆就沒了，為什麼只怪教授？",
+    "en": "Each took one pen and the pens ran out; why does only the professor get the blame?"
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮一間大學哲學系的系辦：秘書桌上的筆筒平常放著幾支筆。系上的規定是行政人員可以取用，教授則須自行購買。行政人員通常都會拿筆，教授也常常偷拿，秘書提醒多次仍然無效。某天早上，一位助教和一位教授差不多同時走進系辦，各自拿走一支筆。不久後秘書需要記錄一則重要訊息，才發現筆筒已經空了。",
+    "en": "Consider a philosophy department office. The secretary keeps a few pens in a cup on the desk. By the department's rule, administrative staff may take them, while professors are expected to buy their own. Staff usually do take pens, and professors often do too, despite repeated reminders from the secretary. One morning an administrative assistant and a professor walk in at about the same time and each takes a pen. Soon afterwards the secretary needs to write down an important message and finds the cup empty."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "某天早上，一位助教和一位教授差不多同時走進系辦，各自拿走一支筆。", "variables": ["AT", "PT"] },
+      { "sentence": "不久後秘書需要記錄一則重要訊息，才發現筆筒已經空了。", "variables": ["PO"] }
+    ],
+    "en": [
+      {
+        "sentence": "One morning an administrative assistant and a professor walk in at about the same time and each takes a pen.",
+        "variables": ["AT", "PT"]
+      },
+      { "sentence": "Soon afterwards the secretary needs to write down an important message and finds the cup empty.", "variables": ["PO"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "AT=1", "effect": "PO=1" },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "受試者同意教授拿筆造成了問題（平均 2.2），卻不同意助教拿筆造成了問題（平均 −1.2；量尺 −3 至 +3）。",
+      "en": "Subjects agreed that the professor's taking a pen caused the problem (mean 2.2) but disagreed that the assistant's did (mean −1.2, on a scale from −3 to +3)."
+    },
+    "agree": ["hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "模型取自 Halpern 與 Hitchcock (2015) §7.2：PO = PT·AT，兩人都拿筆，筆筒才會空，因此簡單反事實依賴與 HP 定義都把兩人判為原因。差別來自規範：系規允許助教拿筆、不允許教授拿筆，所以預設值設為教授不拿筆（PT = 0）、助教拿筆（AT = 1）。教授不拿筆的見證世界不比實際世界更偏離預設；助教不拿筆的見證世界卻比實際世界更偏離預設，因此引擎的二元預設只把教授判為原因。Halpern 與 Hitchcock 的原定義是分級的（教授是更強的原因，助教較弱），這裡只取其二分的特例。",
+    "en": "The model is the one in Halpern and Hitchcock (2015, §7.2): PO = PT·AT, so the cup is empty only if both take a pen, and the simple counterfactual test and the HP definitions count both as causes. The difference comes from the norm: the rule allows the assistant to take a pen and forbids the professor, so the defaults are that the professor does not (PT = 0) and the assistant does (AT = 1). The witness world in which the professor does not take a pen is no less normal than the actual world; the witness world in which the assistant does not is more deviant than the actual world. The engine's binary defaults therefore make only the professor a cause. Halpern and Hitchcock's own account is graded (the professor a stronger cause, the assistant a weaker one); only its two-valued special case is encoded here."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Knobe, J., & Fraser, B. (2008). Causal judgment and moral judgment: two experiments. In W. Sinnott-Armstrong (Ed.), Moral Psychology, Vol. 2 (pp. 441–447). MIT Press.",
+      "key": "knobe2008causaljudgment",
+      "role": "origin",
+      "pages": "forthcoming manuscript, PDF p. 4 (vignette, ratings 2.2 and −1.2 in note 4); the manuscript is unpaginated",
+      "verified": true
+    },
+    {
+      "citation": "Halpern, J. Y., & Hitchcock, C. (2015). Graded causation and defaults. British Journal for the Philosophy of Science, 66(2), 413–457.",
+      "key": "halpern2015graded",
+      "role": "treatment",
+      "pages": "§7.2, arXiv manuscript pp. 24–25",
+      "verified": true
+    },
+    {
+      "citation": "Hitchcock, C., & Knobe, J. (2009). Cause and norm. Journal of Philosophy, 106(11), 587–612.",
+      "key": "hitchcock2009cause",
+      "role": "reference",
+      "pages": "p. 594",
+      "verified": true
+    },
+    {
+      "citation": "Wang, P.-H. (2019). The problems of counterfactual thinking in omissive causal judgements [in Chinese]. EurAmerica, 49(3), 287–340.",
+      "key": "wang2019omission",
+      "role": "reference",
+      "pages": "p. 307",
+      "verified": true
+    },
+    {
+      "citation": "Wang, P.-H. (2025). The linkage between causality and responsibility from the viewpoint of norms [in Chinese]. EurAmerica, 55(2), 227–271.",
+      "key": "wang2025causality",
+      "role": "reference",
+      "pages": "pp. 233–234",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_PT", "label": { "zh-TW": "教授的情況", "en": "Professor's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_AT", "label": { "zh-TW": "助教的情況", "en": "Assistant's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "PT", "label": { "zh-TW": "教授拿筆", "en": "Professor takes a pen" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "AT", "label": { "zh-TW": "助教拿筆", "en": "Assistant takes a pen" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "PO", "label": { "zh-TW": "秘書沒筆可用", "en": "Secretary has no pen" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "PT": "U_PT", "AT": "U_AT", "PO": "PT and AT" }
+  },
+  "context": { "U_PT": 1, "U_AT": 1 },
+  "normality": { "PT": 0, "AT": 1, "PO": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "PT=1", "effect": "PO=1" },
+      "expected": "cause",
+      "note": "Witness: PT = 0, the permitted state of affairs."
+    },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "AT=1", "effect": "PO=1" },
+      "expected": "not-cause",
+      "note": "Witness: AT = 0 is more deviant than the actual world, since assistants are allowed to take pens."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "教授沒拿筆", "en": "The professor takes no pen" }, "interventions": { "PT": 0 } },
+    { "label": { "zh-TW": "助教沒拿筆", "en": "The assistant takes no pen" }, "interventions": { "AT": 0 } }
+  ],
+  "layout": { "PT": [0, 0], "AT": [0, 1], "PO": [1, 0.5] }
+}

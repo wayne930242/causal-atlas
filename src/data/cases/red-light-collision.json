@@ -1,0 +1,94 @@
+{
+  "id": "red-light-collision",
+  "title": { "zh-TW": "綠燈與紅燈對撞", "en": "Green light, red light: a collision" },
+  "subtitle": {
+    "zh-TW": "兩輛車都沒剎車才撞上，為什麼只說闖紅燈的那輛是原因？",
+    "en": "Neither car braked and they collided; why is only the red-light runner picked out as the cause?"
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮一個十字路口：甲在綠燈亮起時，依速限直接通過，沒有剎車。另一個方向的乙闖紅燈，同樣沒有剎車，兩輛車因此相撞。甲若剎車，或乙若剎車，兩車都不會相撞。",
+    "en": "Consider a crossroads. Driver A passes through on a green light at the speed limit without braking. Driver B, coming from the other direction, runs the red light, also without braking, and the two cars collide. Had A braked, or had B braked, they would not have collided."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "甲在綠燈亮起時，依速限直接通過，沒有剎車。", "variables": ["BA"] },
+      { "sentence": "另一個方向的乙闖紅燈，同樣沒有剎車，兩輛車因此相撞。", "variables": ["BB", "CR"] }
+    ],
+    "en": [
+      { "sentence": "Driver A passes through on a green light at the speed limit without braking.", "variables": ["BA"] },
+      { "sentence": "Driver B, coming from the other direction, runs the red light, also without braking, and the two cars collide.", "variables": ["BB", "CR"] }
+    ]
+  },
+  "intuition": {
+    "query": { "cause": "BA=0", "effect": "CR=1" },
+    "expected": "not-cause",
+    "text": {
+      "zh-TW": "直覺和實務上，都以闖紅燈的乙沒剎車為車禍的主要原因，守規矩的甲不是。",
+      "en": "By intuition and in practice, the red-light runner's not braking is the main cause of the crash, and the law-abiding driver's not braking is not."
+    },
+    "agree": ["hp-normality"]
+  },
+  "explanation": {
+    "zh-TW": "模型依故事擬成：兩車都沒剎車才會相撞（CR = ¬BA·¬BB）。簡單反事實依賴與 HP 定義都把兩人沒剎車判為原因，因為任一方剎車就不會撞。交通規則使兩人不同：綠燈直行的甲不需要剎車（預設 BA = 0），闖紅燈的乙本來應該停下（預設 BB = 1）。甲剎車的見證世界比實際世界更偏離預設，乙剎車的見證世界則不偏離，所以引擎只把乙判為原因，與王鵬翔 (2019) 的說法一致。",
+    "en": "The model is built from the story: the cars collide only if neither brakes (CR = ¬BA·¬BB). The simple counterfactual test and the HP definitions count both drivers' not braking as causes, since a collision is avoided if either brakes. The traffic rules make the two differ: A, going straight on a green light, need not brake (default BA = 0), while B, facing a red light, should have stopped (default BB = 1). The witness world in which A brakes is more deviant than the actual world, and the one in which B brakes is not, so the engine makes only B a cause, in agreement with Wang (2019)."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Wang, P.-H. (2019). The problems of counterfactual thinking in omissive causal judgements [in Chinese]. EurAmerica, 49(3), 287–340.",
+      "key": "wang2019omission",
+      "role": "origin",
+      "pages": "p. 308",
+      "verified": true
+    },
+    {
+      "citation": "Wang, P.-H., & Wang, L. (2026). Causal dialectics [in Chinese]. National Taiwan University Press.",
+      "key": "wang2026dialectics",
+      "role": "reference",
+      "note": {
+        "zh-TW": "第 1 章例 1 是只有闖紅燈一方的版本（甲闖紅燈撞傷行人乙）。",
+        "en": "Example 1 of chapter 1 is a one-party version (a red-light runner injures a pedestrian)."
+      },
+      "pages": "p. 13 (publisher's sample)",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_BA", "label": { "zh-TW": "甲的情況", "en": "A's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_BB", "label": { "zh-TW": "乙的情況", "en": "B's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "BA", "label": { "zh-TW": "甲剎車", "en": "A brakes" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "BB", "label": { "zh-TW": "乙剎車", "en": "B brakes" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "CR", "label": { "zh-TW": "兩車相撞", "en": "The cars collide" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "BA": "U_BA", "BB": "U_BB", "CR": "not BA and not BB" }
+  },
+  "context": { "U_BA": 0, "U_BB": 0 },
+  "normality": { "BA": 0, "BB": 1, "CR": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "BA=0", "effect": "CR=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "BB=0", "effect": "CR=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "BA=0", "effect": "CR=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "BB=0", "effect": "CR=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "BA=0", "effect": "CR=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "BB=0", "effect": "CR=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "BB=0", "effect": "CR=1" },
+      "expected": "cause",
+      "note": "Witness: BB = 1, the red-light-conforming state."
+    },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "BA=0", "effect": "CR=1" },
+      "expected": "not-cause",
+      "note": "Witness: BA = 1 departs from what a driver with the green light does."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "甲剎車", "en": "A brakes" }, "interventions": { "BA": 1 } },
+    { "label": { "zh-TW": "乙剎車", "en": "B brakes" }, "interventions": { "BB": 1 } }
+  ],
+  "layout": { "BA": [0, 0], "BB": [0, 1], "CR": [1, 0.5] }
+}

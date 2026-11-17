@@ -1,0 +1,92 @@
+{
+  "id": "pen-case-both-permitted",
+  "title": { "zh-TW": "筆案例的變體：教授也可以拿", "en": "The pen case, both permitted" },
+  "subtitle": {
+    "zh-TW": "規定改成教授也能拿筆，兩人的因果評分趨於接近。",
+    "en": "Once professors may take pens too, the two causal ratings move toward each other."
+  },
+  "family": "norms",
+  "story": {
+    "zh-TW": "考慮與系辦的筆案例相同的情境，只改動一處：這次系上的規定是行政人員與教授都可以取用筆筒裡的筆。某天早上，一位助教和一位教授差不多同時走進系辦，各自拿走一支筆。不久後秘書需要記錄一則重要訊息，才發現筆筒已經空了。",
+    "en": "Consider the same office as in the pen case, with one change: this time the department's rule lets both administrative staff and professors take pens from the cup. One morning an administrative assistant and a professor walk in at about the same time and each takes a pen. Soon afterwards the secretary needs to write down an important message and finds the cup empty."
+  },
+  "story_tags": {
+    "zh-TW": [
+      { "sentence": "這次系上的規定是行政人員與教授都可以取用筆筒裡的筆。", "variables": ["AT", "PT"] },
+      { "sentence": "不久後秘書需要記錄一則重要訊息，才發現筆筒已經空了。", "variables": ["PO"] }
+    ],
+    "en": [
+      {
+        "sentence": "this time the department's rule lets both administrative staff and professors take pens from the cup.",
+        "variables": ["AT", "PT"]
+      },
+      { "sentence": "Soon afterwards the secretary needs to write down an important message and finds the cup empty.", "variables": ["PO"] }
+    ]
+  },
+  "explanation": {
+    "zh-TW": "模型與原版的筆案例相同（Halpern 與 Hitchcock 2015, §7.2）：PO = PT·AT。差別只在規範：兩人拿筆都被允許，沒有哪一個拿筆是偏離預設，因此兩個見證世界同樣正常，引擎的二元預設不再區分兩人，兩人都是原因。實驗的結果是比較性的：Sytsma、Livengood 與 Rose 重做原實驗，原版中教授 4.05、助教 2.51（量尺 1 至 7）；教授的行為改為被允許後，教授降為 3.0，助教升為 3.53。助教的行為沒變，評分卻上升，顯示因果判斷有一部分是在兩個候選原因之間比較。引擎沒有分級，所以這個「升降」只能從原版與本變體的對照看出，不能由單一個判定算出。",
+    "en": "The model is the same as in the original pen case (Halpern and Hitchcock 2015, §7.2): PO = PT·AT. Only the norm differs. Taking a pen is permitted for both, so neither action departs from its default, the two witness worlds are equally normal, and the engine's binary defaults no longer separate the two: both are causes. The experimental result is comparative. Sytsma, Livengood and Rose repeated the original experiment and obtained 4.05 for the professor and 2.51 for the assistant (scale 1 to 7); when the professor's action was made permissible, the professor fell to 3.0 and the assistant rose to 3.53. The assistant's action had not changed, yet its rating rose, which suggests that causal judgment is in part a comparison between candidate causes. The engine is not graded, so that shift shows only in the contrast with the original case, not in any single verdict here."
+  },
+  "copy_status": { "zh-TW": "draft", "en": "draft" },
+  "sources": [
+    {
+      "citation": "Halpern, J. Y., & Hitchcock, C. (2015). Graded causation and defaults. British Journal for the Philosophy of Science, 66(2), 413–457.",
+      "key": "halpern2015graded",
+      "role": "origin",
+      "note": {
+        "zh-TW": "變體與評分（3.0 與 3.53）出自該文註 12 轉述的 Sytsma、Livengood 與 Rose (2010)，不是 Knobe 與 Fraser 的原實驗。",
+        "en": "The variant and the ratings (3.0 and 3.53) are reported in note 12 of the paper, from Sytsma, Livengood and Rose (2010); they are not part of Knobe and Fraser's original experiment."
+      },
+      "pages": "§7.2, arXiv manuscript p. 25, note 12",
+      "verified": true
+    },
+    {
+      "citation": "Knobe, J., & Fraser, B. (2008). Causal judgment and moral judgment: two experiments. In W. Sinnott-Armstrong (Ed.), Moral Psychology, Vol. 2 (pp. 441–447). MIT Press.",
+      "key": "knobe2008causaljudgment",
+      "role": "reference",
+      "note": {
+        "zh-TW": "原版的筆情境，變體由此改動而來。",
+        "en": "The original pen vignette, from which the variant is derived."
+      },
+      "pages": "forthcoming manuscript, PDF p. 4; the manuscript is unpaginated",
+      "verified": true
+    }
+  ],
+  "model": {
+    "variables": [
+      { "id": "U_PT", "label": { "zh-TW": "教授的情況", "en": "Professor's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "U_AT", "label": { "zh-TW": "助教的情況", "en": "Assistant's circumstances" }, "kind": "exogenous", "domain": "boolean" },
+      { "id": "PT", "label": { "zh-TW": "教授拿筆", "en": "Professor takes a pen" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "AT", "label": { "zh-TW": "助教拿筆", "en": "Assistant takes a pen" }, "kind": "endogenous", "domain": "boolean" },
+      { "id": "PO", "label": { "zh-TW": "秘書沒筆可用", "en": "Secretary has no pen" }, "kind": "endogenous", "domain": "boolean" }
+    ],
+    "equations": { "PT": "U_PT", "AT": "U_AT", "PO": "PT and AT" }
+  },
+  "context": { "U_PT": 1, "U_AT": 1 },
+  "normality": { "PO": 0 },
+  "verdicts": [
+    { "theory": "butfor", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "butfor", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-updated", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "PT=1", "effect": "PO=1" }, "expected": "cause" },
+    { "theory": "hp-modified", "query": { "cause": "AT=1", "effect": "PO=1" }, "expected": "cause" },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "PT=1", "effect": "PO=1" },
+      "expected": "cause",
+      "note": "No default separates the two witnesses, so both pass."
+    },
+    {
+      "theory": "hp-normality",
+      "query": { "cause": "AT=1", "effect": "PO=1" },
+      "expected": "cause",
+      "note": "Contrast with the original pen case, where this is not-cause."
+    }
+  ],
+  "showcase": [
+    { "label": { "zh-TW": "教授沒拿筆", "en": "The professor takes no pen" }, "interventions": { "PT": 0 } },
+    { "label": { "zh-TW": "助教沒拿筆", "en": "The assistant takes no pen" }, "interventions": { "AT": 0 } }
+  ],
+  "layout": { "PT": [0, 0], "AT": [0, 1], "PO": [1, 0.5] }
+}
