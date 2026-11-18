@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useReducer, useRef, useState } from 'react'
 import { caseIds, getCase } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
 import { caseToDoc, decodeShare, encodeShare, parseModelJson, sameModel, schemaProblems } from '../../data/model-doc.ts'
@@ -14,6 +14,8 @@ import { catalog, modelKey, textIn } from './catalog.ts'
 import type { Draft, DraftMode, DraftVariable } from './draft.ts'
 import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './draft.ts'
 import { NO_DO, NO_OBSERVATION, validInterventions, validObserved, validStochastic } from './do-state.ts'
+import type { Start } from './session.ts'
+import { sessionReducer, startSession } from './session.ts'
 import { hashFragment, readHashState, replaceHash } from './url-state.ts'
 import type { EditorTask } from './tasks.ts'
 import { TaskCard } from './TaskCard.tsx'
@@ -77,15 +79,6 @@ export interface ModelEditorProps {
 }
 
 export type { ExtraModel, LessonLink } from './catalog.ts'
-
-interface Start {
-  readonly draft: Draft
-  readonly problems: readonly Problem[]
-  /** The extra model it started from. */
-  readonly picked?: string
-  /** The `#case=` id that names this draft while it is unedited; none for a document. */
-  readonly named?: string
-}
 
 /** A draft from a host model's document; an invalid document gives a blank draft and its problems. */
 function startFromDoc(doc: ModelDoc, t: Messages, picked?: string): Start {
@@ -161,22 +154,9 @@ function EditorBody({
   const t = useMessages()
   const e = t.editor
   const [start] = useState(() => startDraft(initial, t, extraModels, initialDoc))
-  const [draft, setDraft] = useState<Draft>(start.draft)
-  // The extra model on screen, if one was chosen; any other way of replacing the draft clears it.
-  const [picked, setPicked] = useState<string | undefined>(start.picked)
-  // Problems of the document the editor started from or the extra model chosen.
-  const [docProblems, setDocProblems] = useState<readonly Problem[]>(start.problems)
-  const [doState, setDoState] = useState<DoState>(NO_DO)
-  // Observations are not written to the address: they last while the model is edited, as long as they still fit it.
-  const [observed, setObserved] = useState<Assignment>(NO_OBSERVATION)
-  // The draft as a case or extra model was loaded, and its id: while the draft is still this very
-  // object, the address names the id instead of encoding the model.
-  const [base, setBase] = useState<{ readonly draft: Draft; readonly id: string } | undefined>(() =>
-    start.named === undefined ? undefined : { draft: start.draft, id: start.named },
-  )
+  const [session, dispatch] = useReducer(sessionReducer, start, startSession)
+  const { draft, picked, docProblems, doState, observed, base, loadErrors } = session
   const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
-  // What reading the share link went wrong with; worded at render, so it follows the language.
-  const [loadErrors, setLoadErrors] = useState<readonly unknown[]>([])
   const compiled = useMemo(
     () =>
       compileDraft(
@@ -223,13 +203,7 @@ function EditorBody({
   const ownsUrl = syncUrl && hash === undefined
 
   const showNamed = (next: Start, doNext: DoState): void => {
-    setDraft(next.draft)
-    setDoState(doNext)
-    setObserved(NO_OBSERVATION)
-    setPicked(next.picked)
-    setDocProblems(next.problems)
-    setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
-    setLoadErrors([])
+    dispatch({ type: 'show', start: next, doState: doNext })
     synced.current = { draft: next.draft, doState: doNext }
   }
 
@@ -284,10 +258,10 @@ function EditorBody({
             if (result.ok) {
               const next = draftFromImport(result.doc)
               showNamed({ draft: next, problems: [] }, { interventions: wanted.interventions, stochastic: wanted.stochastic })
-            } else setLoadErrors(result.errors.map((p) => ({ problem: p })))
+            } else dispatch({ type: 'loadFailed', errors: result.errors.map((p) => ({ problem: p })) })
           })
           .catch((error: unknown) => {
-            if (live) setLoadErrors([error])
+            if (live) dispatch({ type: 'loadFailed', errors: [error] })
           })
         return
       }
@@ -307,23 +281,11 @@ function EditorBody({
     }
   }, [hash, ownsUrl])
 
-  const replace = (next: Draft): void => {
-    setDraft(next)
-    setDoState(NO_DO)
-    setObserved(NO_OBSERVATION)
-    setPicked(undefined)
-    setDocProblems([])
-    setBase(undefined)
-  }
+  const replace = (next: Draft): void => dispatch({ type: 'replace', draft: next })
   const pick = (key: string): void => {
     const extra = extraModels.find((m) => modelKey(m.id) === key)
     const next = extra !== undefined ? startFromDoc(extra.doc, t, extra.id) : startNamed(key, t, NO_EXTRAS)
-    setDraft(next.draft)
-    setDoState(NO_DO)
-    setObserved(NO_OBSERVATION)
-    setPicked(next.picked)
-    setDocProblems(next.problems)
-    setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
+    dispatch({ type: 'pick', start: next })
   }
   const groups = useMemo(() => catalog(t, extraModels), [t, extraModels])
   const pickedModel = picked === undefined ? undefined : extraModels.find((m) => m.id === picked)
@@ -345,9 +307,10 @@ function EditorBody({
           : textIn(pickedModel.group, t.locale)
         : e.customModel
   const headSubtitle = caseId === undefined ? undefined : getCase(caseId).data.subtitle?.[t.locale]
-  const update = (patch: Partial<Draft>): void => setDraft((d) => ({ ...d, ...patch }))
+  const edit = (change: (d: Draft) => Draft): void => dispatch({ type: 'edit', edit: change })
+  const update = (patch: Partial<Draft>): void => edit((d) => ({ ...d, ...patch }))
   const setVariable = (key: string, patch: Partial<DraftVariable>): void =>
-    setDraft((d) => {
+    edit((d) => {
       const variables = d.variables.map((v) => (v.key === key ? { ...v, ...patch } : v))
       const v = variables.find((x) => x.key === key)
       if (v === undefined) return d
@@ -362,7 +325,7 @@ function EditorBody({
       return { ...d, variables, context, priors, layout }
     })
   const addVariable = (): void =>
-    setDraft((d) => {
+    edit((d) => {
       const ids = new Set(d.variables.map((v) => v.id))
       let n = d.variables.length + 1
       while (ids.has(`V${n}`)) n += 1
@@ -378,7 +341,7 @@ function EditorBody({
       }
     })
   const removeVariable = (key: string): void =>
-    setDraft((d) => {
+    edit((d) => {
       const drop = <T,>(r: Readonly<Record<string, T>>): Record<string, T> => {
         const out = { ...r }
         delete out[key]
@@ -395,7 +358,7 @@ function EditorBody({
       }
     })
   const move = (id: string, dCol: number, dRow: number): void =>
-    setDraft((d) => {
+    edit((d) => {
       const v = d.variables.find((x) => x.id === id)
       const at = v === undefined ? undefined : d.layout[v.key]
       if (v === undefined || at === undefined) return d
@@ -471,9 +434,9 @@ function EditorBody({
                     world={world}
                     interventions={active.interventions}
                     stochastic={active.stochastic}
-                    onDo={setDoState}
+                    onDo={(next) => dispatch({ type: 'setDo', doState: next })}
                     observed={seenNow}
-                    onObserve={setObserved}
+                    onObserve={(next) => dispatch({ type: 'observe', observed: next })}
                     onMove={move}
                     legend
                     exportUrl={exportUrl}
