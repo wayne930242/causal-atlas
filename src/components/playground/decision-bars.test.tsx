@@ -72,11 +72,11 @@ describe('CausalPlayground decision: expected-utility bars under the graph', () 
 
   it('murder lesion, utilities given in the prop: EDT does not shoot (−4.91 against 0), CDT shoots (5.60)', () => {
     const decision: CaseDecision = { variable: 'S', utility: { variables: ['S', 'H'], rows: [[1, 1, 10], [1, 0, -10], [0, 0, 0], [0, 1, 0]] } }
-    const { container } = render(<CausalPlayground doc={lessonModel('m10-murder-lesion')} decision={decision} />)
+    const { container } = render(<CausalPlayground doc={lessonModel('m11-murder-lesion')} decision={decision} />)
     expect(rows(container)).toMatchObject({ edt: { values: ['-4.91', '0.00'] }, cdt: { values: ['5.60', '0.00'] } })
   })
 
   it('decision={true} needs the case to have one', () => {
-    expect(() => renderToString(<CausalPlayground doc={lessonModel('m10-murder-lesion')} decision />)).toThrow(/decision/)
+    expect(() => renderToString(<CausalPlayground doc={lessonModel('m11-murder-lesion')} decision />)).toThrow(/decision/)
   })
 })

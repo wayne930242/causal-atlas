@@ -47,7 +47,7 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
         }}
       />
       <CausalPlayground
-        doc={lessonModel('m10-murder-lesion')}
+        doc={lessonModel('m11-murder-lesion')}
         decision={{
           variable: 'S',
           utility: {
@@ -118,7 +118,7 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
     <>
       <CausalPlayground caseId="forest-fire-disjunctive" verdicts={[{ cause: 'L=1', effect: 'FF=1' }]} />
       <CausalPlayground
-        doc={lessonModel('m08-loaded-gun')}
+        doc={lessonModel('m09-loaded-gun')}
         verdicts={[
           { cause: 'A=1', effect: 'D=1' },
           { cause: 'C=1', effect: 'D=1' },

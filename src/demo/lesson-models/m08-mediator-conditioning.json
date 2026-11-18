@@ -1,0 +1,98 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "避孕藥對血栓沒有直接作用：依懷孕與否分層會造出假關聯（Pearl 2009, p. 127；機率為本站自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_X",
+        "label": {
+          "zh-TW": "決定服藥",
+          "en": "Decides to take the pill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_P",
+        "label": {
+          "zh-TW": "沒有藥也會懷孕",
+          "en": "Would become pregnant without the pill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "H",
+        "label": {
+          "zh-TW": "未記錄的體質：藥容易失效，也容易長血栓",
+          "en": "Unrecorded constitution: the pill tends to fail, and clots form easily"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_B",
+        "label": {
+          "zh-TW": "懷孕促成血栓",
+          "en": "Pregnancy leads to thrombosis"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_C",
+        "label": {
+          "zh-TW": "體質促成血栓",
+          "en": "The constitution leads to thrombosis"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "服用避孕藥",
+          "en": "Takes the pill"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "懷孕",
+          "en": "Pregnant"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "血栓",
+          "en": "Thrombosis"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "U_X",
+      "Z": "U_P and (not X or H)",
+      "Y": "(Z and U_B) or (H and U_C)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_X": 0.5,
+      "U_P": 0.5,
+      "H": 0.2,
+      "U_B": 0.4,
+      "U_C": 0.5
+    }
+  },
+  "latent_as_arcs": [
+    "H"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "投票 5–0：五位委員全數贊成（Halpern 2016, §6.1）",
+  "model": {
+    "variables": [
+      {
+        "id": "U1",
+        "label": {
+          "zh-TW": "第 1 位委員的態度",
+          "en": "Member 1 favours the measure"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U2",
+        "label": {
+          "zh-TW": "第 2 位委員的態度",
+          "en": "Member 2 favours the measure"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U3",
+        "label": {
+          "zh-TW": "第 3 位委員的態度",
+          "en": "Member 3 favours the measure"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U4",
+        "label": {
+          "zh-TW": "第 4 位委員的態度",
+          "en": "Member 4 favours the measure"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U5",
+        "label": {
+          "zh-TW": "第 5 位委員的態度",
+          "en": "Member 5 favours the measure"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "V1",
+        "label": {
+          "zh-TW": "第 1 位委員投贊成票",
+          "en": "Member 1 votes yes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "V2",
+        "label": {
+          "zh-TW": "第 2 位委員投贊成票",
+          "en": "Member 2 votes yes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "V3",
+        "label": {
+          "zh-TW": "第 3 位委員投贊成票",
+          "en": "Member 3 votes yes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "V4",
+        "label": {
+          "zh-TW": "第 4 位委員投贊成票",
+          "en": "Member 4 votes yes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "V5",
+        "label": {
+          "zh-TW": "第 5 位委員投贊成票",
+          "en": "Member 5 votes yes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "W",
+        "label": {
+          "zh-TW": "提案通過",
+          "en": "The measure passes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "V1": "U1",
+      "V2": "U2",
+      "V3": "U3",
+      "V4": "U4",
+      "V5": "U5",
+      "W": "(V1 and V2 and V3) or (V1 and V2 and V4) or (V1 and V2 and V5) or (V1 and V3 and V4) or (V1 and V3 and V5) or (V1 and V4 and V5) or (V2 and V3 and V4) or (V2 and V3 and V5) or (V2 and V4 and V5) or (V3 and V4 and V5)"
+    }
+  },
+  "context": {
+    "U1": 1,
+    "U2": 1,
+    "U3": 1,
+    "U4": 1,
+    "U5": 1
+  }
+}

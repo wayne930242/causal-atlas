@@ -1,0 +1,131 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "小蘇的責備：小蘇不知道小比做了什麼（Halpern 2016, Ex. 6.2.2）",
+  "model": {
+    "variables": [
+      {
+        "id": "PRE",
+        "label": {
+          "zh-TW": "瓶子在小蘇丟之前就破了（小比早就丟了）",
+          "en": "The bottle was already shattered before Suzy threw (Billy threw earlier)"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_ST",
+        "label": {
+          "zh-TW": "小蘇想丟",
+          "en": "Suzy's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_BT",
+        "label": {
+          "zh-TW": "小比的情況",
+          "en": "Billy's situation"
+        },
+        "kind": "exogenous",
+        "domain": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "id": "ST",
+        "label": {
+          "zh-TW": "小蘇丟",
+          "en": "Suzy throws"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BT",
+        "label": {
+          "zh-TW": "小比丟的方式（0 不丟，1 丟，2 特別用力丟）",
+          "en": "How Billy throws (0 not at all, 1 throws, 2 throws extra hard)"
+        },
+        "kind": "endogenous",
+        "domain": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "id": "SH",
+        "label": {
+          "zh-TW": "小蘇的石頭砸中",
+          "en": "Suzy's rock hits"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BH",
+        "label": {
+          "zh-TW": "小比的石頭砸中",
+          "en": "Billy's rock hits"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BS",
+        "label": {
+          "zh-TW": "瓶子破",
+          "en": "Bottle shatters"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "ST": "U_ST",
+      "BT": "U_BT",
+      "SH": "ST and not PRE",
+      "BH": "not PRE and ((BT = 1 and not SH) or BT = 2)",
+      "BS": "PRE or SH or BH"
+    }
+  },
+  "priors": {
+    "joint": {
+      "variables": [
+        "PRE",
+        "U_ST",
+        "U_BT"
+      ],
+      "rows": [
+        [
+          1,
+          1,
+          1,
+          0.25
+        ],
+        [
+          0,
+          1,
+          2,
+          0.25
+        ],
+        [
+          0,
+          1,
+          1,
+          0.25
+        ],
+        [
+          0,
+          1,
+          0,
+          0.25
+        ]
+      ]
+    }
+  }
+}

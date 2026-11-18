@@ -1,0 +1,93 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "瓊斯太太：服了藥，沒有懷孕，卻得了血栓（Pearl 2009, §7.5.4 的情境；設定為本站自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_X",
+        "label": {
+          "zh-TW": "決定服藥",
+          "en": "Decides to take the pill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_P",
+        "label": {
+          "zh-TW": "沒有藥也會懷孕",
+          "en": "Would become pregnant without the pill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_F",
+        "label": {
+          "zh-TW": "藥沒有擋住懷孕",
+          "en": "Pill fails to prevent pregnancy"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_A",
+        "label": {
+          "zh-TW": "藥直接傷害血管",
+          "en": "Pill harms the vessels directly"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_B",
+        "label": {
+          "zh-TW": "懷孕促成血栓",
+          "en": "Pregnancy leads to thrombosis"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "服用避孕藥",
+          "en": "Takes the pill"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "懷孕",
+          "en": "Pregnant"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "血栓",
+          "en": "Thrombosis"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "U_X",
+      "Z": "U_P and (not X or U_F)",
+      "Y": "(X and U_A) or (Z and U_B)"
+    }
+  },
+  "context": {
+    "U_X": 1,
+    "U_P": 1,
+    "U_F": 0,
+    "U_A": 1,
+    "U_B": 1
+  }
+}

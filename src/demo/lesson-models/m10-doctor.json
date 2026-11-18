@@ -1,0 +1,80 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "醫生的責備：藥對高血壓病人有副作用（Halpern 2016, Ex. 6.2.4；機率為本站自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "S",
+        "label": {
+          "zh-TW": "這種藥對高血壓病人有副作用",
+          "en": "The drug has the side effect"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "H",
+        "label": {
+          "zh-TW": "病人本來就有高血壓",
+          "en": "The patient already has high blood pressure"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N",
+        "label": {
+          "zh-TW": "病人另有死因",
+          "en": "The patient has another cause of death"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_T",
+        "label": {
+          "zh-TW": "醫生決定用藥",
+          "en": "The doctor decides to treat"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "T",
+        "label": {
+          "zh-TW": "用藥",
+          "en": "Treated with the drug"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "D",
+        "label": {
+          "zh-TW": "病人死亡",
+          "en": "The patient dies"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "T": "U_T",
+      "D": "(T and S and H) or N"
+    }
+  },
+  "priors": {
+    "independent": {
+      "S": 1,
+      "H": 0.3,
+      "N": 0.05,
+      "U_T": 1
+    }
+  },
+  "show_exogenous": [
+    "S",
+    "H",
+    "N"
+  ]
+}

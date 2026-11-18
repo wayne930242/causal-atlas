@@ -62,7 +62,7 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
   })
 
   it('a model with normality gets the fifth cell', () => {
-    const { container } = render(<CausalPlayground doc={lessonModel('m09-pen')} verdicts={[{ cause: 'PT=1', effect: 'PO=1' }]} />)
+    const { container } = render(<CausalPlayground doc={lessonModel('m10-pen')} verdicts={[{ cause: 'PT=1', effect: 'PO=1' }]} />)
     expect(container.querySelector('[data-verdict-cell="hp-normality"]')).not.toBeNull()
   })
 

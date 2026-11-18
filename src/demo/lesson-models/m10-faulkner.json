@@ -1,0 +1,155 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "Regina v. Faulkner：火柴、朗姆酒、船、保險與主管自殺（Halpern 2016, §3.4.4, Ex. 6.2.7；機率為本站自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_M",
+        "label": {
+          "zh-TW": "是否點燃火柴",
+          "en": "Whether the match is lit"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_R",
+        "label": {
+          "zh-TW": "火柴附近是否有朗姆酒",
+          "en": "Whether there is rum near the match"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_F",
+        "label": {
+          "zh-TW": "朗姆酒附近是否有其他易燃物",
+          "en": "Whether there is more flammable material near the rum"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_LI",
+        "label": {
+          "zh-TW": "船是否由勞合社承保",
+          "en": "Whether Lloyd's insures the ship"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_EU",
+        "label": {
+          "zh-TW": "主管是否精神不穩定",
+          "en": "Whether the executive is mentally unstable"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "M",
+        "label": {
+          "zh-TW": "火柴點燃了",
+          "en": "The match is lit"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "R",
+        "label": {
+          "zh-TW": "附近有朗姆酒",
+          "en": "There is rum nearby"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "RI",
+        "label": {
+          "zh-TW": "朗姆酒著火",
+          "en": "The rum ignites"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "F",
+        "label": {
+          "zh-TW": "附近還有其他易燃物",
+          "en": "There is more flammable material nearby"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SD",
+        "label": {
+          "zh-TW": "船被燒毀",
+          "en": "The ship is destroyed"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "LI",
+        "label": {
+          "zh-TW": "船由勞合社承保",
+          "en": "Lloyd's insures the ship"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "LL",
+        "label": {
+          "zh-TW": "勞合社蒙受損失",
+          "en": "Lloyd's suffers a loss"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "EU",
+        "label": {
+          "zh-TW": "主管精神不穩定",
+          "en": "The executive is mentally unstable"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "ES",
+        "label": {
+          "zh-TW": "主管自殺",
+          "en": "The executive commits suicide"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "M": "U_M",
+      "R": "U_R",
+      "F": "U_F",
+      "LI": "U_LI",
+      "EU": "U_EU",
+      "RI": "M and R",
+      "SD": "RI and F",
+      "LL": "SD and LI",
+      "ES": "LL and EU"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_M": 0.5,
+      "U_R": 0.3,
+      "U_F": 0.5,
+      "U_LI": 0.6,
+      "U_EU": 0.1
+    }
+  }
+}
