@@ -23,6 +23,7 @@ import { EquationPanel } from '../panels/EquationBox.tsx'
 import { GraphBox } from '../panels/GraphBox.tsx'
 import { SliderList } from '../panels/SliderList.tsx'
 import type { FigureBlock } from '../shared/FigureTabs.tsx'
+import { heightAtInitialBlock } from '../shared/tab-height.ts'
 import { DocProblems, Segmented, Tip } from '../shared/parts.tsx'
 import { Rich } from '../text/typeset.tsx'
 import { DecisionBars } from './DecisionBars.tsx'
@@ -225,19 +226,6 @@ function PlaygroundFor({
     sameAssignment(interventions, s.interventions) &&
     sameAssignment(holding, s.hold)
   const src = embedded || embedUrl === false ? undefined : (embedUrl ?? (caseId === undefined ? undefined : `${DEFAULT_EMBED_BASE}case/${encodeURIComponent(caseId)}/`))
-  const embed =
-    src === undefined
-      ? undefined
-      : (): string =>
-          embedCode({
-            src: embedSrc(src, { interventions, stochastic, observed }, window.location.pathname, t.locale),
-            title: c.data.title[t.locale],
-            // The figure as it stands, plus the credit line the embed page adds under it.
-            height: (root.current?.offsetHeight ?? 640) + 72,
-            locale: t.locale,
-            url: exportUrl,
-            origins: originCitations(c),
-          })
   // Under the graph, one block at a time: the figure's own (verdicts, expected utility, paths) open at first, the equations closed.
   const blocks: FigureBlock[] = []
   if (verdicts !== undefined) {
@@ -272,6 +260,21 @@ function PlaygroundFor({
     label: t.equations,
     children: <EquationPanel c={c} world={world} interventions={interventions} stochastic={stochastic} observed={observed} reading={reading} notation={notation} onNotation={setNotation} defaults={defaults} />,
   })
+  const initialBlock = blocks.find((b) => b.id !== 'equations')?.id
+  const embed =
+    src === undefined
+      ? undefined
+      : (): string =>
+          embedCode({
+            src: embedSrc(src, { interventions, stochastic, observed }, window.location.pathname, t.locale),
+            title: c.data.title[t.locale],
+            // The figure as it stands, plus the credit line the embed page adds under it.
+            // The embed page starts with the figure's own block open, whatever is open here.
+            height: heightAtInitialBlock(root.current, initialBlock, 640) + 72,
+            locale: t.locale,
+            url: exportUrl,
+            origins: originCitations(c),
+          })
   return (
     <div className="ca-root not-prose ca-playground" data-case={c.data.id} lang={t.locale} ref={root}>
       <div className="ca-panel">
@@ -381,7 +384,7 @@ function PlaygroundFor({
             </div>
           }
           blocks={blocks}
-          initialBlock={blocks.find((b) => b.id !== 'equations')?.id}
+          initialBlock={initialBlock}
         />
       </div>
       {embedded && <EmbedCredit c={c} url={exportUrl ?? DEFAULT_URL} />}
