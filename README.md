@@ -2,6 +2,9 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.4.2
+The reading switch is labelled 「視角」 (en "View") and shows one line under it for the chosen reading: 干預 「點選的是干預之後看到的結果」, 反事實 「點選的是實際發生過的事，再問：假如當初……會怎樣」.
+
 ## 0.4.1
 The playground reading switch reads 「干預｜反事實」 (en "Intervention | Counterfactual").
 
@@ -113,7 +116,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.4.1) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.4.2) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -388,9 +391,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.4.1 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.4.2 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.4.1) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.4.2) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -399,7 +402,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.4.1},
+  version = {0.4.2},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

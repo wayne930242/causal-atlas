@@ -329,7 +329,7 @@ const ZH = {
   observing: (event: string): string => `觀察 ${event}`,
   comparePick: '切換比較的值',
   notRecomputed: '尚未重算',
-  readingLabel: '讀法',
+  readingLabel: '視角',
   dsep: {
     pairs: '路徑的兩端',
     pair: (x: string, y: string): string => `${x} 與 ${y}`,
@@ -412,6 +412,7 @@ const ZH = {
     heldPlain: '固定',
   },
   reading: { interventional: '干預', counterfactual: '反事實' },
+  readingHint: { interventional: '點選的是干預之後看到的結果', counterfactual: '點選的是實際發生過的事，再問：假如當初……會怎樣' },
   actually: (value: string): string => `實際 ${value}`,
   cf: {
     kicker: '反事實',
@@ -859,7 +860,7 @@ const EN: Messages = {
   probGraphTitle: (title) => `${title}: the probability that each variable equals 1`,
   comparePick: 'Switch the compared value',
   notRecomputed: 'not yet recomputed',
-  readingLabel: 'Reading',
+  readingLabel: 'View',
   dsep: {
     pairs: 'Ends of the paths',
     pair: (x, y) => `${x} and ${y}`,
@@ -942,6 +943,7 @@ const EN: Messages = {
     heldPlain: 'held',
   },
   reading: { interventional: 'Intervention', counterfactual: 'Counterfactual' },
+  readingHint: { interventional: 'Clicks show what is seen after the intervention', counterfactual: 'Clicks are what actually happened; then ask: what if things had been different?' },
   actually: (value) => `actually ${value}`,
   cf: {
     kicker: 'Counterfactual',

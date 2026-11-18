@@ -290,16 +290,26 @@ function PlaygroundFor({
                   onChange={(v) => setPairAt(Number(v))}
                 />
               )}
-              <Segmented
-                className="ca-reading"
-                label={t.readingLabel}
-                options={[
-                  { value: 'interventional', label: t.reading.interventional },
-                  { value: 'counterfactual', label: t.reading.counterfactual },
-                ]}
-                value={reading}
-                onChange={switchReading}
-              />
+              <div className="ca-reading-box">
+                <div className="ca-reading-row">
+                  <span className="ca-reading-label" aria-hidden="true">
+                    {t.readingLabel}
+                  </span>
+                  <Segmented
+                    className="ca-reading"
+                    label={t.readingLabel}
+                    options={[
+                      { value: 'interventional', label: t.reading.interventional },
+                      { value: 'counterfactual', label: t.reading.counterfactual },
+                    ]}
+                    value={reading}
+                    onChange={switchReading}
+                  />
+                </div>
+                <p className="ca-reading-hint" aria-live="polite">
+                  {t.readingHint[reading]}
+                </p>
+              </div>
               </>
             ) : undefined
           }

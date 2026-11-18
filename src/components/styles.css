@@ -2334,6 +2334,31 @@
   white-space: nowrap;
 }
 
+.ca-reading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.ca-reading-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ca-reading-label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.ca-reading-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-align: right;
+}
+
 /* ---- playground verdicts ---- */
 
 .ca-pg-verdicts {

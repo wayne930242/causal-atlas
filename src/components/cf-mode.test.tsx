@@ -15,19 +15,29 @@ const readout = (container: HTMLElement, id: string): string => node(container, 
 const note = (container: HTMLElement, id: string): string | null => node(container, id).querySelector('[data-note]')?.textContent ?? null
 const chip = (container: HTMLElement): string | null => container.querySelector('.ca-do-chip')?.getAttribute('data-text') ?? null
 const mode = (container: HTMLElement, name: string): HTMLElement =>
-  within(within(container).getByRole('group', { name: '讀法' })).getByRole('button', { name })
+  within(within(container).getByRole('group', { name: '視角' })).getByRole('button', { name })
 
 const nervous = lessonModel('m00-firing-squad-nervous')
 const lesson07 = [{ label: 'D=1, A←0', observed: { D: 1 }, interventions: { A: 0 } }]
 
 describe('playground reading: 干預｜反事實', () => {
+  it('shows the label 視角 and a one-line hint for the chosen reading', () => {
+    const { container } = render(<CausalPlayground doc={nervous} />)
+    const box = container.querySelector('.ca-reading-box')
+    expect(box?.querySelector('.ca-reading-label')?.textContent).toBe('視角')
+    expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('點選的是干預之後看到的結果')
+    fireEvent.click(mode(container, '反事實'))
+    expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('點選的是實際發生過的事，再問：假如當初……會怎樣')
+  })
+
+
   it('appears on probability graphs only', () => {
     const prob = render(<CausalPlayground doc={nervous} />)
     expect(mode(prob.container, '干預').getAttribute('aria-pressed')).toBe('true')
     expect(mode(prob.container, '反事實').getAttribute('aria-pressed')).toBe('false')
     prob.unmount()
     const values = render(<CausalPlayground caseId="forest-fire-disjunctive" />)
-    expect(within(values.container).queryByRole('group', { name: '讀法' })).toBeNull()
+    expect(within(values.container).queryByRole('group', { name: '視角' })).toBeNull()
   })
 
   it('lesson 07: the same settings read 1.00 after do() then observing, 0.92 as a counterfactual', () => {
