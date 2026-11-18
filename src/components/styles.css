@@ -587,6 +587,21 @@
   }
 }
 
+.ca-export-embed {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.ca-embed-credit {
+  margin-top: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.ca-embed-credit p {
+  margin: 0.125rem 0;
+}
+
 .ca-notice {
   margin: 0.5rem 0 0;
   font-size: 0.875rem;

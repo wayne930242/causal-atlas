@@ -13,6 +13,8 @@ export interface ExportMenuProps {
   readonly url?: string
   /** Full citations of the case's origin sources; the academic style's reminder lists them. */
   readonly origins?: readonly string[]
+  /** Builds the embed code (iframe and citation) at click time; given, the menu offers to copy it. */
+  readonly embedCode?: () => string
 }
 
 const LANGUAGES = (Object.keys(LANGUAGE_NAMES) as Locale[]).map((value) => ({ value, label: LANGUAGE_NAMES[value] }))
@@ -21,7 +23,7 @@ const LANGUAGES = (Object.keys(LANGUAGE_NAMES) as Locale[]).map((value) => ({ va
  * 「下載圖片」: format, theme (default: the page's) and language (default: the component's), then
  * download. Client only on click.
  */
-export function ExportMenu({ source, url, origins = [] }: ExportMenuProps) {
+export function ExportMenu({ source, url, origins = [], embedCode }: ExportMenuProps) {
   const t = useMessages()
   const [open, setOpen] = useState(false)
   const [format, setFormat] = useState<ExportFormat>('png')
@@ -105,17 +107,26 @@ export function ExportMenu({ source, url, origins = [] }: ExportMenuProps) {
               {error}
             </p>
           )}
+          {embedCode !== undefined && (
+            <div className="ca-export-embed" role="note">
+              <p className="ca-small">{t.export.embedLead}</p>
+              <div className="ca-export-copy">
+                <CopyButton text={embedCode} label={t.export.copyEmbed} />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   )
 }
 
-function CopyButton({ text, label }: { readonly text: string; readonly label: string }) {
+/** Copies `text` (or what it builds at click time). */
+function CopyButton({ text, label }: { readonly text: string | (() => string); readonly label: string }) {
   const t = useMessages()
   const [copied, setCopied] = useState(false)
   const copy = (): void => {
-    void navigator.clipboard?.writeText(text).then(() => setCopied(true))
+    void navigator.clipboard?.writeText(typeof text === 'string' ? text : text()).then(() => setCopied(true))
   }
   return (
     <button type="button" className="ca-btn ca-btn-outline" onClick={copy}>

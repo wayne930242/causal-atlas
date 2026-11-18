@@ -41,6 +41,8 @@ export interface GraphBoxProps {
   readonly exportUrl?: string
   /** Node drag in the editor: grid offset in columns and rows. */
   readonly onMove?: (id: string, dCol: number, dRow: number) => void
+  /** Builds the embed code (iframe and citation) for the figure as it stands; the export menu offers it when given. */
+  readonly embedCode?: () => string
 }
 
 const NONE: Stochastic = {}
@@ -80,6 +82,7 @@ export function GraphBox({
   title,
   exportUrl,
   onMove,
+  embedCode,
 }: GraphBoxProps) {
   const t = useMessages()
   const [notice, setNotice] = useState<string | undefined>(undefined)
@@ -193,7 +196,7 @@ export function GraphBox({
               {prob ? t.backToPrior : t.backToActual}
             </button>
           )}
-          <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} />
+          <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} embedCode={embedCode} />
         </div>
       </div>
       <div className="ca-graph-wrap" ref={wrap}>
