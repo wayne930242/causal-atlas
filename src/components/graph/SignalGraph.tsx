@@ -4,19 +4,18 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Edge, Value } from '../../engine/index.ts'
 import { getVariable } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
-import type { Anchor, Box, Placed } from './graph-labels.ts'
-import { around, firstClear, intersects, placePop, rectBox, segmentHitsBox, shifted, textBox } from './graph-labels.ts'
+import { around, placePop, shifted } from './graph-labels.ts'
 import type { NodeToggle } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
 import { Tip } from '../shared/parts.tsx'
 import { sub } from '../text/svg-text.tsx'
 import type { PathMarks } from '../model/dsep-view.ts'
 import type { Stochastic } from '../model/assignments.ts'
-import { arcCurve, edgeLive, edgePolarity, graphSpacing, gridLayout, latentArcs, planArcs, shownEdges } from './graph-layout.ts'
-import { assignmentText, idWithName, probText, shortLabel } from '../model/wording.ts'
+import { idWithName, probText, shortLabel } from '../model/wording.ts'
 import { barLayout, textWidth } from '../text/text-measure.ts'
-import type { Block, Point, Readout } from './signal-shapes.ts'
-import { BAR_H, BAR_LABEL, EXO_INSET, arrowHead, blockOptions, clampPath, exoDash, snap, unit } from './signal-shapes.ts'
+import { layoutSignalGraph } from './signal-geometry.ts'
+import type { Block, Point } from './signal-shapes.ts'
+import { BAR_H, BAR_LABEL, EXO_INSET, arrowHead, clampPath, exoDash, snap } from './signal-shapes.ts'
 
 export interface SignalGraphProps {
   readonly c: LoadedCase
@@ -171,25 +170,33 @@ export function SignalGraph(props: SignalGraphProps) {
       document.removeEventListener('keydown', escape)
     }
   }, [picking])
-  const prob = probs !== undefined
-  const { r: R, col: COL, row: ROW } = graphSpacing(prob, props.compact === true)
-  const PAD_X = props.compact === true ? 60 : 96
-  const PAD_Y = 72
-  const grid = gridLayout(c, shown)
-  const cells = [...grid.values()]
-  const minCol = Math.min(...cells.map((p) => p.col))
-  const maxCol = Math.max(...cells.map((p) => p.col))
-  const minRow = Math.min(...cells.map((p) => p.row))
-  const maxRow = Math.max(...cells.map((p) => p.row))
-  const width = PAD_X * 2 + (maxCol - minCol) * COL
-  const hasWitness = witness !== undefined && Object.keys(witness).length > 0
+  const layout = layoutSignalGraph(
+    {
+      c,
+      shown,
+      values,
+      original,
+      probs,
+      dists,
+      probNotes,
+      observedValues,
+      evidence,
+      interventions,
+      stochastic,
+      removedEdges,
+      witness,
+      holdNotes,
+      defaults,
+      paths,
+      clamped,
+      compact: props.compact === true,
+      drag,
+    },
+    t,
+  )
+  const { prob, r: R, col: COL, row: ROW, pos, blocks, arcs, hull, left, top, width: viewW, height } = layout
   const barred = (id: string): boolean => prob && getVariable(c.model, id).domain.kind === 'finite'
-  const layoutHeight = PAD_Y * 2 + (maxRow - minRow) * ROW + (hasWitness ? 40 : 0)
-  const pos = new Map<string, Point>()
-  for (const [id, p] of grid) {
-    const off = drag?.id === id ? drag : undefined
-    pos.set(id, { x: PAD_X + (p.col - minCol) * COL + (off?.dx ?? 0), y: PAD_Y + (p.row - minRow) * ROW + (off?.dy ?? 0) })
-  }
+
   const toSvg = (e: PointerEvent): Point => {
     const ctm = svgRef.current?.getScreenCTM?.()
     if (ctm === null || ctm === undefined) return { x: e.clientX, y: e.clientY }
@@ -223,274 +230,25 @@ export function SignalGraph(props: SignalGraphProps) {
     const dRow = snap(drag.dy / ROW)
     if (dCol !== 0 || dRow !== 0) onMove?.(drag.id, dCol, dRow)
   }
-  const cut = new Set(removedEdges.map((e) => `${e.from}>${e.to}`))
-  const edges = shownEdges(c.model.edges, shown)
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
-  // The tag beside a set node: `X←1` for do(), `P(X=1)=0.30` for a stochastic do(), `X=1` observed.
-  const doTag = (id: string): { text: string; box: Box; left: boolean; seen: boolean } | undefined => {
-    const forced = interventions[id]
-    const soft = stochastic[id]
-    const seen = observedValues[id]
-    if (forced === undefined && soft === undefined && (seen === undefined || evidence)) return undefined
-    if (witness !== undefined && id in witness) return undefined
-    const text =
-      forced !== undefined ? `${id}←${formatValue(forced)}` : soft !== undefined ? `P(${id}=1)=${probText(soft)}` : `${id}=${formatValue(seen as Value)}`
-    const w = textWidth(text, 12) + 18
-    const left = (grid.get(id)?.col ?? 0) === maxCol
-    return { text, left, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
-  }
-
-  /** 固定（實際 v） or 固定（實際值） for a held variable, when `holdNotes`. */
-  const holdNote = (id: string): string | undefined => {
-    if (!holdNotes || witness === undefined || !(id in witness)) return undefined
-    // A probability graph has no actual world to compare with.
-    if (prob) return t.witness.heldPlain
-    const before = original?.[id]
-    const now = values?.[id] ?? witness[id]
-    return before === undefined || valuesEqual(before, now) ? t.witness.heldActual : t.witness.held(formatValue(before))
-  }
-
-  /** 偏離（預設 v） for a node of a graph with values off its default. */
-  const deviantNote = (id: string): string | undefined => {
-    const normal = defaults?.[id]
-    const now = values?.[id]
-    if (prob || normal === undefined || now === undefined || valuesEqual(now, normal)) return undefined
-    return t.normality.deviant(formatValue(normal))
-  }
-
-  // Each node's label and readout form one block right under it; only when that block touches an
-  // edge, another node, a do tag or an earlier block, or leaves the graph's sides, does the whole
-  // block go above the node (when that touches less).
-  const placedBoxes: Box[] = []
-  const blocks = new Map<string, Block>()
-  const fixed: Box[] = []
-  const tagBoxes: Box[] = []
-  for (const id of shown) {
-    const p = pos.get(id)
-    if (p === undefined) continue
-    fixed.push(around(p.x, p.y, R + 3))
-    const tag = doTag(id)
-    if (tag !== undefined) {
-      fixed.push(shifted(tag.box, p.x, p.y))
-      tagBoxes.push(shifted(tag.box, p.x, p.y))
-    }
-  }
-  // An arc ends where its child is cut: do() on a child (or a cut edge from the latent cause) removes
-  // that end, so the arc is gone (Pearl's G with the arrows into X removed).
-  const endCut = (via: string, id: string): boolean => cut.has(`${via}>${id}`) || id in interventions || id in stochastic || clamped.includes(id)
-  const arcPlans = planArcs(
-    latentArcs(c, shown).filter((a) => !endCut(a.via, a.a) && !endCut(a.via, a.b)),
-    pos,
-    edges,
-    R,
-    tagBoxes,
-  )
-  const arcSegments = arcPlans.map((a) => arcCurve(a.start, a.control, a.end, 12))
-  for (const id of shown) {
-    const p = pos.get(id)
-    if (p === undefined) continue
-    const variable = getVariable(c.model, id)
-    const note = holdNote(id) ?? probNotes?.[id]
-    const noteW = note === undefined ? undefined : textWidth(note, 12)
-    const deviant = deviantNote(id)
-    let readout: Readout = { kind: 'none', noteW, note2W: deviant === undefined ? undefined : textWidth(deviant, 11) }
-    if (barred(id) && variable.domain.kind === 'finite') {
-      const known = (dists?.[id] ?? []).filter((x) => !Number.isNaN(x))
-      const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known))), 11)
-      readout = { kind: 'bars', width: barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width, maxW, noteW }
-    } else if (prob) readout = { kind: 'number', noteW }
-    const labelW = textWidth(idWithName(id, nameOf(id)), 14)
-    const touches = (b: Block): number => {
-      let n = 0
-      for (const local of b.boxes) {
-        const box = shifted(local, p.x, p.y)
-        if (box.x0 < 0 || box.x1 > width) n += 1
-        for (const e of edges) {
-          const a = pos.get(e.from)
-          const q = pos.get(e.to)
-          if (a !== undefined && q !== undefined && segmentHitsBox(a, q, box)) n += 1
-        }
-        for (const curve of arcSegments) {
-          for (let i = 0; i + 1 < curve.length; i++) if (segmentHitsBox(curve[i], curve[i + 1], box)) n += 1
-        }
-        // The node's own circle and do tag never meet its block, above or below.
-        for (const o of [...fixed, ...placedBoxes]) if (intersects(box, o, 0)) n += 1
-      }
-      return n
-    }
-    const [below, above] = blockOptions(R, labelW, readout)
-    const hitsBelow = touches(below)
-    const block = hitsBelow > 0 && touches(above) < hitsBelow ? above : below
-    blocks.set(id, block)
-    for (const b of block.boxes) placedBoxes.push(shifted(b, p.x, p.y))
-  }
-
-  // What a floating edge label must stay clear of: every node, its label block, its do tag; and
-  // the edge labels already placed.
-  const obstacles: Box[] = [...placedBoxes]
-  for (const id of shown) {
-    const p = pos.get(id)
-    if (p === undefined) continue
-    const local: Box[] = [around(0, 0, R + 6)]
-    const tag = doTag(id)
-    if (tag !== undefined) local.push(tag.box)
-    const before = original?.[id]
-    const now = values?.[id]
-    if (holdNote(id) === undefined && !prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
-      local.push(textBox(R + 14, R + 14, 'start', textWidth(t.was(formatValue(before)), 12), 12))
-    }
-    for (const b of local) obstacles.push(shifted(b, p.x, p.y))
-  }
-  // Each arc says what it is in one short label by its middle, off the nodes, their labels and the edges;
-  // the longer explanation is its tooltip.
-  const arcLabelW = textWidth(t.arc.label, 12)
-  const arcs = arcPlans.map((plan) => {
-    const curve = arcCurve(plan.start, plan.control, plan.end, 40)
-    const candidates: Placed[] = []
-    for (const side of [1, -1]) {
-      for (const i of [20, 16, 24, 12, 28]) {
-        const q = curve[i]
-        const nx = plan.bulge.x * side
-        const ny = plan.bulge.y * side
-        const away = 8 + Math.abs(nx) * (arcLabelW / 2) + Math.abs(ny) * 7
-        const x = q.x + nx * away
-        const y = q.y + ny * away + 4
-        candidates.push({ x, y, anchor: 'middle', box: textBox(x, y, 'middle', arcLabelW, 12) })
-      }
-    }
-    const offEdges = candidates.filter((cand) =>
-      edges.every((e) => {
-        const p = pos.get(e.from)
-        const q = pos.get(e.to)
-        return p === undefined || q === undefined || !segmentHitsBox(p, q, cand.box)
-      }),
-    )
-    const label = firstClear(offEdges.length > 0 ? offEdges : candidates, obstacles)
-    obstacles.push(label.box)
-    return { plan, curve, label }
-  })
-  // Edge labels placed later keep off the arcs too.
-  for (const { curve } of arcs) {
-    for (let i = 0; i + 1 < curve.length; i += 2) {
-      const [p, q] = [curve[i], curve[Math.min(i + 2, curve.length - 1)]]
-      obstacles.push({ x0: Math.min(p.x, q.x) - 2, y0: Math.min(p.y, q.y) - 2, x1: Math.max(p.x, q.x) + 2, y1: Math.max(p.y, q.y) + 2 })
-    }
-  }
-  // The drawing grows to hold every block: above the top row, below the bottom one, and past the
-  // sides when a wide one (bars with their largest probability) reaches beyond the margin.
-  let top = 0
-  let bottom = layoutHeight
-  let left = 0
-  let right = width
-  for (const id of shown) {
-    const p = pos.get(id)
-    const block = blocks.get(id)
-    if (p === undefined || block === undefined) continue
-    for (const b of block.boxes) {
-      top = Math.min(top, p.y + b.y0 - 8)
-      bottom = Math.max(bottom, p.y + b.y1 + 12)
-      left = Math.min(left, p.x + b.x0 - 8)
-      right = Math.max(right, p.x + b.x1 + 8)
-    }
-  }
-  for (const { curve, label } of arcs) {
-    for (const q of curve) {
-      top = Math.min(top, q.y - 8)
-      bottom = Math.max(bottom, q.y + 12)
-      left = Math.min(left, q.x - 8)
-      right = Math.max(right, q.x + 8)
-    }
-    top = Math.min(top, label.box.y0 - 6)
-    bottom = Math.max(bottom, label.box.y1 + 8)
-    left = Math.min(left, label.box.x0 - 8)
-    right = Math.max(right, label.box.x1 + 8)
-  }
-  top = Math.floor(top)
-  left = Math.floor(left)
-  const height = Math.ceil(bottom - top)
-  const viewW = Math.ceil(right - left)
-  const claim = (placed: Placed): Placed => {
-    obstacles.push(placed.box)
-    return placed
-  }
-
-  const edgeEls = edges.map((e) => {
-    const a = pos.get(e.from)
-    const b = pos.get(e.to)
-    if (a === undefined || b === undefined) return null
-    const { ux, uy } = unit(a, b)
-    const x1 = a.x + R * ux
-    const y1 = a.y + R * uy
-    const polarity = edgePolarity(c.model, e.from, e.to)
-    const key = `${e.from}>${e.to}`
-    if (cut.has(key)) {
-      const x2 = b.x - (R + 2) * ux
-      const y2 = b.y - (R + 2) * uy
-      const mx = (x1 + x2) / 2
-      const my = (y1 + y2) / 2
-      const nx = -uy
-      const ny = ux
-      const slash = (cx: number, cy: number): string =>
-        `M${cx - 10 * nx - 3 * ux} ${cy - 10 * ny - 3 * uy}L${cx + 10 * nx + 3 * ux} ${cy + 10 * ny + 3 * uy}`
-      // 切斷 goes beside the gap, on the side (and distance) where nothing else is.
-      const cutCandidates: Placed[] = []
-      for (const dist of [18, 28]) {
-        for (const side of [1, -1]) {
-          const x = mx + side * dist * uy
-          const y = my - side * dist * ux + 4
-          const anchor: Anchor = side * uy > 0.3 ? 'start' : side * uy < -0.3 ? 'end' : 'middle'
-          cutCandidates.push({ x, y, anchor, box: textBox(x, y, anchor, textWidth(t.cut, 12), 12) })
-        }
-      }
-      // Nor on an edge still drawn, so the mark is read on the edge it cuts.
-      const offEdges = cutCandidates.filter((cand) =>
-        edges.every((o) => {
-          const p = pos.get(o.from)
-          const q = pos.get(o.to)
-          return cut.has(`${o.from}>${o.to}`) || p === undefined || q === undefined || !segmentHitsBox(p, q, cand.box)
-        }),
-      )
-      const cutLabel = claim(firstClear(offEdges.length > 0 ? offEdges : cutCandidates, obstacles))
+  const edgeEls = layout.edges.map((edge) => {
+    if (edge.kind === 'cut') {
+      const { key, x1, y1, x2, y2, mx, my, ux, uy, label: cutLabel } = edge
       return (
         <g key={key} className="ca-edge ca-edge-cut" data-edge={key} data-state="cut">
           <line x1={x1} y1={y1} x2={mx - 10 * ux} y2={my - 10 * uy} className="ca-stroke-cut" />
           <line x1={mx + 10 * ux} y1={my + 10 * uy} x2={x2} y2={y2} className="ca-stroke-cut" />
-          <path d={slash(mx - 4 * ux, my - 4 * uy) + slash(mx + 4 * ux, my + 4 * uy)} className="ca-stroke-slash" />
+          <path d={edge.slash} className="ca-stroke-slash" />
           <text x={cutLabel.x} y={cutLabel.y} className="ca-svg-small ca-svg-bold" textAnchor={cutLabel.anchor}>
             {t.cut}
           </text>
         </g>
       )
     }
-    const live = edgeLive(values, e.from)
-    const onPath = paths?.open.has(key) === true ? 'open' : paths?.blocked.has(key) === true ? 'blocked' : undefined
-    const cls = `${live ? 'ca-stroke-live' : 'ca-stroke-idle'}${onPath === undefined ? '' : ` ca-path-${onPath}`}`
-    if (polarity === 'inhibit') {
-      const x2 = b.x - (R + 7) * ux
-      const y2 = b.y - (R + 7) * uy
-      // ¬X sits by the line; when that spot is taken it slides along the edge or switches sides.
-      const text = `¬${e.from}`
-      const width = textWidth(text, 12)
-      const inhibitCandidates: Placed[] = []
-      {
-        const x = a.x + (b.x - a.x) * 0.55 + 14 * Math.abs(uy) + 4
-        const y = a.y + (b.y - a.y) * 0.55 - 12 * Math.abs(ux)
-        inhibitCandidates.push({ x, y, anchor: 'start', box: textBox(x, y, 'start', width, 12) })
-      }
-      for (const t of [0.55, 0.45, 0.65, 0.35, 0.72, 0.28]) {
-        for (const side of [1, -1]) {
-          const nx = -uy * side
-          const ny = ux * side
-          const away = 8 + Math.abs(nx) * (width / 2) + Math.abs(ny) * 7
-          const cx = a.x + (b.x - a.x) * t + nx * away
-          const cy = a.y + (b.y - a.y) * t + ny * away
-          const x = cx - width / 2
-          const y = cy + 4
-          inhibitCandidates.push({ x, y, anchor: 'start', box: textBox(x, y, 'start', width, 12) })
-        }
-      }
-      const inhibitLabel = claim(firstClear(inhibitCandidates, obstacles))
+    const { key, x1, y1, x2, y2, live, onPath, cls } = edge
+    if (edge.kind === 'inhibit') {
+      const { ux, uy, text, label: inhibitLabel } = edge
       return (
         <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath}>
           <line x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />
@@ -501,8 +259,6 @@ export function SignalGraph(props: SignalGraphProps) {
         </g>
       )
     }
-    const x2 = b.x - (R + 2) * ux
-    const y2 = b.y - (R + 2) * uy
     return (
       <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath}>
         <line
@@ -543,26 +299,6 @@ export function SignalGraph(props: SignalGraphProps) {
       </g>
     )
   })
-
-  let hull: { x: number; y: number; w: number; h: number; text: string } | undefined
-  if (witness !== undefined && Object.keys(witness).length > 0) {
-    const pts = Object.keys(witness)
-      .map((id) => pos.get(id))
-      .filter((p): p is Point => p !== undefined)
-    if (pts.length > 0) {
-      const pad = R + 14
-      const x = Math.min(...pts.map((p) => p.x)) - pad - 20
-      const y = Math.min(...pts.map((p) => p.y)) - pad
-      hull = {
-        x,
-        y,
-        w: Math.max(...pts.map((p) => p.x)) + pad + 20 - x,
-        // Include the label under the node, and its 固定 note.
-        h: Math.max(...pts.map((p) => p.y)) + R + (holdNotes ? 50 : 34) + (Object.keys(witness).some((id) => deviantNote(id) !== undefined) ? 18 : 0) - y,
-        text: t.witnessHold(assignmentText(witness)),
-      }
-    }
-  }
 
   const nodeEls = shown.map((id) => {
     const p = pos.get(id)
@@ -692,7 +428,9 @@ export function SignalGraph(props: SignalGraphProps) {
     const exo = variable.kind === 'exogenous'
     const inner = exo ? R - EXO_INSET : R
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * inner * pv : 0
-    const tag = doTag(id)
+    const tag = layout.tags.get(id)
+    const hold = layout.holdNotes.get(id)
+    const deviant = layout.deviantNotes.get(id)
     return (
       <g
         key={id}
@@ -792,9 +530,9 @@ export function SignalGraph(props: SignalGraphProps) {
             </text>
           </g>
         )}
-        {holdNote(id) !== undefined ? (
+        {hold !== undefined ? (
           <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-svg-bold ca-fill-amber" data-held={id}>
-            {holdNote(id)}
+            {hold}
           </text>
         ) : (
           changed && (
@@ -803,17 +541,17 @@ export function SignalGraph(props: SignalGraphProps) {
             </text>
           )
         )}
-        {deviantNote(id) !== undefined && (
+        {deviant !== undefined && (
           <g className="ca-deviant" data-deviant={id}>
             <rect
-              x={-(textWidth(deviantNote(id) ?? '', 11) + 8) / 2}
+              x={-(textWidth(deviant ?? '', 11) + 8) / 2}
               y={block.note2Y - 11}
-              width={textWidth(deviantNote(id) ?? '', 11) + 8}
+              width={textWidth(deviant ?? '', 11) + 8}
               height={15}
               className="ca-deviant-box"
             />
             <text y={block.note2Y} textAnchor="middle" className="ca-svg-tiny ca-svg-bold">
-              {deviantNote(id)}
+              {deviant}
             </text>
           </g>
         )}
@@ -828,7 +566,7 @@ export function SignalGraph(props: SignalGraphProps) {
                 {probText(pv ?? Number.NaN)}
               </text>
             )}
-        {prob && probNotes?.[id] !== undefined && holdNote(id) === undefined && (
+        {prob && probNotes?.[id] !== undefined && hold === undefined && (
           <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted" data-note={id}>
             {probNotes[id]}
           </text>
