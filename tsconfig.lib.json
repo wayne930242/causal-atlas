@@ -10,5 +10,5 @@
     "outDir": "./dist/types"
   },
   "include": ["src/components", "src/engine", "src/data"],
-  "exclude": ["src/data/node-shim.d.ts", "src/**/*.test.ts", "src/**/*.test.tsx", "src/engine/test-models.ts"]
+  "exclude": ["src/data/node-shim.d.ts", "src/**/*.test.ts", "src/**/*.test.tsx", "src/engine/test-models.ts", "src/components/golden"]
 }
