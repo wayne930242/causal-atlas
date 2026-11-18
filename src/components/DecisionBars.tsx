@@ -64,7 +64,7 @@ export function DecisionBars({ c, problem, observed, interventions }: DecisionBa
           label={t.moreInfo}
           tip={
             <>
-              {utilityLines.join('；')}
+              {t.clauses(utilityLines)}
               <br />
               EU_EDT(a) = Σ P(o | a) · U(o){t.eu.edt}
               <br />

@@ -7,6 +7,7 @@ import { lessonModel } from './lesson-models.ts'
  * (`#/interactions/<item>`, or all of them). Labels are the lessons' own, in Chinese.
  */
 const ITEMS: Readonly<Record<string, () => ReactNode>> = {
+  'adjust-calc': () => <ProbabilityPanel doc={lessonModel('m05-backdoor')} view="adjust" adjust={{ x: 'X', y: 'Y' }} />,
   'confound-slider': () => <CausalPlayground caseId="smoking-lesion" sliders={['N_S1']} decision />,
   utilities: () => (
     <>

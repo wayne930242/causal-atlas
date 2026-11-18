@@ -2552,3 +2552,47 @@
     display: none;
   }
 }
+
+/* The adjustment calculator: the verdict line under the graph and the strata table. */
+.ca-adj-line {
+  margin: 0;
+  padding: 10px 0;
+  font-size: 13px;
+}
+
+.ca-adj-ok {
+  color: var(--ca-green);
+  font-weight: 700;
+}
+
+.ca-adj-no {
+  color: var(--ca-amber-text);
+  font-weight: 700;
+}
+
+.ca-adj-table .ca-num {
+  text-align: right;
+}
+
+.ca-adj-table tfoot .ca-adj-sum :where(th, td) {
+  border-top: 2px solid var(--foreground);
+  font-weight: 700;
+}
+
+.ca-adj-table tbody tr[data-empty="true"] {
+  color: var(--muted-foreground);
+}
+
+.ca-adj-short {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .ca-adj-formula {
+    display: none;
+  }
+
+  .ca-adj-short {
+    display: inline;
+  }
+}

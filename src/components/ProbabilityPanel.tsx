@@ -16,6 +16,8 @@ import { notations } from './notation.ts'
 import { DocProblems, Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
 import { SliderList } from './SliderList.tsx'
+import type { AdjustSpec } from './AdjustPanel.tsx'
+import { AdjustPanel } from './AdjustPanel.tsx'
 import type { CounterfactualSpec } from './cf-steps.ts'
 import { CfStepper } from './CfStepper.tsx'
 import { Formula, Rich } from './typeset.tsx'
@@ -35,7 +37,7 @@ import {
   phraseOf,
 } from './view-model.ts'
 
-export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual'
+export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual' | 'adjust'
 
 export type ProbabilityPanelProps = ProbabilitySource & ProbabilityOptions
 
@@ -59,6 +61,12 @@ export interface ProbabilityOptions {
    * `{ evidence: 'D=1', do: { A: 0 }, event: 'D=0' }` for P(D_{A=0}=0 | D=1).
    */
   readonly counterfactual?: CounterfactualSpec
+  /**
+   * For `adjust`: the cause x, the effect y (its event y=1, or its first value) and the groupings
+   * the head offers (`sets`; default every grouping of the other endogenous variables, at most
+   * three of them). Each grouping shows the back-door verdict and the adjustment formula's table.
+   */
+  readonly adjust?: AdjustSpec
   /** For `counterfactual`: the question in words, beside the formula in the head. */
   readonly actionLabel?: string
   /** For `counterfactual`: the step shown first, 1 (abduction, default), 2 (action) or 3 (prediction). */
@@ -142,10 +150,12 @@ export function ProbabilityPanelFor({
   defaultNotation,
   sliders: heldSliders,
   onSliders,
+  adjust,
 }: {
   c: LoadedCase
   view?: ProbabilityView
   pair?: SeeDoPair | readonly SeeDoPair[]
+  adjust?: AdjustSpec
   counterfactual?: CounterfactualSpec
   actionLabel?: string
   initialStep?: number
@@ -179,6 +189,20 @@ export function ProbabilityPanelFor({
     return <Compare c={c} pairs={pairs} prior={prior} base={base} shown={shown} exportUrl={exportUrl} sliderSection={
       <SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />
     } />
+  }
+
+  if (view === 'adjust') {
+    if (adjust === undefined) throw new Error(`case ${c.data.id}: view="adjust" needs adjust { x, y }`)
+    return (
+      <AdjustPanel
+        c={c}
+        prior={prior}
+        spec={adjust}
+        shown={shown}
+        exportUrl={exportUrl}
+        sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />}
+      />
+    )
   }
 
   if (view === 'counterfactual') {

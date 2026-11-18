@@ -142,6 +142,8 @@ const ZH = {
   /** Splits a story into sentences. */
   sentences: (text: string): string[] => text.split(/(?<=[。？！])/),
   list: (items: readonly string[]): string => items.join('、'),
+  /** Joins clauses of one line. */
+  clauses: (items: readonly string[]): string => items.join('；'),
   sourceList: (items: readonly string[]): string => items.join('；'),
 
   // case page
@@ -343,6 +345,25 @@ const ZH = {
     noPath: '沒有路徑',
     more: (n: number): string => `另 ${n} 條`,
     tip: '已知集合就是圖上觀察的變項；有干預時，用剪掉箭頭之後的圖判斷。相依程度：已知這些值時，各種取值組合裡 |P(x,y|z) − P(x|z)P(y|z)| 的最大值，0 表示獨立。',
+  },
+  adj: {
+    tag: '調整',
+    sets: '按哪些變數分組',
+    by: (set: string): string => `分組：${set}`,
+    none: '不分組',
+    grouped: '分組',
+    all: '全體',
+    ok: '後門準則成立',
+    descendant: (id: string, x: string): string => `${id} 是 ${x} 的後代`,
+    opened: (by: string, path: string): string => `已知 ${by} 打開 ${path}`,
+    backdoor: (path: string): string => `後門 ${path} 通`,
+    equal: '＝ 干預值',
+    differ: '≠ 干預值',
+    group: '組',
+    pGroup: 'P(組)',
+    weighted: '加權和',
+    doRow: '干預',
+    tip: '後門準則（Pearl 2009，定義 3.3.1）：(i) 分組的變數都不是 X 的後代；(ii) 拿掉 X 出去的箭頭後，它們堵住 X 與 Y 之間的每一條路。兩條都成立，加權和就等於干預值。圖上只標非因果的路：通的亮起，堵住的畫虛線。一層的機率是 0，或那一層沒有某個 X 值，寫「—」：這一層沒有資料。',
   },
   normality: {
     kicker: '偏離預設值',
@@ -624,6 +645,7 @@ const EN: Messages = {
   problems: PROBLEMS_EN,
   sentences: (text) => text.split(/(?<=[.?!])\s+/),
   list: enList,
+  clauses: (items) => items.join('; '),
   sourceList: (items) => items.join('; '),
 
   family: { actual: 'Actual causation', omission: 'Omission and responsibility', norms: 'Norms and defaults', law: 'Law', decision: 'Causal decision theory' },
@@ -824,6 +846,25 @@ const EN: Messages = {
     noPath: 'no path',
     more: (n) => `${n} more`,
     tip: 'The known set is what is observed on the graph; with a do(), the graph after the cut decides. Dependence: given those values, the largest |P(x,y|z) − P(x|z)P(y|z)| over the value pairs; 0 means independent.',
+  },
+  adj: {
+    tag: 'Adjustment',
+    sets: 'Group by',
+    by: (set) => `Grouped by ${set}`,
+    none: 'No grouping',
+    grouped: 'grouped',
+    all: 'Everyone',
+    ok: 'The back-door criterion holds',
+    descendant: (id, x) => `${id} is a descendant of ${x}`,
+    opened: (by, path) => `knowing ${by} opens ${path}`,
+    backdoor: (path) => `back-door path ${path} is open`,
+    equal: '= the do() value',
+    differ: '≠ the do() value',
+    group: 'group',
+    pGroup: 'P(group)',
+    weighted: 'Weighted sum',
+    doRow: 'do()',
+    tip: 'The back-door criterion (Pearl 2009, Def. 3.3.1): (i) no grouped variable is a descendant of X; (ii) with the arrows out of X removed, they block every path between X and Y. When both hold, the weighted sum equals the do() value. Only the non-causal paths are marked: lit when open, dashed when blocked. A stratum with probability 0, or with no case of some value of X, reads —: there is no data in it.',
   },
   normality: {
     kicker: 'Deviations',
