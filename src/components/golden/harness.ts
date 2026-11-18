@@ -9,10 +9,11 @@ import type { Locale } from '../i18n/messages.ts'
 import { LocaleProvider } from '../i18n/messages.ts'
 
 /**
- * The markup baseline recorded at 0.4.2 (f64af86) for the 0.4.3 refactor round: the server markup
- * of every subject, hashed. A refactor keeps every hash; an intended change of what is drawn
- * re-records them with `GOLDEN_UPDATE=1 pnpm vitest run src/components/golden`, sets
- * `BASELINE_VERSION` to the version it records at, and says so in its commit.
+ * The markup baseline: recorded at 0.4.2 (f64af86) for the 0.4.3 refactor round, re-recorded for the 0.5.0
+ * graph-first layout. The server markup of every subject, hashed. A refactor keeps every hash; an intended
+ * change of what is drawn re-records them with `GOLDEN_UPDATE=1 pnpm vitest run src/components/golden` and
+ * says in its commit which kinds of entry changed. `BASELINE_VERSION` only names the version the citation is
+ * written as, so it stays as it is.
  */
 
 export const GOLDEN_LOCALES: readonly Locale[] = ['zh-TW', 'en']
