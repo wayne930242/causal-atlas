@@ -1,6 +1,6 @@
 /* The component explorer. Layout follows the explorer's own width (container queries), so a host column decides. */
-.ex-root {
-  container: ex / inline-size;
+.ex-root { container: ex / inline-size; }
+.ex-grid {
   display: grid;
   gap: 16px;
   grid-template-columns: minmax(0, 1fr);
@@ -108,7 +108,7 @@
 .ex-add { width: auto; }
 
 @container ex (min-width: 760px) {
-  .ex-root { grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
+  .ex-grid { grid-template-columns: 220px minmax(0, 1fr); align-items: start; }
   .ex-head { grid-column: 1 / -1; }
   .ex-pick, .ex-close { display: none; }
   .ex-nav, .ex-nav[data-open] {
@@ -126,7 +126,7 @@
   .ex-controls { grid-column: 2; grid-row: 3; }
 }
 @container ex (min-width: 1100px) {
-  .ex-root { grid-template-columns: 240px minmax(0, 1fr) 340px; }
+  .ex-grid { grid-template-columns: 240px minmax(0, 1fr) 340px; }
   .ex-nav { grid-row: 2; }
   .ex-main { grid-column: 2; grid-row: 2; }
   .ex-controls { grid-column: 3; grid-row: 2; position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow: auto; }

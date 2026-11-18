@@ -7,7 +7,9 @@ import { buildDefines } from './vite.define.ts'
 export default defineConfig({
   plugins: [react()],
   define: buildDefines,
-  // The demo site; the library build is vite.lib.config.ts.
+  // The demo site; the library build is vite.lib.config.ts. Relative base: the demo is served from a sub-path
+  // (GitHub Pages project site) and routes with the hash, so every asset URL stays relative.
+  base: './',
   build: { outDir: 'dist-demo' },
   test: {
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],

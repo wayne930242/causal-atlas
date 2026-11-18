@@ -101,7 +101,7 @@ function EventField(props: EditorProps) {
   )
 }
 
-function NumberField({ spec, value, onChange }: EditorProps) {
+function NumberField({ spec, value, fallback, onChange }: EditorProps) {
   const field = useCommitted(typeof value === 'number' ? String(value) : '', (text) => {
     if (text.trim() === '') onChange(undefined)
     else if (Number.isFinite(Number(text))) onChange(Number(text))
@@ -114,6 +114,7 @@ function NumberField({ spec, value, onChange }: EditorProps) {
       min={spec.min}
       max={spec.max}
       step={1}
+      placeholder={typeof fallback === 'number' ? String(fallback) : undefined}
       disabled={spec.disabled !== undefined}
       value={field.value}
       onChange={(e) => field.onChange(e.currentTarget.value)}
@@ -322,9 +323,10 @@ function JsonField({ spec, value, onChange, text }: EditorProps) {
   )
 }
 
-function ModesField({ spec, value, onChange, text }: EditorProps) {
+function ModesField({ spec, value, fallback, onChange, text }: EditorProps) {
   const modes = spec.modes ?? []
-  const matched = modes.find((m) => same(m.value, value) && !m.disabled)
+  const effective = value === undefined ? fallback : value
+  const matched = modes.find((m) => same(m.value, effective) && !m.disabled)
   const [custom, setCustom] = useState(false)
   const selected = custom || matched === undefined ? 'custom' : matched.id
   return (

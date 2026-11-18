@@ -149,6 +149,7 @@ export function Explorer() {
   const storyNote = state.story === undefined ? undefined : state.story
   return (
     <div className="ex-root" data-component={state.component} data-story={storyNote}>
+      <div className="ex-grid">
       <header className="ex-head">
       <div className="ex-bar">
         <h1 className="ex-title">{t.title}</h1>
@@ -176,6 +177,7 @@ export function Explorer() {
         <SnippetPanel state={state} />
       </main>
       <ControlsPanel state={state} onArg={onArg} onLang={onLang} onTheme={onTheme} />
+      </div>
     </div>
   )
 }
