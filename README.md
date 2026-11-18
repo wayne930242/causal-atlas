@@ -150,7 +150,7 @@ Every component speaks Traditional Chinese (`zh-TW`, the default) or English (`e
 one component, or wrap a page in `<LocaleProvider locale="en">`; a component's own `locale` wins. The
 language covers the interface text, the case texts (title, subtitle, story, explanation, intuition,
 variable and preset labels) and the error messages. All interface text lives in
-`src/components/i18n.ts`; a test fails when a component holds a Chinese literal of its own.
+`src/components/i18n/` (`zh.ts`, `en.ts`); a test fails when a component holds a Chinese literal of its own.
 
 Errors from the engine and the data layer carry a stable `problem`: `{ code, params, where? }`
 (`CausalAtlasError`, its subclasses `ModelError` and `ParseError`; `problemOf(error)` reads it).
