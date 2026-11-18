@@ -303,6 +303,18 @@ export function settingText(a: Assignment, s: Stochastic = {}, observed: Assignm
   return [hasDo ? doText(a, s) : '', assignmentText(observed)].filter((x) => x !== '').join(', ')
 }
 
+/**
+ * What is set, as the chip reads it: `settingText` for the interventional reading; for the
+ * counterfactual one the evidence, then 若 and the do(): `D=1 ⇒ 若 do(A=0)`.
+ */
+export function readingText(t: Messages, counterfactualReading: boolean, a: Assignment, s: Stochastic = {}, observed: Assignment = {}): string {
+  if (!counterfactualReading) return settingText(a, s, observed)
+  const hasDo = Object.keys(a).length > 0 || Object.keys(s).length > 0
+  const evidence = assignmentText(observed)
+  if (!hasDo) return evidence
+  return evidence === '' ? doText(a, s) : t.cf.head(evidence, doText(a, s))
+}
+
 /** An observation as a formula for `marginals`' `given`: `Z=1 and A='one'`; undefined when empty. */
 export function observationFormula(observed: Assignment): string | undefined {
   if (Object.keys(observed).length === 0) return undefined
@@ -688,21 +700,22 @@ export function trailText(t: Messages, id: string, trail: readonly TrailEntry[],
 export const SAME_PROBABILITY = 0.005
 
 /**
- * 原本 v under each number that moved from `base` by SAME_PROBABILITY or more; nodes that did not
- * move get no entry. The playground and the compare panel use the same rule.
+ * 原本 v (or `word`'s note) under each number that moved from `base` by SAME_PROBABILITY or more;
+ * nodes that did not move get no entry. The playground and the compare panel use the same rule.
  */
 export function changeNotes(
   t: Messages,
   base: Readonly<Record<string, number>>,
   now: Readonly<Record<string, number>>,
   shown: readonly string[],
+  word: (value: string) => string = t.was,
 ): Record<string, string> {
   const out: Record<string, string> = {}
   for (const id of shown) {
     const b = base[id]
     const n = now[id]
     if (b === undefined || n === undefined || Number.isNaN(b) || Number.isNaN(n)) continue
-    if (Math.abs(n - b) >= SAME_PROBABILITY) out[id] = t.was(probText(b))
+    if (Math.abs(n - b) >= SAME_PROBABILITY) out[id] = word(probText(b))
   }
   return out
 }

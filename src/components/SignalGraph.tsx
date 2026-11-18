@@ -41,6 +41,8 @@ export interface SignalGraphProps {
   readonly observed?: readonly string[]
   /** The observed values, written in a tag beside each observed node. */
   readonly observedValues?: Assignment
+  /** The observations are counterfactual evidence: ringed, with no tag (a 實際 v note says it instead). */
+  readonly evidence?: boolean
   readonly interventions: Assignment
   /** Stochastic interventions: P*(X=1) of a boolean node, 0 < p < 1 (drawn like a do(), with that probability). */
   readonly stochastic?: Stochastic
@@ -187,6 +189,7 @@ export function SignalGraph(props: SignalGraphProps) {
     onObserve,
     onMove,
     observedValues = {},
+    evidence = false,
   } = props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -299,7 +302,7 @@ export function SignalGraph(props: SignalGraphProps) {
     const forced = interventions[id]
     const soft = stochastic[id]
     const seen = observedValues[id]
-    if (forced === undefined && soft === undefined && seen === undefined) return undefined
+    if (forced === undefined && soft === undefined && (seen === undefined || evidence)) return undefined
     if (witness !== undefined && id in witness) return undefined
     const text =
       forced !== undefined ? `${id}←${formatValue(forced)}` : soft !== undefined ? `P(${id}=1)=${probText(soft)}` : `${id}=${formatValue(seen as Value)}`

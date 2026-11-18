@@ -306,6 +306,8 @@ const ZH = {
   observing: (event: string): string => `觀察 ${event}`,
   comparePick: '切換比較的值',
   notRecomputed: '尚未重算',
+  readingLabel: '讀法',
+  reading: { interventional: '干預後再觀察', counterfactual: '反事實' },
   actually: (value: string): string => `實際 ${value}`,
   cf: {
     kicker: '反事實',
@@ -368,6 +370,8 @@ const ZH = {
       ? '觀察：先觀察到 1，再點換成 0，第三下取消。干預：設成 1，旁邊的滑桿可以改成 0 或其他機率；Esc 關掉滑桿。'
       : '先固定在目前的值，再點換成另一個值，第三下取消；多值的節點用滑桿選值。',
   moreInfo: '說明',
+  cfHint: '點一下是實際世界的觀察；長按、右鍵或 Shift＋點是假設的干預。',
+  cfHintMore: '先依觀察回推背景，再在同樣的背景下套上干預。節點顯示假設世界的機率，「實際 v」是實際世界的值；同一個節點可以既是觀察又是干預。',
   trail: '軌跡',
   trailStep: (value: string, setting: string): string => (setting === '' ? value : `${value}（${setting}）`),
   trailLine: (id: string, steps: readonly string[], dropped: boolean): string =>
@@ -716,6 +720,8 @@ const EN: Messages = {
   probGraphTitle: (title) => `${title}: the probability that each variable equals 1`,
   comparePick: 'Switch the compared value',
   notRecomputed: 'not yet recomputed',
+  readingLabel: 'Reading',
+  reading: { interventional: 'Intervene, then observe', counterfactual: 'Counterfactual' },
   actually: (value) => `actually ${value}`,
   cf: {
     kicker: 'Counterfactual',
@@ -778,6 +784,8 @@ const EN: Messages = {
       ? 'Observing: first as 1, again as 0, a third time to release. Intervening sets it to 1, and the slider beside it sets 0 or a probability in between; Esc closes the slider.'
       : 'First at its current value, again at the other value, a third time to release; on a node with more than two values, pick the value with the slider.',
   moreInfo: 'Details',
+  cfHint: 'Click to observe the actual world; long-press, right-click or Shift+click for the supposed intervention.',
+  cfHintMore: 'The observations update the backgrounds first; the intervention then acts in those same backgrounds. Nodes show the supposed world, "actually v" the actual one; a node can be both observed and intervened on.',
   trail: 'Trail',
   trailStep: (value, setting) => (setting === '' ? value : `${value} (${setting})`),
   trailLine: (id, steps, dropped) => `${id}: ${dropped ? '… ' : ''}${steps.join(' → ')}`,

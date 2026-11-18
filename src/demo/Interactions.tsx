@@ -44,6 +44,13 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
       <ProbabilityPanel doc={lessonModel('m02-pearl-model2')} view="counterfactual" counterfactual={{ evidence: 'X=1 and Y=1', do: { X: 0 }, event: 'Y=0' }} initialStep={3} />
     </>
   ),
+  'cf-mode': () => (
+    <CausalPlayground
+      doc={lessonModel('m00-firing-squad-nervous')}
+      track={['D']}
+      presets={[{ label: '已知 D=1；若 A 沒開槍', observed: { D: 1 }, interventions: { A: 0 } }]}
+    />
+  ),
 }
 
 export function Interactions({ item }: { readonly item: string }) {

@@ -7,15 +7,16 @@ import type { Locale } from './i18n.ts'
 import { LocaleScope, useMessages } from './i18n.ts'
 import { DEFAULT_URL, watermarkLine } from './cite.ts'
 import { DEFAULT_EMBED_BASE, embedCode, embedHome, embedSrc, fitEmbedState, readEmbedState } from './embed.ts'
+import type { Reading } from './model-state.ts'
 import { solve, useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
-import { DocProblems, Tip } from './parts.tsx'
+import { DocProblems, Segmented, Tip } from './parts.tsx'
 import { Rich } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
 import { getVariable, valuesEqual } from '../engine/index.ts'
 import type { TrailEntry } from './view-model.ts'
-import { TRAIL_LENGTH, sameAssignment, settingText, trailEntry, trailText } from './view-model.ts'
+import { TRAIL_LENGTH, readingText, sameAssignment, trailEntry, trailText } from './view-model.ts'
 
 /**
  * A step button under the graph: one press sets these do()s and observations (and nothing else).
@@ -113,11 +114,21 @@ function PlaygroundFor({
   track = NO_TRACK,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
+  const [reading, setReading] = useState<Reading>('interventional')
   const { interventions, stochastic, observed, setDo, setObserved, notation, setNotation, world } = useModel(
     c,
     initialInterventions,
     defaultNotation,
+    reading,
   )
+  /** Switch the reading, keeping what is set; back to interventional, a node keeps only its do(). */
+  const switchReading = (next: Reading): void => {
+    if (next === 'interventional') {
+      const kept = Object.fromEntries(Object.entries(observed).filter(([id]) => !(id in interventions) && !(id in stochastic)))
+      if (Object.keys(kept).length !== Object.keys(observed).length) setObserved(kept)
+    }
+    setReading(next)
+  }
   const root = useRef<HTMLDivElement>(null)
   // An embed page takes its state from the address once mounted (the server has no address hash).
   useEffect(() => {
@@ -136,7 +147,7 @@ function PlaygroundFor({
   for (const id of track) getVariable(c.model, id)
   const startTrail = (): Trail => ({ entries: [trailEntry(solve(c, {}), track, '')], dropped: false })
   const [trail, setTrail] = useState<Trail>(startTrail)
-  const setting = settingText(interventions, stochastic, observed)
+  const setting = readingText(t, reading === 'counterfactual' && prob, interventions, stochastic, observed)
   if (track.length > 0 && trail.entries[trail.entries.length - 1]?.setting !== setting) {
     const entries = [...trail.entries, trailEntry(world, track, setting)]
     setTrail({ entries: entries.slice(-TRAIL_LENGTH), dropped: trail.dropped || entries.length > TRAIL_LENGTH })
@@ -182,6 +193,21 @@ function PlaygroundFor({
           exportUrl={exportUrl}
           embedCode={embed}
           onReset={() => setTrail(startTrail())}
+          reading={reading}
+          actions={
+            prob ? (
+              <Segmented
+                className="ca-reading"
+                label={t.readingLabel}
+                options={[
+                  { value: 'interventional', label: t.reading.interventional },
+                  { value: 'counterfactual', label: t.reading.counterfactual },
+                ]}
+                value={reading}
+                onChange={switchReading}
+              />
+            ) : undefined
+          }
           foot={
             <div className="ca-playground-foot">
               {track.length > 0 && (
@@ -197,7 +223,8 @@ function PlaygroundFor({
                 </ul>
               )}
               <p className="ca-hint">
-                {t.playgroundHint(prob)} <Tip tip={t.playgroundHintMore(prob)} label={t.moreInfo} />
+                {reading === 'counterfactual' && prob ? t.cfHint : t.playgroundHint(prob)}{' '}
+                <Tip tip={reading === 'counterfactual' && prob ? t.cfHintMore : t.playgroundHintMore(prob)} label={t.moreInfo} />
               </p>
               {buttons.length > 0 && (
                 <div className="ca-presets" role="group" aria-label={t.presets}>

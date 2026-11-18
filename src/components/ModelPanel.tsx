@@ -2,13 +2,13 @@ import type { ReactNode } from 'react'
 import { useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
-import { getVariable } from '../engine/index.ts'
+import { formatValue, getVariable } from '../engine/index.ts'
 import { graphExport } from './export-render.tsx'
 import type { ExportSource, ExportTag } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { messagesFor, useMessages } from './i18n.ts'
-import type { DoState, ModelWorld } from './model-state.ts'
+import type { DoState, ModelWorld, Reading } from './model-state.ts'
 import { observedNext, solve, toggled, withProbability, withValue } from './model-state.ts'
 import { useNarrow } from './use-narrow.ts'
 import { CopyLatex, Equations } from './Equations.tsx'
@@ -19,7 +19,7 @@ import { SignalGraph } from './SignalGraph.tsx'
 import { Formula, Rich } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
 import type { Stochastic } from './view-model.ts'
-import { assignmentText, changeNotes, probLegend, settingText } from './view-model.ts'
+import { assignmentText, changeNotes, probLegend, readingText } from './view-model.ts'
 
 export interface GraphBoxProps {
   readonly c: LoadedCase
@@ -51,6 +51,14 @@ export interface GraphBoxProps {
   readonly onReset?: () => void
   /** Notes under nodes that replace the 原本 v notes of a probability graph. */
   readonly notes?: Readonly<Record<string, string>>
+  /**
+   * How a probability graph reads what is set (see `Reading`). `counterfactual`: a click sets
+   * evidence about the actual world and a long press, right-click or Shift+click the hypothetical
+   * action; a node may be both; evidence nodes read 實際 v instead of a tag.
+   */
+  readonly reading?: Reading
+  /** Controls in the head, before 「回到原本」 (the playground's reading switch). */
+  readonly actions?: ReactNode
 }
 
 const NONE: Stochastic = {}
@@ -94,6 +102,8 @@ export function GraphBox({
   foot,
   onReset,
   notes,
+  reading = 'interventional',
+  actions,
 }: GraphBoxProps) {
   const t = useMessages()
   const [notice, setNotice] = useState<string | undefined>(undefined)
@@ -101,17 +111,20 @@ export function GraphBox({
   const hasObs = Object.keys(observed).length > 0
   const hasSet = hasDo || hasObs
   const state: DoState = { interventions, stochastic }
-  const setNow = settingText(interventions, stochastic, observed)
+  const prob = world.probs !== undefined
+  const cf = reading === 'counterfactual' && prob
+  const setNow = readingText(t, cf, interventions, stochastic, observed)
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
-  const prob = world.probs !== undefined
   const observes = prob && onObserve !== undefined
   const legendFor = (m: Messages): string => (world.probs !== undefined ? probLegend(m, c.model, world.shown) : m.valueLegend)
-  const headTag = (m: Messages): string => (hasDo && hasObs ? m.afterDoObserve : hasObs ? m.afterObserve : m.afterDo)
+  const headTag = (m: Messages): string => (cf && hasDo ? m.cf.kicker : hasDo && hasObs ? m.afterDoObserve : hasObs ? m.afterObserve : m.afterDo)
+  const chipText = (m: Messages): string => readingText(m, cf, interventions, stochastic, observed)
   /** Commit do() and observations together, unless the observations cannot happen under that do(). */
   const commit = (next: DoState, nextObserved: Assignment): void => {
     if (Object.keys(nextObserved).length > 0 && prob) {
-      const evidence = solve(c, next.interventions, next.stochastic, nextObserved).evidence ?? 1
+      // Counterfactual evidence is about the actual world: it must be possible without the do().
+      const evidence = (cf ? solve(c, {}, {}, nextObserved) : solve(c, next.interventions, next.stochastic, nextObserved)).evidence ?? 1
       if (!(evidence > 0)) {
         setNotice(t.observeImpossible(assignmentText(nextObserved)))
         return
@@ -122,7 +135,8 @@ export function GraphBox({
     if (next.interventions !== interventions || next.stochastic !== stochastic) onDo?.(next)
   }
   // A do() on a node first drops its observation: the node keeps the value, now set by intervention.
-  const doing = (next: DoState, id: string): void => commit(next, id in observed ? withoutKey(observed, id) : observed)
+  // Read as a counterfactual, the observation stays: what happened, and what is supposed instead.
+  const doing = (next: DoState, id: string): void => commit(next, !cf && id in observed ? withoutKey(observed, id) : observed)
   const clearAll = (): void => {
     commit({ interventions: {}, stochastic: NONE }, NO_OBSERVATION)
     onReset?.()
@@ -130,8 +144,19 @@ export function GraphBox({
   // A probability graph keeps 原本 v under each 0/1 node whose number moved from the prior.
   const prior = useMemo(() => (prob ? solve(c, {}).probs : undefined), [c, prob])
   const twoValued = world.shown.filter((id) => getVariable(c.model, id).domain.kind === 'boolean')
+  // Read as a counterfactual: 實際 v under each evidence node, and under each other node whose
+  // number moved from the actual world's (the abduced one).
+  const abduced = useMemo(() => (cf ? solve(c, {}, {}, observed).probs : undefined), [c, cf, observed])
+  const cfNotes = (m: Messages): Record<string, string> => {
+    if (abduced === undefined || world.probs === undefined) return {}
+    const out: Record<string, string> = { ...changeNotes(m, abduced, world.probs, twoValued, m.actually) }
+    for (const [id, v] of Object.entries(observed)) out[id] = m.actually(formatValue(v))
+    return out
+  }
   const probNotes =
-    prior === undefined || world.probs === undefined ? undefined : { ...changeNotes(t, prior, world.probs, twoValued), ...notes }
+    prior === undefined || world.probs === undefined
+      ? undefined
+      : { ...(cf ? cfNotes(t) : changeNotes(t, prior, world.probs, twoValued)), ...notes }
   const graph = (m: Messages, interactive: boolean) => (
     <SignalGraph
       compact={narrow}
@@ -144,6 +169,7 @@ export function GraphBox({
       probNotes={probNotes}
       observed={Object.keys(observed)}
       observedValues={observed}
+      evidence={cf}
       interventions={interventions}
       stochastic={stochastic}
       removedEdges={world.removedEdges}
@@ -156,7 +182,7 @@ export function GraphBox({
           ? undefined
           : (id) => {
               const forced = interventions[id]
-              if (forced !== undefined || id in stochastic) {
+              if (!cf && (forced !== undefined || id in stochastic)) {
                 // Observing an intervened node: the same value, now observed (1 for a stochastic one).
                 commit(withoutDo(state, id), { ...observed, [id]: forced ?? true })
               } else commit(state, observedNext(c, observed, id))
@@ -176,7 +202,7 @@ export function GraphBox({
     const tags: ExportTag[] = hasSet
       ? [
           { text: headTag(m), tone: 'slate' },
-          { text: setNow, tone: 'accent', mono: true },
+          { text: chipText(m), tone: 'accent', mono: true },
         ]
       : [{ text: world.probs !== undefined ? m.probability : m.actualWorld, tone: 'fg' }]
     return {
@@ -191,14 +217,14 @@ export function GraphBox({
   }
   const editable = onDo !== undefined || onObserve !== undefined
   return (
-    <div className={`ca-box ca-graph-box${hasSet ? ' is-cf' : ''}`} data-world={hasDo ? 'do' : hasObs ? 'observed' : 'actual'}>
+    <div className={`ca-box ca-graph-box${hasSet ? ' is-cf' : ''}`} data-world={cf && hasDo ? 'counterfactual' : hasDo ? 'do' : hasObs ? 'observed' : 'actual'}>
       <div className="ca-box-head">
         <div className="ca-tags">
           {hasSet ? (
             <>
               <Tag tone="slate">{headTag(t)}</Tag>
-              <span className="ca-do-chip ca-mono">
-                <Formula text={setNow} />
+              <span className="ca-do-chip ca-mono" data-text={setNow}>
+                {cf ? <Rich text={setNow} ids={c.model.byId} /> : <Formula text={setNow} />}
                 {editable && (
                   <button type="button" className="ca-do-clear" aria-label={hasObs ? t.clearSettings(setNow) : t.removeDo(setNow)} onClick={clearAll}>
                     ×
@@ -211,6 +237,7 @@ export function GraphBox({
           )}
         </div>
         <div className="ca-box-actions">
+          {actions}
           {hasSet && editable && (
             <button type="button" className="ca-link" onClick={clearAll}>
               {prob ? t.backToPrior : t.backToActual}

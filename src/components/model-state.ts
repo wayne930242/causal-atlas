@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, Edge, Value } from '../engine/index.ts'
-import { evaluate, getVariable, valuesEqual } from '../engine/index.ts'
+import { counterfactual, evaluate, getVariable, valuesEqual } from '../engine/index.ts'
 import type { UiNotation } from './notation.ts'
 import type { Stochastic } from './view-model.ts'
 import { flipValue, mixedMarginals, observationFormula, shownVariables, targetValue } from './view-model.ts'
@@ -51,6 +51,58 @@ export function solve(c: LoadedCase, interventions: Assignment, stochastic: Stoc
     evidence: m.evidence,
     removedEdges: c.model.edges.filter((e) => cut.has(e.to)),
   }
+}
+
+/**
+ * How a probability graph reads what is set. `interventional`: P(· | do(…), observed), the
+ * observations conditioning the intervened model. `counterfactual`: the observations are evidence
+ * about the actual world and the do() a hypothetical action, P(V_{do(…)} | evidence) by abduction,
+ * action and prediction (Pearl 2009, §7.1); a node may then be both evidence and action.
+ */
+export type Reading = 'interventional' | 'counterfactual'
+
+/**
+ * The counterfactual world: each variable's distribution in the world changed by do(), given the
+ * evidence about the actual one. A stochastic do() mixes the hard settings by their weights (the
+ * abduction does not depend on the action). `evidence` is P(evidence) under the prior.
+ */
+export function solveCounterfactual(c: LoadedCase, interventions: Assignment, stochastic: Stochastic = {}, evidence: Assignment = {}): ModelWorld {
+  const shown = shownVariables(c)
+  if (c.prior === undefined) throw new Error(`case ${c.data.id} has an actual context: a counterfactual reading needs probabilities`)
+  const prior = c.prior
+  const given = observationFormula(evidence)
+  const ids = Object.keys(stochastic)
+  const p: Record<string, number> = {}
+  const dist: Record<string, number[]> = {}
+  for (const v of c.model.variables) {
+    p[v.id] = 0
+    if (v.domain.kind === 'finite') dist[v.id] = v.domain.values.map(() => 0)
+  }
+  let pEvidence = 1
+  for (let mask = 0; mask < 1 << ids.length; mask++) {
+    const setting: Record<string, Value> = { ...interventions }
+    let weight = 1
+    ids.forEach((id, i) => {
+      const on = (mask & (1 << i)) !== 0
+      setting[id] = on
+      weight *= on ? stochastic[id] : 1 - stochastic[id]
+    })
+    const result = counterfactual(c.model, prior, { evidence: given, do: setting })
+    pEvidence = result.evidenceProbability
+    for (const w of result.worlds) {
+      for (const v of c.model.variables) {
+        const value = w.counterfactual[v.id]
+        if (value === undefined) continue
+        if (valuesEqual(value, targetValue(v))) p[v.id] += weight * w.posterior
+        if (v.domain.kind === 'finite') {
+          const at = v.domain.values.findIndex((o) => valuesEqual(o, value))
+          if (at >= 0) dist[v.id][at] += weight * w.posterior
+        }
+      }
+    }
+  }
+  const cut = new Set([...Object.keys(interventions), ...ids])
+  return { shown, probs: p, dists: dist, evidence: pEvidence, removedEdges: c.model.edges.filter((e) => cut.has(e.to)) }
 }
 
 /** The interventions with `id` set to `value`, or released when `value` is undefined. */
@@ -128,11 +180,17 @@ const NONE: Stochastic = {}
  * Shared state for a graph with do() and observations: interventions, observations, notation and
  * the solved world. `setDo` sets the hard and stochastic interventions; `setObserved` the observations.
  */
-export function useModel(c: LoadedCase, initial: Assignment = {}, initialNotation: UiNotation = 'propositional') {
+export function useModel(c: LoadedCase, initial: Assignment = {}, initialNotation: UiNotation = 'propositional', reading: Reading = 'interventional') {
   const [state, setDo] = useState<DoState>(() => ({ interventions: initial, stochastic: NONE }))
   const [observed, setObserved] = useState<Assignment>(NO_OBSERVATION)
   const [notation, setNotation] = useNotation(initialNotation)
-  const world = useMemo(() => solve(c, state.interventions, state.stochastic, observed), [c, state, observed])
+  const world = useMemo(
+    () =>
+      reading === 'counterfactual' && c.prior !== undefined && c.context === undefined
+        ? solveCounterfactual(c, state.interventions, state.stochastic, observed)
+        : solve(c, state.interventions, state.stochastic, observed),
+    [c, state, observed, reading],
+  )
   /** Hard interventions only: clears any stochastic one and every observation. */
   const setInterventions = (interventions: Assignment): void => {
     setDo({ interventions, stochastic: NONE })

@@ -194,6 +194,14 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   `track={['Y']}` adds one line per tracked node under the graph with its reading after each change
   of what is set, `Y：0.50 → 0.67（Z=1）→ 0.50（Z=1, X=1）` (the last five; 「回到原本」 and the step
   buttons start it again; on a graph with values it follows the value).
+- A probability playground has a reading switch in its head, 「干預後再觀察｜反事實」. The first
+  (default) reads what is set as P(· | do(…), observed), and a node is either observed or set. Under
+  反事實 the same gestures mean evidence about the actual world (click) and the supposed action (long
+  press, right-click, Shift+click); a node may be both (actual A=1, set A=0); the nodes show
+  P(V_{do(…)} | evidence) by abduction, action and prediction, evidence nodes read 實際 v, other nodes
+  實際 v where they moved from the actual world, and the chip reads `D=1 ⇒ 若 do(A=0)`. Switching
+  keeps what is set; back to the first reading, a node that was both keeps only its do(). The embed
+  code does not carry the reading (an embed opens in the first one).
 - `<ProbabilityPanel view="compare" pair>`: `pair` is one `{ event, observe, intervene }` or a list;
   with two or more, a switch labelled by each `observe` (`S=1｜S=0`) changes both sides together:
   `pair={[{ event: 'W=1', observe: 'S=1', intervene: { S: 1 } }, { event: 'W=1', observe: 'S=0', intervene: { S: 0 } }]}`.

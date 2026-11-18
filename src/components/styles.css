@@ -1468,8 +1468,11 @@
 
 .ca-box-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 16px;
+  row-gap: 8px;
   margin-left: auto;
 }
 
@@ -2255,4 +2258,8 @@
   align-items: baseline;
   gap: 16px;
   margin-top: 12px;
+}
+
+.ca-reading .ca-seg-item {
+  white-space: nowrap;
 }
