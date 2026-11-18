@@ -1,10 +1,9 @@
 import type { ChangeEvent } from 'react'
-import { useEffect, useId, useMemo, useReducer, useRef, useState } from 'react'
+import { useId, useMemo, useReducer, useState } from 'react'
 import { caseIds, getCase } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
-import { caseToDoc, decodeShare, encodeShare, parseModelJson, sameModel, schemaProblems } from '../../data/model-doc.ts'
+import { caseToDoc, encodeShare, parseModelJson, sameModel } from '../../data/model-doc.ts'
 import type { ModelDoc } from '../../data/schema.ts'
-import { modelDocSchema } from '../../data/schema.ts'
 import type { Assignment, Problem } from '../../engine/index.ts'
 import { CaseInfo, ModelInfo } from '../case/CaseInfo.tsx'
 import { CaseList, CaseSheet } from '../case/CaseList.tsx'
@@ -12,14 +11,13 @@ import { saveFile } from '../export/download.ts'
 import type { ExtraModel, LessonLink } from './catalog.ts'
 import { catalog, modelKey, textIn } from './catalog.ts'
 import type { Draft, DraftMode, DraftVariable } from './draft.ts'
-import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './draft.ts'
+import { compileDraft, draftFromImport, freeCell, newKey, valueTexts } from './draft.ts'
 import { NO_DO, NO_OBSERVATION, validInterventions, validObserved, validStochastic } from './do-state.ts'
-import type { Start } from './session.ts'
-import { sessionReducer, startSession } from './session.ts'
-import { hashFragment, readHashState, replaceHash } from './url-state.ts'
+import { sessionReducer, startDraft, startFromDoc, startNamed, startSession } from './session.ts'
+import { useHashSync } from './use-hash-sync.ts'
 import type { EditorTask } from './tasks.ts'
 import { TaskCard } from './TaskCard.tsx'
-import type { Locale, Messages } from '../i18n/messages.ts'
+import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, draftIssueMessage, errorMessage, problemMessage, useMessages } from '../i18n/messages.ts'
 import type { DoState, ModelWorld } from '../model/model-state.ts'
 import { solve } from '../model/model-state.ts'
@@ -80,43 +78,11 @@ export interface ModelEditorProps {
 
 export type { ExtraModel, LessonLink } from './catalog.ts'
 
-/** A draft from a host model's document; an invalid document gives a blank draft and its problems. */
-function startFromDoc(doc: ModelDoc, t: Messages, picked?: string): Start {
-  const parsed = modelDocSchema.safeParse(doc, { reportInput: true })
-  if (parsed.success) return { draft: draftFromImport(parsed.data), problems: [], picked, named: picked }
-  return { draft: blankDraft(t.editor.defaultTitle), problems: schemaProblems(parsed.error), picked, named: picked }
-}
-
-/** A bundled case, an extra model, or `blank` (also for an id that is neither). */
-function startNamed(id: string, t: Messages, extras: readonly ExtraModel[]): Start {
-  const extra = caseIds.includes(id) ? undefined : extras.find((m) => m.id === id)
-  if (extra !== undefined) return startFromDoc(extra.doc, t, extra.id)
-  const known = id !== 'blank' && caseIds.includes(id)
-  return { draft: startFromCase(id, t), problems: [], named: known ? id : 'blank' }
-}
-
-function startDraft(initial: string, t: Messages, extras: readonly ExtraModel[], initialDoc?: ModelDoc): Start {
-  if (initialDoc !== undefined) return { ...startFromDoc(initialDoc, t), named: undefined }
-  return startNamed(initial, t, extras)
-}
-
 const NO_TASKS: readonly EditorTask[] = []
 
 /** The list key that loads a task's start: an extra model's, or the case id. */
 function startKey(id: string, extras: readonly ExtraModel[]): string {
   return !caseIds.includes(id) && extras.some((m) => m.id === id) ? modelKey(id) : id
-}
-
-/** Whether `#case=<id>` names something the editor can show. */
-const knownName = (id: string, extras: readonly ExtraModel[]): boolean =>
-  id === 'blank' || caseIds.includes(id) || extras.some((m) => m.id === id)
-
-/** How long the address waits after the last edit before it is rewritten. */
-const URL_DEBOUNCE_MS = 400
-
-function startFromCase(initial: string, t: Messages): Draft {
-  if (initial === 'blank' || !caseIds.includes(initial)) return blankDraft(t.editor.defaultTitle)
-  return draftFromCase(getCase(initial), t.locale)
 }
 
 function priorsFor(v: DraftVariable): number[] {
@@ -195,91 +161,7 @@ function EditorBody({
     }
   }, [shown, doState, observed, e, t])
 
-  // The state the address already shows: changes to anything else rewrite it.
-  const synced = useRef<{ draft: Draft; doState: DoState }>({ draft: start.draft, doState })
-  // The state the writing effect last ran with: only a change is written, so a re-run of the
-  // effect with the state of an earlier render (Strict Mode on mount) never rewrites the address.
-  const seen = useRef<{ draft: Draft; doState: DoState }>({ draft: start.draft, doState })
-  const ownsUrl = syncUrl && hash === undefined
-
-  const showNamed = (next: Start, doNext: DoState): void => {
-    dispatch({ type: 'show', start: next, doState: doNext })
-    synced.current = { draft: next.draft, doState: doNext }
-  }
-
-  // Write the address: a name at once, an encoded model once the edits pause. It acts on a new
-  // draft or new interventions only; `base` and the document change with the draft.
-  const doc = compiled.doc
-  useEffect(() => {
-    const changed = draft !== seen.current.draft || doState !== seen.current.doState
-    seen.current = { draft, doState }
-    if (!ownsUrl || !changed) return
-    if (draft === synced.current.draft && doState === synced.current.doState) return
-    if (base !== undefined && draft === base.draft) {
-      synced.current = { draft, doState }
-      replaceHash(hashFragment({ caseId: base.id }, doState.interventions, doState.stochastic))
-      return
-    }
-    // A draft with errors leaves the address at the last model that built.
-    if (doc === undefined) return
-    let live = true
-    const timer = window.setTimeout(() => {
-      encodeShare(doc)
-        .then((model) => {
-          if (!live) return
-          synced.current = { draft, doState }
-          replaceHash(hashFragment({ model }, doState.interventions, doState.stochastic))
-        })
-        .catch(() => {
-          // too large to share: the address keeps the last model it could carry
-        })
-    }, URL_DEBOUNCE_MS)
-    return () => {
-      live = false
-      window.clearTimeout(timer)
-    }
-  }, [ownsUrl, draft, doState, base, doc])
-
-  // What reading the address needs, without re-reading it when a host passes new arrays.
-  const reading = useRef({ t, extraModels })
-  useEffect(() => {
-    reading.current = { t, extraModels }
-  }, [t, extraModels])
-
-  // Read the address: on mount, from `hash` when given, and on hashchange while the editor owns it.
-  useEffect(() => {
-    let live = true
-    const read = (text: string): void => {
-      const wanted = readHashState(text)
-      if (wanted.model !== undefined) {
-        decodeShare(wanted.model)
-          .then((result) => {
-            if (!live) return
-            if (result.ok) {
-              const next = draftFromImport(result.doc)
-              showNamed({ draft: next, problems: [] }, { interventions: wanted.interventions, stochastic: wanted.stochastic })
-            } else dispatch({ type: 'loadFailed', errors: result.errors.map((p) => ({ problem: p })) })
-          })
-          .catch((error: unknown) => {
-            if (live) dispatch({ type: 'loadFailed', errors: [error] })
-          })
-        return
-      }
-      // An unknown id keeps what is on screen.
-      const { t: now, extraModels: extras } = reading.current
-      if (wanted.caseId !== undefined && knownName(wanted.caseId, extras)) {
-        showNamed(startNamed(wanted.caseId, now, extras), { interventions: wanted.interventions, stochastic: wanted.stochastic })
-      }
-    }
-    if (hash !== undefined) read(hash)
-    else if (typeof window !== 'undefined') read(window.location.hash)
-    const onHashChange = (): void => read(window.location.hash)
-    if (ownsUrl) window.addEventListener('hashchange', onHashChange)
-    return () => {
-      live = false
-      if (ownsUrl) window.removeEventListener('hashchange', onHashChange)
-    }
-  }, [hash, ownsUrl])
+  useHashSync({ syncUrl, hash, start: start.draft, draft, doState, base, doc: compiled.doc, t, extraModels, dispatch })
 
   const replace = (next: Draft): void => dispatch({ type: 'replace', draft: next })
   const pick = (key: string): void => {

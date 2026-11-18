@@ -1,7 +1,14 @@
+import { caseIds, getCase } from '../../data/index.ts'
+import { schemaProblems } from '../../data/model-doc.ts'
+import type { ModelDoc } from '../../data/schema.ts'
+import { modelDocSchema } from '../../data/schema.ts'
 import type { Assignment, Problem } from '../../engine/index.ts'
+import type { Messages } from '../i18n/messages.ts'
 import type { DoState } from '../model/model-state.ts'
+import type { ExtraModel } from './catalog.ts'
 import { NO_DO, NO_OBSERVATION } from './do-state.ts'
 import type { Draft } from './draft.ts'
+import { blankDraft, draftFromCase, draftFromImport } from './draft.ts'
 
 /**
  * The editor's session: the draft on screen, where it came from, and what is set on it. Every way
@@ -16,6 +23,36 @@ export interface Start {
   readonly picked?: string
   /** The `#case=` id that names this draft while it is unedited; none for a document. */
   readonly named?: string
+}
+
+/** A draft from a host model's document; an invalid document gives a blank draft and its problems. */
+export function startFromDoc(doc: ModelDoc, t: Messages, picked?: string): Start {
+  const parsed = modelDocSchema.safeParse(doc, { reportInput: true })
+  if (parsed.success) return { draft: draftFromImport(parsed.data), problems: [], picked, named: picked }
+  return { draft: blankDraft(t.editor.defaultTitle), problems: schemaProblems(parsed.error), picked, named: picked }
+}
+
+/** A bundled case, an extra model, or `blank` (also for an id that is neither). */
+export function startNamed(id: string, t: Messages, extras: readonly ExtraModel[]): Start {
+  const extra = caseIds.includes(id) ? undefined : extras.find((m) => m.id === id)
+  if (extra !== undefined) return startFromDoc(extra.doc, t, extra.id)
+  const known = id !== 'blank' && caseIds.includes(id)
+  return { draft: startFromCase(id, t), problems: [], named: known ? id : 'blank' }
+}
+
+export function startDraft(initial: string, t: Messages, extras: readonly ExtraModel[], initialDoc?: ModelDoc): Start {
+  if (initialDoc !== undefined) return { ...startFromDoc(initialDoc, t), named: undefined }
+  return startNamed(initial, t, extras)
+}
+
+/** Whether `#case=<id>` names something the editor can show. */
+export const knownName = (id: string, extras: readonly ExtraModel[]): boolean =>
+  id === 'blank' || caseIds.includes(id) || extras.some((m) => m.id === id)
+
+/** A bundled case's draft, or a blank one for `blank` and any other id. */
+function startFromCase(initial: string, t: Messages): Draft {
+  if (initial === 'blank' || !caseIds.includes(initial)) return blankDraft(t.editor.defaultTitle)
+  return draftFromCase(getCase(initial), t.locale)
 }
 
 export interface Session {
