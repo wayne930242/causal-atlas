@@ -411,7 +411,7 @@ function citationMetadata(source: ExportSource, url: string, locale: Locale): st
 }
 
 /** The framed export: title, panels with their tags, legend, and the watermark strip. */
-export function buildExportSvg(source: ExportSource, options: ExportOptions): BuiltSvg {
+function buildExportSvg(source: ExportSource, options: ExportOptions): BuiltSvg {
   const academic = options.style === 'academic'
   const p = academic ? ACADEMIC_PALETTE : PALETTES[options.theme]
   const url = options.url ?? DEFAULT_URL
@@ -508,7 +508,7 @@ export function buildExportSvg(source: ExportSource, options: ExportOptions): Bu
 }
 
 /** Draw the SVG onto a canvas at `scale` and return a PNG. Browser only. */
-export async function rasterize(built: BuiltSvg, scale = 2): Promise<Blob> {
+async function rasterize(built: BuiltSvg, scale = 2): Promise<Blob> {
   const img = new Image()
   img.decoding = 'sync'
   img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(built.svg)}`

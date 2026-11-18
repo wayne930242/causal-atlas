@@ -121,7 +121,7 @@ export function Tip({ tip, children, label, className }: TipProps) {
   )
 }
 
-export function PlusMinus({ open }: { readonly open: boolean }) {
+function PlusMinus({ open }: { readonly open: boolean }) {
   return (
     <svg className="ca-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
       <path d={open ? 'M2 8h12' : 'M2 8h12M8 2v12'} fill="none" stroke="currentColor" strokeWidth="1.75" />

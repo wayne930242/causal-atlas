@@ -60,7 +60,7 @@ export function blankDraft(title: string): Draft {
 }
 
 /** Domain values typed as `a, b，c`: numbers become numbers. */
-export function parseValues(text: string): (string | number)[] {
+function parseValues(text: string): (string | number)[] {
   return text
     .split(/[,，、\s]+/)
     .map((s) => s.trim())
@@ -78,7 +78,7 @@ function valueOf(v: DraftVariable, text: string): Value {
   return parseValues(v.values).find((x) => String(x) === text) ?? text
 }
 
-export function draftFromDoc(doc: ModelDoc, layoutFrom?: LoadedCase): Draft {
+function draftFromDoc(doc: ModelDoc, layoutFrom?: LoadedCase): Draft {
   const keys = new Map(doc.model.variables.map((v) => [v.id, newKey()]))
   const key = (id: string): string => keys.get(id) ?? id
   const loaded = layoutFrom ?? docToCase(doc)

@@ -183,7 +183,7 @@ export function graphSpacing(prob: boolean, compact: boolean): Spacing {
 const SPACINGS: readonly Spacing[] = [graphSpacing(false, false), graphSpacing(true, false), graphSpacing(false, true), graphSpacing(true, true)]
 
 /** How far past a node's radius an edge that does not end at it stays, in px. */
-export const EDGE_CLEARANCE = 10
+const EDGE_CLEARANCE = 10
 
 /** Distance from `p` to the segment `a`–`b`. */
 function segmentDistance(p: GridPos, a: GridPos, b: GridPos, s: Spacing): number {
@@ -389,10 +389,6 @@ export function idWithName(id: string, name: string): string {
   return name === '' ? id : `${id} ${name}`
 }
 
-export function valueText(value: Value | undefined): string {
-  return value === undefined ? '' : formatValue(value)
-}
-
 /** The same variables at the same values, in any order. */
 export function sameAssignment(a: Assignment, b: Assignment): boolean {
   const keys = Object.keys(a)
@@ -409,7 +405,7 @@ export function assignmentText(a: Assignment, sep = ', '): string {
  * A variable's label with its value, worded by value: a boolean 0 says the label's event did not
  * happen, so the label alone is never read as the event having occurred. `text` is `A=0` or `do(A=0)`.
  */
-export function valuePhrase(model: CausalModel, locale: Locale, id: string, value: Value, text: string, doing: boolean): string {
+function valuePhrase(model: CausalModel, locale: Locale, id: string, value: Value, text: string, doing: boolean): string {
   const t = messagesFor(locale).phrase
   const name = label(model, id, locale)
   if (getVariable(model, id).domain.kind !== 'boolean' || ![true, false, 0, 1].includes(value as never)) return t.other(name, text)
@@ -433,7 +429,7 @@ export function phraseOf(model: CausalModel, locale: Locale, text: string, doing
 export type Stochastic = Readonly<Record<string, number>>
 
 /** `P(X=1)=0.30` for each stochastic intervention. */
-export function stochasticText(s: Stochastic, sep = ', '): string {
+function stochasticText(s: Stochastic, sep = ', '): string {
   return Object.entries(s)
     .map(([id, p]) => `P(${id}=1)=${probText(p)}`)
     .join(sep)
@@ -448,7 +444,7 @@ export function doText(a: Assignment, s: Stochastic = {}): string {
  * What the graph is conditioned on: `do(X=1), Z=1`, `do(X=1)` or `Z=1` (the do() first, then the
  * observations, read as P(· | do(…), …)); '' when nothing is set.
  */
-export function settingText(a: Assignment, s: Stochastic = {}, observed: Assignment = {}): string {
+function settingText(a: Assignment, s: Stochastic = {}, observed: Assignment = {}): string {
   const hasDo = Object.keys(a).length > 0 || Object.keys(s).length > 0
   return [hasDo ? doText(a, s) : '', assignmentText(observed)].filter((x) => x !== '').join(', ')
 }
@@ -778,7 +774,7 @@ export interface BarLayout {
   readonly labelsFit: boolean
 }
 
-export const BAR_MAX_WIDTH = 126
+const BAR_MAX_WIDTH = 126
 
 /** Lay out one bar per value, in `size`-px labels, within BAR_MAX_WIDTH. */
 export function barLayout(labels: readonly string[], size: number): BarLayout {
@@ -836,7 +832,7 @@ export function deviations(model: CausalModel, world: Assignment, normality: Ass
 export type NormalityOrder = 'more' | 'same' | 'less' | 'incomparable'
 
 /** How `world` compares with `actual` by `atLeastAsNormal`, both ways (deviant sets by inclusion). */
-export function normalityOrder(world: Assignment, actual: Assignment, normality: Assignment): NormalityOrder {
+function normalityOrder(world: Assignment, actual: Assignment, normality: Assignment): NormalityOrder {
   const a = atLeastAsNormal(world, actual, normality)
   const b = atLeastAsNormal(actual, world, normality)
   return a && b ? 'same' : a ? 'more' : b ? 'less' : 'incomparable'

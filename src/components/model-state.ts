@@ -66,7 +66,7 @@ export type Reading = 'interventional' | 'counterfactual'
  * evidence about the actual one. A stochastic do() mixes the hard settings by their weights (the
  * abduction does not depend on the action). `evidence` is P(evidence) under the prior.
  */
-export function solveCounterfactual(c: LoadedCase, interventions: Assignment, stochastic: Stochastic = {}, evidence: Assignment = {}): ModelWorld {
+function solveCounterfactual(c: LoadedCase, interventions: Assignment, stochastic: Stochastic = {}, evidence: Assignment = {}): ModelWorld {
   const shown = shownVariables(c)
   if (c.prior === undefined) throw new Error(`case ${c.data.id} has an actual context: a counterfactual reading needs probabilities`)
   const prior = c.prior
@@ -179,7 +179,7 @@ export function observedNext(c: LoadedCase, observed: Assignment, id: string): A
   return next
 }
 
-export function useNotation(initial: UiNotation = 'propositional'): [UiNotation, (n: UiNotation) => void] {
+function useNotation(initial: UiNotation = 'propositional'): [UiNotation, (n: UiNotation) => void] {
   return useState<UiNotation>(initial)
 }
 

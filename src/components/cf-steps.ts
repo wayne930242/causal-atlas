@@ -55,7 +55,7 @@ export interface CfView {
 }
 
 /** Past this many backgrounds, the ones the evidence rules out fold into one line. */
-export const MAX_ROWS = 8
+const MAX_ROWS = 8
 
 const EVENT = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\S+)\s*$/
 
