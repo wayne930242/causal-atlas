@@ -154,4 +154,97 @@ describe('graph of one actual world: a click intervenes', () => {
     expect(node(container, 'X').getAttribute('data-intervened')).toBe('false')
     expect(chip(container)).toBeNull()
   })
+
+  it('after do(C=0) pins B at the value it shows (1), then 0, then releases (early preemption)', () => {
+    const doc = modelDocSchema.parse({
+      format: 'causal-atlas/model',
+      version: 1,
+      title: 'Early preemption',
+      model: {
+        variables: [boolVar('U_C', 'exogenous'), boolVar('U_A', 'exogenous'), boolVar('C', 'endogenous'), boolVar('B', 'endogenous'), boolVar('E', 'endogenous')],
+        equations: { C: 'U_C', B: 'U_A and not C', E: 'C or B' },
+      },
+      context: { U_C: 1, U_A: 1 },
+    })
+    const { container } = render(<CausalPlayground doc={doc} />)
+    fireEvent.click(node(container, 'C'))
+    fireEvent.click(node(container, 'C'))
+    expect(chip(container)).toBe('do(C=0)')
+    expect(node(container, 'B').getAttribute('data-value')).toBe('1')
+
+    fireEvent.click(node(container, 'B'))
+    expect(chip(container)).toBe('do(C=0, B=1)')
+    fireEvent.click(node(container, 'B'))
+    expect(chip(container)).toBe('do(C=0, B=0)')
+    expect(node(container, 'E').getAttribute('data-value')).toBe('0')
+    fireEvent.click(node(container, 'B'))
+    expect(chip(container)).toBe('do(C=0)')
+  })
+})
+
+describe('probability graph: a click observes a multi-valued node', () => {
+  it('cycles its values, then releases: P(M=1 | A=one) = 1, P(M=1 | A=two) = 0, P(M=1) = 0.5', () => {
+    const doc = modelDocSchema.parse({
+      format: 'causal-atlas/model',
+      version: 1,
+      title: 'Newcomb-like',
+      model: {
+        variables: [
+          { id: 'D', label: { 'zh-TW': 'D' }, kind: 'exogenous', domain: ['one', 'two'] },
+          { id: 'A', label: { 'zh-TW': 'A' }, kind: 'endogenous', domain: ['one', 'two'] },
+          boolVar('M', 'endogenous'),
+        ],
+        equations: { A: 'D', M: "D = 'one'" },
+      },
+      priors: { independent: { D: [['one', 0.5], ['two', 0.5]] } },
+    })
+    const { container } = render(<CausalPlayground doc={doc} />)
+    expect(readout(container, 'M')).toBe('0.50')
+    fireEvent.click(node(container, 'A'))
+    expect(observedAs(container, 'A')).toBe('one')
+    expect(readout(container, 'M')).toBe('1.00')
+    fireEvent.click(node(container, 'A'))
+    expect(observedAs(container, 'A')).toBe('two')
+    expect(readout(container, 'M')).toBe('0.00')
+    fireEvent.click(node(container, 'A'))
+    expect(observedAs(container, 'A')).toBeNull()
+    expect(readout(container, 'M')).toBe('0.50')
+  })
+})
+
+describe('exogenous nodes are the context, not do() targets', () => {
+  it('a click on U in the firing squad sets nothing', () => {
+    const { container } = render(<CausalPlayground caseId="firing-squad" />)
+    const u = node(container, 'U')
+    expect(u.getAttribute('role')).toBe('img')
+    fireEvent.click(u)
+    fireEvent.keyDown(u, { key: 'Enter' })
+    expect(chip(container)).toBeNull()
+    expect(u.getAttribute('data-intervened')).toBe('false')
+  })
+
+  it('in probability mode U_X is observed by a click, and Shift+click does not intervene', () => {
+    const doc = modelDocSchema.parse({ ...collider, show_exogenous: ['U_X'] })
+    const { container } = render(<CausalPlayground doc={doc} />)
+    fireEvent.click(node(container, 'U_X'), { shiftKey: true })
+    expect(chip(container)).toBeNull()
+    fireEvent.click(node(container, 'U_X'))
+    expect(observedAs(container, 'U_X')).toBe('1')
+    expect(node(container, 'U_X').getAttribute('aria-label')).not.toContain('干預')
+  })
+})
+
+
+describe('the do() popover', () => {
+  it('closes when 回到原本的機率 is pressed from the keyboard', () => {
+    const { container } = render(<CausalPlayground doc={collider} />)
+    fireEvent.keyDown(node(container, 'X'), { key: 'Enter', shiftKey: true })
+    expect(chip(container)).toBe('do(X=1)')
+    expect(container.querySelector('.ca-do-pop')).not.toBeNull()
+    const reset = [...container.querySelectorAll('button')].find((b) => b.textContent === '回到原本的機率') as HTMLButtonElement
+    fireEvent.keyDown(reset, { key: 'Enter' })
+    fireEvent.click(reset)
+    expect(chip(container)).toBeNull()
+    expect(container.querySelector('.ca-do-pop')).toBeNull()
+  })
 })

@@ -25,7 +25,7 @@ export interface EquationsProps {
 /** The model's equations in one notation at a time. */
 export function Equations({ c, shown, notation, values, interventions, stochastic }: EquationsProps) {
   const t = useMessages()
-  const ids = equationIds(c, shown, interventions, stochastic)
+  const ids = equationIds(c)
   const hasDo = Object.keys(interventions).length > 0
   if (notation === 'causal') {
     if (hasDo && values !== undefined) {

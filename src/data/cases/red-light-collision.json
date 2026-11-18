@@ -31,7 +31,7 @@
   },
   "explanation": {
     "zh-TW": "BA、BB 分別表示甲、乙剎車，CR 表示兩車相撞。兩車都沒剎車才會相撞（CR = ¬BA·¬BB）。交通規則決定預設值（default）：綠燈直行的甲不需要剎車（BA 預設為 0），闖紅燈的乙本來應該停下（BB 預設為 1）。這個案例檢驗常態（normality）能否把原因限於乙（王鵬翔 2019）。",
-    "en": "The model is built from the story: the cars collide only if neither brakes (CR = ¬BA·¬BB). The simple counterfactual test and the HP definitions count both drivers' not braking as causes, since a collision is avoided if either brakes. The traffic rules make the two differ: A, going straight on a green light, need not brake (default BA = 0), while B, facing a red light, should have stopped (default BB = 1). The witness world in which A brakes is more deviant than the actual world, and the one in which B brakes is not, so the engine makes only B a cause, in agreement with Wang (2019)."
+    "en": "The model is built from the story: the cars collide only if neither brakes (CR = ¬BA·¬BB). The simple counterfactual test and the HP definitions count both drivers' not braking as causes, since a collision is avoided if either brakes. The traffic rules make the two differ: A, going straight on a green light, need not brake (default BA = 0), while B, facing a red light, should have stopped (default BB = 1). The witness world in which A brakes cannot be compared with the actual world (it deviates in A's braking, the actual world in the collision), so it is not at least as normal, while the one in which B brakes is, so the engine makes only B a cause, in agreement with Wang (2019)."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [

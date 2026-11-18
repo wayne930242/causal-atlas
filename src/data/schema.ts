@@ -171,6 +171,12 @@ export const showcaseSchema = z.strictObject({
  */
 export const layoutSchema = z.record(identifier, z.tuple([z.number(), z.number()]))
 
+/**
+ * Exogenous variables to draw without a layout. By default the graph draws the endogenous
+ * variables and the exogenous ones with two or more children; these are drawn as well.
+ */
+export const showExogenousSchema = z.array(identifier)
+
 /** A sentence of the story and the variables it introduces; the page tags the sentence with their ids. */
 export const storyTagSchema = z.strictObject({
   sentence: z.string().min(1),
@@ -182,6 +188,20 @@ export const storyTagsSchema = z.strictObject({
   'zh-TW': z.array(storyTagSchema),
   en: z.array(storyTagSchema),
 })
+
+/** Each id names an exogenous variable of the model; reported at `show_exogenous.<id>`. */
+function exogenousOnly(
+  ctx: { addIssue: (issue: z.core.$ZodRawIssue) => void },
+  variables: readonly { readonly id: string; readonly kind: 'exogenous' | 'endogenous' }[],
+  ids: readonly string[],
+): void {
+  const kinds = new Map(variables.map((v) => [v.id, v.kind]))
+  for (const id of ids) {
+    const kind = kinds.get(id)
+    if (kind === undefined) addProblem(ctx, ['show_exogenous', id], problem('unknown-variable', { id }))
+    else if (kind !== 'exogenous') addProblem(ctx, ['show_exogenous', id], problem('not-exogenous', { id }))
+  }
+}
 
 const actualTheorySchema = z.enum(['butfor', 'hp-original', 'hp-updated', 'hp-modified', 'hp-normality'])
 
@@ -233,6 +253,7 @@ export const caseSchema = z
     verdicts: z.array(verdictSchema).min(1),
     showcase: z.array(showcaseSchema),
     layout: layoutSchema.optional(),
+    show_exogenous: showExogenousSchema.optional(),
   })
   .superRefine((c, ctx) => {
     if (c.layout !== undefined) {
@@ -241,6 +262,7 @@ export const caseSchema = z
         if (!ids.has(id)) addProblem(ctx, ['layout', id], problem('unknown-variable', { id }))
       }
     }
+    exogenousOnly(ctx, c.model.variables, c.show_exogenous ?? [])
     const variableIds = new Set(c.model.variables.map((v) => v.id))
     for (const locale of LOCALES) {
       c.story_tags?.[locale].forEach((t, i) => {
@@ -326,6 +348,7 @@ export const modelDocSchema = z
     priors: priorsSchema.optional(),
     normality: assignmentSchema.optional(),
     layout: layoutSchema.optional(),
+    show_exogenous: showExogenousSchema.optional(),
   })
   .superRefine((d, ctx) => {
     const kinds = new Map(d.model.variables.map((v) => [v.id, v.kind]))
@@ -337,6 +360,7 @@ export const modelDocSchema = z
       }
     }
     known('layout', Object.keys(d.layout ?? {}), false)
+    exogenousOnly(ctx, d.model.variables, d.show_exogenous ?? [])
     known('normality', Object.keys(d.normality ?? {}), false)
     known('context', Object.keys(d.context ?? {}), true)
     if (d.priors !== undefined) {

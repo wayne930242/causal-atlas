@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import type { ModelDoc } from '../data/schema.ts'
 import { modelDocSchema } from '../data/schema.ts'
 import { PALETTES, inlineSvg } from './export-image.ts'
-import { placePop } from './graph-labels.ts'
+import { intersects, placePop } from './graph-labels.ts'
 import { CausalPlayground, ProbabilityPanel } from './index.ts'
 import { barLayout } from './view-model.ts'
 
@@ -125,6 +125,13 @@ describe('do-value popover placement', () => {
     expect(placePop({ x: 560, y: 150 }, 30, size, bounds, 16)).toEqual({ x: 330, y: 114, side: 'left' })
     expect(placePop({ x: 150, y: 100 }, 30, size, { w: 300, h: 300 }, 16).side).toBe('below')
     expect(placePop({ x: 100, y: 200 }, 30, size, { w: 300, h: 260 }, 16)).toEqual({ x: 8, y: 82, side: 'above' })
+  })
+
+  it('goes to a side that covers no other node (the sprinkler at 390 px: not over W)', () => {
+    const w = { x0: 260, y0: 110, x1: 340, y1: 190 }
+    const at = placePop({ x: 100, y: 150 }, 30, size, { w: 360, h: 300 }, 16, [w])
+    expect(at.side).toBe('below')
+    expect(intersects({ x0: at.x, y0: at.y, x1: at.x + size.w, y1: at.y + size.h }, w, 0)).toBe(false)
   })
 
   it('stays inside the box when the node is near the top or bottom', () => {

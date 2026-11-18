@@ -153,22 +153,32 @@ export function ProbabilityPanelFor({
   pair,
   exportUrl,
   defaultNotation,
+  sliders: heldSliders,
+  onSliders,
 }: {
   c: LoadedCase
   view?: ProbabilityView
   pair?: SeeDoPair
   exportUrl?: string
   defaultNotation?: UiNotation
+  /** The slider values, when the caller keeps them (with `onSliders`); else the panel does. */
+  sliders?: Readonly<Record<string, number>>
+  onSliders?: (next: Readonly<Record<string, number>>) => void
 }) {
   const t = useMessages()
-  const [sliders, setSliders] = useState<Record<string, number>>(() => defaultSliders(c))
+  const [ownSliders, setOwnSliders] = useState<Readonly<Record<string, number>>>(() => defaultSliders(c))
+  const sliders = heldSliders ?? ownSliders
   const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
   const [mode, setMode] = useState<'value' | 'probability'>('probability')
   const shown = useMemo(() => shownVariables(c), [c])
   const prior = useMemo(() => priorWithSliders(c, sliders), [c, sliders])
   const baseM = useMemo(() => marginals(c.model, prior), [c, prior])
   const base = baseM.p
-  const onSlider = (id: string, p: number): void => setSliders((s) => ({ ...s, [id]: p }))
+  const onSlider = (id: string, p: number): void => {
+    const next = { ...sliders, [id]: p }
+    if (onSliders !== undefined) onSliders(next)
+    else setOwnSliders(next)
+  }
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
 

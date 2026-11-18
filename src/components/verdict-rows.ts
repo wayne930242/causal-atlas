@@ -5,7 +5,7 @@ import type { Assignment, CausalTheory, CausalVerdict, Value } from '../engine/i
 import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Messages } from './i18n.ts'
-import { assignmentText, bracketText, flipValue, label, probText } from './view-model.ts'
+import { assignmentText, bracketText, fixed, flipValue, label, probText } from './view-model.ts'
 
 /** Verdict rows computed by the engine, with short plain-language sentences in the table's language. */
 
@@ -272,7 +272,7 @@ export interface VerdictTableRow {
   readonly ok: boolean
 }
 
-const numberText = (x: number): string => (Number.isInteger(x) ? String(x) : x.toFixed(2))
+const numberText = (x: number): string => (Number.isInteger(x) ? String(x) : fixed(x, 2))
 
 /** Every verdict of the case, recomputed by the engine, in the case file's order. */
 export function verdictTable(t: Messages, c: LoadedCase): VerdictTableRow[] {

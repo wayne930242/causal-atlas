@@ -89,7 +89,7 @@
       "theory": "hp-normality",
       "query": { "cause": "QW=0", "effect": "D=1" },
       "expected": "not-cause",
-      "note": "The Queen watering is more abnormal than the actual world."
+      "note": "The world where the Queen waters is not at least as normal as the actual world: each deviates from the defaults where the other does not."
     }
   ],
   "showcase": [

@@ -7,7 +7,7 @@ import { Disclosure, NoIcon, OkIcon, PartIcon, Pin, Tag } from './parts.tsx'
 import type { ActualGroup, ActualRow, Intuition } from './verdict-rows.ts'
 import { Formula, Rich } from './typeset.tsx'
 import { THEORY_REF, actualGroups, decisionRows, intuition, numberRows } from './verdict-rows.ts'
-import { assignmentText, probText } from './view-model.ts'
+import { assignmentText, fixed, probText } from './view-model.ts'
 
 export interface VerdictsProps {
   readonly c: LoadedCase
@@ -251,7 +251,7 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
                 </span>
                 <span className="ca-muted ca-mono">
                   <Rich
-                    text={d.utilities.map((u) => t.utility(u.act, u.eu === undefined ? '—' : u.eu.toFixed(1))).join(t.utilitySep)}
+                    text={d.utilities.map((u) => t.utility(u.act, u.eu === undefined ? '—' : fixed(u.eu, 1))).join(t.utilitySep)}
                     ids={ids}
                   />
                 </span>

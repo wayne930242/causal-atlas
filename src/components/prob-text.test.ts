@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { probText } from './view-model.ts'
+import { fixed, probText } from './view-model.ts'
 
 describe('probText', () => {
   it('keeps two decimals away from the ends', () => {
@@ -22,5 +22,16 @@ describe('probText', () => {
   it('bounds values closer than 1e-6 to an end', () => {
     expect(probText(1e-8)).toBe('<0.000001')
     expect(probText(1 - 1e-8)).toBe('>0.999999')
+  })
+
+  it('rounds halves away from zero, whatever the binary form (0.175 → 0.18, 0.325 → 0.33)', () => {
+    expect(probText(0.175)).toBe('0.18')
+    expect(probText(0.325)).toBe('0.33')
+    expect(probText(0.145)).toBe('0.15')
+    expect(probText(0.00175)).toBe('0.0018')
+    expect(fixed(1.005, 2)).toBe('1.01')
+    expect(fixed(-0.175, 2)).toBe('-0.18')
+    expect(fixed(108000, 1)).toBe('108000.0')
+    expect(fixed(0.0001, 2)).toBe('0.00')
   })
 })

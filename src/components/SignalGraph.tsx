@@ -15,6 +15,7 @@ import {
   barLayout,
   edgeLive,
   edgePolarity,
+  graphSpacing,
   gridLayout,
   idWithName,
   probText,
@@ -79,8 +80,6 @@ interface Drag {
 }
 
 const SNAP = 0.25
-/** Row spacing in probability mode, where a label and its readout (bars, a note) sit under each node. */
-const ROW_PROB = 170
 /** Per-value bars: tallest bar, the gap to the label above them, and the value label size. */
 const BAR_H = 24
 const BAR_GAP = 10
@@ -208,6 +207,9 @@ export function SignalGraph(props: SignalGraphProps) {
   useEffect(() => () => {
     if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
   }, [])
+  // The control belongs to a node under do(): once that do() is gone (reset by a button, a preset,
+  // the keyboard), the control closes.
+  if (picking !== undefined && !(picking in interventions) && !(picking in stochastic)) setPicking(undefined)
   const popRef = useRef<HTMLDivElement>(null)
   const sliderRef = useRef<HTMLInputElement>(null)
   const focusNode = (id: string): void => svgRef.current?.querySelector<SVGGElement>(`[data-node="${id}"]`)?.focus()
@@ -234,9 +236,7 @@ export function SignalGraph(props: SignalGraphProps) {
     }
   }, [picking])
   const prob = probs !== undefined
-  const R = prob ? 34 : 30
-  const COL = props.compact === true ? 132 : 220
-  const ROW = prob ? ROW_PROB : props.compact === true ? 112 : 120
+  const { r: R, col: COL, row: ROW } = graphSpacing(prob, props.compact === true)
   const PAD_X = props.compact === true ? 60 : 96
   const PAD_Y = 72
   const grid = gridLayout(c, shown)
@@ -423,7 +423,15 @@ export function SignalGraph(props: SignalGraphProps) {
           cutCandidates.push({ x, y, anchor, box: textBox(x, y, anchor, textWidth(t.cut, 12), 12) })
         }
       }
-      const cutLabel = claim(firstClear(cutCandidates, obstacles))
+      // Nor on an edge still drawn, so the mark is read on the edge it cuts.
+      const offEdges = cutCandidates.filter((cand) =>
+        edges.every((o) => {
+          const p = pos.get(o.from)
+          const q = pos.get(o.to)
+          return cut.has(`${o.from}>${o.to}`) || p === undefined || q === undefined || !segmentHitsBox(p, q, cand.box)
+        }),
+      )
+      const cutLabel = claim(firstClear(offEdges.length > 0 ? offEdges : cutCandidates, obstacles))
       return (
         <g key={key} className="ca-edge ca-edge-cut" data-edge={key} data-state="cut">
           <line x1={x1} y1={y1} x2={mx - 10 * ux} y2={my - 10 * uy} className="ca-stroke-cut" />
@@ -540,11 +548,14 @@ export function SignalGraph(props: SignalGraphProps) {
     const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen))
     // A multi-valued node does not flip: intervening on it sets a value and opens a control to pick
     // another. In probability mode a boolean one is set to 1 and opens a control for P*(X=1).
-    const picksValue = onToggle !== undefined && onSetValue !== undefined && !boolean
-    const picksProb = prob && boolean && onSetProbability !== undefined
+    // An exogenous node is the context: it can be observed, never set by do().
+    const settable = variable.kind === 'endogenous'
+    const picksValue = settable && onToggle !== undefined && onSetValue !== undefined && !boolean
+    const picksProb = settable && prob && boolean && onSetProbability !== undefined
     const picks = picksValue || picksProb
+    const toggles = settable && onToggle !== undefined
     const observes = onObserve !== undefined
-    const interactive = onToggle !== undefined || onMove !== undefined || picks || observes
+    const interactive = toggles || onMove !== undefined || picks || observes
     /** Intervene: set the node at once (to its observed or current value) and open its control. */
     const intervene = (): void => {
       if (picksProb) {
@@ -553,7 +564,7 @@ export function SignalGraph(props: SignalGraphProps) {
       } else if (picksValue && variable.domain.kind === 'finite') {
         if (!intervened) onSetValue?.(id, seen ?? v ?? variable.domain.values[0])
         setPicking(intervened && picking === id ? undefined : id)
-      } else onToggle?.(id)
+      } else if (toggles) onToggle?.(id)
     }
     const activate = (shift: boolean): void => {
       if (observes && !shift) {
@@ -584,7 +595,7 @@ export function SignalGraph(props: SignalGraphProps) {
     }
     const onPointerDown = (e: PointerEvent<SVGGElement>): void => {
       startDrag(id, e)
-      if (!observes || e.button !== 0 || e.shiftKey) return
+      if (!observes || !settable || e.button !== 0 || e.shiftKey) return
       pressFired.current = false
       cancelPress()
       setPressing(id)
@@ -596,12 +607,14 @@ export function SignalGraph(props: SignalGraphProps) {
       }, LONG_PRESS)
     }
     const toggle: NodeToggle | undefined = observes
-      ? 'observe'
+      ? settable
+        ? 'observe'
+        : 'observeOnly'
       : picksProb
       ? intervened
         ? 'adjustProb'
         : 'chooseProb'
-      : onToggle === undefined
+      : !toggles
         ? undefined
         : picksValue
           ? intervened
@@ -629,7 +642,7 @@ export function SignalGraph(props: SignalGraphProps) {
           ? {
               role: 'button',
               tabIndex: 0,
-              'aria-pressed': onToggle !== undefined && !picks ? intervened : undefined,
+              'aria-pressed': toggles && !picks ? intervened : undefined,
               'aria-haspopup': picks ? 'dialog' : undefined,
               'aria-expanded': picks ? picking === id : undefined,
               'aria-label': t.withHint(aria, hint),
@@ -822,7 +835,16 @@ export function SignalGraph(props: SignalGraphProps) {
     const W = 184
     const H = 72
     // Beside the node, centred on it, so the nodes under it stay visible; the do tag sits above that line.
-    const at = placePop({ x: p.x - left, y: p.y - top }, R, { w: W, h: H }, { w: viewW, h: height }, 16)
+    const others = shown.filter((o) => o !== id)
+    const nodes = others.flatMap((o) => {
+      const q = pos.get(o)
+      return q === undefined ? [] : [around(q.x - left, q.y - top, R + 4)]
+    })
+    const labels = others.flatMap((o) => {
+      const q = pos.get(o)
+      return q === undefined ? [] : (blocks.get(o)?.boxes ?? []).map((b) => shifted(b, q.x - left, q.y - top))
+    })
+    const at = placePop({ x: p.x - left, y: p.y - top }, R, { w: W, h: H }, { w: viewW, h: height }, 16, nodes, labels)
     const release = (): void => {
       control.release()
       setPicking(undefined)

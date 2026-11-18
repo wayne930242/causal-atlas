@@ -132,7 +132,7 @@ type DraftWording = { readonly [K in DraftIssue['code']]: (issue: Extract<DraftI
  * What a click on a node does: set or release a boolean one; choose or adjust the value of a
  * multi-valued one; choose or adjust P*(X=1) of a boolean one in probability mode.
  */
-export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb' | 'observe'
+export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb' | 'observe' | 'observeOnly'
 
 const ZH = {
   locale: 'zh-TW' as Locale,
@@ -195,7 +195,7 @@ const ZH = {
     fix === undefined ? `把 ${change}，${outcome}。` : `先把 ${fix}${allActual ? '（實際值）' : ''}，再把 ${change}，${outcome}。`,
   partOfCause: (cause: string): string => `單獨不算；它是 ${cause} 這個原因的一部分。`,
   smallerCause: (cause: string): string => `其中 ${cause} 單獨就夠了，多出來的部分不算。`,
-  lessNormal: '能讓結果不發生的情況，都比實際世界更不尋常。',
+  lessNormal: '能讓結果不發生的情況，沒有一個至少和實際世界一樣正常。',
   butForSentence: (change: string, outcome: string): string => `只問一件事：少了它，結果還會不會發生。把 ${change}，${outcome}。`,
   anyFixSentence: (change: string, outcome: string): string => `固定哪些變項都一樣：把 ${change}，${outcome}。`,
   verdictHeading: (causeLabel: string, cause: string, effectLabel: string, effect: string): string =>
@@ -271,7 +271,9 @@ const ZH = {
                   ? '按一下改設干預後等於 1 的機率或放開'
                   : toggle === 'observe'
                     ? '按一下觀察（再按換值，第三下取消）；長按或 Shift 加按一下是干預'
-                    : '按一下套上干預',
+                    : toggle === 'observeOnly'
+                      ? '按一下觀察（再按換值，第三下取消）'
+                      : '按一下套上干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
@@ -317,7 +319,9 @@ const ZH = {
     counterfactual: '反事實世界',
     recomputed: '其餘照式子重算',
     witness: 'HP 見證世界',
-    heldActual: (a: string): string => `${a} 固定在實際值`,
+    /** The witness's held variables: those at their actual value, and those at another value (original and updated HP allow it). */
+    held: (atActual: string, notActual: string): string =>
+      [atActual === '' ? '' : `${atActual} 固定在實際值`, notActual === '' ? '' : `${notActual} 固定在非實際值`].filter((x) => x !== '').join('；'),
     outcomeNo: (label: string): string => `${label}：沒有`,
     sameAsActual: '和實際一樣',
     differsFromActual: '和實際不同',
@@ -575,7 +579,7 @@ const EN: Messages = {
     fix === undefined ? `Set ${change}: ${outcome}.` : `Hold ${fix}${allActual ? ' (the actual values)' : ''}, then set ${change}: ${outcome}.`,
   partOfCause: (cause) => `Not on its own; it is part of the cause ${cause}.`,
   smallerCause: (cause) => `${cause} alone is enough; the rest does not count.`,
-  lessNormal: 'Every situation in which the outcome does not occur is less normal than the actual world.',
+  lessNormal: 'No situation in which the outcome does not occur is at least as normal as the actual world.',
   butForSentence: (change, outcome) => `It asks one thing: without it, would the outcome still occur? Set ${change}: ${outcome}.`,
   anyFixSentence: (change, outcome) => `Holding variables fixed changes nothing: set ${change}: ${outcome}.`,
   verdictHeading: (causeLabel, cause, effectLabel, effect) => `Is ${causeLabel} (${cause}) a cause of ${effectLabel} (${effect})?`,
@@ -651,7 +655,9 @@ const EN: Messages = {
                   ? 'click to change the probability of 1 set by intervention, or release it'
                   : toggle === 'observe'
                     ? 'click to observe (again for the other value, a third time to release); long-press or Shift+click to intervene'
-                    : 'click to intervene',
+                    : toggle === 'observeOnly'
+                      ? 'click to observe (again for the other value, a third time to release)'
+                      : 'click to intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
@@ -694,7 +700,10 @@ const EN: Messages = {
     counterfactual: 'Counterfactual world',
     recomputed: 'The rest follow their equations',
     witness: 'HP witness world',
-    heldActual: (a) => `${a} held at actual values`,
+    held: (atActual, notActual) =>
+      [atActual === '' ? '' : `${atActual} held at actual values`, notActual === '' ? '' : `${notActual} held at non-actual values`]
+        .filter((x) => x !== '')
+        .join('; '),
     outcomeNo: (label) => `${label}: no`,
     sameAsActual: 'Same as actual',
     differsFromActual: 'Differs from actual',

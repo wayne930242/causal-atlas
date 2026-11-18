@@ -26,19 +26,67 @@ export interface GridPos {
   readonly row: number
 }
 
-/** Variables drawn in the graph: the case layout's, else endogenous ones plus shared exogenous causes. */
+/**
+ * Variables drawn in the graph: the case layout's, else the endogenous ones, the exogenous causes
+ * shared by two or more variables, and the exogenous ones the case names in `show_exogenous`.
+ */
 export function shownVariables(c: LoadedCase): string[] {
   const { model } = c
   const layout = c.data.layout
   if (layout !== undefined) return model.variables.map((v) => v.id).filter((id) => id in layout)
   const children = new Map<string, number>()
   for (const e of model.edges) children.set(e.from, (children.get(e.from) ?? 0) + 1)
+  const named = new Set(c.data.show_exogenous ?? [])
   return model.variables
-    .filter((v) => v.kind === 'endogenous' || (children.get(v.id) ?? 0) >= 2)
+    .filter((v) => v.kind === 'endogenous' || (children.get(v.id) ?? 0) >= 2 || named.has(v.id))
     .map((v) => v.id)
 }
 
-/** Grid positions: the case layout, else layers by longest path among the shown variables. */
+/** A graph's spacing in px: column width, row height and node radius (SignalGraph draws with these). */
+export interface Spacing {
+  readonly col: number
+  readonly row: number
+  readonly r: number
+}
+
+export function graphSpacing(prob: boolean, compact: boolean): Spacing {
+  return { col: compact ? 132 : 220, row: prob ? 170 : compact ? 112 : 120, r: prob ? 34 : 30 }
+}
+
+const SPACINGS: readonly Spacing[] = [graphSpacing(false, false), graphSpacing(true, false), graphSpacing(false, true), graphSpacing(true, true)]
+
+/** How far past a node's radius an edge that does not end at it stays, in px. */
+export const EDGE_CLEARANCE = 10
+
+/** Distance from `p` to the segment `a`–`b`. */
+function segmentDistance(p: GridPos, a: GridPos, b: GridPos, s: Spacing): number {
+  const [px, py, ax, ay, bx, by] = [p.col * s.col, p.row * s.row, a.col * s.col, a.row * s.row, b.col * s.col, b.row * s.row]
+  const dx = bx - ax
+  const dy = by - ay
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)))
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+}
+
+/** The first edge that, in some spacing, runs over a node it does not join; with that node. */
+function firstBlocked(grid: ReadonlyMap<string, GridPos>, edges: readonly Edge[]): { edge: Edge; node: string } | undefined {
+  for (const edge of edges) {
+    const a = grid.get(edge.from)
+    const b = grid.get(edge.to)
+    if (a === undefined || b === undefined) continue
+    for (const [node, p] of grid) {
+      if (node === edge.from || node === edge.to) continue
+      if (SPACINGS.some((s) => segmentDistance(p, a, b, s) < s.r + EDGE_CLEARANCE)) return { edge, node }
+    }
+  }
+  return undefined
+}
+
+/**
+ * Grid positions: the case layout, else columns by longest path among the shown variables, each
+ * node at the mean row of its parents (roots in declaration order, a column's nodes a row apart).
+ * Then a node that an edge would run over steps half a row off that edge, pushing the nodes of
+ * its column ahead of it, until every edge is clear of the nodes it does not join.
+ */
 export function gridLayout(c: LoadedCase, shown: readonly string[]): Map<string, GridPos> {
   const layout = c.data.layout
   const out = new Map<string, GridPos>()
@@ -50,29 +98,67 @@ export function gridLayout(c: LoadedCase, shown: readonly string[]): Map<string,
     return out
   }
   const set = new Set(shown)
+  const edges = shownEdges(c.model.edges, shown)
+  const parentsOf = (id: string): string[] => edges.filter((e) => e.to === id).map((e) => e.from)
   const layer = new Map<string, number>()
   const depth = (id: string): number => {
     const known = layer.get(id)
     if (known !== undefined) return known
-    const parents = c.model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
+    const parents = parentsOf(id)
     const d = parents.length === 0 ? 0 : 1 + Math.max(...parents.map(depth))
     layer.set(id, d)
     return d
   }
-  const rows = new Map<number, number>()
+  const columns: string[][] = []
   for (const id of shown) {
+    if (!set.has(id)) continue
     const col = depth(id)
-    const row = rows.get(col) ?? 0
-    rows.set(col, row + 1)
-    out.set(id, { col, row })
+    ;(columns[col] ??= []).push(id)
   }
-  // Centre short layers against the tallest one.
-  const tallest = Math.max(...rows.values())
-  for (const [id, pos] of out) {
-    const count = rows.get(pos.col) ?? 1
-    out.set(id, { col: pos.col, row: pos.row + (tallest - count) / 2 })
+  const row = new Map<string, number>()
+  columns.forEach((ids, col) => {
+    if (col === 0) {
+      ids.forEach((id, i) => row.set(id, i))
+      return
+    }
+    const wish = new Map(ids.map((id) => [id, mean(parentsOf(id).map((p) => row.get(p) ?? 0))]))
+    const order = [...ids].sort((a, b) => (wish.get(a) ?? 0) - (wish.get(b) ?? 0))
+    const placed: number[] = []
+    order.forEach((id, i) => placed.push(i === 0 ? (wish.get(id) ?? 0) : Math.max(wish.get(id) ?? 0, placed[i - 1] + 1)))
+    // Spread a crowded column evenly about its wishes.
+    const shift = mean(order.map((id) => wish.get(id) ?? 0)) - mean(placed)
+    order.forEach((id, i) => row.set(id, placed[i] + shift))
+  })
+  const grid = new Map<string, GridPos>()
+  for (const id of shown) grid.set(id, { col: layer.get(id) ?? 0, row: row.get(id) ?? 0 })
+  for (let step = 0; step < 8 * shown.length; step++) {
+    const hit = firstBlocked(grid, edges)
+    if (hit === undefined) break
+    const p = grid.get(hit.node)
+    const a = grid.get(hit.edge.from)
+    const b = grid.get(hit.edge.to)
+    if (p === undefined || a === undefined || b === undefined) break
+    const lineRow = a.col === b.col ? p.row : a.row + ((b.row - a.row) * (p.col - a.col)) / (b.col - a.col)
+    const dir = p.row < lineRow ? -1 : 1
+    // Step off the edge; nodes of the same column in the way move along, a row apart.
+    let at = p.row + dir / 2
+    grid.set(hit.node, { col: p.col, row: at })
+    const ahead = [...grid]
+      .filter(([id, q]) => id !== hit.node && q.col === p.col && (q.row - p.row) * dir >= 0)
+      .sort((x, y) => (x[1].row - y[1].row) * dir)
+    for (const [id, q] of ahead) {
+      if ((q.row - at) * dir >= 1) break
+      at += dir
+      grid.set(id, { col: q.col, row: at })
+    }
   }
+  const top = Math.min(...[...grid.values()].map((p) => p.row))
+  for (const [id, p] of grid) out.set(id, { col: p.col, row: p.row - top })
   return out
+}
+
+function mean(xs: readonly number[]): number {
+  return xs.length === 0 ? 0 : xs.reduce((s, x) => s + x, 0) / xs.length
 }
 
 export function shownEdges(edges: readonly Edge[], shown: readonly string[]): Edge[] {
@@ -211,9 +297,13 @@ export function settingText(a: Assignment, s: Stochastic = {}, observed: Assignm
   return [hasDo ? doText(a, s) : '', assignmentText(observed)].filter((x) => x !== '').join(', ')
 }
 
-/** An observation as a formula for `marginals`' `given`: `Z=1 and X=1`; undefined when empty. */
+/** An observation as a formula for `marginals`' `given`: `Z=1 and A='one'`; undefined when empty. */
 export function observationFormula(observed: Assignment): string | undefined {
-  return Object.keys(observed).length === 0 ? undefined : assignmentText(observed, ' and ')
+  if (Object.keys(observed).length === 0) return undefined
+  const literal = (v: Value): string => (typeof v !== 'string' ? formatValue(v) : v.includes("'") ? `"${v}"` : `'${v}'`)
+  return Object.entries(observed)
+    .map(([id, v]) => `${id}=${literal(v)}`)
+    .join(' and ')
 }
 
 export function bracketText(a: Assignment): string {
@@ -231,14 +321,11 @@ export function flipValue(variable: Variable, value: Value): Value {
 }
 
 /**
- * Endogenous variables whose equation is shown: those with at least one drawn parent, plus any
- * intervened ones (their replaced equation is shown struck through).
+ * Endogenous variables whose equation is shown: every one, also when none of its parents is drawn
+ * (`Y = U2`). An intervened one's replaced equation is shown struck through.
  */
-export function equationIds(c: LoadedCase, shown: readonly string[], interventions: Assignment = {}, stochastic: Stochastic = {}): string[] {
-  const set = new Set(shown)
-  return c.model.endogenous.filter(
-    (id) => set.has(id) && (id in interventions || id in stochastic || c.model.edges.some((e) => e.to === id && set.has(e.from))),
-  )
+export function equationIds(c: LoadedCase): string[] {
+  return [...c.model.endogenous]
 }
 
 function substitute(a: Arith, values: Assignment): Arith {
@@ -546,12 +633,23 @@ export function textWidth(s: string, size: number): number {
  */
 export function probText(p: number): string {
   if (Number.isNaN(p)) return '—'
-  if (p <= 0 || p >= 1) return p.toFixed(2)
+  if (p <= 0 || p >= 1) return fixed(p, 2)
   const gap = Math.min(p, 1 - p)
-  if (gap >= 0.01) return p.toFixed(2)
+  if (gap >= 0.01) return fixed(p, 2)
   if (gap < 1e-6) return p < 0.5 ? '<0.000001' : '>0.999999'
   const digits = Math.ceil(-Math.log10(gap) - 1e-9) + 1
-  return p.toFixed(Math.min(digits, 7)).replace(/(\.\d\d\d*?)0+$/, '$1')
+  return fixed(p, Math.min(digits, 7)).replace(/(\.\d\d\d*?)0+$/, '$1')
+}
+
+/**
+ * `x` with `digits` decimals, a half rounded away from zero. `toFixed` rounds the binary value,
+ * so 0.175 (stored as 0.17499…) would read 0.17 and 0.325 (0.32500…01) 0.33; here the scaled
+ * value is first cut to 12 significant digits, which drops that error.
+ */
+export function fixed(x: number, digits: number): string {
+  const scale = 10 ** digits
+  const n = Math.round(Number((Math.abs(x) * scale).toPrecision(12)))
+  return ((Math.sign(x) * n) / scale).toFixed(digits)
 }
 
 /** Legend for probability readouts (the value legend is `t.valueLegend`): fill for 0/1 variables, bars for the others. */

@@ -2,6 +2,9 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.15
+Fixes from a classroom test of the lessons. Automatic layout no longer runs an edge under a node it does not join (the sprinkler's R→W, the back-door and front-door graphs): a node in the way steps half a row aside, each node sits at the mean row of its parents, and 切斷 is placed off the edges still drawn; two bundled layouts (train switching, trumping) moved for the same reason. On a graph with values, a click pins the value a node shows under the other do()s, then the other value, then releases, so do(C=0) followed by B can reach B=0. A click observes a multi-valued node too (each value in turn, then released). Exogenous nodes are the context: they can be observed, never set by do() (and the pen-fiasco preset that set `U_N` is gone). The case page works its probability and decision verdicts out at the current sliders. Numbers round halves away from zero (0.175 → 0.18). The equations panel lists every endogenous equation (`Y = U2`); `show_exogenous` in a case file or model document names exogenous variables to draw without a layout, and do() then names every drawn parent it cuts. A witness lane says whether each held variable keeps its actual value or another one. The do() popover closes when what it sets is reset from the keyboard, and avoids the other nodes; header chips and footer controls no longer break mid-word on narrow screens. Normality wording: a witness that deviates where the actual world does not, and the other way round, is incomparable with it, so not at least as normal (gardener and Queen, the pen cases, red light, antidote); the sharks source note cites what Halpern's pp. 82 and 91 say.
+
 ## 0.3.14
 The export menu (「下載圖片」) of a playground can copy an embed code: an iframe of the figure's embed page, carrying what is observed and set (`#do=…&pdo=…&obs=…`) and the page it was copied from (`?from=`), with `lang=en` for an English figure, followed by the citation given for the academic image (author-year, CC BY 4.0, the case's sources). A bundled case's embed page defaults to `https://wayneh.tw/causal/embed/case/<id>/`; a document needs `embedUrl`, and `embedUrl={false}` turns it off. `embedded` draws a playground as such a page: state from the address, and a credit line (author, licence, sources, link back to the original page) under it.
 
@@ -66,7 +69,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.3.14) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.3.15) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -214,7 +217,10 @@ verdict query and the theories that reach it; the verdict list shows it first an
 
 A case may give graph positions as `layout: { "ST": [column, row], … }`; only the listed variables are
 drawn. Without it the graph shows endogenous variables plus exogenous ones with two or more children,
-laid out in layers.
+laid out in layers, and no edge passes over a node it does not join. A case file or model document may
+name more exogenous variables to draw without a layout: `show_exogenous: ["W"]` (each must be
+exogenous; a `layout` wins over it). The equations panel lists every endogenous variable's equation,
+also one whose parents are not drawn (`Y = U2`).
 
 ## Scripts
 
@@ -230,9 +236,9 @@ laid out in layers.
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.14 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.3.15 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.3.14) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.3.15) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -241,7 +247,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.3.14},
+  version = {0.3.15},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

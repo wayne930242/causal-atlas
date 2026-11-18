@@ -13,7 +13,7 @@ function alignedLine(latex: string): string {
 /** The rows on screen as one `aligned` block; struck-out originals are left out. */
 export function equationsLatex({ c, shown, notation, values, interventions, stochastic }: EquationsProps): string {
   const t = messagesFor('en')
-  const ids = equationIds(c, shown, interventions, stochastic)
+  const ids = equationIds(c)
   let lines: string[]
   if (notation === 'causal') {
     const y = outcomeVariable(c)

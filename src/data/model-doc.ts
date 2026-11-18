@@ -51,6 +51,7 @@ export function caseToDoc(c: LoadedCase, locale: Locale = 'zh-TW'): ModelDoc {
     priors: data.context === undefined ? data.priors : undefined,
     normality: data.normality,
     layout: data.layout,
+    show_exogenous: data.show_exogenous,
   })
 }
 
@@ -75,6 +76,7 @@ export function docToCase(doc: ModelDoc, origin?: CaseFile['sources']): LoadedCa
     verdicts: [],
     showcase: [],
     layout: doc.layout,
+    show_exogenous: doc.show_exogenous,
   })
 }
 

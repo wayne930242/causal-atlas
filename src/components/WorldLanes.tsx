@@ -162,13 +162,20 @@ function WorldLanesFor({
   const ctx = Object.entries(context)
     .map(([id, v]) => `${id}=${formatValue(v as Value)}`)
     .join(' · ')
+  /** What a witness lane holds, split by whether each value is the one it has in the actual world. */
+  const heldText = (m: Messages, lane: LaneSpec): string => {
+    const held = Object.entries(lane.fixed ?? {})
+    const at = (actual: boolean): string =>
+      assignmentText(Object.fromEntries(held.filter(([id, v]) => valuesEqual(v, lanes[0].values[id] ?? v) === actual)))
+    return m.lanes.held(at(true), at(false))
+  }
   /** The lanes drawing in `m`'s language; `ids` keeps marker ids apart when drawn twice. */
   const drawing = (m: Messages, ids: string): ReactNode => {
     // The margins grow to fit the lane notes and outcome lines of the language drawn.
     const leftNotes = [
       m.lanes.context(ctx),
       m.lanes.recomputed,
-      ...lanes.filter((l) => l.fixed !== undefined).map((l) => m.lanes.heldActual(assignmentText(l.fixed ?? {}))),
+      ...lanes.filter((l) => l.fixed !== undefined).map((l) => heldText(m, l)),
     ]
     const left = Math.max(LEFT, Math.ceil(16 + Math.max(...leftNotes.map((t) => textWidth(t, 12))) + HALF + 10))
     const outLabel = label(c.model, outcome, m.locale)
@@ -358,7 +365,7 @@ function WorldLanesFor({
               {tagEl(16, cy - 46, m.lanes.witness, 'amber')}
               {tagEl(16, cy - 16, doText(lane.intervened), 'accent', true)}
               <text x={16} y={cy + 30} className="ca-svg-small ca-fill-amber">
-                {sub(m.lanes.heldActual(assignmentText(lane.fixed ?? {})))}
+                {sub(heldText(m, lane))}
               </text>
             </>
           )}

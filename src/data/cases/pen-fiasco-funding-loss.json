@@ -80,12 +80,11 @@
       "theory": "hp-normality",
       "query": { "cause": "AT=1", "effect": "GL=1" },
       "expected": "not-cause",
-      "note": "As in the pen case, the assistant's witness is more deviant than the actual world."
+      "note": "As in the pen case, the assistant's witness cannot be compared with the actual world, so it is not at least as normal."
     }
   ],
   "showcase": [
-    { "label": { "zh-TW": "教授沒拿筆", "en": "The professor takes no pen" }, "interventions": { "PT": 0 } },
-    { "label": { "zh-TW": "訊息不是補助通知", "en": "The message is not a funding notice" }, "interventions": { "U_N": 0 } }
+    { "label": { "zh-TW": "教授沒拿筆", "en": "The professor takes no pen" }, "interventions": { "PT": 0 } }
   ],
   "layout": { "PT": [0, 0], "AT": [0, 1], "PO": [1, 0.5], "U_N": [1, 1.4], "GL": [2, 0.5] }
 }

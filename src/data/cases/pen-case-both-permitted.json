@@ -36,8 +36,8 @@
     ]
   },
   "explanation": {
-    "zh-TW": "模型與原版筆案例相同（Halpern 與 Hitchcock 2015, §7.2）：PO = PT·AT。差別只在規範：規定允許兩人拿筆，所以預設值（default value）是兩人都拿（PT = 1、AT = 1）。任一人不拿筆的世界都比實際世界更偏離預設，所以帶常態（normality）的 HP 定義判兩人都不是原因；but-for 與其他 HP 定義仍判兩人是原因。實驗中教授 3.0、助教 3.53（量尺 1 至 7），都低於中點；原版是教授 4.05、助教 2.51（Sytsma、Livengood 與 Rose 2010）。",
-    "en": "The model is the same as in the original pen case (Halpern and Hitchcock 2015, §7.2): PO = PT·AT. Only the norm differs. The rule permits both to take a pen, so taking is the default for each (PT = 1, AT = 1). Under the normality clause, the witness world in which either one does not take a pen is more deviant than the actual world, so neither is a cause; the but-for test and the other HP definitions still count both. This contrasts with the original case, where the professor's taking is forbidden and only the professor is a cause. In the experiment (Sytsma, Livengood and Rose 2010, scale 1 to 7) the professor was rated 3.0 and the assistant 3.53: both below the midpoint and close together, against 4.05 and 2.51 in the original. When the rule permits both, taking is the norm and neither is singled out as the cause."
+    "zh-TW": "模型與原版筆案例相同（Halpern 與 Hitchcock 2015, §7.2）：PO = PT·AT。差別只在規範：規定允許兩人拿筆，所以預設值（default value）是兩人都拿（PT = 1、AT = 1）。任一人不拿筆的世界偏離在不拿筆，實際世界偏離在筆筒空了，兩者無法比較，不算至少一樣正常，所以帶常態（normality）的 HP 定義判兩人都不是原因；but-for 與其他 HP 定義仍判兩人是原因。實驗中教授 3.0、助教 3.53（量尺 1 至 7），都低於中點；原版是教授 4.05、助教 2.51（Sytsma、Livengood 與 Rose 2010）。",
+    "en": "The model is the same as in the original pen case (Halpern and Hitchcock 2015, §7.2): PO = PT·AT. Only the norm differs. The rule permits both to take a pen, so taking is the default for each (PT = 1, AT = 1). Under the normality clause, the witness world in which either one does not take a pen deviates in that taking, the actual world in the empty cup; the two cannot be compared, so the witness is not at least as normal and neither is a cause; the but-for test and the other HP definitions still count both. This contrasts with the original case, where the professor's taking is forbidden and only the professor is a cause. In the experiment (Sytsma, Livengood and Rose 2010, scale 1 to 7) the professor was rated 3.0 and the assistant 3.53: both below the midpoint and close together, against 4.05 and 2.51 in the original. When the rule permits both, taking is the norm and neither is singled out as the cause."
   },
   "copy_status": {
     "zh-TW": "draft",
@@ -186,7 +186,7 @@
         "effect": "PO=1"
       },
       "expected": "not-cause",
-      "note": "Both takes are the default, so each witness world (not taking) is more deviant than the actual world; neither passes AC2+(a)."
+      "note": "Both takes are the default: each witness world (not taking) deviates in that taking, the actual world in PO; the two are incomparable, so neither passes AC2+(a)."
     },
     {
       "theory": "hp-normality",
@@ -195,7 +195,7 @@
         "effect": "PO=1"
       },
       "expected": "not-cause",
-      "note": "Both takes are the default, so each witness world (not taking) is more deviant than the actual world; neither passes AC2+(a)."
+      "note": "Both takes are the default: each witness world (not taking) deviates in that taking, the actual world in PO; the two are incomparable, so neither passes AC2+(a)."
     }
   ],
   "showcase": [

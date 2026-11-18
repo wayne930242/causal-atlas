@@ -3,9 +3,11 @@ import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { getCase } from '../data/index.ts'
 import type { LoadedCase } from '../data/load.ts'
+import { docToCase } from '../data/model-doc.ts'
+import { modelDocSchema } from '../data/schema.ts'
 import { marginals, shownVariables, textWidth } from './view-model.ts'
 import type { Box } from './graph-labels.ts'
-import { firstClear, intersects, textBox } from './graph-labels.ts'
+import { firstClear, intersects, segmentHitsBox, textBox } from './graph-labels.ts'
 import { SignalGraph } from './SignalGraph.tsx'
 
 afterEach(cleanup)
@@ -75,6 +77,42 @@ describe('graph labels', () => {
       expect(intersects(labelBox, { x0: x - r, y0: y - r, x1: x + r, y1: y + r }, 0)).toBe(false)
       const name = node.querySelector('text.ca-svg-label') as Element
       expect(intersects(labelBox, textBoxOf(name, [x, y], 14), 0)).toBe(false)
+    }
+  })
+
+  it('切斷 and its slash sit on the cut edge, off every edge still drawn (the sprinkler after do(S=1))', () => {
+    const variable = (id: string, kind: 'exogenous' | 'endogenous') => ({ id, label: { 'zh-TW': id }, kind, domain: 'boolean' })
+    const c = docToCase(
+      modelDocSchema.parse({
+        format: 'causal-atlas/model',
+        version: 1,
+        title: 'sprinkler',
+        model: {
+          variables: [variable('U_R', 'exogenous'), variable('N_S', 'exogenous'), variable('R', 'endogenous'), variable('S', 'endogenous'), variable('W', 'endogenous')],
+          equations: { R: 'U_R', S: 'not R and N_S', W: 'R or S' },
+        },
+        priors: { independent: { U_R: 0.4, N_S: 0.6 } },
+      }),
+    )
+    const intervene = { S: 1 }
+    for (const probs of [undefined, marginals(c.model, c.prior!, { do: intervene }).p]) {
+      const removed = c.model.edges.filter((e) => e.to === 'S')
+      const root = graph(c, { probs, interventions: intervene, removedEdges: removed })
+      const cut = root.querySelector('[data-edge="R>S"]') as Element
+      const label = cut.querySelector('text') as Element
+      const slash = cut.querySelector('path') as Element
+      // The slash's centre: the mean of its two strokes' ends.
+      const n = (slash.getAttribute('d') ?? '').match(/-?[\d.]+/g)?.map(Number) ?? []
+      const cx = (n[0] + n[2] + n[4] + n[6]) / 4
+      const cy = (n[1] + n[3] + n[5] + n[7]) / 4
+      const mark = { x0: cx - 6, y0: cy - 6, x1: cx + 6, y1: cy + 6 }
+      for (const line of root.querySelectorAll('.ca-edge:not(.ca-edge-cut) line')) {
+        const a = { x: num(line, 'x1'), y: num(line, 'y1') }
+        const b = { x: num(line, 'x2'), y: num(line, 'y2') }
+        expect(segmentHitsBox(a, b, textBoxOf(label)), `切斷 on ${line.parentElement?.getAttribute('data-edge')}`).toBe(false)
+        expect(segmentHitsBox(a, b, mark), `slash on ${line.parentElement?.getAttribute('data-edge')}`).toBe(false)
+      }
+      cleanup()
     }
   })
 })

@@ -12,7 +12,7 @@ import { Rich } from './typeset.tsx'
 import { ProbabilityPanelFor } from './ProbabilityPanel.tsx'
 import { Verdicts } from './Verdicts.tsx'
 import { intuitionSummary, seeDoPair, shortSources } from './verdict-rows.ts'
-import { doText, phraseOf } from './view-model.ts'
+import { defaultSliders, doText, phraseOf, priorWithSliders } from './view-model.ts'
 
 export interface CasePageProps {
   /** Notation the equations start in; the reader can still switch. Default 'propositional'. */
@@ -66,6 +66,10 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
   const [witness, setWitness] = useState<Assignment | undefined>(undefined)
   const panelRef = useRef<HTMLDivElement>(null)
   const pair = seeDoPair(c)
+  // The probability sliders live here, so the verdicts below are worked out at the same prior.
+  const [held, setHeld] = useState(() => ({ caseId, values: defaultSliders(c) }))
+  const sliders = held.caseId === caseId ? held.values : defaultSliders(c)
+  const atSliders = probabilistic ? { ...c, prior: priorWithSliders(c, sliders) } : c
 
   const go = (to: number): void => {
     const target = Math.min(Math.max(to, 1), TOTAL)
@@ -187,6 +191,8 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
               view={step === 4 && pair !== undefined ? 'compare' : 'sliders'}
               pair={pair}
               exportUrl={exportUrl}
+              sliders={sliders}
+              onSliders={(values) => setHeld({ caseId, values })}
             />
           ) : (
             <>
@@ -221,7 +227,7 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
       </div>
       {step === TOTAL && (
         <section className="ca-case-verdicts" data-reveal="verdicts">
-          <Verdicts c={c} onShow={probabilistic ? undefined : showWitness} lessonHref={lessonHref} lessonLabel={lessonLabel} />
+          <Verdicts c={atSliders} onShow={probabilistic ? undefined : showWitness} lessonHref={lessonHref} lessonLabel={lessonLabel} />
         </section>
       )}
       <footer className="ca-sources">

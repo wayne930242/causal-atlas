@@ -80,8 +80,10 @@ export interface PopPlacement {
 
 /**
  * Where a popover of `size` goes around a node at `at` (radius `r`) inside a graph box of `bounds`:
- * to its right, vertically centred; failing that to its left, then below, then above. It never
- * leaves the box (the offset along the side is clamped); `gap` is the clear space to the node.
+ * to its right, vertically centred; failing that to its left, then below, then above. Of the sides
+ * that fit, it takes the one that covers least: a box in `avoid` (another node) counts three, one in
+ * `soft` (another node's label) one. It never leaves the box (the offset along the side is clamped);
+ * `gap` is the clear space to the node.
  */
 export function placePop(
   at: { readonly x: number; readonly y: number },
@@ -89,16 +91,26 @@ export function placePop(
   size: { readonly w: number; readonly h: number },
   bounds: { readonly w: number; readonly h: number },
   gap: number,
+  avoid: readonly Box[] = [],
+  soft: readonly Box[] = [],
 ): PopPlacement {
   const clampX = (x: number): number => Math.max(0, Math.min(x, bounds.w - size.w))
   const clampY = (y: number): number => Math.max(0, Math.min(y, bounds.h - size.h))
   const right = at.x + r + gap
-  if (right + size.w <= bounds.w) return { x: right, y: clampY(at.y - size.h / 2), side: 'right' }
   const left = at.x - r - gap - size.w
-  if (left >= 0) return { x: left, y: clampY(at.y - size.h / 2), side: 'left' }
   const below = at.y + r + gap
-  if (below + size.h <= bounds.h) return { x: clampX(at.x - size.w / 2), y: below, side: 'below' }
   const above = at.y - r - gap - size.h
-  if (above >= 0) return { x: clampX(at.x - size.w / 2), y: above, side: 'above' }
-  return { x: clampX(right), y: clampY(at.y - size.h / 2), side: 'right' }
+  const sides: { readonly fits: boolean; readonly place: PopPlacement }[] = [
+    { fits: right + size.w <= bounds.w, place: { x: right, y: clampY(at.y - size.h / 2), side: 'right' } },
+    { fits: left >= 0, place: { x: left, y: clampY(at.y - size.h / 2), side: 'left' } },
+    { fits: below + size.h <= bounds.h, place: { x: clampX(at.x - size.w / 2), y: below, side: 'below' } },
+    { fits: above >= 0, place: { x: clampX(at.x - size.w / 2), y: above, side: 'above' } },
+  ]
+  const cost = (p: PopPlacement): number => {
+    const box = { x0: p.x, y0: p.y, x1: p.x + size.w, y1: p.y + size.h }
+    return 3 * avoid.filter((b) => intersects(box, b, 0)).length + soft.filter((b) => intersects(box, b, 0)).length
+  }
+  let best: PopPlacement | undefined
+  for (const s of sides) if (s.fits && (best === undefined || cost(s.place) < cost(best))) best = s.place
+  return best ?? { x: clampX(right), y: clampY(at.y - size.h / 2), side: 'right' }
 }

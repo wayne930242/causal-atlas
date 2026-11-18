@@ -82,6 +82,12 @@ describe('case display fields', () => {
     expect([...agree].sort(), path).toEqual([...intuition.agree].sort())
   })
 
+  it.each(entries)('%s: presets set endogenous variables only (an exogenous one is the context, not a do())', (path, raw) => {
+    const c = loadCase(raw)
+    const exogenous = c.data.showcase.flatMap((s) => Object.keys(s.interventions)).filter((id) => c.model.exogenous.includes(id))
+    expect(exogenous, path).toEqual([])
+  })
+
   it('rock-throwing has an intuition', () => {
     expect(loadCase(caseFiles['./cases/rock-throwing.json']).data.intuition?.expected).toBe('cause')
   })

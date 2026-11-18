@@ -84,9 +84,10 @@ export function withProbability(state: DoState, id: string, p: number | undefine
 }
 
 /**
- * A click that intervenes on a node with a value: do() at its current value first (or at 1, the
+ * A click that intervenes on a node with a value: do() at the value it shows first (or at 1, the
  * first value, when it has none), then the other value, then released. A multi-valued node goes
- * through its values in turn before it is released.
+ * through its values in turn before it is released. What it shows is its value under the other
+ * interventions, so after do(C=0) a node that C sets starts from its value there.
  */
 export function toggled(c: LoadedCase, interventions: Assignment, world: ModelWorld, id: string): Assignment {
   const next: Record<string, Assignment[string]> = { ...interventions }
@@ -96,14 +97,14 @@ export function toggled(c: LoadedCase, interventions: Assignment, world: ModelWo
     next[id] = world.values?.[id] ?? targetValue(variable)
     return next
   }
-  const start = world.original?.[id] ?? targetValue(variable)
+  delete next[id]
+  const start = c.context === undefined ? targetValue(variable) : evaluate(c.model, c.context, next).values[id]
   const after = flipValue(variable, set)
-  if (valuesEqual(after, start)) delete next[id]
-  else next[id] = after
+  if (!valuesEqual(after, start ?? targetValue(variable))) next[id] = after
   return next
 }
 
-/** A click that observes a boolean node: =1, then =0, then released. */
+/** A click that observes a node: =1, then =0, then released; a multi-valued one goes through its values first. */
 export function observedNext(c: LoadedCase, observed: Assignment, id: string): Assignment {
   const variable = getVariable(c.model, id)
   const now = observed[id]

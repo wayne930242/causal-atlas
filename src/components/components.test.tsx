@@ -128,6 +128,21 @@ describe('CasePage display fields', () => {
   })
 })
 
+describe('CasePage verdicts follow the sliders', () => {
+  it('Newcomb at P(D=one)=0.1: P(M=1) 0.11, CDT 108000 against 109000', () => {
+    const { container } = render(<CasePage caseId="newcomb" initialStep={4} />)
+    const cdt = (): string => container.querySelector('.ca-decision-row[data-theory="cdt"]')?.textContent ?? ''
+    expect(cdt()).toContain('500000')
+    fireEvent.click(container.querySelector('.ca-compare-more .ca-disclosure-head') as Element)
+    const slider = container.querySelector('#ca-slider-newcomb-D') as HTMLInputElement
+    fireEvent.change(slider, { target: { value: '0.1' } })
+    expect(cdt()).toContain('108000')
+    expect(cdt()).toContain('109000')
+    const numbers = [...container.querySelectorAll('.ca-number-row strong')].map((n) => n.textContent)
+    expect(numbers).toContain('0.11')
+  })
+})
+
 describe('ProbabilityPanel', () => {
   it('recomputes P(V=1) when a slider moves', () => {
     const { container } = render(<ProbabilityPanel caseId="smoking-lesion" />)
@@ -184,6 +199,31 @@ describe('WorldLanes', () => {
     expect(container.querySelector('[data-diff-cell="SH"]')?.getAttribute('data-diff-kind')).toBe('do')
     expect(container.querySelector('[data-diff-cell="BH"]')?.getAttribute('data-diff-kind')).toBe('recomputed')
     expect(container.querySelector('[data-diff-cell="BS"]')?.getAttribute('data-diff-kind')).toBe('same')
+  })
+})
+
+describe('normality verdict wording', () => {
+  it('gardener and Queen: no witness is at least as normal (the worlds are incomparable, not less normal)', () => {
+    const { container } = render(<CasePage caseId="gardener-queen" initialStep={4} />)
+    expect(container.textContent).toContain('能讓結果不發生的情況，沒有一個至少和實際世界一樣正常。')
+    expect(container.textContent).not.toContain('更不尋常')
+  })
+})
+
+describe('WorldLanes witness lane', () => {
+  const laneText = (container: HTMLElement): string => container.querySelector('[data-lane="witness"]')?.textContent ?? ''
+
+  it('says MD=0 is held at a value it does not have (forest fire, original HP)', () => {
+    const { container } = render(
+      <WorldLanes caseId="forest-fire-disjunctive" interventions={{ L: 0 }} witness={{ cause: 'L=1', effect: 'FF=1', theory: 'hp-original' }} initialStep={3} />,
+    )
+    expect(laneText(container)).toContain('MD=0 固定在非實際值')
+    expect(laneText(container)).not.toContain('固定在實際值')
+  })
+
+  it('says BH=0 is held at its actual value (rock throwing)', () => {
+    const { container } = render(<WorldLanes caseId="rock-throwing" witness={{ cause: 'ST=1', effect: 'BS=1' }} initialStep={3} />)
+    expect(laneText(container)).toContain('BH=0 固定在實際值')
   })
 })
 
