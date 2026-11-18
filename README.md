@@ -33,6 +33,16 @@ d-separation path through U lights the arc. A variable that is also in `show_exo
 as before. The do() note names the cut parents in the order of the equation (`A = C or W`: 切斷
 C、W).
 
+Six more interactions. The 干預式 notation lists only the rows that can hold under what is set, each
+naming only the parents that decide the value (bow A under do(X=1): 5 rows instead of 40; a graph
+with values keeps the actual world's row of each variable), with the full truth table behind an
+expander; 複製 LaTeX copies the rows shown (`causalRows` in the engine). The playground takes
+`sliders`, `prior` and `decision` (expected-utility bars), the probability panel `view="adjust"`
+(the adjustment formula with the back-door verdict) and `view="rules"` (do-calculus steps on their cut
+graphs; `dSeparation` takes a sixth argument `cutOut`, and `descendants` is exported). The editor
+lists the blank model first, keeps the graph in view on a wide layout, recomputes the case's verdicts
+on the edited model (the column reads 你的模型) and takes guided `tasks`. Details under Package.
+
 It also carries the fixes prepared as 0.3.15, never published on their own: fixes from a classroom
 test of the lessons. Automatic layout no longer runs an edge under a node it does not join (the sprinkler's R→W, the back-door and front-door graphs): a node in the way steps half a row aside, each node sits at the mean row of its parents, and 切斷 is placed off the edges still drawn; two bundled layouts (train switching, trumping) moved for the same reason. On a graph with values, a click pins the value a node shows under the other do()s, then the other value, then releases, so do(C=0) followed by B can reach B=0. A click observes a multi-valued node too (each value in turn, then released). Exogenous nodes are the context: they can be observed, never set by do() (and the pen-fiasco preset that set `U_N` is gone). The case page works its probability and decision verdicts out at the current sliders. Numbers round halves away from zero (0.175 → 0.18). The equations panel lists every endogenous equation (`Y = U2`); `show_exogenous` in a case file or model document names exogenous variables to draw without a layout, and do() then names every drawn parent it cuts. A witness lane says whether each held variable keeps its actual value or another one. The do() popover closes when what it sets is reset from the keyboard, and avoids the other nodes; header chips and footer controls no longer break mid-word on narrow screens. Normality wording: a witness that deviates where the actual world does not, and the other way round, is incomparable with it, so not at least as normal (gardener and Queen, the pen cases, red light, antidote); the sharks source note cites what Halpern's pp. 82 and 91 say.
 
@@ -248,8 +258,9 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   `G 與 M　已知 {L} → 通　相依程度 0.1736` and up to three paths with why
   (`G→A←M：對撞點 A 的後代 L 已知`; the rest counted). 相依程度 is lesson 04's
   δ(X, Y | z) = max |P(x,y|z) − P(x|z)P(y|z)| given the observed values, so the tuned parameters read
-  通 · 0.000. The engine exports `dSeparation(model, x, y, given, cut)` (each path, open or blocked and
-  by what) and `dependence(model, prior, x, y, given, do, stochastic)`.
+  通 · 0.000. The engine exports `dSeparation(model, x, y, given, cut, cutOut)` (each path, open or
+  blocked and by what; `cutOut` removes the arrows out of those variables) and
+  `dependence(model, prior, x, y, given, do, stochastic)`.
 - A probability playground has a reading switch in its head, 「干預後再觀察｜反事實」. The first
   (default) reads what is set as P(· | do(…), observed), and a node is either observed or set. Under
   反事實 the same gestures mean evidence about the actual world (click) and the supposed action (long
@@ -258,6 +269,51 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   實際 v where they moved from the actual world, and the chip reads `D=1 ⇒ 若 do(A=0)`. Switching
   keeps what is set; back to the first reading, a node that was both keeps only its do(). The embed
   code does not carry the reading (an embed opens in the first one).
+- `sliders={['N_S1']}` on a probability playground: a slider per exogenous variable (boolean or
+  two-valued, independent prior) under the graph, written as in the probability panel; dragging
+  recomputes everything drawn (numbers, trail, dsep, the bars below) with the new prior, and
+  「回到原本的機率」 puts the sliders back. `prior={{ E: 0.1 }}` sets start values of exogenous
+  variables, slider or not. The embed code does not record slider positions (said in the hint's ⓘ).
+  Other variables, a graph with values or a joint prior throw.
+  `<CausalPlayground client:visible caseId="smoking-lesion" sliders={["N_S1"]} decision />`
+- `decision` on a probability playground: expected-utility bars under the graph, a row for the
+  evidential and one for the causal theory, one bar per act on a shared zero (negative to the left),
+  and `選 S=0（多 16.74）` at the end of each row; the utility table and the two formulas sit in the ⓘ.
+  Observing the act lights its evidential bar, do() on it its causal bar (no text). `true` takes the
+  case's own decision (else it throws); or give one in the case-file format,
+  `{ variable, acts?, utility: { variables, rows: [[...values, utility]] } }` (`CaseDecision`). Newcomb
+  with Gibbard and Harper's utilities and error 0.1, the bundled case's million-dollar numbers left as they are:
+  `<CausalPlayground client:visible caseId="newcomb" sliders={["D"]} prior={{ D: 0.1, E: 0.1 }} decision={{ variable: "A", utility: { variables: ["A", "M"], rows: [["one", 1, 100], ["one", 0, 0], ["two", 1, 101], ["two", 0, 10]] } }} />`
+  (the causal theory gains 8.38 / 5.5 / 2.62 at D = 0.1 / 0.5 / 0.9; the evidential row stays 90 / 19.1).
+- `<ProbabilityPanel view="adjust" adjust={{ x: 'X', y: 'Y', sets? }}>`: a switch in the head picks
+  the grouping (`sets`, default every grouping of the other endogenous variables, at most three of
+  them; more throw); the grouped variables are ringed with 分組 under them, and only the non-causal
+  paths between x and y are marked (lit when open, dashed when blocked). A line gives
+  `✓ 後門準則成立 ＝ 干預值` or `✗ C 是 X 的後代；已知 C 打開 X→C←Y ≠ 干預值` with the criterion in
+  its ⓘ, and the table is the lesson's computation: each stratum, P(stratum), P(y | x, stratum) per
+  value of x (— where there is no data), the weighted sum and the do() value.
+  `<CausalModel id="m05-backdoor" as="probability" view="adjust" adjust={{ x: "X", y: "Y" }} />`
+- `<ProbabilityPanel view="rules" rules={[...]}>`: a step button per `RuleStep`
+  `{ label, rule: 1|2|3, pair: [a, b], given, cutIn?, cutOut?, equal?: [side, side] }`, each side
+  `{ event, given?, do? }`. The graph draws no numbers: arrows into `cutIn` and out of `cutOut` are
+  struck (切斷), `cutIn` nodes carry the do() clamp without a value, the known set is ringed, the pair's
+  paths are lit or dashed; a latent arc loses the end whose arrow is cut. A line says
+  `X 與 Z 已知：無 → 分隔，規則二適用` with up to three paths and why, and the equation is computed on
+  the full model, `P(Z=1 | do(X=1)) = 0.9 = P(Z=1 | X=1) = 0.9 ✓` (✗ and ≠ when they differ). A click
+  on a node adds it to the known set or takes it out (no value); a step button restores its own. The
+  cut is the lesson's to give: the view does not derive it from the rule. Lesson 06's front-door
+  derivation is `src/demo/front-door-steps.ts` (steps 2, 3, 4, 5a, 5b equal; 7 is open, 0.37 ≠ 0.4695);
+  the model should carry `latent_as_arcs: ["U"]` so X←U→Y shows.
+- `<ModelEditor tasks={[{ id, title, prompt, start, goal: { equations: { FF: 'L or MD' } }, predict?: { cause, effect } }]}>`:
+  a card per task above the inputs: the question, 從它開始 (loads `start`), guess chips for the four
+  definitions, and 檢查, which compares each goal equation with the edited one at every value of
+  their parents together (an extra parent that changes nothing passes) and then reveals the edited
+  model's verdicts and how many guesses were right, or names one setting where they differ
+  (`L=0、MD=1 時，你的 FF 是 0，目標是 1。`). Progress is not kept in the link. Once the model is
+  edited, the case's verdict table recomputes each verdict on it, under the column 你的模型. The
+  list starts with the blank model and a line saying a case starts as a copy; on a content width of
+  960 px or more the graph column stays in view (`--ca-sticky-top`), and on every width the inputs
+  come before the case panel.
 - `<ProbabilityPanel view="compare" pair>`: `pair` is one `{ event, observe, intervene }` or a list;
   with two or more, a switch labelled by each `observe` (`S=1｜S=0`) changes both sides together:
   `pair={[{ event: 'W=1', observe: 'S=1', intervene: { S: 1 } }, { event: 'W=1', observe: 'S=0', intervene: { S: 0 } }]}`.
