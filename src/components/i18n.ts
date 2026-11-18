@@ -134,7 +134,7 @@ type DraftWording = { readonly [K in DraftIssue['code']]: (issue: Extract<DraftI
  * What a click on a node does: set or release a boolean one; choose or adjust the value of a
  * multi-valued one; choose or adjust P*(X=1) of a boolean one in probability mode.
  */
-export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb' | 'observe' | 'observeOnly'
+export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb' | 'observe' | 'observeOnly' | 'pick'
 
 const ZH = {
   locale: 'zh-TW' as Locale,
@@ -288,7 +288,9 @@ const ZH = {
                     ? '按一下觀察（再按換值，第三下取消）；長按、右鍵或 Shift 加按一下是干預'
                     : toggle === 'observeOnly'
                       ? '按一下觀察（再按換值，第三下取消）'
-                      : '按一下套上干預',
+                      : toggle === 'pick'
+                        ? '按一下加進或移出已知集合'
+                        : '按一下套上干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
@@ -364,6 +366,19 @@ const ZH = {
     weighted: '加權和',
     doRow: '干預',
     tip: '後門準則（Pearl 2009，定義 3.3.1）：(i) 分組的變數都不是 X 的後代；(ii) 拿掉 X 出去的箭頭後，它們堵住 X 與 Y 之間的每一條路。兩條都成立，加權和就等於干預值。圖上只標非因果的路：通的亮起，堵住的畫虛線。一層的機率是 0，或那一層沒有某個 X 值，寫「—」：這一層沒有資料。',
+  },
+  rules: {
+    rule: (n: number): string => `規則${['一', '二', '三'][n - 1] ?? String(n)}`,
+    cut: (into: readonly string[], out: readonly string[]): string => {
+      const parts = [into.length > 0 ? `指向 ${into.join('、')} 的` : '', out.length > 0 ? `${out.join('、')} 出去的` : ''].filter((x) => x !== '')
+      return parts.length === 0 ? '不剪箭頭' : `剪掉${parts.join('、')}箭頭`
+    },
+    steps: '步驟',
+    separated: '分隔',
+    applies: (rule: string): string => `，${rule}適用`,
+    notApplies: (rule: string): string => `，${rule}不適用`,
+    graphTitle: (title: string, rule: string): string => `${title}：${rule}的截斷圖`,
+    tip: '截斷圖照課文寫的剪法畫：被剪的箭頭畫成切斷，箭頭被剪掉的變數加上夾角；剪掉箭頭之後不再是原本的模型，圖上不寫機率。點節點把它加進或移出已知集合（不帶值）；按步驟鈕回到那一步原本的已知集合。等式的兩邊用完整模型算。規則三剪掉指向 Z(W) 的箭頭，Z(W) 也由課文寫明。',
   },
   normality: {
     kicker: '偏離預設值',
@@ -792,7 +807,9 @@ const EN: Messages = {
                     ? 'click to observe (again for the other value, a third time to release); long-press, right-click or Shift+click to intervene'
                     : toggle === 'observeOnly'
                       ? 'click to observe (again for the other value, a third time to release)'
-                      : 'click to intervene',
+                      : toggle === 'pick'
+                        ? 'click to add it to the known set or take it out'
+                        : 'click to intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
@@ -865,6 +882,19 @@ const EN: Messages = {
     weighted: 'Weighted sum',
     doRow: 'do()',
     tip: 'The back-door criterion (Pearl 2009, Def. 3.3.1): (i) no grouped variable is a descendant of X; (ii) with the arrows out of X removed, they block every path between X and Y. When both hold, the weighted sum equals the do() value. Only the non-causal paths are marked: lit when open, dashed when blocked. A stratum with probability 0, or with no case of some value of X, reads —: there is no data in it.',
+  },
+  rules: {
+    rule: (n) => `Rule ${n}`,
+    cut: (into, out) => {
+      const parts = [into.length > 0 ? `into ${into.join(', ')}` : '', out.length > 0 ? `out of ${out.join(', ')}` : ''].filter((x) => x !== '')
+      return parts.length === 0 ? 'No arrows cut' : `Arrows ${parts.join(' and ')} cut`
+    },
+    steps: 'Step',
+    separated: 'separated',
+    applies: (rule) => `: ${rule} applies`,
+    notApplies: (rule) => `: ${rule} does not apply`,
+    graphTitle: (title, rule) => `${title}: the cut graph of ${rule}`,
+    tip: 'The cut graph is the one the lesson names: cut arrows are struck, and each variable whose arrows into it are cut is clamped; once arrows are cut it is no longer the model, so no probabilities are drawn. Click a node to add it to the known set or take it out (no value); a step button restores that step\'s known set. Both sides of the equation are computed on the full model. Rule 3 cuts the arrows into Z(W), which the lesson also names.',
   },
   normality: {
     kicker: 'Deviations',

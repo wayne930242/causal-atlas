@@ -1,19 +1,10 @@
 import type { LoadedCase } from '../data/load.ts'
-import type { Assignment, DPath } from '../engine/index.ts'
+import type { Assignment } from '../engine/index.ts'
 import type { DsepPair, DsepView } from './dsep-view.ts'
-import { MAX_PATHS, deltaText, pathText } from './dsep-view.ts'
-import type { Messages } from './i18n.ts'
+import { MAX_PATHS, deltaText, pathReason, pathText } from './dsep-view.ts'
 import { useMessages } from './i18n.ts'
 import { Tip } from './parts.tsx'
 import { Formula, Rich } from './typeset.tsx'
-
-function reason(t: Messages, p: DPath): string {
-  const d = t.dsep
-  if (!p.open) return p.kind === 'collider' ? d.colliderUnknown(p.blockedBy ?? '') : d.middleKnown(p.blockedBy ?? '')
-  const opened = p.opened ?? []
-  if (opened.length === 0) return p.nodes.length === 2 ? d.adjacent : d.middlesUnknown
-  return t.list(opened.map((o) => (o.by === o.collider ? d.colliderKnown(o.collider) : d.descendantKnown(o.collider, o.by))))
-}
 
 /** The line under the graph: the pair, what is known, open or blocked, δ, and up to three paths with why. */
 export function DsepLine({ c, pair, observed, view }: { readonly c: LoadedCase; readonly pair: DsepPair; readonly observed: Assignment; readonly view: DsepView }) {
@@ -37,7 +28,7 @@ export function DsepLine({ c, pair, observed, view }: { readonly c: LoadedCase; 
           <li key={p.nodes.join('-')} data-path-open={p.open ? 'true' : 'false'}>
             <Formula text={pathText(p)} />
             {d.pathSep}
-            <Rich text={reason(t, p)} ids={ids} />
+            <Rich text={pathReason(t, p)} ids={ids} />
           </li>
         ))}
         {result.paths.length > MAX_PATHS && <li>{d.more(result.paths.length - MAX_PATHS)}</li>}

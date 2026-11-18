@@ -1,6 +1,7 @@
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, DPath, DSeparationResult } from '../engine/index.ts'
 import { dSeparation, dependence } from '../engine/index.ts'
+import type { Messages } from './i18n.ts'
 import type { Stochastic } from './view-model.ts'
 import { fixed } from './view-model.ts'
 
@@ -51,3 +52,12 @@ export function pathText(p: DPath): string {
   return p.nodes.reduce((acc, id, i) => (i === 0 ? id : `${acc}${p.edges[i - 1].from === p.nodes[i - 1] ? '→' : '←'}${id}`), '')
 }
 
+
+/** Why a path is open or blocked, in the dsep line's words. */
+export function pathReason(t: Messages, p: DPath): string {
+  const d = t.dsep
+  if (!p.open) return p.kind === 'collider' ? d.colliderUnknown(p.blockedBy ?? '') : d.middleKnown(p.blockedBy ?? '')
+  const opened = p.opened ?? []
+  if (opened.length === 0) return p.nodes.length === 2 ? d.adjacent : d.middlesUnknown
+  return t.list(opened.map((o) => (o.by === o.collider ? d.colliderKnown(o.collider) : d.descendantKnown(o.collider, o.by))))
+}

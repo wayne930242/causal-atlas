@@ -63,6 +63,10 @@ export interface SignalGraphProps {
   readonly defaults?: Assignment
   /** d-separation: edges on an open path between the pair lit, edges only on blocked ones dashed, the two ends ringed. */
   readonly paths?: PathMarks
+  /** Nodes drawn with the do() clamp but no value tag: the arrows into them are cut in a graph without numbers (do-calculus). */
+  readonly clamped?: readonly string[]
+  /** A click (or Enter) on a node picks it, e.g. into or out of a known set; no observing or do(). */
+  readonly onPick?: (id: string) => void
   /** Click on a node: toggles a boolean one; a multi-valued one opens the value control when `onSetValue` is given. */
   readonly onToggle?: (id: string) => void
   /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
@@ -237,6 +241,8 @@ export function SignalGraph(props: SignalGraphProps) {
     holdNotes = false,
     defaults,
     paths,
+    clamped = [],
+    onPick,
   } = props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -395,7 +401,7 @@ export function SignalGraph(props: SignalGraphProps) {
   }
   // An arc ends where its child is cut: do() on a child (or a cut edge from the latent cause) removes
   // that end, so the arc is gone (Pearl's G with the arrows into X removed).
-  const endCut = (via: string, id: string): boolean => cut.has(`${via}>${id}`) || id in interventions || id in stochastic
+  const endCut = (via: string, id: string): boolean => cut.has(`${via}>${id}`) || id in interventions || id in stochastic || clamped.includes(id)
   const arcPlans = planArcs(
     latentArcs(c, shown).filter((a) => !endCut(a.via, a.a) && !endCut(a.via, a.b)),
     pos,
@@ -720,7 +726,7 @@ export function SignalGraph(props: SignalGraphProps) {
     const picks = picksValue || picksProb
     const toggles = settable && onToggle !== undefined
     const observes = onObserve !== undefined
-    const interactive = toggles || onMove !== undefined || picks || observes
+    const interactive = toggles || onMove !== undefined || picks || observes || onPick !== undefined
     /** Intervene: set the node at once (to its observed or current value) and open its control. */
     const intervene = (): void => {
       if (picksProb) {
@@ -732,6 +738,10 @@ export function SignalGraph(props: SignalGraphProps) {
       } else if (toggles) onToggle?.(id)
     }
     const activate = (shift: boolean): void => {
+      if (onPick !== undefined) {
+        onPick(id)
+        return
+      }
       if (observes && !shift) {
         setPicking(undefined)
         onObserve(id)
@@ -781,7 +791,9 @@ export function SignalGraph(props: SignalGraphProps) {
       cancelPress()
       intervene()
     }
-    const toggle: NodeToggle | undefined = observes
+    const toggle: NodeToggle | undefined = onPick !== undefined
+      ? 'pick'
+      : observes
       ? settable
         ? 'observe'
         : 'observeOnly'
@@ -877,10 +889,10 @@ export function SignalGraph(props: SignalGraphProps) {
             </text>
           </>
         )}
-        {intervened && !held && (
+        {((intervened && !held) || (!intervened && clamped.includes(id))) && (
           <>
             <path d={clampPath(R)} className="ca-stroke-clamp" />
-            {tag !== undefined && (
+            {intervened && tag !== undefined && (
               <g transform={`translate(${tag.box.x0} ${tag.box.y0})`}>
                 <rect width={tag.box.x1 - tag.box.x0} height={22} className="ca-fill-accent" />
                 <text

@@ -2596,3 +2596,31 @@
     display: inline;
   }
 }
+
+/* The do-calculus view: the separation line and the step's equation under the cut graph. */
+.ca-rules-line {
+  padding-top: 8px;
+}
+
+.ca-rules-equal {
+  margin: 0;
+  padding: 8px 0 4px;
+  font-size: 13px;
+}
+
+.ca-rules-steps .ca-seg-item {
+  min-width: 40px;
+}
+
+@media (max-width: 760px) {
+  .ca-rules-steps {
+    display: flex;
+    width: 100%;
+  }
+
+  .ca-rules-steps .ca-seg-item {
+    flex: 1;
+    min-width: 0;
+    padding: 0 4px;
+  }
+}

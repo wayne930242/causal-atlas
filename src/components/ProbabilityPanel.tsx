@@ -18,6 +18,8 @@ import { SignalGraph } from './SignalGraph.tsx'
 import { SliderList } from './SliderList.tsx'
 import type { AdjustSpec } from './AdjustPanel.tsx'
 import { AdjustPanel } from './AdjustPanel.tsx'
+import type { RuleStep } from './rules-view.ts'
+import { RulesPanel } from './RulesPanel.tsx'
 import type { CounterfactualSpec } from './cf-steps.ts'
 import { CfStepper } from './CfStepper.tsx'
 import { Formula, Rich } from './typeset.tsx'
@@ -37,7 +39,7 @@ import {
   phraseOf,
 } from './view-model.ts'
 
-export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual' | 'adjust'
+export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual' | 'adjust' | 'rules'
 
 export type ProbabilityPanelProps = ProbabilitySource & ProbabilityOptions
 
@@ -67,6 +69,13 @@ export interface ProbabilityOptions {
    * three of them). Each grouping shows the back-door verdict and the adjustment formula's table.
    */
   readonly adjust?: AdjustSpec
+  /**
+   * For `rules`: the steps of a do-calculus derivation, one button each. A step names its rule,
+   * the pair, the known set it starts with, the cut (`cutIn`: arrows into these removed;
+   * `cutOut`: arrows out of them removed; as the lesson writes it) and the equation the rule
+   * licenses, `equal: [side, side]`, each side `{ event, given?, do? }` computed on the full model.
+   */
+  readonly rules?: readonly RuleStep[]
   /** For `counterfactual`: the question in words, beside the formula in the head. */
   readonly actionLabel?: string
   /** For `counterfactual`: the step shown first, 1 (abduction, default), 2 (action) or 3 (prediction). */
@@ -151,11 +160,13 @@ export function ProbabilityPanelFor({
   sliders: heldSliders,
   onSliders,
   adjust,
+  rules,
 }: {
   c: LoadedCase
   view?: ProbabilityView
   pair?: SeeDoPair | readonly SeeDoPair[]
   adjust?: AdjustSpec
+  rules?: readonly RuleStep[]
   counterfactual?: CounterfactualSpec
   actionLabel?: string
   initialStep?: number
@@ -203,6 +214,11 @@ export function ProbabilityPanelFor({
         sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />}
       />
     )
+  }
+
+  if (view === 'rules') {
+    if (rules === undefined) throw new Error(`case ${c.data.id}: view="rules" needs rules (the steps)`)
+    return <RulesPanel c={c} prior={prior} steps={rules} shown={shown} exportUrl={exportUrl} />
   }
 
   if (view === 'counterfactual') {
