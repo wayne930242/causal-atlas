@@ -63,6 +63,13 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
       />
     </>
   ),
+  defaults: () => (
+    <>
+      <CausalPlayground doc={lessonModel('m01-fire-oxygen')} />
+      <CausalPlayground doc={lessonModel('m01-fire-oxygen-lab')} />
+      <CausalPlayground caseId="gardener-queen" verdicts={[{ cause: 'QW=0', effect: 'D=1' }]} />
+    </>
+  ),
 }
 
 export function Interactions({ item }: { readonly item: string }) {

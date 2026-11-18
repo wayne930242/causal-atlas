@@ -205,6 +205,12 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   with 固定（實際 v） under its label, or 固定（實際值） when held at its actual value (so are a step's
   `hold`s). With several queries the line answers the first whose cause is set away from its actual
   value. `actualGroups(t, c, queries)` takes the same queries.
+- Defaults: when the model has `normality`, a graph with values marks each node off its default
+  with a dashed 偏離（預設 v） under its label (nothing on the others), a line under the graph compares
+  this world's deviant variables with the actual world's, `這個世界 {GW, QW}；實際世界 {GW, D}，無法比較`
+  (更正常／一樣正常／較不正常／無法比較, `atLeastAsNormal` both ways; before any do() only the actual
+  world's), and each equation says 預設 v. HP with normality gives the same sentence as its reason
+  when a world is less normal. `normality={false}` hides all of it.
 - A probability playground has a reading switch in its head, 「干預後再觀察｜反事實」. The first
   (default) reads what is set as P(· | do(…), observed), and a node is either observed or set. Under
   反事實 the same gestures mean evidence about the actual world (click) and the supposed action (long

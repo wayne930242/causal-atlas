@@ -54,6 +54,8 @@ export interface SignalGraphProps {
    * 固定（實際值）, instead of the hull's 見證 tag (the playground: what is held need not be a witness).
    */
   readonly holdNotes?: boolean
+  /** Default values (the model's normality): a node off its default says 偏離（預設 v） under its label. Graphs with values only. */
+  readonly defaults?: Assignment
   /** Click on a node: toggles a boolean one; a multi-valued one opens the value control when `onSetValue` is given. */
   readonly onToggle?: (id: string) => void
   /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
@@ -98,17 +100,18 @@ const LONG_PRESS = 500
 
 /** What sits under a node's label: nothing, one number, or one bar per value (with the largest probability). */
 type Readout =
-  | { readonly kind: 'none'; readonly noteW?: number }
+  | { readonly kind: 'none'; readonly noteW?: number; readonly note2W?: number }
   | { readonly kind: 'number'; readonly noteW?: number }
   | { readonly kind: 'bars'; readonly width: number; readonly maxW: number; readonly noteW?: number }
 
 /** A node's label and its readout as one block, in offsets from the node's centre. */
 interface Block {
   readonly side: 'below' | 'above'
-  /** Baselines of the label, the number and the note. */
+  /** Baselines of the label, the number and the note (and a second note line). */
   readonly labelY: number
   readonly numberY: number
   readonly noteY: number
+  readonly note2Y: number
   /** Bars: left edge and the baseline the bars stand on. */
   readonly x0: number
   readonly baseline: number
@@ -125,9 +128,12 @@ function blockAt(top: number, side: Block['side'], labelW: number, readout: Read
   let noteY = labelY
   let x0 = 0
   let baseline = labelY
-  if (readout.kind === 'none' && readout.noteW !== undefined) {
+  let note2Y = labelY
+  if (readout.kind === 'none' && (readout.noteW !== undefined || readout.note2W !== undefined)) {
     noteY = labelY + 17
-    boxes.push(textBox(0, noteY, 'middle', readout.noteW, 12))
+    note2Y = readout.noteW === undefined ? noteY : noteY + 18
+    if (readout.noteW !== undefined) boxes.push(textBox(0, noteY, 'middle', readout.noteW, 12))
+    if (readout.note2W !== undefined) boxes.push(textBox(0, note2Y, 'middle', readout.note2W + 8, 14))
   } else if (readout.kind === 'number') {
     numberY = labelY + 22
     noteY = numberY + 19
@@ -142,7 +148,7 @@ function blockAt(top: number, side: Block['side'], labelW: number, readout: Read
     boxes.push(textBox(x0 - 5, chartTop + 8, 'end', readout.maxW, 11))
     if (readout.noteW !== undefined) boxes.push(textBox(0, noteY, 'middle', readout.noteW, 12))
   }
-  return { side, labelY, numberY, noteY, x0, baseline, boxes }
+  return { side, labelY, numberY, noteY, note2Y, x0, baseline, boxes }
 }
 
 /** The block under a node of radius `r`, and the same block moved above it. */
@@ -199,6 +205,7 @@ export function SignalGraph(props: SignalGraphProps) {
     observedValues = {},
     evidence = false,
     holdNotes = false,
+    defaults,
   } = props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -330,6 +337,14 @@ export function SignalGraph(props: SignalGraphProps) {
     return before === undefined || valuesEqual(before, now) ? t.witness.heldActual : t.witness.held(formatValue(before))
   }
 
+  /** 偏離（預設 v） for a node of a graph with values off its default. */
+  const deviantNote = (id: string): string | undefined => {
+    const normal = defaults?.[id]
+    const now = values?.[id]
+    if (prob || normal === undefined || now === undefined || valuesEqual(now, normal)) return undefined
+    return t.normality.deviant(formatValue(normal))
+  }
+
   // Each node's label and readout form one block right under it; only when that block touches an
   // edge, another node, a do tag or an earlier block, or leaves the graph's sides, does the whole
   // block go above the node (when that touches less).
@@ -349,7 +364,8 @@ export function SignalGraph(props: SignalGraphProps) {
     const variable = getVariable(c.model, id)
     const note = holdNote(id) ?? probNotes?.[id]
     const noteW = note === undefined ? undefined : textWidth(note, 12)
-    let readout: Readout = { kind: 'none', noteW }
+    const deviant = deviantNote(id)
+    let readout: Readout = { kind: 'none', noteW, note2W: deviant === undefined ? undefined : textWidth(deviant, 11) }
     if (barred(id) && variable.domain.kind === 'finite') {
       const known = (dists?.[id] ?? []).filter((x) => !Number.isNaN(x))
       const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known))), 11)
@@ -535,7 +551,7 @@ export function SignalGraph(props: SignalGraphProps) {
         y,
         w: Math.max(...pts.map((p) => p.x)) + pad + 20 - x,
         // Include the label under the node, and its 固定 note.
-        h: Math.max(...pts.map((p) => p.y)) + R + (holdNotes ? 50 : 34) - y,
+        h: Math.max(...pts.map((p) => p.y)) + R + (holdNotes ? 50 : 34) + (Object.keys(witness).some((id) => deviantNote(id) !== undefined) ? 18 : 0) - y,
         text: t.witnessHold(assignmentText(witness)),
       }
     }
@@ -762,6 +778,20 @@ export function SignalGraph(props: SignalGraphProps) {
               {t.was(formatValue(before))}
             </text>
           )
+        )}
+        {deviantNote(id) !== undefined && (
+          <g className="ca-deviant" data-deviant={id}>
+            <rect
+              x={-(textWidth(deviantNote(id) ?? '', 11) + 8) / 2}
+              y={block.note2Y - 11}
+              width={textWidth(deviantNote(id) ?? '', 11) + 8}
+              height={15}
+              className="ca-deviant-box"
+            />
+            <text y={block.note2Y} textAnchor="middle" className="ca-svg-tiny ca-svg-bold">
+              {deviantNote(id)}
+            </text>
+          </g>
         )}
         <text y={block.labelY} textAnchor="middle" className="ca-svg-label">
           <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>

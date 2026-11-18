@@ -61,6 +61,8 @@ export interface GraphBoxProps {
   readonly reading?: Reading
   /** Controls in the head, before 「回到原本」 (the playground's reading switch). */
   readonly actions?: ReactNode
+  /** Default values: deviant nodes say 偏離（預設 v） (graphs with values). */
+  readonly defaults?: Assignment
 }
 
 const NONE: Stochastic = {}
@@ -107,6 +109,7 @@ export function GraphBox({
   notes,
   reading = 'interventional',
   actions,
+  defaults,
 }: GraphBoxProps) {
   const t = useMessages()
   const [notice, setNotice] = useState<string | undefined>(undefined)
@@ -178,6 +181,7 @@ export function GraphBox({
       removedEdges={world.removedEdges}
       witness={witness}
       holdNotes={holdNotes}
+      defaults={defaults}
       onToggle={!interactive || onDo === undefined ? undefined : (id) => doing({ stochastic, interventions: toggled(c, interventions, world, id) }, id)}
       onSetValue={!interactive || onDo === undefined ? undefined : (id, value) => doing({ stochastic, interventions: withValue(interventions, id, value) }, id)}
       onSetProbability={!interactive || onDo === undefined || !prob ? undefined : (id, p) => doing(withProbability(state, id, p), id)}
@@ -271,9 +275,11 @@ export interface EquationBoxProps {
   readonly stochastic?: Stochastic
   readonly notation: UiNotation
   readonly onNotation: (n: UiNotation) => void
+  /** Default values: 預設 v beside each equation that has one. */
+  readonly defaults?: Assignment
 }
 
-export function EquationBox({ c, world, interventions, stochastic = NONE, notation, onNotation }: EquationBoxProps) {
+export function EquationBox({ c, world, interventions, stochastic = NONE, notation, onNotation, defaults }: EquationBoxProps) {
   const t = useMessages()
   return (
     <div className="ca-box ca-eq-box">
@@ -282,7 +288,7 @@ export function EquationBox({ c, world, interventions, stochastic = NONE, notati
         <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
         <CopyLatex c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} stochastic={stochastic} />
       </div>
-      <Equations c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} stochastic={stochastic} />
+      <Equations c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} stochastic={stochastic} defaults={defaults} />
     </div>
   )
 }

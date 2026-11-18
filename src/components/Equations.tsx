@@ -20,10 +20,12 @@ export interface EquationsProps {
   readonly interventions: Assignment
   /** Stochastic interventions (probability mode): each one's equation is struck and replaced by a coin. */
   readonly stochastic?: Stochastic
+  /** Default values (normality): each such equation says 預設 v beside its label. */
+  readonly defaults?: Assignment
 }
 
 /** The model's equations in one notation at a time. */
-export function Equations({ c, shown, notation, values, interventions, stochastic }: EquationsProps) {
+export function Equations({ c, shown, notation, values, interventions, stochastic, defaults }: EquationsProps) {
   const t = useMessages()
   const ids = equationIds(c)
   const hasDo = Object.keys(interventions).length > 0
@@ -70,7 +72,10 @@ export function Equations({ c, shown, notation, values, interventions, stochasti
               ))}
             </code>
             <code className="ca-eq-worked" />
-            <span className="ca-eq-note">{label(c.model, id, t.locale)}</span>
+            <span className="ca-eq-note">
+              {label(c.model, id, t.locale)}
+              <DefaultTag defaults={defaults} id={id} />
+            </span>
           </div>
         ))}
         <p className="ca-eq-reading">{t.readCausal}</p>
@@ -105,10 +110,23 @@ export function Equations({ c, shown, notation, values, interventions, stochasti
           </code>
           <span className="ca-eq-note">
             <Rich text={r.note} ids={c.model.byId} />
+            <DefaultTag defaults={defaults} id={r.id} />
           </span>
         </div>
       ))}
     </div>
+  )
+}
+
+/** 預設 v beside an equation whose variable has a default. */
+function DefaultTag({ defaults, id }: { readonly defaults?: Assignment; readonly id: string }) {
+  const t = useMessages()
+  const v = defaults?.[id]
+  if (v === undefined) return null
+  return (
+    <span className="ca-eq-default" data-default={id}>
+      {t.normality.default(formatValue(v))}
+    </span>
   )
 }
 

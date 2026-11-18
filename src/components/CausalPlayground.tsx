@@ -18,7 +18,7 @@ import { actualGroups, defaultTheories, originCitations, originSources } from '.
 import { PlaygroundVerdicts } from './PlaygroundVerdicts.tsx'
 import { evaluate, getVariable, parseCause, valuesEqual } from '../engine/index.ts'
 import type { TrailEntry } from './view-model.ts'
-import { TRAIL_LENGTH, readingText, sameAssignment, trailEntry, trailText } from './view-model.ts'
+import { TRAIL_LENGTH, normalityLine, readingText, sameAssignment, trailEntry, trailText } from './view-model.ts'
 
 /**
  * A step button under the graph: one press sets these do()s and observations (and nothing else).
@@ -96,6 +96,13 @@ export interface CausalPlaygroundOptions {
    * the first whose cause is set away from its actual value.
    */
   readonly verdicts?: readonly VerdictQuery[]
+  /**
+   * The model's default values (`normality`), shown on a graph with values: a node off its default
+   * says 偏離（預設 v）, a line under the graph compares this world's deviations with the actual
+   * world's (更正常／一樣正常／較不正常／無法比較), each equation says 預設 v. On by default when the
+   * model has defaults; `false` hides them.
+   */
+  readonly normality?: boolean
 }
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
@@ -123,6 +130,7 @@ function PlaygroundFor({
   embedded = false,
   track = NO_TRACK,
   verdicts,
+  normality = true,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
   if (verdicts !== undefined && c.context === undefined) throw new Error(`${c.data.id}: verdicts need a graph with values (an actual context)`)
@@ -154,6 +162,7 @@ function PlaygroundFor({
   const soft = Object.keys(stochastic).length > 0
   const buttons = presetButtons(c, presets, t.locale)
   const prob = world.probs !== undefined
+  const defaults = normality && c.context !== undefined ? c.normality : undefined
   const groups = useMemo(() => (verdicts === undefined ? [] : actualGroups(t, c, verdicts)), [t, c, verdicts])
   const theories = useMemo(() => (verdicts ?? []).map((q) => q.theories ?? defaultTheories(c)), [c, verdicts])
   const active = verdicts === undefined ? -1 : activeQuery(c, verdicts, interventions)
@@ -209,6 +218,7 @@ function PlaygroundFor({
           onObserve={setObserved}
           witness={Object.keys(holding).length > 0 ? holding : undefined}
           holdNotes
+          defaults={defaults}
           legend
           exportUrl={exportUrl}
           embedCode={embed}
@@ -245,6 +255,16 @@ function PlaygroundFor({
                   }}
                 />
               )}
+              {defaults !== undefined && world.values !== undefined && world.original !== undefined && (
+                <p className="ca-norm-line" data-normality="">
+                  <span className="ca-pg-now-kicker">{t.normality.kicker}</span>{' '}
+                  <Rich
+                    text={normalityLine(t, c.model, world.values, world.original, defaults, !sameAssignment(world.values, world.original))}
+                    ids={c.model.byId}
+                  />{' '}
+                  <Tip tip={t.normality.tip} label={t.moreInfo} />
+                </p>
+              )}
               {track.length > 0 && (
                 <ul className="ca-trail" aria-label={t.trail}>
                   {track.map((id) => {
@@ -273,7 +293,7 @@ function PlaygroundFor({
             </div>
           }
         />
-        <EquationBox c={c} world={world} interventions={interventions} stochastic={stochastic} notation={notation} onNotation={setNotation} />
+        <EquationBox c={c} world={world} interventions={interventions} stochastic={stochastic} notation={notation} onNotation={setNotation} defaults={defaults} />
       </div>
       {embedded && <EmbedCredit c={c} url={exportUrl ?? DEFAULT_URL} />}
     </div>

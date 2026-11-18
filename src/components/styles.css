@@ -2287,7 +2287,7 @@
   padding: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  border: 1px solid var(--border);
+  padding: 0 1px 1px 0;
 }
 
 .ca-pg-cell {
@@ -2296,11 +2296,8 @@
   gap: 2px;
   padding: 6px 10px;
   font-size: 13px;
-  border-right: 1px solid var(--border);
-}
-
-.ca-pg-cell:last-child {
-  border-right: 0;
+  border: 1px solid var(--border);
+  margin: 0 -1px -1px 0;
 }
 
 .ca-pg-theory {
@@ -2322,4 +2319,26 @@
   font-weight: 700;
   color: var(--muted-foreground);
   margin-right: 4px;
+}
+
+/* ---- defaults ---- */
+
+.ca-deviant-box {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.ca-eq-default {
+  margin-left: 8px;
+  padding: 0 4px;
+  border: 1px dashed var(--border);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.ca-norm-line {
+  margin: 0;
+  font-size: 13px;
 }

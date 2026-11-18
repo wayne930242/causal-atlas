@@ -307,6 +307,15 @@ const ZH = {
   comparePick: '切換比較的值',
   notRecomputed: '尚未重算',
   readingLabel: '讀法',
+  normality: {
+    kicker: '偏離預設值',
+    deviant: (value: string): string => `偏離（預設 ${value}）`,
+    default: (value: string): string => `預設 ${value}`,
+    actualOnly: (deviant: string): string => `實際世界 ${deviant}`,
+    compare: (world: string, actual: string, order: string): string => `這個世界 ${world}；實際世界 ${actual}，${order}`,
+    order: { more: '更正常', same: '一樣正常', less: '較不正常', incomparable: '無法比較' },
+    tip: '偏離：變項取了預設值以外的值。一個世界的偏離都在另一個世界的偏離之中，才算至少一樣正常；兩邊各有對方沒有的偏離，就無法比較。',
+  },
   witness: {
     question: (cause: string, effect: string): string => `${cause} 是 ${effect} 的原因嗎？`,
     answer: { cause: '是', 'not-cause': '不是', 'part-of-cause': '原因的一部分' },
@@ -743,6 +752,15 @@ const EN: Messages = {
   comparePick: 'Switch the compared value',
   notRecomputed: 'not yet recomputed',
   readingLabel: 'Reading',
+  normality: {
+    kicker: 'Deviations',
+    deviant: (value) => `deviant (default ${value})`,
+    default: (value) => `default ${value}`,
+    actualOnly: (deviant) => `actual world ${deviant}`,
+    compare: (world, actual, order) => `this world ${world}; actual world ${actual}: ${order}`,
+    order: { more: 'more normal', same: 'as normal', less: 'less normal', incomparable: 'incomparable' },
+    tip: 'A deviation is a value other than the default. A world is at least as normal as another when its deviations are among the other’s; when each has one the other lacks, they are incomparable.',
+  },
   witness: {
     question: (cause, effect) => `Is ${cause} a cause of ${effect}?`,
     answer: { cause: 'yes', 'not-cause': 'no', 'part-of-cause': 'part of a cause' },

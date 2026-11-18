@@ -5,7 +5,7 @@ import type { Assignment, CausalTheory, CausalVerdict, Value } from '../engine/i
 import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability, witnessStatus } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Messages } from './i18n.ts'
-import { assignmentText, bracketText, fixed, flipValue, label, probText } from './view-model.ts'
+import { assignmentText, bracketText, fixed, flipValue, label, normalityLine, probText } from './view-model.ts'
 
 /** Verdict rows computed by the engine, with short plain-language sentences in the table's language. */
 
@@ -69,7 +69,9 @@ export function witnessNow(t: Messages, c: LoadedCase, query: VerdictQuery, theo
                   ? w.failure.effectHolds(query.effect)
                   : f === 'not-sufficient'
                     ? w.failure.notSufficient(causeText(query.cause), query.effect)
-                    : w.failure.lessNormal
+                    : c.normality === undefined
+                      ? w.failure.lessNormal
+                      : normalityLine(t, c.model, s.world, s.actual, c.normality, true)
       sentence = w.not(reason)
     }
     sentences.set(sentence, [...(sentences.get(sentence) ?? []), theory])
