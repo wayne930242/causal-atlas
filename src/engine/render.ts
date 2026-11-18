@@ -4,8 +4,8 @@ import type { Expr, LookupExpr } from './expr.ts'
 import { evalExpr } from './expr.ts'
 import type { CausalModel } from './model.ts'
 import { getVariable } from './model.ts'
-import type { Value } from './types.ts'
-import { coerceToDomain, enumerateAssignments, formatValue } from './values.ts'
+import type { Assignment, Value, Variable } from './types.ts'
+import { coerceToDomain, domainValues, enumerateAssignments, formatValue, valuesEqual } from './values.ts'
 
 export type RenderFormat = 'text' | 'latex'
 
@@ -211,22 +211,73 @@ export function causalFormulas(model: CausalModel, id: string): Expr[] {
   const expr = equationOf(model, id)
   const parents = (model.parents.get(id) ?? []).map((p) => getVariable(model, p))
   const target = getVariable(model, id)
-  const formulas: Expr[] = []
-  for (const setting of enumerateAssignments(parents)) {
-    const value = coerceToDomain(target, evalExpr(expr, { values: setting }))
-    const endo = parents.filter((p) => p.kind === 'endogenous')
-    const exo = parents.filter((p) => p.kind === 'exogenous')
-    let body: Expr = eventExpr(id, value)
-    if (endo.length > 0) {
-      body = { op: 'do', interventions: endo.map((p) => ({ variable: p.id, value: setting[p.id] })), body }
-    }
-    if (exo.length > 0) {
-      const conds = exo.map((p) => eventExpr(p.id, setting[p.id]))
-      body = { op: 'implies', left: conds.length === 1 ? conds[0] : { op: 'and', args: conds }, right: body }
-    }
-    formulas.push(body)
+  return [...enumerateAssignments(parents)].map((setting) =>
+    causalFormula(model, id, parents.map((p) => p.id), setting, coerceToDomain(target, evalExpr(expr, { values: setting }))),
+  )
+}
+
+/** One row of a causal table: the parents it names, the value they give, and the row as a formula. */
+export interface CausalRow {
+  /** Every endogenous parent, and the exogenous parents that decide the value here. */
+  readonly setting: Assignment
+  readonly value: Value
+  readonly formula: Expr
+}
+
+/** `[endo←e](id=v)`, under the exogenous antecedents of `setting`, in the parents' order. */
+function causalFormula(model: CausalModel, id: string, order: readonly string[], setting: Assignment, value: Value): Expr {
+  const named = order.filter((p) => setting[p] !== undefined).map((p) => getVariable(model, p))
+  const endo = named.filter((p) => p.kind === 'endogenous')
+  const exo = named.filter((p) => p.kind === 'exogenous')
+  let body: Expr = eventExpr(id, value)
+  if (endo.length > 0) {
+    body = { op: 'do', interventions: endo.map((p) => ({ variable: p.id, value: setting[p.id] })), body }
   }
-  return formulas
+  if (exo.length > 0) {
+    const conds = exo.map((p) => eventExpr(p.id, setting[p.id]))
+    body = { op: 'implies', left: conds.length === 1 ? conds[0] : { op: 'and', args: conds }, right: body }
+  }
+  return body
+}
+
+/**
+ * The causal table of `id` with the exogenous parents that do not matter left out: per setting of
+ * the endogenous parents (each row intervenes on all of them), a decision tree over the exogenous
+ * ones, in the parents' order, that splits on the first one the value still depends on. The rows
+ * partition the settings of the parents, so together they say what `causalFormulas` says; bow A's
+ * Y has 6 rows instead of 32 (`U=0 ∧ A10=1 → [X←1](Y=1)`).
+ */
+export function causalRows(model: CausalModel, id: string): CausalRow[] {
+  const expr = equationOf(model, id)
+  const target = getVariable(model, id)
+  const order = model.parents.get(id) ?? []
+  const parents = order.map((p) => getVariable(model, p))
+  const endo = parents.filter((p) => p.kind === 'endogenous')
+  const exo = parents.filter((p) => p.kind === 'exogenous')
+  const valueAt = (setting: Assignment): Value => coerceToDomain(target, evalExpr(expr, { values: setting }))
+  const completions = (fixed: Assignment, free: readonly Variable[]): Assignment[] =>
+    [...enumerateAssignments(free)].map((rest) => ({ ...fixed, ...rest }))
+  const rows: CausalRow[] = []
+  const split = (fixed: Assignment, free: readonly Variable[]): void => {
+    const all = completions(fixed, free)
+    const first = valueAt(all[0])
+    if (all.every((a) => valuesEqual(valueAt(a), first))) {
+      rows.push({ setting: fixed, value: first, formula: causalFormula(model, id, order, fixed, first) })
+      return
+    }
+    // The first free parent that changes the value for some setting of the others.
+    const decides = free.find((x) => {
+      const others = free.filter((o) => o !== x)
+      return completions(fixed, others).some((a) => {
+        const seen = domainValues(x.domain).map((v) => valueAt({ ...a, [x.id]: v }))
+        return seen.some((v) => !valuesEqual(v, seen[0]))
+      })
+    })
+    if (decides === undefined) throw new Error(`${id}: no parent decides the value`)
+    for (const v of domainValues(decides.domain)) split({ ...fixed, [decides.id]: v }, free.filter((o) => o !== decides))
+  }
+  for (const setting of enumerateAssignments(endo)) split(setting, exo)
+  return rows
 }
 
 function equationOf(model: CausalModel, id: string): Expr {

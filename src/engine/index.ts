@@ -11,7 +11,8 @@ export type { Evaluation, Interventions } from './evaluate.ts'
 export { evaluate, normalizeAssignment } from './evaluate.ts'
 export { evalFormula, holdsIn, satisfies, toFormula } from './formula.ts'
 export type { Notation, RenderFormat } from './render.ts'
-export { causalFormulas, renderEquation, renderExpr, renderIdent, renderModel, renderValue, renderArith } from './render.ts'
+export type { CausalRow } from './render.ts'
+export { causalFormulas, causalRows, renderEquation, renderExpr, renderIdent, renderModel, renderValue, renderArith } from './render.ts'
 export type {
   IndependentPrior,
   JointPrior,
@@ -51,4 +52,4 @@ export { evaluateDecision } from './decision.ts'
 export type { Arith } from './arithmetic.ts'
 export { evalArith, toArith } from './arithmetic.ts'
 export type { DPath, DSeparationResult, OpenedCollider } from './dseparation.ts'
-export { dSeparation, dependence } from './dseparation.ts'
+export { dSeparation, dependence, descendants } from './dseparation.ts'

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { docToCase } from '../data/index.ts'
 import { lessonModel } from '../demo/lesson-models.ts'
-import { dSeparation, dependence } from './index.ts'
+import { dSeparation, dependence, descendants } from './index.ts'
 
 const load = (id: string) => {
   const c = docToCase(lessonModel(id))
@@ -74,5 +74,23 @@ describe('dependence δ, as lesson 04 defines it: max |P(x,y|z) − P(x|z)P(y|z)
   it('after do(), in the intervened model', () => {
     const { model, prior } = load('m04-admission')
     expect(dependence(model, prior, 'G', 'M', { L: 1 }, { A: 1 })).toBeCloseTo(0, 12)
+  })
+})
+
+describe('dSeparation cutOut: the arrows out of these variables removed (G_X underlined, do-calculus rule 2)', () => {
+  it('front door, rule 2 at step 2: X and Z separated once X→Z is cut, the back path X←U→Y←Z blocked at Y', () => {
+    const { model } = load('m05-frontdoor')
+    expect(dSeparation(model, 'X', 'Z', []).separated).toBe(false)
+    const cut = dSeparation(model, 'X', 'Z', [], [], ['X'])
+    expect(cut.separated).toBe(true)
+    expect(cut.paths.map((p) => p.nodes.join(''))).toEqual(['XUYZ'])
+    expect(cut.paths[0]).toMatchObject({ blockedBy: 'Y', kind: 'collider' })
+    // Knowing Y opens the collider: rule 2 no longer applies.
+    expect(dSeparation(model, 'X', 'Z', ['Y'], [], ['X']).separated).toBe(false)
+  })
+
+  it('descendants lists every variable reachable along the arrows', () => {
+    const { model } = load('m05-backdoor')
+    expect(descendants(model, 'X').sort()).toEqual(['C', 'Y'])
   })
 })

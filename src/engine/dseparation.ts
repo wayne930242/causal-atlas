@@ -34,10 +34,17 @@ export interface DSeparationResult {
   readonly paths: readonly DPath[]
 }
 
-/** Edges of the graph after do(): the arrows into each variable in `cut` are gone. */
-function cutEdges(model: CausalModel, cut: readonly string[]): Edge[] {
+/** Edges of the graph after do(): the arrows into each variable in `cut` are gone, and those out of each in `cutOut`. */
+function cutEdges(model: CausalModel, cut: readonly string[], cutOut: readonly string[] = []): Edge[] {
   const gone = new Set(cut)
-  return model.edges.filter((e) => !gone.has(e.to))
+  const out = new Set(cutOut)
+  return model.edges.filter((e) => !gone.has(e.to) && !out.has(e.from))
+}
+
+/** Every variable reachable from `id` along the model's arrows, nearest first. */
+export function descendants(model: CausalModel, id: string): string[] {
+  getVariable(model, id)
+  return [...descendantsOf(model.edges, id)]
 }
 
 function descendantsOf(edges: readonly Edge[], id: string): Set<string> {
@@ -57,15 +64,23 @@ function descendantsOf(edges: readonly Edge[], id: string): Set<string> {
 
 /**
  * d-separation (Pearl 2009, Def. 1.2.3) of `x` and `y` by the known variables `given`, in the
- * graph after do() on `cut` (the arrows into them removed). Every simple path between the two is
+ * graph after do() on `cut` (the arrows into them removed) and with the arrows out of `cutOut`
+ * removed (the G with X underlined of do-calculus rules 2 and 3). Every simple path between the two is
  * listed, shortest first: a path is blocked by a chain or fork middle that is known, or by a
  * collider that is unknown along with all its descendants; otherwise it is open.
  */
-export function dSeparation(model: CausalModel, x: string, y: string, given: readonly string[], cut: readonly string[] = []): DSeparationResult {
+export function dSeparation(
+  model: CausalModel,
+  x: string,
+  y: string,
+  given: readonly string[],
+  cut: readonly string[] = [],
+  cutOut: readonly string[] = [],
+): DSeparationResult {
   getVariable(model, x)
   getVariable(model, y)
-  for (const id of given) getVariable(model, id)
-  const edges = cutEdges(model, cut)
+  for (const id of [...given, ...cut, ...cutOut]) getVariable(model, id)
+  const edges = cutEdges(model, cut, cutOut)
   const known = new Set(given.filter((id) => id !== x && id !== y))
   const neighbours = new Map<string, Edge[]>()
   for (const e of edges) {
