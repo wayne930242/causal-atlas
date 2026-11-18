@@ -416,6 +416,47 @@
   margin-top: 6px;
 }
 
+/* The causal notation's rows that hold, how many, and the full table behind an expander. */
+.ca-tt-count {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin: 6px 0 0;
+}
+
+.ca-eqs > .ca-tt-full {
+  grid-column: 1 / -1;
+  border: none;
+}
+
+.ca-tt-full > .ca-disclosure-head {
+  min-height: 32px;
+  padding: 4px 0;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.ca-tt-full > .ca-disclosure-head .ca-disclosure-title {
+  flex: 0 1 auto;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ca-tt-full[data-open="true"] > .ca-disclosure-head {
+  border-bottom: none;
+}
+
+.ca-tt-full > .ca-disclosure-body:not([hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content) minmax(min(9em, 30%), 1fr);
+  column-gap: 24px;
+  row-gap: 6px;
+  align-items: baseline;
+  padding: 12px;
+  border: 1px solid var(--border);
+  max-height: 60vh;
+  overflow: auto;
+}
+
 .ca-hint {
   font-size: 13px;
   color: var(--muted-foreground);
@@ -1333,6 +1374,11 @@
     grid-template-columns: 1fr;
     row-gap: 2px;
     font-size: 16px;
+  }
+
+  .ca-tt-full > .ca-disclosure-body:not([hidden]) {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
   }
 
   .ca-eq-worked:empty {

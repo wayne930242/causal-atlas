@@ -70,6 +70,8 @@ export interface ProbabilityOptions {
   readonly locale?: Locale
 }
 
+const NO_DO: Assignment = {}
+
 function notesAgainst(
   t: Messages,
   base: Readonly<Record<string, number>>,
@@ -96,15 +98,16 @@ interface SlidersProps {
 
 function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, withHead }: SlidersProps) {
   const t = useMessages()
+  const prior = useMemo(() => (c.prior === undefined ? undefined : priorWithSliders(c, sliders)), [c, sliders])
   const ids = sliderVariables(c)
   return (
     <div className="ca-prob-sliders">
       <div className="ca-eq-head">
         {withHead && <h3 className="ca-h3">{t.probEquations}</h3>}
         <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
-        <CopyLatex c={c} shown={shown} notation={notation} interventions={{}} />
+        <CopyLatex c={c} shown={shown} notation={notation} interventions={NO_DO} prior={prior} />
       </div>
-      <Equations c={c} shown={shown} notation={notation} interventions={{}} />
+      <Equations c={c} shown={shown} notation={notation} interventions={NO_DO} prior={prior} />
       {ids.length === 0 ? (
         <p className="ca-muted">{t.jointOnly}</p>
       ) : (

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
-import type { Assignment } from '../engine/index.ts'
+import type { Assignment, Prior } from '../engine/index.ts'
 import { formatValue, getVariable } from '../engine/index.ts'
 import { graphExport } from './export-render.tsx'
 import type { ExportSource, ExportTag } from './export-image.ts'
@@ -282,18 +282,26 @@ export interface EquationBoxProps {
   readonly onNotation: (n: UiNotation) => void
   /** Default values: 預設 v beside each equation that has one. */
   readonly defaults?: Assignment
+  /** Observations: the causal notation lists only the rows that can hold given them. */
+  readonly observed?: Assignment
+  /** How the observations are read (see `Reading`). */
+  readonly reading?: Reading
+  /** The prior when the caller changes it (sliders); default the case's. */
+  readonly prior?: Prior
 }
 
-export function EquationBox({ c, world, interventions, stochastic = NONE, notation, onNotation, defaults }: EquationBoxProps) {
+export function EquationBox({ c, world, interventions, stochastic = NONE, notation, onNotation, defaults, observed, reading, prior }: EquationBoxProps) {
+  const counterfactual = reading === 'counterfactual' && world.probs !== undefined
+  const eq = { c, shown: world.shown, notation, values: world.values, interventions, stochastic, observed, prior, counterfactual }
   const t = useMessages()
   return (
     <div className="ca-box ca-eq-box">
       <div className="ca-eq-head">
         <h3 className="ca-h3">{t.equations}</h3>
         <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
-        <CopyLatex c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} stochastic={stochastic} />
+        <CopyLatex {...eq} />
       </div>
-      <Equations c={c} shown={world.shown} notation={notation} values={world.values} interventions={interventions} stochastic={stochastic} defaults={defaults} />
+      <Equations {...eq} defaults={defaults} />
     </div>
   )
 }

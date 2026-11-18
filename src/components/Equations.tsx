@@ -1,16 +1,17 @@
 import { useState, type ClipboardEvent } from 'react'
 import type { LoadedCase } from '../data/load.ts'
-import type { Assignment, Expr } from '../engine/index.ts'
+import type { Assignment, Expr, Prior } from '../engine/index.ts'
 import { causalFormulas, renderExpr } from '../engine/index.ts'
 import { formatValue } from '../engine/values.ts'
 import type { UiNotation } from './notation.ts'
 import { useMessages } from './i18n.ts'
-import { OkIcon, Tag } from './parts.tsx'
+import { Disclosure, OkIcon, Tag, Tip } from './parts.tsx'
+import { causalTable } from './causal-table.ts'
 import { equationsLatex } from './equations-latex.ts'
 import { Tex } from './Tex.tsx'
 import { Rich } from './typeset.tsx'
 import type { Stochastic } from './view-model.ts'
-import { bracketText, doText, equationIds, equationRows, label, outcomeVariable } from './view-model.ts'
+import { bracketText, doText, equationIds, equationRows, label, outcomeVariable, readingText } from './view-model.ts'
 
 export interface EquationsProps {
   readonly c: LoadedCase
@@ -22,10 +23,16 @@ export interface EquationsProps {
   readonly stochastic?: Stochastic
   /** Default values (normality): each such equation says 預設 v beside its label. */
   readonly defaults?: Assignment
+  /** Observations (probability mode): the causal notation lists only the rows that can hold given them. */
+  readonly observed?: Assignment
+  /** The prior the causal rows must have positive probability under; default the case's (the panel's sliders change it). */
+  readonly prior?: Prior
+  /** The observations are counterfactual evidence (the playground's counterfactual reading). */
+  readonly counterfactual?: boolean
 }
 
 /** The model's equations in one notation at a time. */
-export function Equations({ c, shown, notation, values, interventions, stochastic, defaults }: EquationsProps) {
+export function Equations({ c, shown, notation, values, interventions, stochastic, defaults, observed, prior, counterfactual }: EquationsProps) {
   const t = useMessages()
   const ids = equationIds(c)
   const hasDo = Object.keys(interventions).length > 0
@@ -57,27 +64,37 @@ export function Equations({ c, shown, notation, values, interventions, stochasti
         </div>
       )
     }
+    const table = causalTable(c, { values, interventions, stochastic, observed, prior, counterfactual })
+    const setting = values !== undefined ? '' : readingText(t, counterfactual === true, interventions, stochastic, observed)
     return (
       <div className="ca-eqs" data-notation={notation} onCopy={copyAsTex}>
-        {ids.map((id) => (
-          <div key={id} className="ca-eq-row">
+        {table.rows.map((r) => (
+          <div key={r.id} className="ca-eq-row" data-intervened={r.intervened ? 'true' : 'false'}>
             <code className="ca-eq-text">
-              {causalFormulas(c.model, id).map((f, i, all) => (
+              {r.lines.map((l, i, all) => (
                 <span key={i} className="ca-eq-line">
-                  <Tex
-                    tex={`${renderExpr(f, 'latex')}${i < all.length - 1 ? ' \\land' : ''}`}
-                    text={`${renderExpr(f, 'text')}${i < all.length - 1 ? ' ∧' : ''}`}
-                  />
+                  <Tex tex={`${l.latex}${i < all.length - 1 ? ' \\land' : ''}`} text={`${l.text}${i < all.length - 1 ? ' ∧' : ''}`} />
                 </span>
               ))}
             </code>
             <code className="ca-eq-worked" />
             <span className="ca-eq-note">
-              {label(c.model, id, t.locale)}
-              <DefaultTag defaults={defaults} id={id} />
+              {label(c.model, r.id, t.locale)}
+              <DefaultTag defaults={defaults} id={r.id} />
             </span>
           </div>
         ))}
+        {table.count < table.full && (
+          <>
+            <p className="ca-tt-count ca-small">
+              <Rich text={values !== undefined ? t.tt.actual(table.count) : t.tt.count(table.count, setting)} ids={c.model.byId} />{' '}
+              <Tip tip={t.tt.tip} label={t.moreInfo} />
+            </p>
+            <Disclosure kicker="" title={t.tt.full(table.full)} className="ca-tt-full">
+              <FullCausal c={c} ids={ids} defaults={defaults} />
+            </Disclosure>
+          </>
+        )}
         <p className="ca-eq-reading">{t.readCausal}</p>
       </div>
     )
@@ -115,6 +132,31 @@ export function Equations({ c, shown, notation, values, interventions, stochasti
         </div>
       ))}
     </div>
+  )
+}
+
+/** Every causal formula of every variable: the full truth table. */
+function FullCausal({ c, ids, defaults }: { readonly c: LoadedCase; readonly ids: readonly string[]; readonly defaults?: Assignment }) {
+  const t = useMessages()
+  return (
+    <>
+      {ids.map((id) => (
+        <div key={id} className="ca-eq-row">
+          <code className="ca-eq-text">
+            {causalFormulas(c.model, id).map((f, i, all) => (
+              <span key={i} className="ca-eq-line">
+                <Tex tex={`${renderExpr(f, 'latex')}${i < all.length - 1 ? ' \\land' : ''}`} text={`${renderExpr(f, 'text')}${i < all.length - 1 ? ' ∧' : ''}`} />
+              </span>
+            ))}
+          </code>
+          <code className="ca-eq-worked" />
+          <span className="ca-eq-note">
+            {label(c.model, id, t.locale)}
+            <DefaultTag defaults={defaults} id={id} />
+          </span>
+        </div>
+      ))}
+    </>
   )
 }
 

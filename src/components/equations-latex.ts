@@ -1,5 +1,6 @@
 import type { Expr } from '../engine/index.ts'
-import { causalFormulas, renderExpr } from '../engine/index.ts'
+import { renderExpr } from '../engine/index.ts'
+import { causalTable } from './causal-table.ts'
 import { messagesFor } from './i18n.ts'
 import type { EquationsProps } from './Equations.tsx'
 import { equationIds, equationRows, outcomeVariable } from './view-model.ts'
@@ -11,7 +12,7 @@ function alignedLine(latex: string): string {
 }
 
 /** The rows on screen as one `aligned` block; struck-out originals are left out. */
-export function equationsLatex({ c, shown, notation, values, interventions, stochastic }: EquationsProps): string {
+export function equationsLatex({ c, shown, notation, values, interventions, stochastic, observed, prior, counterfactual }: EquationsProps): string {
   const t = messagesFor('en')
   const ids = equationIds(c)
   let lines: string[]
@@ -26,9 +27,8 @@ export function equationsLatex({ c, shown, notation, values, interventions, stoc
       }
       lines = [`& ${renderExpr(statementExpr, 'latex')}`]
     } else {
-      lines = ids.map((id) =>
-        alignedLine(causalFormulas(c.model, id).map((f, i, all) => `${renderExpr(f, 'latex')}${i < all.length - 1 ? ' \\land' : ''}`).join(' ')),
-      )
+      // The rows on screen: those that can hold under what is set.
+      lines = causalTable(c, { values, interventions, stochastic, observed, prior, counterfactual }).rows.flatMap((r) => r.lines.map((l) => alignedLine(l.latex)))
     }
   } else {
     lines = equationRows(t, c, ids, notation, values, interventions, shown, stochastic).map((r) => alignedLine(r.latex))

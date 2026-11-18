@@ -325,7 +325,17 @@ function PlaygroundFor({
             </div>
           }
         />
-        <EquationBox c={c} world={world} interventions={interventions} stochastic={stochastic} notation={notation} onNotation={setNotation} defaults={defaults} />
+        <EquationBox
+          c={c}
+          world={world}
+          interventions={interventions}
+          stochastic={stochastic}
+          observed={observed}
+          reading={reading}
+          notation={notation}
+          onNotation={setNotation}
+          defaults={defaults}
+        />
       </div>
       {embedded && <EmbedCredit c={c} url={exportUrl ?? DEFAULT_URL} />}
     </div>

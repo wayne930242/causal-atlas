@@ -7,6 +7,12 @@ import { lessonModel } from './lesson-models.ts'
  * (`#/interactions/<item>`, or all of them). Labels are the lessons' own, in Chinese.
  */
 const ITEMS: Readonly<Record<string, () => ReactNode>> = {
+  'truth-table': () => (
+    <>
+      <CausalPlayground doc={lessonModel('m06-bow-a')} defaultNotation="causal" initialInterventions={{ X: 1 }} />
+      <CausalPlayground caseId="forest-fire-disjunctive" defaultNotation="causal" />
+    </>
+  ),
   'step-chips': () => (
     <>
       <CausalPlayground

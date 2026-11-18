@@ -59,6 +59,10 @@ describe('CausalPlayground', () => {
     expect(eqs()).toContain('= 1·(1−1) = 0')
     expect(eqs()).not.toContain('↔')
     fireEvent.click(screen.getByRole('button', { name: '干預式' }))
+    // The actual world's row of each variable; the full table is behind the expander.
+    expect(eqs()).toContain('[BT←1, SH←1](BH=0)')
+    expect(eqs()).not.toContain('[BT←1, SH←0](BH=1)')
+    fireEvent.click(screen.getByRole('button', { name: /展開完整真值表/ }))
     expect(eqs()).toContain('[BT←1, SH←0](BH=1)')
   })
 })

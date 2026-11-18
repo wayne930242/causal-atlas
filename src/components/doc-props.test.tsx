@@ -130,7 +130,7 @@ describe('defaultNotation', () => {
   it('renders the chosen notation on the server and keeps propositional by default', () => {
     expect(renderToString(createElement(CausalPlayground, ff()))).toContain('FF ↔ (L ∨ MD)')
     expect(renderToString(createElement(CausalPlayground, ff('arithmetic')))).toContain('FF = max(L, MD)')
-    expect(renderToString(createElement(CausalPlayground, ff('causal')))).toContain('[L←0, MD←0](FF=0)')
+    expect(renderToString(createElement(CausalPlayground, ff('causal')))).toContain('[L←1, MD←1](FF=1)')
   })
   it('applies to ProbabilityPanel, WorldLanes, CasePage and ModelEditor', () => {
     const arith = renderToString(createElement(ProbabilityPanel, { ...ff('arithmetic'), caseId: 'firing-squad' }))

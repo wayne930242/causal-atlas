@@ -297,6 +297,12 @@ const ZH = {
   afterDoNote: (doText: string, label: string, value: string): string => `${doText} 之後，${label}：${value}`,
   readBrackets: '讀法：先做方括號裡的干預，再看圓括號裡的事成不成立。',
   readCausal: '讀法：[X←x](Y=y) 是把 X 設成 x 之後，Y 等於 y。',
+  tt: {
+    count: (n: number, setting: string): string => (setting === '' ? `${n} 列` : `${n} 列，在 ${setting} 下成立`),
+    actual: (n: number): string => `${n} 列，在實際世界成立`,
+    full: (n: number): string => `展開完整真值表（${n} 列）`,
+    tip: '每列只寫會影響結果的變數，所有列合起來和完整真值表等價；只列出在目前的設定下可能成立的列。',
+  },
   valueLegend: '實心＝發生（1）　空心＝沒發生（0）',
   probLegend: '填色的高度＝等於 1 的機率',
   probLegendFinite: '填色的高度＝等於 1 的機率；多值變項每個值一根長條，高度與取該值的機率成正比，最高的一根標出它的機率',
@@ -766,6 +772,12 @@ const EN: Messages = {
   afterDoNote: (doText, label, value) => `After ${doText}, ${label}: ${value}`,
   readBrackets: 'How to read it: first make the interventions in square brackets, then check whether what is in parentheses holds.',
   readCausal: 'How to read it: [X←x](Y=y) says that once X is set to x, Y equals y.',
+  tt: {
+    count: (n, setting) => (setting === '' ? `${n} rows` : `${n} rows that hold under ${setting}`),
+    actual: (n) => `${n} rows that hold in the actual world`,
+    full: (n) => `Full truth table (${n} rows)`,
+    tip: 'Each row names only the variables that decide the result, and the rows together say what the full truth table says; only the rows that can hold under what is set are listed.',
+  },
   valueLegend: 'Filled = happened (1)   Hollow = did not happen (0)',
   probLegend: 'Fill height = probability of 1',
   probLegendFinite:

@@ -513,6 +513,7 @@ function EditorBody({
                     world={world}
                     interventions={active.interventions}
                     stochastic={active.stochastic}
+                    observed={seenNow}
                     notation={notation}
                     onNotation={setNotation}
                   />
