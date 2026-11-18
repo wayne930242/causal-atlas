@@ -43,6 +43,8 @@ export interface SignalGraphInput {
   readonly observedValues: Assignment
   readonly evidence: boolean
   readonly interventions: Assignment
+  /** The text of a do() tag in place of `X←1`, per variable (a mediator held at its natural value, `Z←Z(X=0)`). */
+  readonly tagText?: Readonly<Record<string, string>>
   readonly stochastic: Stochastic
   readonly removedEdges: readonly Edge[]
   readonly witness?: Assignment
@@ -160,6 +162,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     dists,
     probNotes,
     interventions,
+    tagText,
     stochastic,
     removedEdges,
     witness,
@@ -204,7 +207,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     if (forced === undefined && soft === undefined && (seen === undefined || evidence)) return undefined
     if (witness !== undefined && id in witness) return undefined
     const text =
-      forced !== undefined ? `${id}←${formatValue(forced)}` : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : `${id}=${formatValue(seen as Value)}`
+      forced !== undefined ? (tagText?.[id] ?? `${id}←${formatValue(forced)}`) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : `${id}=${formatValue(seen as Value)}`
     const w = textWidth(text, 12) + 18
     const left = (grid.get(id)?.col ?? 0) === maxCol
     return { text, left, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }

@@ -3,9 +3,16 @@ import { CausalPlayground, ModelEditor, ProbabilityPanel } from '../components/i
 import { FRONT_DOOR_STEPS } from './front-door-steps.ts'
 import { lessonModel } from './lesson-models.ts'
 
+/** The doctor's priors (Halpern Ex. 6.2.4) with the probability S that the drug has the side effect. */
+const doctorBelieves = (s: number) => ({ independent: { S: s, H: 0.3, N: 0.05, U_T: 1 } })
+
+const PILL = { treatment: 'X', mediators: ['Z'], outcome: 'Y=1', from: 0, to: 1 } as const
+const ADMISSION = { treatment: 'X', mediators: ['Z'], outcome: 'Y=1', from: 0, to: 1, formula: true } as const
+
 /**
  * The lesson figures with the interactions of 0.4.0 (and the exogenous node style and latent arcs), one section per item
- * (`#/interactions/<item>`, or all of them). Labels are the lessons' own, in Chinese.
+ * (`#/interactions/<item>`, or all of them). Labels are the lessons' own, in Chinese; the epistemic states
+ * of `blame` carry both languages.
  */
 const ITEMS: Readonly<Record<string, () => ReactNode>> = {
   'adjust-calc': () => <ProbabilityPanel doc={lessonModel('m05-backdoor')} view="adjust" adjust={{ x: 'X', y: 'Y' }} />,
@@ -160,6 +167,48 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
           ['X', 'Y'],
           ['Z', 'C'],
         ]}
+      />
+    </>
+  ),
+  mediation: () => (
+    <>
+      <ProbabilityPanel doc={lessonModel('m08-pill')} view="mediation" mediation={PILL} digits={4} />
+      <ProbabilityPanel doc={lessonModel('m08-pill')} view="mediation" mediation={{ ...PILL, formula: true }} initialStep={3} digits={4} />
+      <ProbabilityPanel doc={lessonModel('m08-sex-department')} view="mediation" mediation={ADMISSION} initialStep={3} digits={3} />
+      <ProbabilityPanel doc={lessonModel('m08-sex-department-clean')} view="mediation" mediation={ADMISSION} initialStep={4} digits={3} />
+    </>
+  ),
+  responsibility: () => (
+    <>
+      <CausalPlayground doc={lessonModel('m10-vote-5-0')} verdicts={[{ cause: 'V1=1', effect: 'W=1', responsibility: true }]} />
+      <CausalPlayground doc={lessonModel('m10-vote-3-2')} verdicts={[{ cause: 'V1=1', effect: 'W=1', responsibility: true }]} />
+      <CausalPlayground doc={lessonModel('m08-pill-jones')} verdicts={[{ cause: 'X=1', effect: 'Y=1', responsibility: true }]} />
+      <CausalPlayground caseId="forest-fire-disjunctive" verdicts={[{ cause: 'L=1', effect: 'FF=1', responsibility: true }]} />
+    </>
+  ),
+  blame: () => (
+    <>
+      <CausalPlayground
+        doc={lessonModel('m10-doctor')}
+        blame={{
+          cause: 'T=1',
+          effect: 'D=1',
+          states: [
+            { label: { 'zh-TW': '他實際相信的（以為沒有副作用）', en: 'What he believed (no side effect)' }, prior: doctorBelieves(0) },
+            { label: { 'zh-TW': '他應該知道的', en: 'What he should have known' } },
+            { label: { 'zh-TW': '量完血壓之後', en: 'After testing the blood pressure' }, given: 'H=1' },
+            { label: { 'zh-TW': '病人死了之後', en: 'After the patient died' }, given: 'D=1' },
+          ],
+        }}
+      />
+      <CausalPlayground doc={lessonModel('m10-suzy-blame')} blame={{ cause: 'ST=1', effect: 'BS=1' }} />
+      <CausalPlayground
+        doc={lessonModel('m10-faulkner')}
+        blame={{
+          cause: 'M=1',
+          effect: 'ES=1',
+          states: [{}, { label: { 'zh-TW': '自殺之後', en: 'After the suicide' }, given: 'ES=1' }],
+        }}
       />
     </>
   ),

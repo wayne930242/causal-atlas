@@ -10,7 +10,7 @@ import { tabButtonId, tabPanelId, useTabs } from './use-tabs.ts'
  */
 
 export interface FigureBlock {
-  /** Stable key: `equations`, `verdicts`, `ev`, `dsep`, `strata`, `background`, `probabilities`. */
+  /** Stable key: `equations`, `verdicts`, `ev`, `dsep`, `blame`, `strata`, `effects`, `background`, `probabilities`. */
   readonly id: string
   readonly label: ReactNode
   readonly children: ReactNode

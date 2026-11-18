@@ -39,7 +39,7 @@ function stated(id: string, priors?: ModelDoc['priors'], edit?: (d: ModelDoc) =>
 const close = (value: number | undefined, expected: number) => expect(value).toBeCloseTo(expected, 9)
 
 describe('every new lesson model document', () => {
-  it.each(['m08-pill', 'm08-pill-jones', 'm08-mediator-conditioning', 'm08-sex-department', 'm10-vote-3-2', 'm10-vote-5-0', 'm10-suzy-blame', 'm10-doctor', 'm10-faulkner'])(
+  it.each(['m08-pill', 'm08-pill-jones', 'm08-mediator-conditioning', 'm08-sex-department', 'm08-sex-department-clean', 'm10-vote-3-2', 'm10-vote-5-0', 'm10-suzy-blame', 'm10-doctor', 'm10-faulkner'])(
     '%s loads',
     (id) => {
       expect(() => docToCase(doc(id))).not.toThrow()
@@ -176,18 +176,26 @@ describe('08 m08-sex-department (Pearl §4.5.3: sex, department, admission; apti
     close(P('Y=1', { given: 'X=1 and Z=1' }), 0.72)
   })
 
-  it('with the aptitude arc to admission removed, the mediation formula equals the natural effects', () => {
-    const clean = stated('m08-sex-department', undefined, (d) => {
-      d.model.equations.Y = '(if Z then N_Y1 else N_Y0) and not (X and N_D)'
-      delete d.latent_as_arcs
-      return d
-    })
+  it('with the aptitude arc to admission removed (m08-sex-department-clean), the mediation formula equals the natural effects', () => {
+    const clean = stated('m08-sex-department-clean')
     const c = mediation(clean.model, clean.prior, query)
     close(c.total, -0.364)
     close(c.naturalDirect, -0.14)
     close(c.naturalIndirect, -0.28)
+    close(c.reverseIndirect, 0.224)
+    close(c.total, c.naturalDirect - c.reverseIndirect)
     close(c.formula?.direct, c.naturalDirect)
     close(c.formula?.indirect, c.naturalIndirect)
+    expect(c.formula?.missing).toEqual([])
+  })
+
+  it('the clean document is the same model with only Y\'s equation and the arc changed', () => {
+    const a = doc('m08-sex-department')
+    const b = doc('m08-sex-department-clean')
+    expect(b.model.variables.map((v) => v.id)).toEqual(a.model.variables.map((v) => v.id))
+    expect(b.priors).toEqual(a.priors)
+    expect(b.model.equations).toEqual({ ...a.model.equations, Y: '(if Z then N_Y1 else N_Y0) and not (X and N_D)' })
+    expect(b.latent_as_arcs).toBeUndefined()
   })
 })
 

@@ -305,6 +305,24 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   with 固定（實際 v） under its label, or 固定（實際值） when held at its actual value (so are a step's
   `hold`s). With several queries the line answers the first whose cause is set away from its actual
   value. `actualGroups(t, c, queries)` takes the same queries.
+- `verdicts={[{ cause: 'V1=1', effect: 'W=1', responsibility: true }]}`: each Halpern–Pearl cell (the
+  original, updated and modified definitions, and HP with normality when the model has defaults)
+  adds 責任 1/3 (en "responsibility 1/3"), the degree of responsibility of the single event
+  `cause` (Halpern 2016, Def. 6.1.1 and 6.1.6: 1/k, k the fewest variables the cause and its
+  witness change); its ⓘ says which k, which variables the witness holds fixed and which cause
+  attains it. The but-for cell has none. Without the flag the cells are unchanged. A cause of more
+  than one event throws the engine's `responsibility-single-event` problem. `responsibility` in the
+  engine takes the same query.
+- `blame={{ cause: 'T=1', effect: 'D=1', states?, theories? }}`: a 責備 tab under the graph (a
+  probability graph with the document's `priors`, or a graph with values and priors), the degree of
+  blame (Halpern 2016, Def. 6.2.1): one row per epistemic state, one column per standard (default
+  the three HP definitions, and HP with normality when the model has defaults), each state's
+  backgrounds with their probabilities and responsibilities behind a fold. `states` are
+  `{ label?: string | { 'zh-TW', en }, prior?, given? }`: `prior` takes the model document's `priors`
+  format (default the document's own, which the sliders move; without document priors every state
+  must give one, else it throws), `given` an observation that narrows the state (the outcome seen
+  after acting, `D=1`). Halpern's blame conditions on the cause holding, so the probabilities are
+  conditioned on it. `blame` in the engine takes the same query and a prior.
 - Defaults: when the model has `normality`, a graph with values marks each node off its default
   with a dashed 偏離（預設 v） under its label (nothing on the others), a line under the graph compares
   this world's deviant variables with the actual world's, `這個世界 {GW, QW}；實際世界 {GW, D}，無法比較`
@@ -386,6 +404,18 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   and in step 3 the event variable after do(), the rows where the event holds marked, and the result
   `P(D_{A=0}=0 | D=1) = 0.0789` (four decimals at most). The priors stay under 「式子和機率」.
   `<CausalModel id="m00-firing-squad-nervous" as="probability" view="counterfactual" counterfactual={{ evidence: "D=1", do: { A: 0 }, event: "D=0" }} actionLabel="已知囚犯死了；若 A 沒開槍？" />`
+- `<ProbabilityPanel view="mediation" mediation={{ treatment, mediators, outcome, from, to, formula? }}>`:
+  Pearl's direct and indirect effects (2009, §4.5) in four steps on one graph, switched with
+  「1 總效應｜2 受控直接｜3 自然直接｜4 自然間接」 or 「下一步」 (`initialStep` 1–4, `actionLabel`). Step 1
+  sets X to `to`; step 2 sets X and holds the mediators as constants (a switch over their values);
+  step 3 sets X to `to` while each mediator is tagged `Z←Z(X=0)`, held at the value it takes under
+  `from` in each background, and the arrows into it are cut; step 4 keeps X at `from` with
+  `Z←Z(X=1)`. Under the graph the result `P(Y_{X=1, Z_{X=0}}=1) − P(Y_{X=0}=1) = +0.15` with its two
+  numbers. The 效應 tab lists TE, the controlled direct effect per setting of the mediators, NDE,
+  NIE, the reverse indirect effect and the check TE = NDE − IE(reverse) ✓ (and, with `formula`, the
+  mediation formula (4.17)/(4.18) marked ＝ or ≠ NDE and NIE, — where a cell has no data, with the
+  cells named); the 背景 tab each background's four worlds (past 8 rows a button shows the rest).
+  `<CausalModel id="m08-pill" as="probability" view="mediation" mediation={{ treatment: "X", mediators: ["Z"], outcome: "Y=1", from: 0, to: 1 }} />`
 - `<ProbabilityPanel doc>` takes a document with priors or a `context` (a point mass);
   `<WorldLanes doc interventions>` needs a `context`, and `interventions` because a document has no preset.
 - `<ModelEditor initialDoc>` renders that model on the server instead of a blank one; a share hash

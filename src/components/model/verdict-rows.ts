@@ -2,7 +2,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import { checkVerdict } from '../../data/load.ts'
 import type { CaseVerdict } from '../../data/schema.ts'
 import type { Assignment, CausalTheory, CausalVerdict, Value } from '../../engine/index.ts'
-import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability, witnessStatus } from '../../engine/index.ts'
+import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability, responsibility, witnessStatus } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
 import type { Messages } from '../i18n/messages.ts'
 import { flipValue } from './assignments.ts'
@@ -21,9 +21,28 @@ export const THEORY_REF: Record<CausalTheory, string> = {
 
 const ACTUAL_THEORIES = new Set<string>(['butfor', 'hp-original', 'hp-updated', 'hp-modified', 'hp-normality'])
 
+/** A degree of responsibility (Halpern 2016, Def. 6.1.1, 6.1.6) with what attains it. */
+export interface ResponsibilityCell {
+  /** 0, or 1/k. */
+  readonly degree: number
+  /** The k behind a positive degree. */
+  readonly k?: number
+  /** The cause attaining k, as text (`MD=1`, or a coalition `V1=1 ∧ V2=1 ∧ V3=1`). */
+  readonly cause?: string
+  /** The variables the witness holds fixed, with their values (`MD=1`), empty when it holds none. */
+  readonly held?: string
+}
+
+/** `0`, `1` or `1/3`. */
+export function degreeText(r: ResponsibilityCell): string {
+  return r.degree === 0 || r.k === undefined ? '0' : r.k === 1 ? '1' : `1/${r.k}`
+}
+
 export interface ActualRow {
   readonly theory: CausalTheory
   readonly verdict: CausalVerdict
+  /** The degree of responsibility, for a query that asked for it (`responsibility: true`) under a Halpern–Pearl standard. */
+  readonly responsibility?: ResponsibilityCell
   readonly sentence: string
   /** The witness statement, e.g. `[ST←0, BH←0](BS=0)`; it holds in the model. */
   readonly formula?: string
@@ -109,6 +128,12 @@ export interface VerdictQuery {
   readonly effect: string
   /** Default: but-for and the three HP definitions, and HP with normality when the model has defaults. */
   readonly theories?: readonly CausalTheory[]
+  /**
+   * Each Halpern–Pearl cell also gives the degree of responsibility of `cause` (a single event) for
+   * `effect`, 1/k (Halpern 2016, Def. 6.1.1 and 6.1.6), with its witness in the ⓘ; the but-for cell
+   * has none, the degree is defined for the HP definitions.
+   */
+  readonly responsibility?: boolean
 }
 
 /** The standards a playground's verdict row shows by default for this case. */
@@ -128,13 +153,15 @@ export function actualGroups(t: Messages, c: LoadedCase, queries?: readonly Verd
   const { model } = c
   const groups = new Map<string, { cause: string; effect: string; rows: ActualRow[] }>()
   const actual = evaluate(model, context).values
-  const asked: { theory: CausalTheory; cause: string; effect: string }[] =
+  const asked: { theory: CausalTheory; cause: string; effect: string; responsibility: boolean }[] =
     queries === undefined
       ? c.data.verdicts.flatMap((v) =>
-          ACTUAL_THEORIES.has(v.theory) && 'cause' in v.query ? [{ theory: v.theory as CausalTheory, cause: v.query.cause, effect: v.query.effect }] : [],
+          ACTUAL_THEORIES.has(v.theory) && 'cause' in v.query
+            ? [{ theory: v.theory as CausalTheory, cause: v.query.cause, effect: v.query.effect, responsibility: false }]
+            : [],
         )
-      : queries.flatMap((q) => (q.theories ?? defaultTheories(c)).map((theory) => ({ theory, cause: q.cause, effect: q.effect })))
-  for (const { theory, cause, effect } of asked) {
+      : queries.flatMap((q) => (q.theories ?? defaultTheories(c)).map((theory) => ({ theory, cause: q.cause, effect: q.effect, responsibility: q.responsibility === true })))
+  for (const { theory, cause, effect, responsibility: withDegree } of asked) {
     const key = `${cause}⇒${effect}`
     const group = groups.get(key) ?? { cause, effect, rows: [] }
     groups.set(key, group)
@@ -172,7 +199,15 @@ export function actualGroups(t: Messages, c: LoadedCase, queries?: readonly Verd
           ? t.butForSentence(changeText(t, flipped), yNow(world))
           : t.anyFixSentence(changeText(t, flipped), yNow(world))
     }
-    group.rows.push({ theory, verdict: result.verdict, sentence, formula, fixed, show })
+    group.rows.push({
+      theory,
+      verdict: result.verdict,
+      sentence,
+      formula,
+      fixed,
+      show,
+      ...(withDegree && theory !== 'butfor' ? { responsibility: responsibilityCell(c, context, cause, effect, theory) } : {}),
+    })
   }
   return [...groups.values()].map((g) => {
     const parsed = parseCause(model, g.cause)
@@ -182,6 +217,13 @@ export function actualGroups(t: Messages, c: LoadedCase, queries?: readonly Verd
     const effectLabel = yId === undefined ? '' : label(model, yId, t.locale)
     return { ...g, heading: t.verdictHeading(causeLabel, causeText(g.cause), effectLabel, g.effect) }
   })
+}
+
+function responsibilityCell(c: LoadedCase, context: Assignment, cause: string, effect: string, theory: CausalTheory): ResponsibilityCell {
+  const r = responsibility(c.model, context, { cause, effect }, theory, { normality: c.normality })
+  if (r.degree === 0 || r.k === undefined) return { degree: 0 }
+  const held = r.witness === undefined || r.witness.W.length === 0 ? '' : assignmentText(r.witness.w, ', ')
+  return { degree: r.degree, k: r.k, cause: assignmentText(r.cause ?? parseCause(c.model, cause), ' ∧ '), held }
 }
 
 export interface NumberRow {

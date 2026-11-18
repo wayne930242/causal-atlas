@@ -38,6 +38,8 @@ export interface SignalGraphProps {
   /** The observations are counterfactual evidence: ringed, with no tag (a 實際 v note says it instead). */
   readonly evidence?: boolean
   readonly interventions: Assignment
+  /** The text of a do() tag in place of `X←1`, per intervened variable: a mediator held at its natural value reads `Z←Z(X=0)`. */
+  readonly tagText?: Readonly<Record<string, string>>
   /** Stochastic interventions: P*(X=1) of a boolean node, 0 < p < 1 (drawn like a do(), with that probability). */
   readonly stochastic?: Stochastic
   readonly removedEdges: readonly Edge[]
@@ -90,6 +92,7 @@ export function SignalGraph(props: SignalGraphProps) {
     probNotes,
     observed = [],
     interventions,
+    tagText,
     stochastic = {},
     removedEdges,
     witness,
@@ -152,6 +155,7 @@ export function SignalGraph(props: SignalGraphProps) {
       observedValues,
       evidence,
       interventions,
+      tagText,
       stochastic,
       removedEdges,
       witness,
@@ -265,7 +269,7 @@ export function SignalGraph(props: SignalGraphProps) {
         ? bars.map((_, i) => barText(i)).join(', ')
         : `P(${id}=1) ${probText(pv ?? Number.NaN, digits)}`
       : t.nodeValue(text)
-    const forcedText = forced !== undefined ? formatValue(forced) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : undefined
+    const forcedText = forced !== undefined ? (tagText?.[id] ?? formatValue(forced)) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : undefined
     const seen = observedValues[id]
     const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen))
     // A multi-valued node does not flip: intervening on it sets a value and opens a control to pick

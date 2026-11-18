@@ -1,0 +1,115 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "性別、系所與錄取：沒有未記錄的能力（拿掉能力指向錄取的那條，Pearl 2009, §4.5.3 的結構；數字為本站自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_X",
+        "label": {
+          "zh-TW": "申請人的性別",
+          "en": "Applicant's sex"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U",
+        "label": {
+          "zh-TW": "申請人的能力（只影響要不要報熱門系所）",
+          "en": "Applicant's aptitude (affects only whether to apply to the competitive department)"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_F",
+        "label": {
+          "zh-TW": "女性願意報熱門系所",
+          "en": "A woman is willing to apply to the competitive department"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_M",
+        "label": {
+          "zh-TW": "男性不論能力都想報熱門系所",
+          "en": "A man wants the competitive department whatever his aptitude"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y1",
+        "label": {
+          "zh-TW": "熱門系所：能力強者通過審查",
+          "en": "Competitive department: a strong applicant passes review"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y0",
+        "label": {
+          "zh-TW": "冷門系所：能力不足者也有機會錄取",
+          "en": "Other department: a weaker applicant may still be admitted"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_D",
+        "label": {
+          "zh-TW": "女性被歧視而不錄取",
+          "en": "A woman is turned down because of bias"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "申請人是女性",
+          "en": "Applicant is a woman"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "申請熱門系所",
+          "en": "Applies to the competitive department"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "被錄取",
+          "en": "Admitted"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "U_X",
+      "Z": "if X then (U and N_F) else (U or N_M)",
+      "Y": "(if Z then N_Y1 else N_Y0) and not (X and N_D)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_X": 0.5,
+      "U": 0.5,
+      "N_F": 0.8,
+      "N_M": 0.5,
+      "N_Y1": 0.9,
+      "N_Y0": 0.1,
+      "N_D": 0.2
+    }
+  }
+}

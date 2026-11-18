@@ -71,6 +71,11 @@ function toModel(data: CaseFile): CausalModel {
 function toPrior(data: CaseFile, model: CausalModel): Prior | undefined {
   const priors = data.priors
   if (priors === undefined) return data.context === undefined ? undefined : pointMass(data.context)
+  return priorOf(priors, model)
+}
+
+/** A case file's or document's `priors` (independent marginals or a joint table) as the engine's prior over `model`'s exogenous variables. */
+export function priorOf(priors: NonNullable<CaseFile['priors']>, model: CausalModel): Prior {
   if ('independent' in priors) {
     const marginals: Record<string, { value: Value; p: number }[]> = {}
     for (const [id, marginal] of Object.entries(priors.independent)) {

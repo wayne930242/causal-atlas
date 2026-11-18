@@ -2471,6 +2471,73 @@
   margin-right: 4px;
 }
 
+/* ---- responsibility cell, blame block, mediation view ---- */
+
+.ca-pg-resp {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.ca-pg-blame {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ca-blame-table tbody th,
+.ca-med-effects tbody th {
+  white-space: normal;
+}
+
+.ca-blame-fold summary {
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ca-blame-fold summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ca-blame-fold-table {
+  overflow-x: auto;
+  padding-top: 6px;
+}
+
+.ca-med .ca-cf-result {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.ca-med-z {
+  margin-top: 8px;
+}
+
+/* Four step buttons do not fit one row on a phone: they wrap, keeping whole words. */
+.ca-med .ca-tags {
+  flex-wrap: wrap;
+}
+
+.ca-med .ca-seg {
+  flex-wrap: wrap;
+}
+
+.ca-med .ca-seg-item {
+  min-width: 0;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.ca-med-effects td {
+  white-space: normal;
+}
+
+.ca-scroll-x {
+  overflow-x: auto;
+}
+
 /* ---- defaults ---- */
 
 .ca-deviant-box {

@@ -292,7 +292,7 @@ export const ZH = {
   unchanged: '不變',
   probEquations: '式子和機率',
   tabsLabel: '圖下方的內容',
-  tab: { verdicts: '判定', dsep: 'd-分離', strata: '分組表', background: '背景表' },
+  tab: { verdicts: '判定', dsep: 'd-分離', strata: '分組表', background: '背景表', effects: '效應', blame: '責備' },
   jointOnly: '這個案例的機率是整張聯合分布，不能逐一調整。',
   sliderLabel: (label: string): string => `${label}的機率`,
   nodesShow: '節點顯示',
@@ -404,6 +404,60 @@ export const ZH = {
     after: (doText: string, id: string): string => `${doText} 後的 ${id}`,
     hiddenZero: (n: number): string => `其他 ${n} 種背景機率為 0`,
     graphTitle: (title: string, step: string): string => `${title}：反事實的${step}`,
+  },
+  med: {
+    kicker: '中介效應',
+    head: (transition: string, outcome: string): string => `${transition}，看 ${outcome}`,
+    steps: ['總效應', '受控直接', '自然直接', '自然間接'] as readonly string[],
+    stepsLabel: '中介效應的步驟',
+    next: '下一步',
+    mediatorsLabel: '中介變項固定的值',
+    caption: (step: number, treatment: string, from: string, to: string, mediators: string, z: string): string =>
+      step === 1
+        ? `總效應：把 ${treatment} 設成 ${to}，${mediators} 照式子重算；對照 ${treatment} 設成 ${from}。`
+        : step === 2
+          ? `受控直接效應：${treatment} 設成 ${to}，同時把 ${z} 固定成常數；對照 ${treatment} 設成 ${from}，${z} 一樣固定。經過 ${mediators} 的路被切斷。`
+          : step === 3
+            ? `自然直接效應：${treatment} 設成 ${to}，${mediators} 卻固定在 ${treatment}=${from} 時它自己會有的值（每種背景各算各的）；對照 ${treatment} 維持 ${from}。只有直接那條路看到改變。`
+            : `自然間接效應：${treatment} 維持 ${from}，${mediators} 卻固定在 ${treatment}=${to} 時它會有的值；對照 ${treatment} 維持 ${from}。只有經過 ${mediators} 的路看到改變。`,
+    graphTitle: (title: string, step: string): string => `${title}：中介效應的${step}`,
+    effect: ['總效應 TE', '受控直接效應 CDE', '自然直接效應 NDE', '自然間接效應 NIE'] as readonly string[],
+    result: '算式',
+    effectsHead: { effect: '效應', value: '數值' },
+    controlledAt: (z: string): string => `受控直接效應 CDE（${z}）`,
+    reverse: '反向的間接效應 IE(reverse)',
+    decomposition: 'TE = NDE − IE(reverse)',
+    decomposes: (te: string, nde: string, ie: string): string => `${te} = ${nde} − (${ie})`,
+    formulaDirect: '中介公式 (4.17)，直接',
+    formulaIndirect: '中介公式 (4.18)，間接',
+    equal: (name: string): string => `＝ ${name}`,
+    differ: (name: string): string => `≠ ${name}`,
+    undefinedCell: '—',
+    missing: (cells: string): string => `沒有資料的格子：${cells}`,
+    tip: '總效應 TE = P(Y_x*) − P(Y_x)。受控直接效應把中介變項當常數固定；自然直接效應 NDE = P(Y_{x*, Z_x}) − P(Y_x) 讓中介變項維持在 x 時它自己會有的值；自然間接效應 NIE = P(Y_{x, Z_x*}) − P(Y_x)。反向的間接效應 IE(reverse) = P(Y_{x*, Z_x}) − P(Y_x*)，Pearl（2009，4.15）：TE = NDE − IE(reverse)。中介公式（4.17、4.18）只用觀察到的分布，沒有中介變項與結果的共同原因時才等於 NDE、NIE；某一格 P(x, z) 為 0 就算不出來，寫「—」。',
+    background: { p: '機率', zAt: (ids: string, x: string): string => `${ids}(${x})`, yAt: (y: string, x: string): string => `${y}(${x})`, yAtZ: (y: string, x: string, z: string): string => `${y}(${x}, ${z})` },
+    showAll: (n: number): string => `看全部 ${n} 種背景`,
+    fewer: '收起',
+  },
+  resp: {
+    cell: (degree: string): string => `責任 ${degree}`,
+    tipZero: '責任程度（Halpern 2016，定義 6.1.1、6.1.6）：不是原因，也不是原因的一部分，所以是 0。',
+    tip: (k: number, held: string, cause: string, normality: boolean): string =>
+      `責任程度 1/k（Halpern 2016，定義 6.1.1、6.1.6）：k 是要改動的變項數，取最小：原因裡的變項，加上見證固定住的變項。這裡 k = ${k}：${held === '' ? '見證不固定任何變項' : `見證固定 ${held}`}，原因是 ${cause}。${normality ? '只算不比實際世界更不正常的見證。' : ''}`,
+  },
+  blame: {
+    question: (cause: string, effect: string): string => `${cause} 要為 ${effect} 負多少責備？`,
+    state: '認知狀態',
+    documentState: '文件裡的機率',
+    given: (observation: string): string => `已知 ${observation}`,
+    degree: '責備',
+    contexts: (n: number): string => `${n} 種背景`,
+    fold: (n: number): string => `每種背景的責任（${n} 種）`,
+    background: (ids: readonly string[]): string => `背景（${ids.join('、')}）`,
+    probability: '機率',
+    responsibility: (theory: string): string => `責任（${theory}）`,
+    tip: (cause: string): string =>
+      `責備程度（Halpern 2016，定義 6.2.1）：每種背景的責任程度，乘上那種背景在這個認知狀態裡的機率，再加總。依 Halpern 的假設，認知狀態裡 ${cause} 一定發生，所以機率是以 ${cause} 為條件，已知的觀察再加進條件。同一個模型的不同認知狀態，只換機率，式子不變。`,
   },
   observed: '看到的',
   setByDo: '設定的',

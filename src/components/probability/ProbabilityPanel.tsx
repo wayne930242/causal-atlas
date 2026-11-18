@@ -19,6 +19,8 @@ import type { RuleStep } from './rules-view.ts'
 import { RulesPanel } from './RulesPanel.tsx'
 import type { CounterfactualSpec } from './cf-steps.ts'
 import { CfStepper } from './CfStepper.tsx'
+import type { MediationSpec } from './mediation-steps.ts'
+import { MediationStepper } from './MediationStepper.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import type { SeeDoPair } from '../model/verdict-rows.ts'
 import { originCitations, seeDoPair } from '../model/verdict-rows.ts'
@@ -28,7 +30,7 @@ import { probLegend } from '../model/wording.ts'
 import { ComparePanel } from './ComparePanel.tsx'
 import { SliderBlock, SliderEquations, SliderSection } from './SliderSection.tsx'
 
-export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual' | 'adjust' | 'rules'
+export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual' | 'adjust' | 'rules' | 'mediation'
 
 export type ProbabilityPanelProps = ProbabilitySource & ProbabilityOptions
 
@@ -53,6 +55,16 @@ export interface ProbabilityOptions {
    */
   readonly counterfactual?: CounterfactualSpec
   /**
+   * For `mediation`: the treatment X, its mediators Z⃗, the outcome event and the transition
+   * `from` → `to`, e.g. `{ treatment: 'X', mediators: ['Z'], outcome: 'Y=1', from: 0, to: 1 }`;
+   * `formula: true` adds the mediation formula (Pearl 2009, 4.17 and 4.18) beside the natural
+   * effects. Four steps on one graph: 總效應, 受控直接, 自然直接 and 自然間接 (a mediator held at
+   * the value it takes under the other treatment value is tagged `Z←Z(X=0)`); under the graph the
+   * 效應 tab lists every effect and the check TE = NDE − IE(reverse), the 背景 tab each background's
+   * four worlds.
+   */
+  readonly mediation?: MediationSpec
+  /**
    * For `adjust`: the cause x, the effect y (its event y=1, or its first value) and the groupings
    * the head offers (`sets`; default every grouping of the other endogenous variables, at most
    * three of them). Each grouping shows the back-door verdict and the adjustment formula's table.
@@ -65,9 +77,9 @@ export interface ProbabilityOptions {
    * licenses, `equal: [side, side]`, each side `{ event, given?, do? }` computed on the full model.
    */
   readonly rules?: readonly RuleStep[]
-  /** For `counterfactual`: the question in words, beside the formula in the head. */
+  /** For `counterfactual` and `mediation`: the question in words, beside the formula in the head. */
   readonly actionLabel?: string
-  /** For `counterfactual`: the step shown first, 1 (abduction, default), 2 (action) or 3 (prediction). */
+  /** The step shown first: for `counterfactual` 1 (abduction, default), 2 (action) or 3 (prediction); for `mediation` 1 (total effect, default) to 4 (natural indirect). */
   readonly initialStep?: number
   /** Link in the exported image's watermark. */
   readonly exportUrl?: string
@@ -113,6 +125,7 @@ export function ProbabilityPanelFor({
   onSliders,
   adjust,
   rules,
+  mediation,
 }: {
   c: LoadedCase
   view?: ProbabilityView
@@ -120,6 +133,7 @@ export function ProbabilityPanelFor({
   adjust?: AdjustSpec
   rules?: readonly RuleStep[]
   counterfactual?: CounterfactualSpec
+  mediation?: MediationSpec
   actionLabel?: string
   initialStep?: number
   exportUrl?: string
@@ -172,6 +186,22 @@ export function ProbabilityPanelFor({
   if (view === 'rules') {
     if (rules === undefined) throw new Error(`case ${c.data.id}: view="rules" needs rules (the steps)`)
     return <RulesPanel c={c} prior={prior} steps={rules} shown={shown} exportUrl={exportUrl} />
+  }
+
+  if (view === 'mediation') {
+    if (mediation === undefined) throw new Error(`case ${c.data.id}: view="mediation" needs a mediation { treatment, mediators, outcome, from, to }`)
+    return (
+      <MediationStepper
+        c={c}
+        prior={prior}
+        shown={shown}
+        spec={mediation}
+        actionLabel={actionLabel}
+        initialStep={initialStep}
+        exportUrl={exportUrl}
+        sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} />}
+      />
+    )
   }
 
   if (view === 'counterfactual') {

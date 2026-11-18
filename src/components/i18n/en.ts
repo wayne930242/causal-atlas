@@ -192,7 +192,7 @@ export const EN: Messages = {
   unchanged: 'unchanged',
   probEquations: 'Equations and probabilities',
   tabsLabel: 'Under the figure',
-  tab: { verdicts: 'Verdicts', dsep: 'd-separation', strata: 'Strata', background: 'Backgrounds' },
+  tab: { verdicts: 'Verdicts', dsep: 'd-separation', strata: 'Strata', background: 'Backgrounds', effects: 'Effects', blame: 'Blame' },
   jointOnly: "This case's probabilities form one joint distribution and cannot be set one by one.",
   sliderLabel: (label) => `Probability: ${label}`,
   nodesShow: 'Nodes show',
@@ -303,6 +303,65 @@ export const EN: Messages = {
     after: (doText, id) => `${id} after ${doText}`,
     hiddenZero: (n) => `${n} more backgrounds with probability 0`,
     graphTitle: (title, step) => `${title}: counterfactual, ${step.toLowerCase()}`,
+  },
+  med: {
+    kicker: 'Mediation',
+    head: (transition, outcome) => `${transition}, reading ${outcome}`,
+    steps: ['Total', 'Controlled direct', 'Natural direct', 'Natural indirect'],
+    stepsLabel: 'Steps of the mediation',
+    next: 'Next step',
+    mediatorsLabel: 'Value the mediators are held at',
+    caption: (step, treatment, from, to, mediators, z) =>
+      step === 1
+        ? `Total effect: set ${treatment} to ${to} and recompute ${mediators} from the equations; compare with ${treatment} set to ${from}.`
+        : step === 2
+          ? `Controlled direct effect: set ${treatment} to ${to} and hold ${z} as constants; compare with ${treatment} set to ${from} and ${z} held the same. The paths through ${mediators} are cut.`
+          : step === 3
+            ? `Natural direct effect: set ${treatment} to ${to} while ${mediators} is held at the value it would take under ${treatment}=${from} (each background on its own); compare with ${treatment} kept at ${from}. Only the direct path sees the change.`
+            : `Natural indirect effect: keep ${treatment} at ${from} while ${mediators} is held at the value it would take under ${treatment}=${to}; compare with ${treatment} kept at ${from}. Only the paths through ${mediators} see the change.`,
+    graphTitle: (title, step) => `${title}: mediation, ${step.toLowerCase()}`,
+    effect: ['Total effect TE', 'Controlled direct effect CDE', 'Natural direct effect NDE', 'Natural indirect effect NIE'],
+    result: 'Calculation',
+    effectsHead: { effect: 'Effect', value: 'Value' },
+    controlledAt: (z) => `Controlled direct effect CDE (${z})`,
+    reverse: 'Indirect effect of the reverse transition IE(reverse)',
+    decomposition: 'TE = NDE − IE(reverse)',
+    decomposes: (te, nde, ie) => `${te} = ${nde} − (${ie})`,
+    formulaDirect: 'Mediation formula (4.17), direct',
+    formulaIndirect: 'Mediation formula (4.18), indirect',
+    equal: (name) => `= ${name}`,
+    differ: (name) => `≠ ${name}`,
+    undefinedCell: '—',
+    missing: (cells) => `Cells with no data: ${cells}`,
+    tip: 'Total effect TE = P(Y_x*) − P(Y_x). The controlled direct effect holds the mediators as constants; the natural direct effect NDE = P(Y_{x*, Z_x}) − P(Y_x) lets the mediators keep the value they would take under x; the natural indirect effect NIE = P(Y_{x, Z_x*}) − P(Y_x). The indirect effect of the reverse transition IE(reverse) = P(Y_{x*, Z_x}) − P(Y_x*), Pearl (2009, 4.15): TE = NDE − IE(reverse). The mediation formula (4.17, 4.18) uses only the observed distribution and equals NDE and NIE when the mediators and the outcome share no common cause; a cell with P(x, z) = 0 cannot be computed and reads —.',
+    background: {
+      p: 'Probability',
+      zAt: (ids, x) => `${ids}(${x})`,
+      yAt: (y, x) => `${y}(${x})`,
+      yAtZ: (y, x, z) => `${y}(${x}, ${z})`,
+    },
+    showAll: (n) => `Show all ${n} backgrounds`,
+    fewer: 'Show fewer',
+  },
+  resp: {
+    cell: (degree) => `responsibility ${degree}`,
+    tipZero: 'Degree of responsibility (Halpern 2016, Def. 6.1.1, 6.1.6): not a cause and not part of one, so 0.',
+    tip: (k, held, cause, normality) =>
+      `Degree of responsibility 1/k (Halpern 2016, Def. 6.1.1, 6.1.6): k is the number of variables that have to change, at least: the variables in the cause plus the ones the witness holds fixed. Here k = ${k}: ${held === '' ? 'the witness holds nothing fixed' : `the witness holds ${held} fixed`}, the cause is ${cause}.${normality ? ' Only witnesses no less normal than the actual world count.' : ''}`,
+  },
+  blame: {
+    question: (cause, effect) => `How much blame does ${cause} carry for ${effect}?`,
+    state: 'Epistemic state',
+    documentState: "The document's probabilities",
+    given: (observation) => `given ${observation}`,
+    degree: 'Blame',
+    contexts: (n) => `${n} backgrounds`,
+    fold: (n) => `Responsibility in each background (${n})`,
+    background: (ids) => `Background (${ids.join(', ')})`,
+    probability: 'Probability',
+    responsibility: (theory) => `Responsibility (${theory})`,
+    tip: (cause) =>
+      `Degree of blame (Halpern 2016, Def. 6.2.1): each background's degree of responsibility times its probability in this epistemic state, added up. Following Halpern, ${cause} holds in every state, so the probabilities are conditioned on ${cause}, and on the observation when there is one. Epistemic states of one model change the probabilities only; the equations stay.`,
   },
   observing: (event) => `Observing ${event}`,
   observed: 'observed',

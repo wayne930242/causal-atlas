@@ -30,12 +30,16 @@ import { Rich } from '../text/typeset.tsx'
 import { DecisionBars } from './DecisionBars.tsx'
 import { DsepLine } from './DsepLine.tsx'
 import type { PlaygroundPreset, PresetButton } from './playground-options.ts'
+import type { BlameSpec } from './blame-view.ts'
+import { blameView } from './blame-view.ts'
+import { PlaygroundBlame } from './PlaygroundBlame.tsx'
 import { NONE, activeQuery, checkTrack, checkVerdicts, decisionFor, dsepPairs, presetButtons, sliderStart } from './playground-options.ts'
 import { PlaygroundVerdicts } from './PlaygroundVerdicts.tsx'
 import { trailText } from './trail.ts'
 import { useTrail } from './use-trail.ts'
 
 export type { PlaygroundPreset } from './playground-options.ts'
+export type { BlameSpec, BlameState } from './blame-view.ts'
 
 export type CausalPlaygroundProps = CausalPlaygroundSource & CausalPlaygroundOptions
 
@@ -105,6 +109,17 @@ export interface CausalPlaygroundOptions {
    */
   readonly verdicts?: readonly VerdictQuery[]
   /**
+   * The degree of blame (Halpern 2016, Def. 6.2.1) of one event for an outcome: a 責備 tab under
+   * the graph with one row per epistemic state and one column per Halpern–Pearl standard, and each
+   * state's backgrounds with their probabilities and responsibilities behind a fold. `states` are
+   * `{ label?, prior?, given? }`: `prior` in the model document's `priors` format (default the
+   * document's own, which a document without `priors` must then supply in every state), `given` an
+   * observation that narrows the state, e.g. the outcome seen after acting. Without `states` there
+   * is one, the document's `priors` (the sliders move it). Halpern's blame conditions on the cause
+   * holding, so the probabilities are conditioned on it. Throws when no priors are available.
+   */
+  readonly blame?: BlameSpec
+  /**
    * The model's default values (`normality`), shown on a graph with values: a node off its default
    * says 偏離（預設 v）, a line under the graph compares this world's deviations with the actual
    * world's (更正常／一樣正常／較不正常／無法比較), each equation says 預設 v. On by default when the
@@ -163,6 +178,7 @@ function PlaygroundFor({
   embedded = false,
   track = NO_TRACK,
   verdicts,
+  blame,
   normality = true,
   dsep,
   sliders = NO_TRACK,
@@ -215,6 +231,7 @@ function PlaygroundFor({
   const dsepNow = pair === undefined || !prob ? undefined : dsepView(c, pair, observed, interventions, stochastic)
   const groups = useMemo(() => (verdicts === undefined ? [] : actualGroups(t, c, verdicts)), [t, c, verdicts])
   const theories = useMemo(() => (verdicts ?? []).map((q) => q.theories ?? defaultTheories(c)), [c, verdicts])
+  const blamed = useMemo(() => (blame === undefined ? undefined : blameView(c, blame, t.locale)), [c, blame, t.locale])
   const active = verdicts === undefined ? -1 : activeQuery(c, verdicts, interventions)
   const activeCause = active < 0 || verdicts === undefined ? NONE : parseCause(c.model, verdicts[active].cause)
   // The hull shows what a step holds for as long as the reader leaves it at that value; with
@@ -265,6 +282,9 @@ function PlaygroundFor({
   }
   if (dsepNow !== undefined && pair !== undefined) {
     blocks.push({ id: 'dsep', label: t.tab.dsep, children: <DsepLine c={c} pair={pair} observed={observed} view={dsepNow} /> })
+  }
+  if (blame !== undefined && blamed !== undefined) {
+    blocks.push({ id: 'blame', label: t.tab.blame, children: <PlaygroundBlame c={c} cause={blame.cause} effect={blame.effect} view={blamed} /> })
   }
   blocks.push({
     id: 'equations',
