@@ -2,7 +2,7 @@ import type { LoadedCase } from '../data/load.ts'
 import { checkVerdict } from '../data/load.ts'
 import type { CaseVerdict } from '../data/schema.ts'
 import type { Assignment, CausalTheory, CausalVerdict, Value } from '../engine/index.ts'
-import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability } from '../engine/index.ts'
+import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability, witnessStatus } from '../engine/index.ts'
 import { formatValue, valuesEqual } from '../engine/values.ts'
 import type { Messages } from './i18n.ts'
 import { assignmentText, bracketText, fixed, flipValue, label, probText } from './view-model.ts'
@@ -40,6 +40,43 @@ export interface ActualGroup {
 
 const EVENT = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^\s]+)\s*$/
 
+/**
+ * Whether the world `interventions` sets is a witness for `query`, per standard, standards with the
+ * same answer joined: `HP 原始定義、HP 更新定義：是 L 的見證。HP 修正定義：不是，MD 沒有固定在實際值 1。`
+ */
+export function witnessNow(t: Messages, c: LoadedCase, query: VerdictQuery, theories: readonly CausalTheory[], interventions: Assignment): string {
+  const context = c.context
+  if (context === undefined) return ''
+  const causeIds = Object.keys(parseCause(c.model, query.cause))
+  const w = t.witness
+  const sentences = new Map<string, CausalTheory[]>()
+  for (const theory of theories) {
+    const s = witnessStatus(c.model, context, query, theory, interventions, c.normality)
+    let sentence: string
+    if (s.witness) sentence = w.is(t.list(causeIds))
+    else {
+      const f = s.failure ?? 'cause-not-changed'
+      const reason =
+        f === 'not-actual'
+          ? w.failure.notActual(causeText(query.cause), query.effect)
+          : f === 'cause-not-changed'
+            ? w.failure.causeNotChanged(t.list(causeIds))
+            : f === 'holds-others'
+              ? w.failure.holdsOthers(t.list(causeIds))
+              : f === 'not-at-actual'
+                ? w.failure.notAtActual(t.list(s.ids ?? []), t.list((s.ids ?? []).map((id) => formatValue(s.actual[id] ?? ''))))
+                : f === 'effect-holds'
+                  ? w.failure.effectHolds(query.effect)
+                  : f === 'not-sufficient'
+                    ? w.failure.notSufficient(causeText(query.cause), query.effect)
+                    : w.failure.lessNormal
+      sentence = w.not(reason)
+    }
+    sentences.set(sentence, [...(sentences.get(sentence) ?? []), theory])
+  }
+  return w.join([...sentences].map(([sentence, names]) => w.group(t.list(names.map((n) => t.theory[n])), sentence)))
+}
+
 function negateEffect(effect: string): string {
   const m = EVENT.exec(effect)
   if (m !== null && (m[2] === '1' || m[2] === '0')) return `${m[1]}=${m[2] === '1' ? '0' : '1'}`
@@ -62,16 +99,38 @@ function fixText(t: Messages, a: Assignment): string {
   return t.list(Object.entries(a).map(([id, v]) => t.fixItem(id, formatValue(v))))
 }
 
-export function actualGroups(t: Messages, c: LoadedCase): ActualGroup[] {
+/** An actual-cause question asked of a figure: is `cause` a cause of `effect`, under `theories`. */
+export interface VerdictQuery {
+  readonly cause: string
+  readonly effect: string
+  /** Default: but-for and the three HP definitions, and HP with normality when the model has defaults. */
+  readonly theories?: readonly CausalTheory[]
+}
+
+/** The standards a playground's verdict row shows by default for this case. */
+export function defaultTheories(c: LoadedCase): CausalTheory[] {
+  const out: CausalTheory[] = ['butfor', 'hp-original', 'hp-updated', 'hp-modified']
+  if (c.normality !== undefined) out.push('hp-normality')
+  return out
+}
+
+/**
+ * The verdict rows grouped by question: the case file's actual-cause verdicts, or, given
+ * `queries`, each query under its theories.
+ */
+export function actualGroups(t: Messages, c: LoadedCase, queries?: readonly VerdictQuery[]): ActualGroup[] {
   const context = c.context
   if (context === undefined) return []
   const { model } = c
   const groups = new Map<string, { cause: string; effect: string; rows: ActualRow[] }>()
   const actual = evaluate(model, context).values
-  for (const v of c.data.verdicts) {
-    if (!ACTUAL_THEORIES.has(v.theory) || !('cause' in v.query)) continue
-    const theory = v.theory as CausalTheory
-    const { cause, effect } = v.query
+  const asked: { theory: CausalTheory; cause: string; effect: string }[] =
+    queries === undefined
+      ? c.data.verdicts.flatMap((v) =>
+          ACTUAL_THEORIES.has(v.theory) && 'cause' in v.query ? [{ theory: v.theory as CausalTheory, cause: v.query.cause, effect: v.query.effect }] : [],
+        )
+      : queries.flatMap((q) => (q.theories ?? defaultTheories(c)).map((theory) => ({ theory, cause: q.cause, effect: q.effect })))
+  for (const { theory, cause, effect } of asked) {
     const key = `${cause}⇒${effect}`
     const group = groups.get(key) ?? { cause, effect, rows: [] }
     groups.set(key, group)

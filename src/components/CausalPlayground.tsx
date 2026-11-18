@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import type { Assignment, LocalizedText } from '../engine/index.ts'
@@ -13,8 +13,10 @@ import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
 import { DocProblems, Segmented, Tip } from './parts.tsx'
 import { Rich } from './typeset.tsx'
-import { originCitations, originSources } from './verdict-rows.ts'
-import { getVariable, valuesEqual } from '../engine/index.ts'
+import type { VerdictQuery } from './verdict-rows.ts'
+import { actualGroups, defaultTheories, originCitations, originSources } from './verdict-rows.ts'
+import { PlaygroundVerdicts } from './PlaygroundVerdicts.tsx'
+import { evaluate, getVariable, parseCause, valuesEqual } from '../engine/index.ts'
 import type { TrailEntry } from './view-model.ts'
 import { TRAIL_LENGTH, readingText, sameAssignment, trailEntry, trailText } from './view-model.ts'
 
@@ -86,6 +88,14 @@ export interface CausalPlaygroundOptions {
    * 「回到原本」 and the step buttons start it again.
    */
   readonly track?: readonly string[]
+  /**
+   * Actual-cause questions for a graph with values: per query a row of verdicts (but-for, the three
+   * HP definitions, HP with normality when the model has defaults; or `theories`), each with
+   * 在圖上看 for its witness, and a line saying whether the world on the graph is a witness. A do()
+   * on a variable other than the cause is drawn held (固定). With several queries, the line answers
+   * the first whose cause is set away from its actual value.
+   */
+  readonly verdicts?: readonly VerdictQuery[]
 }
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
@@ -112,8 +122,10 @@ function PlaygroundFor({
   embedUrl,
   embedded = false,
   track = NO_TRACK,
+  verdicts,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
+  if (verdicts !== undefined && c.context === undefined) throw new Error(`${c.data.id}: verdicts need a graph with values (an actual context)`)
   const [reading, setReading] = useState<Reading>('interventional')
   const { interventions, stochastic, observed, setDo, setObserved, notation, setNotation, world } = useModel(
     c,
@@ -142,8 +154,15 @@ function PlaygroundFor({
   const soft = Object.keys(stochastic).length > 0
   const buttons = presetButtons(c, presets, t.locale)
   const prob = world.probs !== undefined
-  // The hull shows what a step holds for as long as the reader leaves it at that value.
-  const holding = Object.fromEntries(Object.entries(held).filter(([id, v]) => id in interventions && valuesEqual(interventions[id], v)))
+  const groups = useMemo(() => (verdicts === undefined ? [] : actualGroups(t, c, verdicts)), [t, c, verdicts])
+  const theories = useMemo(() => (verdicts ?? []).map((q) => q.theories ?? defaultTheories(c)), [c, verdicts])
+  const active = verdicts === undefined ? -1 : activeQuery(c, verdicts, interventions)
+  const activeCause = active < 0 || verdicts === undefined ? NONE : parseCause(c.model, verdicts[active].cause)
+  // The hull shows what a step holds for as long as the reader leaves it at that value; with
+  // verdicts, every do() on a variable other than the cause is held.
+  const holding = Object.fromEntries(
+    Object.entries(interventions).filter(([id, v]) => (id in held && valuesEqual(held[id], v)) || (verdicts !== undefined && !(id in activeCause))),
+  )
   for (const id of track) getVariable(c.model, id)
   const startTrail = (): Trail => ({ entries: [trailEntry(solve(c, {}), track, '')], dropped: false })
   const [trail, setTrail] = useState<Trail>(startTrail)
@@ -189,6 +208,7 @@ function PlaygroundFor({
           observed={observed}
           onObserve={setObserved}
           witness={Object.keys(holding).length > 0 ? holding : undefined}
+          holdNotes
           legend
           exportUrl={exportUrl}
           embedCode={embed}
@@ -210,6 +230,21 @@ function PlaygroundFor({
           }
           foot={
             <div className="ca-playground-foot">
+              {verdicts !== undefined && (
+                <PlaygroundVerdicts
+                  c={c}
+                  groups={groups}
+                  queries={verdicts}
+                  theories={theories}
+                  active={active}
+                  interventions={interventions}
+                  onShow={(row) => {
+                    const hold = row.fixed ?? NONE
+                    const xPrime = Object.fromEntries(Object.entries(row.show ?? NONE).filter(([id]) => !(id in hold)))
+                    applyPreset({ text: '', interventions: { ...xPrime, ...hold }, observed: NONE, hold })
+                  }}
+                />
+              )}
               {track.length > 0 && (
                 <ul className="ca-trail" aria-label={t.trail}>
                   {track.map((id) => {
@@ -285,6 +320,17 @@ interface PresetButton {
   readonly interventions: Assignment
   readonly observed: Assignment
   readonly hold: Assignment
+}
+
+/** The query whose cause is set, every cause variable, not all at actual values; else the first. */
+function activeQuery(c: LoadedCase, queries: readonly VerdictQuery[], interventions: Assignment): number {
+  const actual = c.context === undefined ? NONE : evaluate(c.model, c.context).values
+  const i = queries.findIndex((q) => {
+    const cause = parseCause(c.model, q.cause)
+    const ids = Object.keys(cause)
+    return ids.every((id) => id in interventions) && ids.some((id) => !valuesEqual(interventions[id], actual[id]))
+  })
+  return i < 0 ? 0 : i
 }
 
 function presetButtons(c: LoadedCase, presets: boolean | readonly PlaygroundPreset[], locale: Locale): PresetButton[] {

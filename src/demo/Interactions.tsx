@@ -51,6 +51,18 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
       presets={[{ label: '已知 D=1；若 A 沒開槍', observed: { D: 1 }, interventions: { A: 0 } }]}
     />
   ),
+  witness: () => (
+    <>
+      <CausalPlayground caseId="forest-fire-disjunctive" verdicts={[{ cause: 'L=1', effect: 'FF=1' }]} />
+      <CausalPlayground
+        doc={lessonModel('m08-loaded-gun')}
+        verdicts={[
+          { cause: 'A=1', effect: 'D=1' },
+          { cause: 'C=1', effect: 'D=1' },
+        ]}
+      />
+    </>
+  ),
 }
 
 export function Interactions({ item }: { readonly item: string }) {

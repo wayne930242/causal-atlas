@@ -37,6 +37,8 @@ export interface GraphBoxProps {
    */
   readonly onObserve?: (next: Assignment) => void
   readonly witness?: Assignment
+  /** Held variables say 固定（實際 v） beside them instead of the hull's 見證 tag (see SignalGraph). */
+  readonly holdNotes?: boolean
   readonly legend?: boolean
   readonly title?: string
   /** Link in the exported image's watermark. */
@@ -94,6 +96,7 @@ export function GraphBox({
   observed = NO_OBSERVATION,
   onObserve,
   witness,
+  holdNotes,
   legend,
   title,
   exportUrl,
@@ -174,6 +177,7 @@ export function GraphBox({
       stochastic={stochastic}
       removedEdges={world.removedEdges}
       witness={witness}
+      holdNotes={holdNotes}
       onToggle={!interactive || onDo === undefined ? undefined : (id) => doing({ stochastic, interventions: toggled(c, interventions, world, id) }, id)}
       onSetValue={!interactive || onDo === undefined ? undefined : (id, value) => doing({ stochastic, interventions: withValue(interventions, id, value) }, id)}
       onSetProbability={!interactive || onDo === undefined || !prob ? undefined : (id, p) => doing(withProbability(state, id, p), id)}

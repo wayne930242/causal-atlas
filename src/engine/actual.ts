@@ -326,3 +326,93 @@ export function actualCause(
   }
   return { theory, verdict: 'not-cause', actual, check }
 }
+
+/** Why a world is not a witness; see `witnessStatus`. */
+export type WitnessFailure =
+  /** AC1 fails: the cause or the effect does not hold in the actual world. */
+  | 'not-actual'
+  /** Not every cause variable is set, or each is set at its actual value. */
+  | 'cause-not-changed'
+  /** But-for allows no held variables. */
+  | 'holds-others'
+  /** hp-modified, hp-normality: a held variable is not at its actual value (`ids`). */
+  | 'not-at-actual'
+  /** The effect still holds in this world. */
+  | 'effect-holds'
+  /** hp-original, hp-updated: AC2(b^o) or AC2(b^u) fails for these held values. */
+  | 'not-sufficient'
+  /** hp-normality: this world is not at least as normal as the actual one. */
+  | 'less-normal'
+
+export interface WitnessStatus {
+  readonly witness: boolean
+  readonly failure?: WitnessFailure
+  /** For `not-at-actual`: the held variables away from their actual values. */
+  readonly ids?: readonly string[]
+  /** The cause variables' setting x⃗′ in this world (those of them that are set). */
+  readonly xPrime: Assignment
+  /** The other set variables, W⃗ held at w⃗. */
+  readonly held: Assignment
+  /** The world s_{X⃗←x⃗′, W⃗←w⃗, u}. */
+  readonly world: Assignment
+  readonly actual: Assignment
+}
+
+/**
+ * Whether the world `interventions` sets is a witness for AC2 of `query` under `theory`: the cause
+ * variables set to x⃗′ (not all at their actual values), every other set variable read as W⃗ held at
+ * w⃗, and φ failing there; hp-modified and hp-normality need w⃗ = w⃗* (actual values), hp-original
+ * and hp-updated need AC2(b^o) / AC2(b^u) for that W⃗ and w⃗, hp-normality needs the world at least
+ * as normal as the actual one, and but-for holds nothing. It is the check `actualCause` makes for
+ * each candidate it tries, so a world it accepts is one `actualCause` could have found.
+ */
+export function witnessStatus(
+  model: CausalModel,
+  context: Assignment,
+  query: ActualCauseQuery,
+  theory: CausalTheory,
+  interventions: Assignment,
+  normality?: Normality,
+): WitnessStatus {
+  const cause = parseCause(model, query.cause)
+  const effect = toFormula(model, query.effect)
+  if (containsDo(effect)) throw new ModelError(problem('effect-has-intervention', {}))
+  const actual = evaluate(model, context).values
+  const xPrime: Record<string, Value> = {}
+  const held: Record<string, Value> = {}
+  for (const [id, raw] of Object.entries(interventions)) {
+    const value = coerceToDomain(getVariable(model, id), raw)
+    if (Object.hasOwn(cause, id)) xPrime[id] = value
+    else held[id] = value
+  }
+  const world = evaluate(model, context, interventions).values
+  const out = (failure?: WitnessFailure, ids?: readonly string[]): WitnessStatus => ({
+    witness: failure === undefined,
+    failure,
+    ids,
+    xPrime,
+    held,
+    world,
+    actual,
+  })
+  let admissible: (w: Assignment) => boolean = () => true
+  if (theory === 'hp-normality') {
+    if (normality === undefined) throw new ModelError(problem('normality-missing', {}))
+    admissible = (w) => atLeastAsNormal(w, actual, normality)
+  }
+  const ac2 = theory === 'hp-original' ? 'o' : theory === 'hp-updated' ? 'u' : 'm'
+  const setup: Setup = { model, context, effect, actual, admissible, ac2, theory, budget: { left: MAX_EVALUATIONS } }
+  if (!ac1(setup, cause)) return out('not-actual')
+  const ids = Object.keys(cause)
+  if (!ids.every((id) => Object.hasOwn(xPrime, id)) || ids.every((id) => valuesEqual(xPrime[id], cause[id]))) return out('cause-not-changed')
+  const W = Object.keys(held)
+  if (theory === 'butfor' && W.length > 0) return out('holds-others')
+  if (ac2 === 'm') {
+    const off = W.filter((id) => !valuesEqual(held[id], requireValue(actual, id)))
+    if (off.length > 0) return out('not-at-actual', off)
+  }
+  if (holdsIn(world, effect)) return out('effect-holds')
+  if (ac2 !== 'm' && !sufficient(setup, cause, W, held)) return out('not-sufficient')
+  if (!admissible(world)) return out('less-normal')
+  return out()
+}

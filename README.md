@@ -194,6 +194,17 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   `track={['Y']}` adds one line per tracked node under the graph with its reading after each change
   of what is set, `Y：0.50 → 0.67（Z=1）→ 0.50（Z=1, X=1）` (the last five; 「回到原本」 and the step
   buttons start it again; on a graph with values it follows the value).
+- `verdicts={[{ cause: 'L=1', effect: 'FF=1' }]}` (graphs with values; a probability graph throws):
+  under the graph, per query 「L=1 是 FF=1 的原因嗎？」 and one cell per standard (but-for, HP original,
+  updated, modified, and HP with normality when the model has defaults; or the query's `theories`),
+  each 是／不是／原因的一部分, with 在圖上看 where the engine found a witness: it sets x⃗′ and holds W⃗ at
+  w⃗. A last line, 目前的世界, says per standard whether the world on the graph is a witness and if
+  not why (`HP 修正定義：不是，MD 沒有固定在實際值 1`), from `witnessStatus` in the engine, the same
+  check `actualCause` makes for each candidate; its ⓘ explains what holding means for each
+  standard. With verdicts, a do() on a variable other than the cause is drawn held: in the amber hull
+  with 固定（實際 v） under its label, or 固定（實際值） when held at its actual value (so are a step's
+  `hold`s). With several queries the line answers the first whose cause is set away from its actual
+  value. `actualGroups(t, c, queries)` takes the same queries.
 - A probability playground has a reading switch in its head, 「干預後再觀察｜反事實」. The first
   (default) reads what is set as P(· | do(…), observed), and a node is either observed or set. Under
   反事實 the same gestures mean evidence about the actual world (click) and the supposed action (long

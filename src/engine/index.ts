@@ -34,8 +34,10 @@ export type {
   CauseCheck,
   Normality,
   Witness,
+  WitnessFailure,
+  WitnessStatus,
 } from './actual.ts'
-export { MAX_EVALUATIONS, actualCause, atLeastAsNormal, parseCause } from './actual.ts'
+export { MAX_EVALUATIONS, actualCause, atLeastAsNormal, parseCause, witnessStatus } from './actual.ts'
 export type {
   ActEvaluation,
   DecisionProblem,

@@ -49,6 +49,11 @@ export interface SignalGraphProps {
   readonly removedEdges: readonly Edge[]
   /** Variables a witness holds fixed: an amber hull. */
   readonly witness?: Assignment
+  /**
+   * Each held variable says 固定（實際 v） beside it when held away from its actual value, else
+   * 固定（實際值）, instead of the hull's 見證 tag (the playground: what is held need not be a witness).
+   */
+  readonly holdNotes?: boolean
   /** Click on a node: toggles a boolean one; a multi-valued one opens the value control when `onSetValue` is given. */
   readonly onToggle?: (id: string) => void
   /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
@@ -93,7 +98,7 @@ const LONG_PRESS = 500
 
 /** What sits under a node's label: nothing, one number, or one bar per value (with the largest probability). */
 type Readout =
-  | { readonly kind: 'none' }
+  | { readonly kind: 'none'; readonly noteW?: number }
   | { readonly kind: 'number'; readonly noteW?: number }
   | { readonly kind: 'bars'; readonly width: number; readonly maxW: number; readonly noteW?: number }
 
@@ -120,7 +125,10 @@ function blockAt(top: number, side: Block['side'], labelW: number, readout: Read
   let noteY = labelY
   let x0 = 0
   let baseline = labelY
-  if (readout.kind === 'number') {
+  if (readout.kind === 'none' && readout.noteW !== undefined) {
+    noteY = labelY + 17
+    boxes.push(textBox(0, noteY, 'middle', readout.noteW, 12))
+  } else if (readout.kind === 'number') {
     numberY = labelY + 22
     noteY = numberY + 19
     boxes.push(textBox(0, numberY, 'middle', NUMBER_W, 16))
@@ -190,6 +198,7 @@ export function SignalGraph(props: SignalGraphProps) {
     onMove,
     observedValues = {},
     evidence = false,
+    holdNotes = false,
   } = props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -311,6 +320,16 @@ export function SignalGraph(props: SignalGraphProps) {
     return { text, left, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
   }
 
+  /** 固定（實際 v） or 固定（實際值） for a held variable, when `holdNotes`. */
+  const holdNote = (id: string): string | undefined => {
+    if (!holdNotes || witness === undefined || !(id in witness)) return undefined
+    // A probability graph has no actual world to compare with.
+    if (prob) return t.witness.heldPlain
+    const before = original?.[id]
+    const now = values?.[id] ?? witness[id]
+    return before === undefined || valuesEqual(before, now) ? t.witness.heldActual : t.witness.held(formatValue(before))
+  }
+
   // Each node's label and readout form one block right under it; only when that block touches an
   // edge, another node, a do tag or an earlier block, or leaves the graph's sides, does the whole
   // block go above the node (when that touches less).
@@ -328,9 +347,9 @@ export function SignalGraph(props: SignalGraphProps) {
     const p = pos.get(id)
     if (p === undefined) continue
     const variable = getVariable(c.model, id)
-    const note = probNotes?.[id]
+    const note = holdNote(id) ?? probNotes?.[id]
     const noteW = note === undefined ? undefined : textWidth(note, 12)
-    let readout: Readout = { kind: 'none' }
+    let readout: Readout = { kind: 'none', noteW }
     if (barred(id) && variable.domain.kind === 'finite') {
       const known = (dists?.[id] ?? []).filter((x) => !Number.isNaN(x))
       const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known))), 11)
@@ -370,7 +389,7 @@ export function SignalGraph(props: SignalGraphProps) {
     if (tag !== undefined) local.push(tag.box)
     const before = original?.[id]
     const now = values?.[id]
-    if (!prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
+    if (holdNote(id) === undefined && !prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
       local.push(textBox(R + 14, R + 14, 'start', textWidth(t.was(formatValue(before)), 12), 12))
     }
     for (const b of local) obstacles.push(shifted(b, p.x, p.y))
@@ -515,8 +534,8 @@ export function SignalGraph(props: SignalGraphProps) {
         x,
         y,
         w: Math.max(...pts.map((p) => p.x)) + pad + 20 - x,
-        // Include the label under the node.
-        h: Math.max(...pts.map((p) => p.y)) + R + 34 - y,
+        // Include the label under the node, and its 固定 note.
+        h: Math.max(...pts.map((p) => p.y)) + R + (holdNotes ? 50 : 34) - y,
         text: t.witnessHold(assignmentText(witness)),
       }
     }
@@ -733,10 +752,16 @@ export function SignalGraph(props: SignalGraphProps) {
             </text>
           </g>
         )}
-        {changed && (
-          <text x={R + 14} y={R + 14} className="ca-svg-small ca-fill-muted">
-            {t.was(formatValue(before))}
+        {holdNote(id) !== undefined ? (
+          <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-svg-bold ca-fill-amber" data-held={id}>
+            {holdNote(id)}
           </text>
+        ) : (
+          changed && (
+            <text x={R + 14} y={R + 14} className="ca-svg-small ca-fill-muted">
+              {t.was(formatValue(before))}
+            </text>
+          )
         )}
         <text y={block.labelY} textAnchor="middle" className="ca-svg-label">
           <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
@@ -749,7 +774,7 @@ export function SignalGraph(props: SignalGraphProps) {
                 {probText(pv ?? Number.NaN)}
               </text>
             )}
-        {prob && probNotes?.[id] !== undefined && (
+        {prob && probNotes?.[id] !== undefined && holdNote(id) === undefined && (
           <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted" data-note={id}>
             {probNotes[id]}
           </text>
@@ -919,12 +944,14 @@ export function SignalGraph(props: SignalGraphProps) {
       {hull !== undefined && (
         <g className="ca-witness" data-witness={Object.keys(witness ?? {}).join(',')}>
           <rect x={hull.x} y={hull.y} width={hull.w} height={hull.h} className="ca-hull" />
-          <g transform={`translate(${hull.x} ${hull.y + hull.h + 6})`}>
-            <rect width={textWidth(hull.text, 12) + 18} height={22} className="ca-amber-tag" />
-            <text x={8} y={15.5} className="ca-svg-small ca-svg-bold ca-fill-amber">
-              {sub(hull.text)}
-            </text>
-          </g>
+          {!holdNotes && (
+            <g transform={`translate(${hull.x} ${hull.y + hull.h + 6})`}>
+              <rect width={textWidth(hull.text, 12) + 18} height={22} className="ca-amber-tag" />
+              <text x={8} y={15.5} className="ca-svg-small ca-svg-bold ca-fill-amber">
+                {sub(hull.text)}
+              </text>
+            </g>
+          )}
         </g>
       )}
       {edgeEls}
