@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterAll, expect, it } from 'vitest'
-import type { Locale } from '../i18n.ts'
-import { LocaleProvider } from '../i18n.ts'
+import type { Locale } from '../i18n/messages.ts'
+import { LocaleProvider } from '../i18n/messages.ts'
 
 /**
  * The markup baseline recorded at 0.4.2 (f64af86) for the 0.4.3 refactor round: the server markup

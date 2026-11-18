@@ -5,9 +5,9 @@ import { MODEL_DOC_FORMAT, modelDocSchema } from '../../data/schema.ts'
 import type { Locale, Problem, Value, Variable } from '../../engine/index.ts'
 import { CyclicModelError, ParseError, isReservedName, parseExpr, problemOf } from '../../engine/index.ts'
 import { checkExpr } from '../../engine/model.ts'
-import { creditedFrom } from '../doc-case.ts'
-import type { DraftIssue } from '../i18n.ts'
-import { gridLayout, shownVariables } from '../view-model.ts'
+import { creditedFrom } from '../model/doc-case.ts'
+import type { DraftIssue } from '../i18n/messages.ts'
+import { gridLayout, shownVariables } from '../model/view-model.ts'
 
 /**
  * The editor's working state. Variables carry a stable `key` so renaming an id keeps its

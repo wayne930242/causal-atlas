@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Problem } from '../engine/errors.ts'
-import { messagesFor, problemMessage } from '../components/i18n.ts'
+import { messagesFor, problemMessage } from '../components/i18n/messages.ts'
 import { caseFiles } from './cases.ts'
 import { loadCase } from './load.ts'
 import { caseSchema } from './schema.ts'

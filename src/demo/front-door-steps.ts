@@ -1,4 +1,4 @@
-import type { RuleStep } from '../components/rules-view.ts'
+import type { RuleStep } from '../components/probability/rules-view.ts'
 
 /** Lesson 06's front-door derivation, step by step, as a lesson passes it to view="rules". */
 export const FRONT_DOOR_STEPS: readonly RuleStep[] = [

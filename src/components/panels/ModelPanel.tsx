@@ -1,0 +1,307 @@
+import type { ReactNode } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import type { LoadedCase } from '../../data/load.ts'
+import type { Assignment, Prior } from '../../engine/index.ts'
+import { formatValue, getVariable } from '../../engine/index.ts'
+import { graphExport } from '../export/export-render.tsx'
+import type { ExportSource, ExportTag } from '../export/export-image.ts'
+import { ExportMenu } from '../export/ExportMenu.tsx'
+import type { Locale, Messages } from '../i18n/messages.ts'
+import { messagesFor, useMessages } from '../i18n/messages.ts'
+import type { PathMarks } from '../model/dsep-view.ts'
+import type { DoState, ModelWorld, Reading } from '../model/model-state.ts'
+import { observedNext, solve, toggled, withProbability, withValue } from '../model/model-state.ts'
+import { useNarrow } from '../shared/use-narrow.ts'
+import { CopyLatex, Equations } from './Equations.tsx'
+import type { UiNotation } from '../model/notation.ts'
+import { notations } from '../model/notation.ts'
+import { Segmented, Tag } from '../shared/parts.tsx'
+import { SignalGraph } from '../graph/SignalGraph.tsx'
+import { Formula, Rich } from '../text/typeset.tsx'
+import { originCitations, originSources } from '../model/verdict-rows.ts'
+import type { Stochastic } from '../model/view-model.ts'
+import { assignmentText, changeNotes, probLegend, readingText } from '../model/view-model.ts'
+
+export interface GraphBoxProps {
+  readonly c: LoadedCase
+  readonly world: ModelWorld
+  readonly interventions: Assignment
+  /** Stochastic interventions, P*(X=1) per boolean node (probability mode only). */
+  readonly stochastic?: Stochastic
+  /** A click on a node: the new do() state. */
+  readonly onDo?: (next: DoState) => void
+  /** Observations the probabilities are conditioned on (probability mode only). */
+  readonly observed?: Assignment
+  /**
+   * The new observations after a click. Given in probability mode, a click observes and a long
+   * press or Shift+click intervenes; without it every click intervenes.
+   */
+  readonly onObserve?: (next: Assignment) => void
+  readonly witness?: Assignment
+  /** Held variables say 固定（實際 v） beside them instead of the hull's 見證 tag (see SignalGraph). */
+  readonly holdNotes?: boolean
+  readonly legend?: boolean
+  readonly title?: string
+  /** Link in the exported image's watermark. */
+  readonly exportUrl?: string
+  /** Node drag in the editor: grid offset in columns and rows. */
+  readonly onMove?: (id: string, dCol: number, dRow: number) => void
+  /** Builds the embed code (iframe and citation) for the figure as it stands; the export menu offers it when given. */
+  readonly embedCode?: () => string
+  /** Drawn inside the graph's frame under the legend (the playground's hint and step buttons); not exported. */
+  readonly foot?: ReactNode
+  /** Called when the reader asks for the prior or actual world back (「回到原本」 or the chip's ×). */
+  readonly onReset?: () => void
+  /** Notes under nodes that replace the 原本 v notes of a probability graph. */
+  readonly notes?: Readonly<Record<string, string>>
+  /**
+   * How a probability graph reads what is set (see `Reading`). `counterfactual`: a click sets
+   * evidence about the actual world and a long press, right-click or Shift+click the hypothetical
+   * action; a node may be both; evidence nodes read 實際 v instead of a tag.
+   */
+  readonly reading?: Reading
+  /** Controls in the head, before 「回到原本」 (the playground's reading switch). */
+  readonly actions?: ReactNode
+  /** Default values: deviant nodes say 偏離（預設 v） (graphs with values). */
+  readonly defaults?: Assignment
+  /** d-separation marks for a pair (the playground's `dsep`). */
+  readonly paths?: PathMarks
+}
+
+const NONE: Stochastic = {}
+const NO_OBSERVATION: Assignment = {}
+
+/** `do` without `id`, hard or stochastic. */
+function withoutDo(state: DoState, id: string): DoState {
+  const interventions: Record<string, Assignment[string]> = { ...state.interventions }
+  const stochastic: Record<string, number> = { ...state.stochastic }
+  delete interventions[id]
+  delete stochastic[id]
+  return { interventions, stochastic }
+}
+
+function withoutKey(a: Assignment, id: string): Assignment {
+  const next: Record<string, Assignment[string]> = { ...a }
+  delete next[id]
+  return next
+}
+
+/**
+ * The graph with its world tags. With values, a click intervenes on a node. With probabilities and
+ * `onObserve`, a click observes it and a long press or Shift+click intervenes (a boolean node is set
+ * to 1 at once, with a slider for P*(X=1) beside it); an observation that cannot happen under what is
+ * set is refused with a note.
+ */
+export function GraphBox({
+  c,
+  world,
+  interventions,
+  stochastic = NONE,
+  onDo,
+  observed = NO_OBSERVATION,
+  onObserve,
+  witness,
+  holdNotes,
+  legend,
+  title,
+  exportUrl,
+  onMove,
+  embedCode,
+  foot,
+  onReset,
+  notes,
+  reading = 'interventional',
+  actions,
+  defaults,
+  paths,
+}: GraphBoxProps) {
+  const t = useMessages()
+  const [notice, setNotice] = useState<string | undefined>(undefined)
+  const hasDo = Object.keys(interventions).length > 0 || Object.keys(stochastic).length > 0
+  const hasObs = Object.keys(observed).length > 0
+  const hasSet = hasDo || hasObs
+  const state: DoState = { interventions, stochastic }
+  const prob = world.probs !== undefined
+  const cf = reading === 'counterfactual' && prob
+  const setNow = readingText(t, cf, interventions, stochastic, observed)
+  const wrap = useRef<HTMLDivElement>(null)
+  const narrow = useNarrow(wrap, 560)
+  const observes = prob && onObserve !== undefined
+  const legendFor = (m: Messages): string => (world.probs !== undefined ? probLegend(m, c.model, world.shown) : m.valueLegend)
+  const headTag = (m: Messages): string => (cf && hasDo ? m.cf.kicker : hasDo && hasObs ? m.afterDoObserve : hasObs ? m.afterObserve : m.afterDo)
+  const chipText = (m: Messages): string => readingText(m, cf, interventions, stochastic, observed)
+  /** Commit do() and observations together, unless the observations cannot happen under that do(). */
+  const commit = (next: DoState, nextObserved: Assignment): void => {
+    if (Object.keys(nextObserved).length > 0 && prob) {
+      // Counterfactual evidence is about the actual world: it must be possible without the do().
+      const evidence = (cf ? solve(c, {}, {}, nextObserved) : solve(c, next.interventions, next.stochastic, nextObserved)).evidence ?? 1
+      if (!(evidence > 0)) {
+        setNotice(t.observeImpossible(assignmentText(nextObserved)))
+        return
+      }
+    }
+    setNotice(undefined)
+    if (nextObserved !== observed) onObserve?.(nextObserved)
+    if (next.interventions !== interventions || next.stochastic !== stochastic) onDo?.(next)
+  }
+  // A do() on a node first drops its observation: the node keeps the value, now set by intervention.
+  // Read as a counterfactual, the observation stays: what happened, and what is supposed instead.
+  const doing = (next: DoState, id: string): void => commit(next, !cf && id in observed ? withoutKey(observed, id) : observed)
+  const clearAll = (): void => {
+    commit({ interventions: {}, stochastic: NONE }, NO_OBSERVATION)
+    onReset?.()
+  }
+  // A probability graph keeps 原本 v under each 0/1 node whose number moved from the prior.
+  const prior = useMemo(() => (prob ? solve(c, {}).probs : undefined), [c, prob])
+  const twoValued = world.shown.filter((id) => getVariable(c.model, id).domain.kind === 'boolean')
+  // Read as a counterfactual: 實際 v under each evidence node, and under each other node whose
+  // number moved from the actual world's (the abduced one).
+  const abduced = useMemo(() => (cf ? solve(c, {}, {}, observed).probs : undefined), [c, cf, observed])
+  const cfNotes = (m: Messages): Record<string, string> => {
+    if (abduced === undefined || world.probs === undefined) return {}
+    const out: Record<string, string> = { ...changeNotes(m, abduced, world.probs, twoValued, m.actually) }
+    for (const [id, v] of Object.entries(observed)) out[id] = m.actually(formatValue(v))
+    return out
+  }
+  const probNotes =
+    prior === undefined || world.probs === undefined
+      ? undefined
+      : { ...(cf ? cfNotes(t) : changeNotes(t, prior, world.probs, twoValued)), ...notes }
+  const graph = (m: Messages, interactive: boolean) => (
+    <SignalGraph
+      compact={narrow}
+      c={c}
+      shown={world.shown}
+      values={world.values}
+      original={world.original}
+      probs={world.probs}
+      dists={world.dists}
+      probNotes={probNotes}
+      observed={Object.keys(observed)}
+      observedValues={observed}
+      evidence={cf}
+      interventions={interventions}
+      stochastic={stochastic}
+      removedEdges={world.removedEdges}
+      witness={witness}
+      holdNotes={holdNotes}
+      defaults={defaults}
+      paths={paths}
+      onToggle={!interactive || onDo === undefined ? undefined : (id) => doing({ stochastic, interventions: toggled(c, interventions, world, id) }, id)}
+      onSetValue={!interactive || onDo === undefined ? undefined : (id, value) => doing({ stochastic, interventions: withValue(interventions, id, value) }, id)}
+      onSetProbability={!interactive || onDo === undefined || !prob ? undefined : (id, p) => doing(withProbability(state, id, p), id)}
+      onObserve={
+        !interactive || !observes
+          ? undefined
+          : (id) => {
+              const forced = interventions[id]
+              if (!cf && (forced !== undefined || id in stochastic)) {
+                // Observing an intervened node: the same value, now observed (1 for a stochastic one).
+                commit(withoutDo(state, id), { ...observed, [id]: forced ?? true })
+              } else commit(state, observedNext(c, observed, id))
+            }
+      }
+      title={title ?? m.graphTitle(c.data.title[m.locale])}
+      onMove={interactive ? onMove : undefined}
+    />
+  )
+  const exportSource = (locale: Locale): ExportSource | undefined => {
+    const m = messagesFor(locale)
+    const { svg, dispose } = graphExport(locale, t, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => graph(m, false))
+    if (svg === null) {
+      dispose?.()
+      return undefined
+    }
+    const tags: ExportTag[] = hasSet
+      ? [
+          { text: headTag(m), tone: 'slate' },
+          { text: chipText(m), tone: 'accent', mono: true },
+        ]
+      : [{ text: world.probs !== undefined ? m.probability : m.actualWorld, tone: 'fg' }]
+    return {
+      name: `${c.data.id}-graph`,
+      title: c.data.title[locale],
+      panels: [{ svg, tags, tint: hasSet }],
+      legend: legendFor(m),
+      origin: originSources(m, c),
+      originCitations: originCitations(c),
+      dispose,
+    }
+  }
+  const editable = onDo !== undefined || onObserve !== undefined
+  return (
+    <div className={`ca-box ca-graph-box${hasSet ? ' is-cf' : ''}`} data-world={cf && hasDo ? 'counterfactual' : hasDo ? 'do' : hasObs ? 'observed' : 'actual'}>
+      <div className="ca-box-head">
+        <div className="ca-tags">
+          {hasSet ? (
+            <>
+              <Tag tone="slate">{headTag(t)}</Tag>
+              <span className="ca-do-chip ca-mono" data-text={setNow}>
+                {cf ? <Rich text={setNow} ids={c.model.byId} /> : <Formula text={setNow} />}
+                {editable && (
+                  <button type="button" className="ca-do-clear" aria-label={hasObs ? t.clearSettings(setNow) : t.removeDo(setNow)} onClick={clearAll}>
+                    ×
+                  </button>
+                )}
+              </span>
+            </>
+          ) : (
+            <Tag tone="fg">{world.probs !== undefined ? t.probability : t.actualWorld}</Tag>
+          )}
+        </div>
+        <div className="ca-box-actions">
+          {actions}
+          {hasSet && editable && (
+            <button type="button" className="ca-link" onClick={clearAll}>
+              {prob ? t.backToPrior : t.backToActual}
+            </button>
+          )}
+          <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} embedCode={embedCode} />
+        </div>
+      </div>
+      <div className="ca-graph-wrap" ref={wrap}>
+        {graph(t, true)}
+      </div>
+      {notice !== undefined && (
+        <p className="ca-notice" role="status">
+          <Rich text={notice} ids={c.model.byId} />
+        </p>
+      )}
+      {legend === true && <p className="ca-legend">{legendFor(t)}</p>}
+      {foot}
+    </div>
+  )
+}
+
+export interface EquationBoxProps {
+  readonly c: LoadedCase
+  readonly world: ModelWorld
+  readonly interventions: Assignment
+  readonly stochastic?: Stochastic
+  readonly notation: UiNotation
+  readonly onNotation: (n: UiNotation) => void
+  /** Default values: 預設 v beside each equation that has one. */
+  readonly defaults?: Assignment
+  /** Observations: the causal notation lists only the rows that can hold given them. */
+  readonly observed?: Assignment
+  /** How the observations are read (see `Reading`). */
+  readonly reading?: Reading
+  /** The prior when the caller changes it (sliders); default the case's. */
+  readonly prior?: Prior
+}
+
+export function EquationBox({ c, world, interventions, stochastic = NONE, notation, onNotation, defaults, observed, reading, prior }: EquationBoxProps) {
+  const counterfactual = reading === 'counterfactual' && world.probs !== undefined
+  const eq = { c, shown: world.shown, notation, values: world.values, interventions, stochastic, observed, prior, counterfactual }
+  const t = useMessages()
+  return (
+    <div className="ca-box ca-eq-box">
+      <div className="ca-eq-head">
+        <h3 className="ca-h3">{t.equations}</h3>
+        <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
+        <CopyLatex {...eq} />
+      </div>
+      <Equations {...eq} defaults={defaults} />
+    </div>
+  )
+}

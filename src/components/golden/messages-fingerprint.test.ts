@@ -2,7 +2,7 @@
 // normalized), so moving the tables between files is provably a move.
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { MESSAGES } from '../i18n.ts'
+import { MESSAGES } from '../i18n/messages.ts'
 
 /** A function's source with the test transform's import bindings (`(0, __vi_import_3__.f)`, `__vi_import_3__.f`) written as `f`. */
 function source(fn: (...args: never[]) => unknown): string {

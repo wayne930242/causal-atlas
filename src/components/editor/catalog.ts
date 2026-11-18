@@ -2,7 +2,7 @@ import { caseIds, getCase } from '../../data/index.ts'
 import type { CaseFamily, ModelDoc } from '../../data/schema.ts'
 import { familySchema } from '../../data/schema.ts'
 import type { Locale, LocalizedText } from '../../engine/index.ts'
-import type { Messages } from '../i18n.ts'
+import type { Messages } from '../i18n/messages.ts'
 
 /** A link the host gives for a case or model, e.g. a lesson that uses it. */
 export interface LessonLink {

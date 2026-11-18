@@ -7,7 +7,7 @@ import { caseToDoc } from '../data/model-doc.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import { modelDocSchema } from '../data/schema.ts'
 import { CasePage, CausalPlayground, ModelEditor, ProbabilityPanel, WorldLanes } from './index.ts'
-import { docOrigin } from './doc-case.ts'
+import { docOrigin } from './model/doc-case.ts'
 
 const valueDoc: ModelDoc = modelDocSchema.parse({
   format: 'causal-atlas/model',
