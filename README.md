@@ -2,6 +2,24 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.6.0
+Node precision. `CausalPlayground`, `ProbabilityPanel`, `CasePage` and `ModelEditor` take an optional
+`digits`: a whole number from 1 to 6 (default 2, which is today's output exactly) for the decimals of
+the probability under each node. A lesson that quotes 0.175 sets `digits={3}` and the node reads 0.175,
+not 0.18. It applies to the number under each node, a stochastic do()'s tag beside a node
+(`P(S=1)=0.3500`), the top value of a multi-valued node's bars (`最高 0.5000`) and the bar tooltips,
+the aria text of a node, the 原本 and 實際 notes under a node, and, in the `compare` view, the two
+result numbers that sit beside the graphs (and the numbers in their export footers). Equation rows,
+tables, verdicts, the counterfactual result and its backgrounds table, the sliders' own readout and the
+chips' `do(P(S=1)=0.35)` keep their own precision. A number within 10^-`digits` of 0 or 1 still gets
+two significant digits of its distance from that end (at `digits={4}`, 0.000012 reads 0.000012, not
+0.0000). The readout slot under a node is as wide as the digits need, and the layout moves a block
+above its node, as before, when the wider one would touch an edge or the graph's side; checked at
+390 px with 4 digits. An invalid `digits` (not an integer, below 1, above 6) throws. The export draws
+with the same digits, in either language; the embed code does not record it. `WorldLanes` shows no
+probabilities and takes no `digits`. The demo reads `?digits=4` from the page's query string. The
+markup baseline is unchanged. New: `shared/digits.ts` (`DigitsScope`, `useDigits`, `checkDigits`).
+
 ## 0.5.0
 Graph first. The blocks stacked under a figure's graph (the equations, the verdicts, the strata and
 background tables, the expected-utility bars, the d-separation paths) now sit behind one row of tab
@@ -146,7 +164,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.5.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.6.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -182,6 +200,11 @@ language covers the interface text, the case texts (title, subtitle, story, expl
 variable and preset labels) and the error messages. All interface text lives in
 `src/components/i18n/` (`zh.ts`, `en.ts`); a test fails when a component holds a Chinese literal of its own.
 
+Nodes show their probability to two decimals. Pass `digits` (1 to 6) to `CausalPlayground`,
+`ProbabilityPanel`, `CasePage` or `ModelEditor` to write them to the digits the text quotes:
+`<CausalPlayground caseId="smoking-lesion" digits={3} />`. Equations, tables and verdicts keep their own
+precision; see 0.6.0 for what it covers.
+
 Errors from the engine and the data layer carry a stable `problem`: `{ code, params, where? }`
 (`CausalAtlasError`, its subclasses `ModelError` and `ParseError`; `problemOf(error)` reads it).
 `Error.message` is the English wording, `problemText(problem)` gives it again, and the components word
@@ -198,7 +221,7 @@ shown inline, context values or priors, normality defaults, and node positions b
 keys). It starts from any bundled case or a blank model, exports and imports JSON validated by
 `modelDocSchema` (a whole case file also imports), and shares the model in the URL hash as
 `#model=1.<base64url(deflate-raw(JSON))>`; the leading `1` is the format version. Props: `initial`
-(case id, `extraModels` id or `blank`), `hash`, `syncUrl`, `shareHref(value)`, `exportUrl`, `locale`,
+(case id, `extraModels` id or `blank`), `hash`, `syncUrl`, `shareHref(value)`, `exportUrl`, `digits`, `locale`,
 `caseLinks`, `extraModels`, `modelsLabel`.
 
 The address follows the editor (`syncUrl`, default on): `#case=<id>` while a bundled case or host
@@ -421,9 +444,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.5.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.6.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.5.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.6.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -432,7 +455,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.5.0},
+  version = {0.6.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

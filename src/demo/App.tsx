@@ -38,6 +38,12 @@ function useRoute(): Route {
   return route
 }
 
+/** `?digits=4` in the page's query string: the decimals of every node readout; absent leaves the default. */
+function pageDigits(): number | undefined {
+  const value = new URLSearchParams(window.location.search).get('digits')
+  return value === null ? undefined : Number(value)
+}
+
 function useTheme(): [string, () => void] {
   const [theme, setTheme] = useState(() => new URLSearchParams(window.location.search).get('theme') ?? 'light')
   useEffect(() => {
@@ -240,14 +246,15 @@ export function App() {
         </header>
         <main>
           {route.page === 'index' && <Index locale={locale} />}
-          {route.page === 'playground' && <CausalPlayground key={`${route.id}-${locale}`} caseId={route.id} />}
-          {route.page === 'case' && <CasePage key={`${route.id}-${route.step}-${locale}`} caseId={route.id} initialStep={route.step} />}
+          {route.page === 'playground' && <CausalPlayground key={`${route.id}-${locale}`} caseId={route.id} digits={pageDigits()} />}
+          {route.page === 'case' && <CasePage key={`${route.id}-${route.step}-${locale}`} caseId={route.id} initialStep={route.step} digits={pageDigits()} />}
           {route.page === 'lesson' && (locale === 'en' ? <LessonEn /> : <LessonZh />)}
           {route.page === 'interactions' && <Interactions key={`${route.id}-${locale}`} item={route.id} />}
           {route.page === 'editor' && (
             <ModelEditor
               key={`${route.id}-${locale}`}
               initial={route.id}
+              digits={pageDigits()}
               shareHref={(value) => `${window.location.origin}${window.location.pathname}${href('/editor', locale, `model=${value}`)}`}
             />
           )}
