@@ -2,6 +2,28 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.5.0
+Graph first. The blocks stacked under a figure's graph (the equations, the verdicts, the strata and
+background tables, the expected-utility bars, the d-separation paths) now sit behind one row of tab
+buttons under the graph: a click opens a block, another click on the open tab closes it, and only one
+is open at a time. The figure's own block is open at first (verdicts in `CausalPlayground` with
+`verdicts`, expected utility with `decision`, paths with `dsep`, the strata table in the adjustment
+view, the backgrounds table in the counterfactual view) and the equations are closed; a figure with
+only the equations has one 「式子」 tab, closed. This is derived from the props, so no lesson needs a
+new prop. It applies to `CausalPlayground`, `CasePage`, and `ProbabilityPanel` (`sliders`,
+`compare`, `adjust`, `counterfactual`); `WorldLanes` keeps its 「看式子」 button in the foot. A closed
+block stays in the page (`hidden`), so page search and screen readers still reach it; the tabs are
+buttons with `aria-expanded` and `aria-controls`. The step and preset buttons, the hint, the trail,
+the 視角 switch, the export menu, the sliders, the verdict line of the adjustment view and the
+counterfactual result stay where they were. The `ModelEditor` keeps its equations box open. The
+open tab is not part of the embed code or the address: an embed page starts with the figure's own
+block open. The compare view's 「式子和機率」 fold is the same tab. Equations moved from their own box
+into the graph's box, so `.ca-eq-box` no longer wraps them in these views. Interface text gains
+`tabsLabel` and `tab` (`verdicts`, `dsep`, `strata`, `background`) in both languages. The type check
+now keeps `src/data/node-shim.d.ts` (Node's `fs` and `crypto` for tests) away from browser code
+(`tsconfig.test.json`), and the interface-text test lists the four string-table files instead of
+skipping `i18n/`.
+
 ## 0.4.3
 Internal restructuring, no change in behavior or API: the component sources sit in feature folders
 (`case/`, `playground/`, `probability/`, `lanes/`, `editor/`, `graph/`, `panels/`, `model/`,
@@ -124,7 +146,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.4.3) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.5.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -399,9 +421,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.4.3 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.5.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.4.3) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.5.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -410,7 +432,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.4.3},
+  version = {0.5.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
