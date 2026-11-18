@@ -4,7 +4,7 @@ import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { encodeShare } from '../../data/model-doc.ts'
 import { modelDocSchema } from '../../data/schema.ts'
-import { formatDo, formatPdo, hashFragment, hashWith, parseDo, parsePdo, readHashState } from './url-state.ts'
+import { formatDo, formatPdo, hashFragment, hashWith, parseDo, parsePdo, readHashState } from '../export/url-state.ts'
 import { ModelEditor } from '../index.ts'
 
 const setUrl = (url: string): void => window.history.replaceState(null, '', url)

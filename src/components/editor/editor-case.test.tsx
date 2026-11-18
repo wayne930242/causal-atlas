@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { checkVerdict, getCase, loadCase } from '../../data/index.ts'
 import type { ModelDoc } from '../../data/schema.ts'
 import { modelDocSchema } from '../../data/schema.ts'
-import { CaseInfo } from '../case/CaseInfo.tsx'
+import { CaseInfo } from './CaseInfo.tsx'
 import { ModelEditor } from '../index.ts'
 import { messagesFor } from '../i18n/messages.ts'
 

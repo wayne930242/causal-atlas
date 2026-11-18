@@ -9,7 +9,7 @@ import type { Draft } from './draft.ts'
 import { draftFromImport } from './draft.ts'
 import type { Session, SessionAction, Start } from './session.ts'
 import { knownName, startNamed } from './session.ts'
-import { hashFragment, readHashState, replaceHash } from './url-state.ts'
+import { hashFragment, readHashState, replaceHash } from '../export/url-state.ts'
 
 /** How long the address waits after the last edit before it is rewritten. */
 const URL_DEBOUNCE_MS = 400

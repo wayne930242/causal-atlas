@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 import { useMemo } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
-import type { LessonLink } from '../editor/catalog.ts'
+import type { LessonLink } from './catalog.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
 import { NoIcon, OkIcon, Tag } from '../shared/parts.tsx'
-import { Story } from './Story.tsx'
+import { Story } from '../case/Story.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { intuition, verdictTable } from '../model/verdict-rows.ts'
 

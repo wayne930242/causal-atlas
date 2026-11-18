@@ -7,7 +7,7 @@ import { evaluate } from '../../engine/index.ts'
 import { causalTable } from './causal-table.ts'
 import { Equations } from './Equations.tsx'
 import { equationsLatex } from './equations-latex.ts'
-import { shownVariables } from '../graph/graph-layout.ts'
+import { shownVariables } from '../model/shown-variables.ts'
 
 afterEach(cleanup)
 

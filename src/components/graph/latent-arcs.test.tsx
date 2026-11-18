@@ -8,7 +8,8 @@ import { caseToDoc, docToCase, parseModelJson } from '../../data/model-doc.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import { ACADEMIC_PALETTE, inlineSvg } from '../export/export-image.ts'
 import { SignalGraph } from './SignalGraph.tsx'
-import { arcCurve, gridLayout, latentArcs, planArcs, shownEdges, shownVariables } from './graph-layout.ts'
+import { arcCurve, gridLayout, latentArcs, planArcs, shownEdges } from './graph-layout.ts'
+import { shownVariables } from '../model/shown-variables.ts'
 
 afterEach(cleanup)
 

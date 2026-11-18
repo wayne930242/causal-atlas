@@ -1,7 +1,7 @@
 import type { KeyboardEvent, ReactNode } from 'react'
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { CatalogEntry, CatalogGroup } from '../editor/catalog.ts'
-import { HOST_CHIP, filterCatalog, matches } from '../editor/catalog.ts'
+import type { CatalogEntry, CatalogGroup } from './catalog.ts'
+import { HOST_CHIP, filterCatalog, matches } from './catalog.ts'
 import { useMessages } from '../i18n/messages.ts'
 
 /**

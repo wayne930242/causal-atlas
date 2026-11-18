@@ -4,7 +4,8 @@ import { listCases } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
 import { docToCase } from '../../data/model-doc.ts'
 import { modelDocSchema } from '../../data/schema.ts'
-import { gridLayout, shownEdges, shownVariables } from './graph-layout.ts'
+import { gridLayout, shownEdges } from './graph-layout.ts'
+import { shownVariables } from '../model/shown-variables.ts'
 
 /**
  * Automatic layout: no drawn edge may pass over a node that is not one of its ends, in any of the

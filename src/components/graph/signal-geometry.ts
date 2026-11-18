@@ -8,7 +8,16 @@ import type { PathMarks } from '../model/dsep-view.ts'
 import { assignmentText, idWithName, probText, shortLabel } from '../model/wording.ts'
 import { barLayout, textWidth } from '../text/text-measure.ts'
 import type { ArcPlan, Pt } from './graph-layout.ts'
-import { arcCurve, edgeLive, edgePolarity, graphSpacing, gridLayout, latentArcs, planArcs, shownEdges } from './graph-layout.ts'
+import {
+  arcCurve,
+  edgeLive,
+  edgePolarity,
+  graphSpacing,
+  gridLayout,
+  latentArcs,
+  planArcs,
+  shownEdges,
+} from './graph-layout.ts'
 import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, intersects, rectBox, segmentHitsBox, shifted, textBox } from './graph-labels.ts'
 import type { Block, Point, Readout } from './signal-shapes.ts'

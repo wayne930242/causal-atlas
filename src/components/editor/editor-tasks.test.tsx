@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { docToCase, caseToDoc, getCase } from '../../data/index.ts'
-import { CaseInfo } from '../case/CaseInfo.tsx'
+import { CaseInfo } from './CaseInfo.tsx'
 import type { EditorTask } from './tasks.ts'
 import { checkTask } from './tasks.ts'
 import { ModelEditor } from '../index.ts'

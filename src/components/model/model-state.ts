@@ -4,7 +4,7 @@ import type { Assignment, Edge, Value } from '../../engine/index.ts'
 import { counterfactual, evaluate, getVariable, valuesEqual } from '../../engine/index.ts'
 import type { UiNotation } from './notation.ts'
 import type { Stochastic } from './assignments.ts'
-import { shownVariables } from '../graph/graph-layout.ts'
+import { shownVariables } from './shown-variables.ts'
 import { flipValue, observationFormula } from './assignments.ts'
 import { mixedMarginals, targetValue } from './probability-view.ts'
 

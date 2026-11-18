@@ -7,7 +7,8 @@ import { CyclicModelError, ParseError, isReservedName, parseExpr, problemOf } fr
 import { checkExpr } from '../../engine/model.ts'
 import { creditedFrom } from '../model/doc-case.ts'
 import type { DraftIssue } from '../i18n/messages.ts'
-import { gridLayout, shownVariables } from '../graph/graph-layout.ts'
+import { gridLayout } from '../graph/graph-layout.ts'
+import { shownVariables } from '../model/shown-variables.ts'
 
 /**
  * The editor's working state. Variables carry a stable `key` so renaming an id keeps its
