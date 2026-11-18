@@ -211,6 +211,14 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   (更正常／一樣正常／較不正常／無法比較, `atLeastAsNormal` both ways; before any do() only the actual
   world's), and each equation says 預設 v. HP with normality gives the same sentence as its reason
   when a world is less normal. `normality={false}` hides all of it.
+- `dsep={['G', 'M']}` (or several pairs, switched in the head) on a probability graph: every path
+  between the two in the graph after do() is drawn lit (accent) when open and dashed when blocked,
+  the two ends ringed; the known set is what the reader observed. A line under the graph gives
+  `G 與 M　已知 {L} → 通　相依程度 0.1736` and up to three paths with why
+  (`G→A←M：對撞點 A 的後代 L 已知`; the rest counted). 相依程度 is lesson 04's
+  δ(X, Y | z) = max |P(x,y|z) − P(x|z)P(y|z)| given the observed values, so the tuned parameters read
+  通 · 0.000. The engine exports `dSeparation(model, x, y, given, cut)` (each path, open or blocked and
+  by what) and `dependence(model, prior, x, y, given, do, stochastic)`.
 - A probability playground has a reading switch in its head, 「干預後再觀察｜反事實」. The first
   (default) reads what is set as P(· | do(…), observed), and a node is either observed or set. Under
   反事實 the same gestures mean evidence about the actual world (click) and the supposed action (long

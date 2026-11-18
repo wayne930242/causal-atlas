@@ -9,6 +9,7 @@ import { around, firstClear, intersects, placePop, rectBox, segmentHitsBox, shif
 import type { NodeToggle } from './i18n.ts'
 import { useMessages } from './i18n.ts'
 import { sub } from './svg-text.tsx'
+import type { PathMarks } from './dsep-view.ts'
 import type { Stochastic } from './view-model.ts'
 import {
   assignmentText,
@@ -56,6 +57,8 @@ export interface SignalGraphProps {
   readonly holdNotes?: boolean
   /** Default values (the model's normality): a node off its default says 偏離（預設 v） under its label. Graphs with values only. */
   readonly defaults?: Assignment
+  /** d-separation: edges on an open path between the pair lit, edges only on blocked ones dashed, the two ends ringed. */
+  readonly paths?: PathMarks
   /** Click on a node: toggles a boolean one; a multi-valued one opens the value control when `onSetValue` is given. */
   readonly onToggle?: (id: string) => void
   /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
@@ -206,6 +209,7 @@ export function SignalGraph(props: SignalGraphProps) {
     evidence = false,
     holdNotes = false,
     defaults,
+    paths,
   } = props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -485,7 +489,8 @@ export function SignalGraph(props: SignalGraphProps) {
       )
     }
     const live = edgeLive(values, e.from)
-    const cls = live ? 'ca-stroke-live' : 'ca-stroke-idle'
+    const onPath = paths?.open.has(key) === true ? 'open' : paths?.blocked.has(key) === true ? 'blocked' : undefined
+    const cls = `${live ? 'ca-stroke-live' : 'ca-stroke-idle'}${onPath === undefined ? '' : ` ca-path-${onPath}`}`
     if (polarity === 'inhibit') {
       const x2 = b.x - (R + 7) * ux
       const y2 = b.y - (R + 7) * uy
@@ -512,7 +517,7 @@ export function SignalGraph(props: SignalGraphProps) {
       }
       const inhibitLabel = claim(firstClear(inhibitCandidates, obstacles))
       return (
-        <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'}>
+        <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath}>
           <line x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />
           <circle cx={x2 + 5 * ux} cy={y2 + 5 * uy} r={5} className={`ca-inhibit ${live ? 'is-live' : ''}`} />
           <text x={inhibitLabel.x} y={inhibitLabel.y} className={`ca-svg-small ca-svg-bold ca-mono ${live ? '' : 'ca-fill-muted'}`}>
@@ -524,14 +529,14 @@ export function SignalGraph(props: SignalGraphProps) {
     const x2 = b.x - (R + 2) * ux
     const y2 = b.y - (R + 2) * uy
     return (
-      <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'}>
+      <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath}>
         <line
           x1={x1}
           y1={y1}
           x2={x2}
           y2={y2}
           className={cls}
-          markerEnd={`url(#${uid}-${live ? 'live' : 'idle'})`}
+          markerEnd={`url(#${uid}-${onPath === 'open' ? 'open' : live ? 'live' : 'idle'})`}
         />
       </g>
     )
@@ -710,6 +715,7 @@ export function SignalGraph(props: SignalGraphProps) {
         <circle r={R + 12} className="ca-focus-ring" />
         {pressing === id && <circle r={R + 8} className="ca-press-ring" pathLength={100} />}
         {observed.includes(id) && <circle r={R + 5} className="ca-ring" />}
+        {paths?.ends.includes(id) === true && <circle r={R + 9} className="ca-dsep-ring" data-dsep-end={id} />}
         {prob ? (
           <>
             <clipPath id={`${uid}-cp-${id}`}>
@@ -966,6 +972,9 @@ export function SignalGraph(props: SignalGraphProps) {
       <defs>
         <marker id={`${uid}-live`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
           <path d="M0 0.5L10 5L0 9.5z" className="ca-fill-fg" />
+        </marker>
+        <marker id={`${uid}-open`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+          <path d="M0 0.5L10 5L0 9.5z" className="ca-fill-accent" />
         </marker>
         <marker id={`${uid}-idle`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
           <path d="M0 0.5L10 5L0 9.5z" className="ca-fill-idle" />

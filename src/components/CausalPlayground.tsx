@@ -16,6 +16,9 @@ import { Rich } from './typeset.tsx'
 import type { VerdictQuery } from './verdict-rows.ts'
 import { actualGroups, defaultTheories, originCitations, originSources } from './verdict-rows.ts'
 import { PlaygroundVerdicts } from './PlaygroundVerdicts.tsx'
+import { DsepLine } from './DsepLine.tsx'
+import type { DsepPair } from './dsep-view.ts'
+import { dsepView } from './dsep-view.ts'
 import { evaluate, getVariable, parseCause, valuesEqual } from '../engine/index.ts'
 import type { TrailEntry } from './view-model.ts'
 import { TRAIL_LENGTH, normalityLine, readingText, sameAssignment, trailEntry, trailText } from './view-model.ts'
@@ -103,6 +106,13 @@ export interface CausalPlaygroundOptions {
    * model has defaults; `false` hides them.
    */
   readonly normality?: boolean
+  /**
+   * A pair of variables, or several (a switch in the head picks one), on a probability graph: every
+   * path between the two in the graph after do() is lit when open and dashed when blocked, the
+   * known set being what is observed, and a line under the graph gives the verdict, δ (lesson 04's
+   * dependence, given the observed values) and up to three paths with why.
+   */
+  readonly dsep?: DsepPair | readonly DsepPair[]
 }
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
@@ -131,6 +141,7 @@ function PlaygroundFor({
   track = NO_TRACK,
   verdicts,
   normality = true,
+  dsep,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
   if (verdicts !== undefined && c.context === undefined) throw new Error(`${c.data.id}: verdicts need a graph with values (an actual context)`)
@@ -163,6 +174,15 @@ function PlaygroundFor({
   const buttons = presetButtons(c, presets, t.locale)
   const prob = world.probs !== undefined
   const defaults = normality && c.context !== undefined ? c.normality : undefined
+  const pairs: readonly DsepPair[] = dsep === undefined ? [] : isPair(dsep) ? [dsep] : dsep
+  if (pairs.length > 0 && (c.context !== undefined || c.prior === undefined)) throw new Error(`${c.data.id}: dsep needs a probability graph (priors, no context)`)
+  for (const [x, y] of pairs) {
+    getVariable(c.model, x)
+    getVariable(c.model, y)
+  }
+  const [pairAt, setPairAt] = useState(0)
+  const pair = pairs[Math.min(pairAt, pairs.length - 1)]
+  const dsepNow = pair === undefined || !prob ? undefined : dsepView(c, pair, observed, interventions, stochastic)
   const groups = useMemo(() => (verdicts === undefined ? [] : actualGroups(t, c, verdicts)), [t, c, verdicts])
   const theories = useMemo(() => (verdicts ?? []).map((q) => q.theories ?? defaultTheories(c)), [c, verdicts])
   const active = verdicts === undefined ? -1 : activeQuery(c, verdicts, interventions)
@@ -224,8 +244,18 @@ function PlaygroundFor({
           embedCode={embed}
           onReset={() => setTrail(startTrail())}
           reading={reading}
+          paths={dsepNow?.marks}
           actions={
             prob ? (
+              <>
+              {pairs.length > 1 && (
+                <Segmented
+                  label={t.dsep.pairs}
+                  options={pairs.map((p, i) => ({ value: String(i), label: t.dsep.pair(p[0], p[1]) }))}
+                  value={String(Math.min(pairAt, pairs.length - 1))}
+                  onChange={(v) => setPairAt(Number(v))}
+                />
+              )}
               <Segmented
                 className="ca-reading"
                 label={t.readingLabel}
@@ -236,6 +266,7 @@ function PlaygroundFor({
                 value={reading}
                 onChange={switchReading}
               />
+              </>
             ) : undefined
           }
           foot={
@@ -255,6 +286,7 @@ function PlaygroundFor({
                   }}
                 />
               )}
+              {dsepNow !== undefined && pair !== undefined && <DsepLine c={c} pair={pair} observed={observed} view={dsepNow} />}
               {defaults !== undefined && world.values !== undefined && world.original !== undefined && (
                 <p className="ca-norm-line" data-normality="">
                   <span className="ca-pg-now-kicker">{t.normality.kicker}</span>{' '}
@@ -340,6 +372,10 @@ interface PresetButton {
   readonly interventions: Assignment
   readonly observed: Assignment
   readonly hold: Assignment
+}
+
+function isPair(dsep: DsepPair | readonly DsepPair[]): dsep is DsepPair {
+  return typeof dsep[0] === 'string'
 }
 
 /** The query whose cause is set, every cause variable, not all at actual values; else the first. */

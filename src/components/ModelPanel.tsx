@@ -8,6 +8,7 @@ import type { ExportSource, ExportTag } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { messagesFor, useMessages } from './i18n.ts'
+import type { PathMarks } from './dsep-view.ts'
 import type { DoState, ModelWorld, Reading } from './model-state.ts'
 import { observedNext, solve, toggled, withProbability, withValue } from './model-state.ts'
 import { useNarrow } from './use-narrow.ts'
@@ -63,6 +64,8 @@ export interface GraphBoxProps {
   readonly actions?: ReactNode
   /** Default values: deviant nodes say 偏離（預設 v） (graphs with values). */
   readonly defaults?: Assignment
+  /** d-separation marks for a pair (the playground's `dsep`). */
+  readonly paths?: PathMarks
 }
 
 const NONE: Stochastic = {}
@@ -110,6 +113,7 @@ export function GraphBox({
   reading = 'interventional',
   actions,
   defaults,
+  paths,
 }: GraphBoxProps) {
   const t = useMessages()
   const [notice, setNotice] = useState<string | undefined>(undefined)
@@ -182,6 +186,7 @@ export function GraphBox({
       witness={witness}
       holdNotes={holdNotes}
       defaults={defaults}
+      paths={paths}
       onToggle={!interactive || onDo === undefined ? undefined : (id) => doing({ stochastic, interventions: toggled(c, interventions, world, id) }, id)}
       onSetValue={!interactive || onDo === undefined ? undefined : (id, value) => doing({ stochastic, interventions: withValue(interventions, id, value) }, id)}
       onSetProbability={!interactive || onDo === undefined || !prob ? undefined : (id, p) => doing(withProbability(state, id, p), id)}

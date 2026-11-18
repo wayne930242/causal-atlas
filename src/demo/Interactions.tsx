@@ -70,6 +70,19 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
       <CausalPlayground caseId="gardener-queen" verdicts={[{ cause: 'QW=0', effect: 'D=1' }]} />
     </>
   ),
+  dsep: () => (
+    <>
+      <CausalPlayground doc={lessonModel('m04-admission')} dsep={['G', 'M']} />
+      <CausalPlayground doc={lessonModel('m04-tuned')} dsep={['X', 'Y']} />
+      <CausalPlayground
+        doc={lessonModel('m05-backdoor')}
+        dsep={[
+          ['X', 'Y'],
+          ['Z', 'C'],
+        ]}
+      />
+    </>
+  ),
 }
 
 export function Interactions({ item }: { readonly item: string }) {

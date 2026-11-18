@@ -50,3 +50,5 @@ export type {
 export { evaluateDecision } from './decision.ts'
 export type { Arith } from './arithmetic.ts'
 export { evalArith, toArith } from './arithmetic.ts'
+export type { DPath, DSeparationResult, OpenedCollider } from './dseparation.ts'
+export { dSeparation, dependence } from './dseparation.ts'
