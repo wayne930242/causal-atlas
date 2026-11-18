@@ -36,8 +36,8 @@
     "agree": ["butfor"]
   },
   "explanation": {
-    "zh-TW": "J 表示路人跳水，SK 表示水裡有鯊魚，路人不知情。孩子獲救的條件是路人跳水而且沒有鯊魚（SV = J·¬SK），沒獲救就溺斃（DR = ¬SV）。實際為 J = 0、SK = 1。方程式依故事擬定，文獻只有敘述。本模型把鯊魚當作內生變數（endogenous variable），可以在反事實中拿掉。假如把鯊魚改成外生，則 HP 各版本都判沒跳不是原因（Halpern 2016 p. 82 把氧氣這個促成條件改成外生，是同樣的做法）。",
-    "en": "J is the bystander jumping in and SK is the sharks being in the water (an endogenous variable set by the background U_SK; he does not know of them). The child is saved only if he jumps and there are no sharks (SV = J·¬SK), and the child drowns if not saved (DR = ¬SV). The actual situation is J = 0, SK = 1. The sharks defeat a rescue but do not stop him from jumping, so his staying ashore is not a but-for cause of the death. The literature gives the story only, not equations, so the model is built here to carry it. The engine finds that only the but-for test agrees with the intuition. Death occurs if he does not jump or the sharks are present, and either alone suffices (DR = ¬J ∨ SK), so none of the HP definitions sets the omission aside. That holds only because the sharks are an endogenous variable that can be counterfactually removed; with the sharks as background (exogenous, as Halpern 2016, Ex. 3.2.1, p. 82, makes oxygen, an enabling condition, exogenous), every HP variant agrees with Sartorio that the omission is not a cause. In the model as built, the original counts it as a cause, and the modified and normality-based definitions count it as part of a cause, which sits uneasily with the intuition that he is not answerable for the death."
+    "zh-TW": "J 表示路人跳水，SK 表示水裡有鯊魚，路人不知情。孩子獲救的條件是路人跳水而且沒有鯊魚（SV = J·¬SK），沒獲救就溺斃（DR = ¬SV）。實際為 J = 0、SK = 1。方程式依故事擬定，文獻只有敘述。本模型把鯊魚當作內生變數（endogenous variable），可以在反事實中拿掉。假如把鯊魚改成外生，則 HP 各版本都判沒跳不是原因（Halpern 2016 p. 82（例 3.2.1）提到可以把氧氣這個促成條件當作外生，是同樣的做法）。",
+    "en": "J is the bystander jumping in and SK is the sharks being in the water (an endogenous variable set by the background U_SK; he does not know of them). The child is saved only if he jumps and there are no sharks (SV = J·¬SK), and the child drowns if not saved (DR = ¬SV). The actual situation is J = 0, SK = 1. The sharks defeat a rescue but do not stop him from jumping, so his staying ashore is not a but-for cause of the death. The literature gives the story only, not equations, so the model is built here to carry it. The engine finds that only the but-for test agrees with the intuition. Death occurs if he does not jump or the sharks are present, and either alone suffices (DR = ¬J ∨ SK), so none of the HP definitions sets the omission aside. That holds only because the sharks are an endogenous variable that can be counterfactually removed; with the sharks as background (exogenous, as Halpern 2016, Ex. 3.2.1, p. 82, suggests one may treat oxygen, an enabling condition), every HP variant agrees with Sartorio that the omission is not a cause. In the model as built, the original counts it as a cause, and the modified and normality-based definitions count it as part of a cause, which sits uneasily with the intuition that he is not answerable for the death."
   },
   "copy_status": { "zh-TW": "draft", "en": "draft" },
   "sources": [
@@ -58,8 +58,8 @@
       "role": "treatment",
       "pages": "pp. 82–83 (Example 3.2.1), p. 91",
       "note": {
-        "zh-TW": "HP 把不作為（omission）當作行動處理。p. 82（例 3.2.1）把氧氣這個促成條件改成外生；p. 91 說把選民偏好改成外生「有點激烈」。兩處談的都不是阻斷因素。",
-        "en": "HP treat omissions like actions. On p. 82 (Example 3.2.1) they make oxygen, an enabling condition, exogenous; on p. 91 they call making the voters' preferences exogenous \"somewhat draconian\". Neither passage is about preventers."
+        "zh-TW": "HP 把不作為（omission）當作行動處理。p. 82（例 3.2.1）提到可以把氧氣這個促成條件當作外生；p. 91 說把選民偏好改成外生「有點激烈」。兩處談的都不是阻斷因素。",
+        "en": "HP treat omissions like actions. On p. 82 (Example 3.2.1) Halpern names making oxygen, an enabling condition, exogenous as one way to keep it from counting as a cause; on p. 91 he calls making the voters' preferences exogenous \"somewhat draconian\". Neither passage is about preventers."
       },
       "verified": true
     }

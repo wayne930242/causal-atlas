@@ -1,7 +1,7 @@
 import type { LoadedCase } from '../data/load.ts'
 import type { Arith } from '../engine/arithmetic.ts'
 import { evalArith, toArith } from '../engine/arithmetic.ts'
-import { evalExpr } from '../engine/expr.ts'
+import { evalExpr, freeVariables } from '../engine/expr.ts'
 import type { Assignment, CausalModel, Edge, Notation, Outcome, Prior, Value, Variable } from '../engine/index.ts'
 import {
   atLeastAsNormal,
@@ -378,6 +378,12 @@ function substitute(a: Arith, values: Assignment): Arith {
   }
 }
 
+/** The drawn variables the equation of `id` mentions, in the order it mentions them (`A = C or W`: C, W). */
+function drawnParents(model: CausalModel, id: string, shown: ReadonlySet<string>): string[] {
+  const expr = model.equations.get(id)
+  return expr === undefined ? [] : [...freeVariables(expr)].filter((p) => shown.has(p))
+}
+
 export interface EquationRow {
   readonly id: string
   /** The equation as written in the chosen notation. */
@@ -413,7 +419,7 @@ export function equationRows(
     const soft = stochastic[id]
     if (soft !== undefined) {
       // A stochastic do(): the equation gives way to a coin with P(X=1) = p.
-      const parents = model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
+      const parents = drawnParents(model, id, set)
       return {
         id,
         text: `${id} ~ Bernoulli(${probText(soft)})`,
@@ -425,7 +431,7 @@ export function equationRows(
       }
     }
     if (forced !== undefined) {
-      const parents = model.edges.filter((e) => e.to === id && set.has(e.from)).map((e) => e.from)
+      const parents = drawnParents(model, id, set)
       return {
         id,
         text: `${id} = ${formatValue(forced)}`,

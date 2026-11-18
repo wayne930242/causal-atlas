@@ -51,13 +51,13 @@ describe('show_exogenous: a model document names exogenous variables to draw', (
     priors: { independent: { U: 0.7, W: 0.2 } },
   }
 
-  it('draws W, and do(A=0) names both cut parents: 切斷 W、C', () => {
+  it("draws W, and do(A=0) names both cut parents in the equation's order: 切斷 C、W", () => {
     const c = docToCase(modelDocSchema.parse({ ...nervous, show_exogenous: ['W'] }))
     const shown = shownVariables(c)
     expect(shown).toContain('W')
     expect(shown).not.toContain('U')
     const [row] = equationRows(messagesFor('zh-TW'), c, ['A'], 'propositional', undefined, { A: false }, shown)
-    expect(row.note).toBe('切斷 W、C，直接設成 0')
+    expect(row.note).toBe('切斷 C、W，直接設成 0')
   })
 
   it('keeps the field when a document becomes a case and back', () => {
