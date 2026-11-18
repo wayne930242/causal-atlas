@@ -32,6 +32,18 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
       />
     </>
   ),
+  'cf-stepper': () => (
+    <>
+      <ProbabilityPanel
+        doc={lessonModel('m00-firing-squad-nervous')}
+        view="counterfactual"
+        counterfactual={{ evidence: 'D=1', do: { A: 0 }, event: 'D=0' }}
+        actionLabel="已知囚犯死了；若 A 沒開槍？"
+      />
+      <ProbabilityPanel doc={lessonModel('m02-pearl-model1')} view="counterfactual" counterfactual={{ evidence: 'X=1 and Y=1', do: { X: 0 }, event: 'Y=0' }} initialStep={3} />
+      <ProbabilityPanel doc={lessonModel('m02-pearl-model2')} view="counterfactual" counterfactual={{ evidence: 'X=1 and Y=1', do: { X: 0 }, event: 'Y=0' }} initialStep={3} />
+    </>
+  ),
 }
 
 export function Interactions({ item }: { readonly item: string }) {

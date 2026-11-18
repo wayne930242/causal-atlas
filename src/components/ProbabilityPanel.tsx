@@ -15,6 +15,8 @@ import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { DocProblems, Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
+import type { CounterfactualSpec } from './cf-steps.ts'
+import { CfStepper } from './CfStepper.tsx'
 import { Formula, Ident, Rich } from './typeset.tsx'
 import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
@@ -34,7 +36,7 @@ import {
   phraseOf,
 } from './view-model.ts'
 
-export type ProbabilityView = 'sliders' | 'compare'
+export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual'
 
 export type ProbabilityPanelProps = ProbabilitySource & ProbabilityOptions
 
@@ -53,6 +55,15 @@ export interface ProbabilityOptions {
    * several, a switch in the panel's head (labelled by each `observe`) changes both sides at once.
    */
   readonly pair?: SeeDoPair | readonly SeeDoPair[]
+  /**
+   * For `counterfactual`: the evidence, the do() and the event, e.g.
+   * `{ evidence: 'D=1', do: { A: 0 }, event: 'D=0' }` for P(D_{A=0}=0 | D=1).
+   */
+  readonly counterfactual?: CounterfactualSpec
+  /** For `counterfactual`: the question in words, beside the formula in the head. */
+  readonly actionLabel?: string
+  /** For `counterfactual`: the step shown first, 1 (abduction, default), 2 (action) or 3 (prediction). */
+  readonly initialStep?: number
   /** Link in the exported image's watermark. */
   readonly exportUrl?: string
   /** Interface language. Default: the surrounding LocaleProvider's, else zh-TW. */
@@ -133,24 +144,27 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
 }
 
 /** Direction 1 probability mode: per-exogenous p sliders; node fill is P(V=1); observing vs do() side by side. */
-export function ProbabilityPanel({ caseId, doc, view = 'sliders', pair, exportUrl, defaultNotation, locale }: ProbabilityPanelProps) {
+export function ProbabilityPanel({ locale, ...props }: ProbabilityPanelProps) {
   return (
     <LocaleScope locale={locale}>
-      <ProbabilityPanelResolved caseId={caseId} doc={doc} view={view} pair={pair} exportUrl={exportUrl} defaultNotation={defaultNotation} />
+      <ProbabilityPanelResolved {...props} />
     </LocaleScope>
   )
 }
 
-function ProbabilityPanelResolved({ caseId, doc, view, pair, exportUrl, defaultNotation }: Omit<ProbabilityPanelProps, 'locale'>) {
+function ProbabilityPanelResolved({ caseId, doc, ...props }: Omit<ProbabilityPanelProps, 'locale'>) {
   const resolved = useCaseOrDoc(caseId, doc)
   if (!resolved.ok) return <DocProblems problems={resolved.problems} />
-  return <ProbabilityPanelFor c={resolved.c} view={view} pair={pair} exportUrl={exportUrl} defaultNotation={defaultNotation} />
+  return <ProbabilityPanelFor c={resolved.c} {...props} />
 }
 
 export function ProbabilityPanelFor({
   c,
   view = 'sliders',
   pair,
+  counterfactual,
+  actionLabel,
+  initialStep,
   exportUrl,
   defaultNotation,
   sliders: heldSliders,
@@ -159,6 +173,9 @@ export function ProbabilityPanelFor({
   c: LoadedCase
   view?: ProbabilityView
   pair?: SeeDoPair | readonly SeeDoPair[]
+  counterfactual?: CounterfactualSpec
+  actionLabel?: string
+  initialStep?: number
   exportUrl?: string
   defaultNotation?: UiNotation
   /** The slider values, when the caller keeps them (with `onSliders`); else the panel does. */
@@ -189,6 +206,22 @@ export function ProbabilityPanelFor({
     return <Compare c={c} pairs={pairs} prior={prior} base={base} shown={shown} exportUrl={exportUrl} sliderSection={
       <SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />
     } />
+  }
+
+  if (view === 'counterfactual') {
+    if (counterfactual === undefined) throw new Error(`case ${c.data.id}: view="counterfactual" needs a counterfactual { evidence, do, event }`)
+    return (
+      <CfStepper
+        c={c}
+        prior={prior}
+        shown={shown}
+        spec={counterfactual}
+        actionLabel={actionLabel}
+        initialStep={initialStep}
+        exportUrl={exportUrl}
+        sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />}
+      />
+    )
   }
 
   const showValues = mode === 'value' && c.context !== undefined

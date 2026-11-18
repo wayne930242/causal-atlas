@@ -197,6 +197,16 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 - `<ProbabilityPanel view="compare" pair>`: `pair` is one `{ event, observe, intervene }` or a list;
   with two or more, a switch labelled by each `observe` (`S=1｜S=0`) changes both sides together:
   `pair={[{ event: 'W=1', observe: 'S=1', intervene: { S: 1 } }, { event: 'W=1', observe: 'S=0', intervene: { S: 0 } }]}`.
+- `<ProbabilityPanel view="counterfactual" counterfactual={{ evidence, do, event }}>`: Pearl's three
+  steps on one graph, switched with 「1 溯因｜2 行動｜3 預測」 or 「下一步」 (`initialStep` 1–3 picks the
+  first; `actionLabel` puts the question in words beside the formula). Abduction rings the evidence
+  and gives P(· | evidence) with 原本 v; action sets do() and cuts the arrows into it, the variables
+  below it marked 尚未重算; prediction gives each variable in the changed world, 實際 v where it moved.
+  Under the graph a table lists every background (exogenous setting) with its prior and its
+  probability given the evidence (0 and grey when ruled out; past 8 rows those fold into one line),
+  and in step 3 the event variable after do(), the rows where the event holds marked, and the result
+  `P(D_{A=0}=0 | D=1) = 0.0789` (four decimals at most). The priors stay under 「式子和機率」.
+  `<CausalModel id="m00-firing-squad-nervous" as="probability" view="counterfactual" counterfactual={{ evidence: "D=1", do: { A: 0 }, event: "D=0" }} actionLabel="已知囚犯死了；若 A 沒開槍？" />`
 - `<ProbabilityPanel doc>` takes a document with priors or a `context` (a point mass);
   `<WorldLanes doc interventions>` needs a `context`, and `interventions` because a document has no preset.
 - `<ModelEditor initialDoc>` renders that model on the server instead of a blank one; a share hash

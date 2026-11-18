@@ -305,6 +305,27 @@ const ZH = {
   probGraphTitle: (title: string): string => `${title}：各變項等於 1 的機率`,
   observing: (event: string): string => `觀察 ${event}`,
   comparePick: '切換比較的值',
+  notRecomputed: '尚未重算',
+  actually: (value: string): string => `實際 ${value}`,
+  cf: {
+    kicker: '反事實',
+    head: (evidence: string, doText: string): string => `${evidence} ⇒ 若 ${doText}`,
+    steps: ['溯因', '行動', '預測'] as readonly string[],
+    stepsLabel: '反事實的步驟',
+    next: '下一步',
+    caption: (step: number, evidence: string, assignment: string): string =>
+      step === 1
+        ? `溯因：已知 ${evidence}，每種背景的機率改成已知之後的機率；不可能的背景變成 0。`
+        : step === 2
+          ? `行動：換成 ${assignment}，剪掉指進它的箭頭；背景的機率不動。`
+          : '預測：在每種背景下照式子重算，再按溯因後的機率加總。',
+    background: (ids: readonly string[]): string => `背景（${ids.join('、')}）`,
+    prior: '原本',
+    given: (evidence: string): string => `已知 ${evidence} 後`,
+    after: (doText: string, id: string): string => `${doText} 後的 ${id}`,
+    hiddenZero: (n: number): string => `其他 ${n} 種背景機率為 0`,
+    graphTitle: (title: string, step: string): string => `${title}：反事實的${step}`,
+  },
   observed: '看到的',
   setByDo: '設定的',
   zeroObservation: '這個觀察的機率是 0，無法以它為條件。',
@@ -694,6 +715,27 @@ const EN: Messages = {
   zeroOne: '0/1',
   probGraphTitle: (title) => `${title}: the probability that each variable equals 1`,
   comparePick: 'Switch the compared value',
+  notRecomputed: 'not yet recomputed',
+  actually: (value) => `actually ${value}`,
+  cf: {
+    kicker: 'Counterfactual',
+    head: (evidence, doText) => `${evidence} ⇒ had ${doText}`,
+    steps: ['Abduction', 'Action', 'Prediction'],
+    stepsLabel: 'Steps of the counterfactual',
+    next: 'Next step',
+    caption: (step, evidence, assignment) =>
+      step === 1
+        ? `Abduction: given ${evidence}, each background takes its probability given that; the impossible ones go to 0.`
+        : step === 2
+          ? `Action: set ${assignment}, cutting the arrows into it; the backgrounds keep their probabilities.`
+          : 'Prediction: recompute each background from the equations, then add them up by their abduced probabilities.',
+    background: (ids) => `Background (${ids.join(', ')})`,
+    prior: 'Prior',
+    given: (evidence) => `Given ${evidence}`,
+    after: (doText, id) => `${id} after ${doText}`,
+    hiddenZero: (n) => `${n} more backgrounds with probability 0`,
+    graphTitle: (title, step) => `${title}: counterfactual, ${step.toLowerCase()}`,
+  },
   observing: (event) => `Observing ${event}`,
   observed: 'observed',
   setByDo: 'set',
