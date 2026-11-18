@@ -3,7 +3,7 @@ import { CausalPlayground, ProbabilityPanel } from '../components/index.ts'
 import { lessonModel } from './lesson-models.ts'
 
 /**
- * The lesson figures with the interactions of 0.4.0, one section per item
+ * The lesson figures with the interactions of 0.4.0 (and the exogenous node style and latent arcs), one section per item
  * (`#/interactions/<item>`, or all of them). Labels are the lessons' own, in Chinese.
  */
 const ITEMS: Readonly<Record<string, () => ReactNode>> = {
@@ -68,6 +68,23 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
       <CausalPlayground doc={lessonModel('m01-fire-oxygen')} />
       <CausalPlayground doc={lessonModel('m01-fire-oxygen-lab')} />
       <CausalPlayground caseId="gardener-queen" verdicts={[{ cause: 'QW=0', effect: 'D=1' }]} />
+    </>
+  ),
+  style: () => (
+    <>
+      <CausalPlayground doc={{ ...lessonModel('m05-frontdoor'), latent_as_arcs: ['U'] }} />
+      <CausalPlayground doc={lessonModel('m05-frontdoor')} />
+      <CausalPlayground doc={lessonModel('m00-firing-squad-nervous')} />
+      <CausalPlayground doc={{ ...lessonModel('m00-firing-squad-nervous'), context: { U: false, W: true }, priors: undefined }} />
+      <CausalPlayground
+        doc={{
+          ...lessonModel('m05-frontdoor'),
+          latent_as_arcs: ['U'],
+          context: { U: true, N_X1: true, N_X0: false, N_Z1: true, N_Z0: false, N_Y11: true, N_Y10: false, N_Y01: false, N_Y00: false },
+          priors: undefined,
+        }}
+      />
+      <ProbabilityPanel doc={{ ...lessonModel('m05-frontdoor'), latent_as_arcs: ['U'] }} view="compare" pair={[{ event: 'Y=1', observe: 'X=1', intervene: { X: 1 } }]} />
     </>
   ),
   dsep: () => (

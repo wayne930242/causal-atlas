@@ -8,10 +8,12 @@ import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, intersects, placePop, rectBox, segmentHitsBox, shifted, textBox } from './graph-labels.ts'
 import type { NodeToggle } from './i18n.ts'
 import { useMessages } from './i18n.ts'
+import { Tip } from './parts.tsx'
 import { sub } from './svg-text.tsx'
 import type { PathMarks } from './dsep-view.ts'
 import type { Stochastic } from './view-model.ts'
 import {
+  arcCurve,
   assignmentText,
   barLayout,
   edgeLive,
@@ -19,6 +21,8 @@ import {
   graphSpacing,
   gridLayout,
   idWithName,
+  latentArcs,
+  planArcs,
   probText,
   shortLabel,
   shownEdges,
@@ -177,6 +181,29 @@ function unit(a: Point, b: Point): { ux: number; uy: number; d: number } {
   const dy = b.y - a.y
   const d = Math.hypot(dx, dy) || 1
   return { ux: dx / d, uy: dy / d, d }
+}
+
+/**
+ * The dashes of an exogenous node's outline: whole dashes round the circle, so the ring has no
+ * seam. (Dashes in px, not `pathLength`, so a viewer that ignores that attribute still draws them.)
+ */
+function exoDash(r: number): string {
+  const c = 2 * Math.PI * r
+  const unitLength = c / Math.max(6, Math.round(c / 11))
+  return `${(unitLength * 0.6).toFixed(2)} ${(unitLength * 0.4).toFixed(2)}`
+}
+
+/** How far an exogenous node's fill sits inside its dashed outline, in px. */
+const EXO_INSET = 4.5
+
+/** An arrowhead with its tip at `tip`, pointing along (`dx`, `dy`). */
+function arrowHead(tip: Point, dx: number, dy: number): string {
+  const len = Math.hypot(dx, dy) || 1
+  const ux = dx / len
+  const uy = dy / len
+  const bx = tip.x - 9 * ux
+  const by = tip.y - 9 * uy
+  return `M${tip.x} ${tip.y}L${bx - 3.6 * uy} ${by + 3.6 * ux}L${bx + 3.6 * uy} ${by - 3.6 * ux}z`
 }
 
 function clampPath(r: number): string {
@@ -355,13 +382,28 @@ export function SignalGraph(props: SignalGraphProps) {
   const placedBoxes: Box[] = []
   const blocks = new Map<string, Block>()
   const fixed: Box[] = []
+  const tagBoxes: Box[] = []
   for (const id of shown) {
     const p = pos.get(id)
     if (p === undefined) continue
     fixed.push(around(p.x, p.y, R + 3))
     const tag = doTag(id)
-    if (tag !== undefined) fixed.push(shifted(tag.box, p.x, p.y))
+    if (tag !== undefined) {
+      fixed.push(shifted(tag.box, p.x, p.y))
+      tagBoxes.push(shifted(tag.box, p.x, p.y))
+    }
   }
+  // An arc ends where its child is cut: do() on a child (or a cut edge from the latent cause) removes
+  // that end, so the arc is gone (Pearl's G with the arrows into X removed).
+  const endCut = (via: string, id: string): boolean => cut.has(`${via}>${id}`) || id in interventions || id in stochastic
+  const arcPlans = planArcs(
+    latentArcs(c, shown).filter((a) => !endCut(a.via, a.a) && !endCut(a.via, a.b)),
+    pos,
+    edges,
+    R,
+    tagBoxes,
+  )
+  const arcSegments = arcPlans.map((a) => arcCurve(a.start, a.control, a.end, 12))
   for (const id of shown) {
     const p = pos.get(id)
     if (p === undefined) continue
@@ -385,6 +427,9 @@ export function SignalGraph(props: SignalGraphProps) {
           const a = pos.get(e.from)
           const q = pos.get(e.to)
           if (a !== undefined && q !== undefined && segmentHitsBox(a, q, box)) n += 1
+        }
+        for (const curve of arcSegments) {
+          for (let i = 0; i + 1 < curve.length; i++) if (segmentHitsBox(curve[i], curve[i + 1], box)) n += 1
         }
         // The node's own circle and do tag never meet its block, above or below.
         for (const o of [...fixed, ...placedBoxes]) if (intersects(box, o, 0)) n += 1
@@ -414,6 +459,41 @@ export function SignalGraph(props: SignalGraphProps) {
     }
     for (const b of local) obstacles.push(shifted(b, p.x, p.y))
   }
+  // Each arc says what it is in one short label by its middle, off the nodes, their labels and the edges;
+  // the longer explanation is its tooltip.
+  const arcLabelW = textWidth(t.arc.label, 12)
+  const arcs = arcPlans.map((plan) => {
+    const curve = arcCurve(plan.start, plan.control, plan.end, 40)
+    const candidates: Placed[] = []
+    for (const side of [1, -1]) {
+      for (const i of [20, 16, 24, 12, 28]) {
+        const q = curve[i]
+        const nx = plan.bulge.x * side
+        const ny = plan.bulge.y * side
+        const away = 8 + Math.abs(nx) * (arcLabelW / 2) + Math.abs(ny) * 7
+        const x = q.x + nx * away
+        const y = q.y + ny * away + 4
+        candidates.push({ x, y, anchor: 'middle', box: textBox(x, y, 'middle', arcLabelW, 12) })
+      }
+    }
+    const offEdges = candidates.filter((cand) =>
+      edges.every((e) => {
+        const p = pos.get(e.from)
+        const q = pos.get(e.to)
+        return p === undefined || q === undefined || !segmentHitsBox(p, q, cand.box)
+      }),
+    )
+    const label = firstClear(offEdges.length > 0 ? offEdges : candidates, obstacles)
+    obstacles.push(label.box)
+    return { plan, curve, label }
+  })
+  // Edge labels placed later keep off the arcs too.
+  for (const { curve } of arcs) {
+    for (let i = 0; i + 1 < curve.length; i += 2) {
+      const [p, q] = [curve[i], curve[Math.min(i + 2, curve.length - 1)]]
+      obstacles.push({ x0: Math.min(p.x, q.x) - 2, y0: Math.min(p.y, q.y) - 2, x1: Math.max(p.x, q.x) + 2, y1: Math.max(p.y, q.y) + 2 })
+    }
+  }
   // The drawing grows to hold every block: above the top row, below the bottom one, and past the
   // sides when a wide one (bars with their largest probability) reaches beyond the margin.
   let top = 0
@@ -430,6 +510,18 @@ export function SignalGraph(props: SignalGraphProps) {
       left = Math.min(left, p.x + b.x0 - 8)
       right = Math.max(right, p.x + b.x1 + 8)
     }
+  }
+  for (const { curve, label } of arcs) {
+    for (const q of curve) {
+      top = Math.min(top, q.y - 8)
+      bottom = Math.max(bottom, q.y + 12)
+      left = Math.min(left, q.x - 8)
+      right = Math.max(right, q.x + 8)
+    }
+    top = Math.min(top, label.box.y0 - 6)
+    bottom = Math.max(bottom, label.box.y1 + 8)
+    left = Math.min(left, label.box.x0 - 8)
+    right = Math.max(right, label.box.x1 + 8)
   }
   top = Math.floor(top)
   left = Math.floor(left)
@@ -538,6 +630,33 @@ export function SignalGraph(props: SignalGraphProps) {
           className={cls}
           markerEnd={`url(#${uid}-${onPath === 'open' ? 'open' : live ? 'live' : 'idle'})`}
         />
+      </g>
+    )
+  })
+
+  const arcEls = arcs.map(({ plan, label }) => {
+    const key = `${plan.via}:${plan.a}-${plan.b}`
+    const edgeKeys = [`${plan.via}>${plan.a}`, `${plan.via}>${plan.b}`]
+    const onPath = edgeKeys.every((k) => paths?.open.has(k) === true)
+      ? 'open'
+      : edgeKeys.every((k) => paths?.open.has(k) === true || paths?.blocked.has(k) === true)
+        ? 'blocked'
+        : undefined
+    const cls = `ca-stroke-arc${onPath === undefined ? '' : ` ca-path-${onPath}`}`
+    const box = label.box
+    return (
+      <g key={key} className="ca-arc" data-arc={key} data-path={onPath}>
+        <path d={`M${plan.start.x} ${plan.start.y}Q${plan.control.x} ${plan.control.y} ${plan.end.x} ${plan.end.y}`} className={cls} />
+        <path d={arrowHead(plan.start, plan.start.x - plan.control.x, plan.start.y - plan.control.y)} className="ca-arc-head ca-fill-fg" />
+        <path d={arrowHead(plan.end, plan.end.x - plan.control.x, plan.end.y - plan.control.y)} className="ca-arc-head ca-fill-fg" />
+        <text x={label.x} y={label.y} textAnchor="middle" className="ca-svg-small ca-fill-muted" aria-hidden="true">
+          {t.arc.label}
+        </text>
+        <foreignObject className="ca-arc-tip-box" x={box.x0} y={box.y0} width={box.x1 - box.x0} height={box.y1 - box.y0}>
+          <Tip tip={t.arc.tip(plan.via, plan.a, plan.b)} className="ca-arc-tip">
+            <span className="ca-arc-hit">{t.arc.label}</span>
+          </Tip>
+        </foreignObject>
       </g>
     )
   })
@@ -680,7 +799,10 @@ export function SignalGraph(props: SignalGraphProps) {
             ? 'release'
             : 'set'
     const hint = t.nodeHint(toggle, onMove !== undefined)
-    const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * R * pv : 0
+    // An exogenous node is a dashed ring with its value or fill a little inside it.
+    const exo = variable.kind === 'exogenous'
+    const inner = exo ? R - EXO_INSET : R
+    const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * inner * pv : 0
     const tag = doTag(id)
     return (
       <g
@@ -719,25 +841,32 @@ export function SignalGraph(props: SignalGraphProps) {
         {prob ? (
           <>
             <clipPath id={`${uid}-cp-${id}`}>
-              <circle r={R} />
+              <circle r={inner} />
             </clipPath>
             <circle r={R} className="ca-fill-bg" />
             {bars === undefined && (
               <rect
-                x={-R}
-                y={R - level}
-                width={2 * R}
+                x={-inner}
+                y={inner - level}
+                width={2 * inner}
                 height={level}
                 className="ca-fill-fg"
                 clipPath={`url(#${uid}-cp-${id})`}
                 data-level={pv === undefined ? '' : pv.toFixed(4)}
               />
             )}
-            <circle r={R} className="ca-node-outline" />
+            <circle r={R} className={`ca-node-outline${exo ? ' ca-exo' : ''}`} strokeDasharray={exo ? exoDash(R) : undefined} />
           </>
         ) : (
           <>
-            <circle r={R} className={filled ? 'ca-node-on' : 'ca-node-off'} />
+            {exo ? (
+              <>
+                <circle r={R} className="ca-node-off ca-exo" strokeDasharray={exoDash(R)} />
+                {filled && <circle r={inner} className="ca-fill-fg ca-exo-core" />}
+              </>
+            ) : (
+              <circle r={R} className={filled ? 'ca-node-on' : 'ca-node-off'} />
+            )}
             <text
               y={boolean ? 7.5 : 5}
               textAnchor="middle"
@@ -994,6 +1123,7 @@ export function SignalGraph(props: SignalGraphProps) {
         </g>
       )}
       {edgeEls}
+      {arcEls}
       {nodeEls}
       {pickPop()}
     </svg>

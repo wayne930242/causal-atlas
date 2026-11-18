@@ -166,6 +166,10 @@ const RULES: readonly Rule[] = [
     decl: (p) => ({ stroke: p.idle, 'stroke-width': '1.5', 'stroke-dasharray': '4 4', fill: 'none' }),
   },
   {
+    cls: ['ca-stroke-arc'],
+    decl: (p) => ({ stroke: p.foreground, 'stroke-width': '1.5', 'stroke-dasharray': '7 4', fill: 'none' }),
+  },
+  {
     cls: ['ca-stroke-slash'],
     decl: (p) => ({ stroke: p.accent, 'stroke-width': '2.5', 'stroke-linecap': 'square', fill: 'none' }),
   },
@@ -216,6 +220,7 @@ const ACADEMIC_RULES: readonly Rule[] = [
   { cls: ['ca-stroke-idle'], decl: (p) => ({ stroke: p.idle, 'stroke-width': '1', fill: 'none' }) },
   { cls: ['ca-stroke-live'], decl: (p) => ({ stroke: p.foreground, 'stroke-width': '2', fill: 'none' }) },
   { cls: ['ca-stroke-cut'], decl: (p) => ({ stroke: p.idle, 'stroke-width': '1.25', 'stroke-dasharray': '5 3', fill: 'none' }) },
+  { cls: ['ca-stroke-arc'], decl: (p) => ({ stroke: p.foreground, 'stroke-width': '1.25', 'stroke-dasharray': '7 3', fill: 'none' }) },
   { cls: ['ca-stroke-slash'], decl: (p) => ({ stroke: p.foreground, 'stroke-width': '2', 'stroke-linecap': 'butt', fill: 'none' }) },
   { cls: ['ca-stroke-clamp'], decl: (p) => ({ stroke: p.foreground, 'stroke-width': '2', 'stroke-linecap': 'butt', fill: 'none' }) },
   {
@@ -232,7 +237,7 @@ const DROP_ATTRS = /^(class|role|tabindex|aria-.*|data-.*|style)$/i
 export function inlineSvg(svg: SVGSVGElement, palette: Palette, style: ExportStyle = 'color'): SVGSVGElement {
   const rules = style === 'academic' ? [...RULES, ...ACADEMIC_RULES] : RULES
   const clone = svg.cloneNode(true) as SVGSVGElement
-  for (const ring of [...clone.querySelectorAll('.ca-focus-ring, .ca-do-pop-box, .ca-bars title')]) ring.remove()
+  for (const ring of [...clone.querySelectorAll('.ca-focus-ring, .ca-do-pop-box, .ca-arc-tip-box, .ca-bars title')]) ring.remove()
   const all = [clone, ...clone.querySelectorAll('*')]
   for (const el of all) {
     const tag = el.tagName.toLowerCase()

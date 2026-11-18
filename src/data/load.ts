@@ -126,9 +126,18 @@ export function loadCase(raw: unknown): LoadedCase {
   return buildCase(caseSchema.parse(raw))
 }
 
+/** A variable drawn as an arc between its children needs two of them to draw it between. */
+function checkLatentArcs(data: CaseFile, model: CausalModel): void {
+  for (const id of data.latent_as_arcs ?? []) {
+    const children = new Set(model.edges.filter((e) => e.from === id).map((e) => e.to))
+    if (children.size < 2) throw new ModelError(problem('arc-needs-children', { id }, { kind: 'path', path: `latent_as_arcs.${id}` }))
+  }
+}
+
 /** Build the engine objects from already-validated case data (or a model document turned into one). */
 export function buildCase(data: CaseFile): LoadedCase {
   const model = toModel(data)
+  checkLatentArcs(data, model)
   const prior = toPrior(data, model)
   if (prior !== undefined) checkContextBudget(model, prior)
   return {

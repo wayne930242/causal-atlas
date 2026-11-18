@@ -17,6 +17,8 @@ import {
 } from '../engine/index.ts'
 import type { Locale } from '../engine/types.ts'
 import { coerceToDomain, enumerateAssignments, formatValue, valuesEqual } from '../engine/values.ts'
+import type { Box } from './graph-labels.ts'
+import { segmentHitsBox } from './graph-labels.ts'
 import type { Messages } from './i18n.ts'
 import { messagesFor } from './i18n.ts'
 
@@ -30,17 +32,141 @@ export interface GridPos {
 /**
  * Variables drawn in the graph: the case layout's, else the endogenous ones, the exogenous causes
  * shared by two or more variables, and the exogenous ones the case names in `show_exogenous`.
+ * Those named in `latent_as_arcs` are never drawn as nodes: they are the arcs between their children.
  */
 export function shownVariables(c: LoadedCase): string[] {
   const { model } = c
   const layout = c.data.layout
-  if (layout !== undefined) return model.variables.map((v) => v.id).filter((id) => id in layout)
+  const arcs = new Set(c.data.latent_as_arcs ?? [])
+  if (layout !== undefined) return model.variables.map((v) => v.id).filter((id) => id in layout && !arcs.has(id))
   const children = new Map<string, number>()
   for (const e of model.edges) children.set(e.from, (children.get(e.from) ?? 0) + 1)
   const named = new Set(c.data.show_exogenous ?? [])
   return model.variables
-    .filter((v) => v.kind === 'endogenous' || (children.get(v.id) ?? 0) >= 2 || named.has(v.id))
+    .filter((v) => !arcs.has(v.id) && (v.kind === 'endogenous' || (children.get(v.id) ?? 0) >= 2 || named.has(v.id)))
     .map((v) => v.id)
+}
+
+/** A latent common cause drawn as an arc: `via` is its variable, `a` and `b` two of its drawn children. */
+export interface LatentArc {
+  readonly via: string
+  readonly a: string
+  readonly b: string
+}
+
+/** The arcs of `latent_as_arcs` among the drawn variables: one per pair of drawn children, in the drawn order. */
+export function latentArcs(c: LoadedCase, shown: readonly string[]): LatentArc[] {
+  const out: LatentArc[] = []
+  for (const via of c.data.latent_as_arcs ?? []) {
+    const kids = new Set(c.model.edges.filter((e) => e.from === via).map((e) => e.to))
+    const drawn = shown.filter((id) => kids.has(id))
+    for (let i = 0; i < drawn.length; i++) for (let j = i + 1; j < drawn.length; j++) out.push({ via, a: drawn[i], b: drawn[j] })
+  }
+  return out
+}
+
+/** A point in px. */
+export interface Pt {
+  readonly x: number
+  readonly y: number
+}
+
+/** `n + 1` points along the quadratic curve from `p0` to `p2` bent towards `control`. */
+export function arcCurve(p0: Pt, control: Pt, p2: Pt, n = 24): Pt[] {
+  const out: Pt[] = []
+  for (let i = 0; i <= n; i++) {
+    const t = i / n
+    const u = 1 - t
+    out.push({ x: u * u * p0.x + 2 * u * t * control.x + t * t * p2.x, y: u * u * p0.y + 2 * u * t * control.y + t * t * p2.y })
+  }
+  return out
+}
+
+/** An arc as drawn: its ends on the two nodes' rims, the control point between them, the curve's middle. */
+export interface ArcPlan extends LatentArc {
+  readonly start: Pt
+  readonly control: Pt
+  readonly end: Pt
+  readonly apex: Pt
+  /** The unit normal the curve bulges along (up when it can). */
+  readonly bulge: Pt
+  /** A node the best curve still comes too close to, if any. */
+  readonly hit: string | undefined
+}
+
+/** How high an arc's middle may stand above the chord between its ends, in px, tried in turn. */
+const ARC_HEIGHTS = [44, 60, 80, 104, 132, 168] as const
+
+function segmentsCross(a: Pt, b: Pt, c: Pt, d: Pt): boolean {
+  const side = (p: Pt, q: Pt, r: Pt): number => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x)
+  return side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0
+}
+
+/**
+ * Where each arc runs: the lowest bulge, on the upper side first, whose curve keeps `r` plus
+ * EDGE_CLEARANCE from every node it does not join, then (in that order) off the boxes in `avoid`,
+ * crossing the fewest edges and arcs already placed. `at` holds the nodes' centres, `r` their radius.
+ */
+export function planArcs(arcs: readonly LatentArc[], at: ReadonlyMap<string, Pt>, edges: readonly Edge[], r: number, avoid: readonly Box[] = []): ArcPlan[] {
+  const out: ArcPlan[] = []
+  const placed: Pt[][] = []
+  for (const arc of arcs) {
+    const a = at.get(arc.a)
+    const b = at.get(arc.b)
+    if (a === undefined || b === undefined) continue
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    const d = Math.hypot(b.x - a.x, b.y - a.y) || 1
+    let n = { x: (b.y - a.y) / d, y: -(b.x - a.x) / d }
+    // The upper side is the first; for a vertical pair, the left one.
+    if (n.y > 1e-9 || (Math.abs(n.y) <= 1e-9 && n.x > 0)) n = { x: -n.x, y: -n.y }
+    let best: { plan: ArcPlan; score: number } | undefined
+    for (const [hi, height] of ARC_HEIGHTS.entries()) {
+      for (const [si, side] of [1, -1].entries()) {
+        const bulge = { x: n.x * side, y: n.y * side }
+        const control = { x: mid.x + 2 * height * bulge.x, y: mid.y + 2 * height * bulge.y }
+        const rim = (p: Pt): Pt => {
+          const len = Math.hypot(control.x - p.x, control.y - p.y) || 1
+          return { x: p.x + ((control.x - p.x) / len) * (r + 2), y: p.y + ((control.y - p.y) / len) * (r + 2) }
+        }
+        const start = rim(a)
+        const end = rim(b)
+        const curve = arcCurve(start, control, end, 40)
+        let hit: string | undefined
+        for (const [id, p] of at) {
+          if (id === arc.a || id === arc.b) continue
+          if (curve.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < r + EDGE_CLEARANCE)) {
+            hit = id
+            break
+          }
+        }
+        let boxes = 0
+        let crossings = 0
+        for (let i = 0; i + 1 < curve.length; i++) {
+          if (avoid.some((box) => segmentHitsBox(curve[i], curve[i + 1], box))) boxes += 1
+        }
+        const coarse = arcCurve(start, control, end, 16)
+        for (let i = 0; i + 1 < coarse.length; i++) {
+          for (const e of edges) {
+            const p = at.get(e.from)
+            const q = at.get(e.to)
+            if (p !== undefined && q !== undefined && segmentsCross(coarse[i], coarse[i + 1], p, q)) crossings += 1
+          }
+          for (const other of placed) {
+            for (let j = 0; j + 1 < other.length; j++) if (segmentsCross(coarse[i], coarse[i + 1], other[j], other[j + 1])) crossings += 1
+          }
+        }
+        const score = (hit === undefined ? 0 : 1e6) + (boxes > 0 ? 1e4 : 0) + crossings * 100 + hi * 2 + si
+        if (best === undefined || score < best.score) {
+          best = { plan: { ...arc, start, control, end, apex: curve[20], bulge, hit }, score }
+        }
+      }
+    }
+    if (best !== undefined) {
+      out.push(best.plan)
+      placed.push(arcCurve(best.plan.start, best.plan.control, best.plan.end, 16))
+    }
+  }
+  return out
 }
 
 /** A graph's spacing in px: column width, row height and node radius (SignalGraph draws with these). */
@@ -68,8 +194,15 @@ function segmentDistance(p: GridPos, a: GridPos, b: GridPos, s: Spacing): number
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
 }
 
-/** The first edge that, in some spacing, runs over a node it does not join; with that node. */
-function firstBlocked(grid: ReadonlyMap<string, GridPos>, edges: readonly Edge[]): { edge: Edge; node: string } | undefined {
+/**
+ * The first edge that, in some spacing, runs over a node it does not join; with that node. An
+ * arc counts when no bulge of it clears the nodes: the pair is then treated as an edge to step off.
+ */
+function firstBlocked(
+  grid: ReadonlyMap<string, GridPos>,
+  edges: readonly Edge[],
+  arcs: readonly LatentArc[] = [],
+): { edge: Edge; node: string } | undefined {
   for (const edge of edges) {
     const a = grid.get(edge.from)
     const b = grid.get(edge.to)
@@ -77,6 +210,13 @@ function firstBlocked(grid: ReadonlyMap<string, GridPos>, edges: readonly Edge[]
     for (const [node, p] of grid) {
       if (node === edge.from || node === edge.to) continue
       if (SPACINGS.some((s) => segmentDistance(p, a, b, s) < s.r + EDGE_CLEARANCE)) return { edge, node }
+    }
+  }
+  if (arcs.length === 0) return undefined
+  for (const s of SPACINGS) {
+    const at = new Map([...grid].map(([id, g]) => [id, { x: g.col * s.col, y: g.row * s.row }]))
+    for (const plan of planArcs(arcs, at, edges, s.r)) {
+      if (plan.hit !== undefined) return { edge: { from: plan.a, to: plan.b }, node: plan.hit }
     }
   }
   return undefined
@@ -132,9 +272,14 @@ export function gridLayout(c: LoadedCase, shown: readonly string[]): Map<string,
   })
   const grid = new Map<string, GridPos>()
   for (const id of shown) grid.set(id, { col: layer.get(id) ?? 0, row: row.get(id) ?? 0 })
+  const arcs = latentArcs(c, shown)
+  let settled = false
   for (let step = 0; step < 8 * shown.length; step++) {
-    const hit = firstBlocked(grid, edges)
-    if (hit === undefined) break
+    const hit = firstBlocked(grid, edges, arcs)
+    if (hit === undefined) {
+      settled = true
+      break
+    }
     const p = grid.get(hit.node)
     const a = grid.get(hit.edge.from)
     const b = grid.get(hit.edge.to)
@@ -152,6 +297,10 @@ export function gridLayout(c: LoadedCase, shown: readonly string[]): Map<string,
       at += dir
       grid.set(id, { col: q.col, row: at })
     }
+  }
+  // The step budget ran out with an edge (or an arc's way) still blocked: the graph is drawn anyway.
+  if (!settled && firstBlocked(grid, edges, arcs) !== undefined) {
+    console.warn(`causal-atlas: ${c.data.id}: automatic layout left an edge or arc over a node; give the model a layout`)
   }
   const top = Math.min(...[...grid.values()].map((p) => p.row))
   for (const [id, p] of grid) out.set(id, { col: p.col, row: p.row - top })

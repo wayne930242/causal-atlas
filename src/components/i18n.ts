@@ -78,6 +78,8 @@ const ZH_PROBLEMS: ProblemWording = {
     'no-such-act': (p) => `沒有行動 ${p.act}`,
     'not-identifier': () => '代號要用英文字母開頭，只能有英文字母、數字和底線',
     'not-exogenous': (p) => `${p.id} 不是外生變項`,
+    'arc-needs-children': (p) => `${p.id} 要畫成兩個子變項之間的弧線，所以至少要有兩個子變項`,
+    'arc-also-node': (p) => `${p.id} 不能同時畫成弧線和節點（show_exogenous 或 layout 也列了它）`,
     'needs-context-or-priors': () => '需要脈絡或機率',
     'too-large': () => '資料過大',
     'not-json': (p) => `不是 JSON：${p.detail}`,
@@ -251,6 +253,11 @@ const ZH = {
   backToActual: '回到實際世界',
   graphTitle: (title: string): string => `${title}的因果圖`,
   cut: '切斷',
+  arc: {
+    label: '不明共因',
+    tip: (cause: string, a: string, b: string): string =>
+      `${a} 與 ${b} 有一個看不見的共同原因 ${cause}。圖上不畫成節點，畫成虛線雙箭頭弧線，也不能觀察它。對 ${a} 或 ${b} 做 do()，就切斷那一端，弧線隨之消失。`,
+  },
   was: (value: string): string => `原本 ${value}`,
   nodeValue: (value: string): string => `值 ${value}`,
   nodeAria: (who: string, state: string, forced: string | undefined, before: string | undefined, seen?: string): string =>
@@ -717,6 +724,11 @@ const EN: Messages = {
   backToActual: 'Back to the actual world',
   graphTitle: (title) => `Causal graph: ${title}`,
   cut: 'cut',
+  arc: {
+    label: 'unseen cause',
+    tip: (cause, a, b) =>
+      `${a} and ${b} share a common cause ${cause} that cannot be seen. It is drawn as a dashed double-headed arc, not a node, and cannot be observed. do() on ${a} or ${b} cuts that end, and the arc disappears.`,
+  },
   was: (value) => `was ${value}`,
   nodeValue: (value) => `value ${value}`,
   nodeAria: (who, state, forced, before, seen) =>

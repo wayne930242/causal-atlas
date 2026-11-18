@@ -52,6 +52,7 @@ export function caseToDoc(c: LoadedCase, locale: Locale = 'zh-TW'): ModelDoc {
     normality: data.normality,
     layout: data.layout,
     show_exogenous: data.show_exogenous,
+    latent_as_arcs: data.latent_as_arcs,
   })
 }
 
@@ -77,6 +78,7 @@ export function docToCase(doc: ModelDoc, origin?: CaseFile['sources']): LoadedCa
     showcase: [],
     layout: doc.layout,
     show_exogenous: doc.show_exogenous,
+    latent_as_arcs: doc.latent_as_arcs,
   })
 }
 

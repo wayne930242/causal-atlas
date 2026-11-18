@@ -177,6 +177,13 @@ export const layoutSchema = z.record(identifier, z.tuple([z.number(), z.number()
  */
 export const showExogenousSchema = z.array(identifier)
 
+/**
+ * Exogenous variables with two or more children to draw as a dashed two-headed arc between their
+ * children (Pearl's semi-Markovian graphs: a latent common cause) instead of as a node. The
+ * variable stays in the model; only the drawing changes. Default: drawn as a node.
+ */
+export const latentAsArcsSchema = z.array(identifier)
+
 /** A sentence of the story and the variables it introduces; the page tags the sentence with their ids. */
 export const storyTagSchema = z.strictObject({
   sentence: z.string().min(1),
@@ -189,17 +196,35 @@ export const storyTagsSchema = z.strictObject({
   en: z.array(storyTagSchema),
 })
 
-/** Each id names an exogenous variable of the model; reported at `show_exogenous.<id>`. */
+/** Each id names an exogenous variable of the model; reported at `<field>.<id>`. */
 function exogenousOnly(
   ctx: { addIssue: (issue: z.core.$ZodRawIssue) => void },
   variables: readonly { readonly id: string; readonly kind: 'exogenous' | 'endogenous' }[],
   ids: readonly string[],
+  field: 'show_exogenous' | 'latent_as_arcs' = 'show_exogenous',
 ): void {
   const kinds = new Map(variables.map((v) => [v.id, v.kind]))
   for (const id of ids) {
     const kind = kinds.get(id)
-    if (kind === undefined) addProblem(ctx, ['show_exogenous', id], problem('unknown-variable', { id }))
-    else if (kind !== 'exogenous') addProblem(ctx, ['show_exogenous', id], problem('not-exogenous', { id }))
+    if (kind === undefined) addProblem(ctx, [field, id], problem('unknown-variable', { id }))
+    else if (kind !== 'exogenous') addProblem(ctx, [field, id], problem('not-exogenous', { id }))
+  }
+}
+
+/** `latent_as_arcs` checks: each id an exogenous variable, and none also drawn as a node (`show_exogenous`, `layout`). */
+function latentArcsValid(
+  ctx: { addIssue: (issue: z.core.$ZodRawIssue) => void },
+  variables: readonly { readonly id: string; readonly kind: 'exogenous' | 'endogenous' }[],
+  latent: readonly string[],
+  nodes: { readonly show_exogenous?: readonly string[]; readonly layout?: Readonly<Record<string, unknown>> },
+): void {
+  exogenousOnly(ctx, variables, latent, 'latent_as_arcs')
+  const known = new Set(variables.map((v) => v.id))
+  for (const id of latent) {
+    if (!known.has(id)) continue
+    if ((nodes.show_exogenous ?? []).includes(id) || (nodes.layout !== undefined && id in nodes.layout)) {
+      addProblem(ctx, ['latent_as_arcs', id], problem('arc-also-node', { id }))
+    }
   }
 }
 
@@ -254,6 +279,7 @@ export const caseSchema = z
     showcase: z.array(showcaseSchema),
     layout: layoutSchema.optional(),
     show_exogenous: showExogenousSchema.optional(),
+    latent_as_arcs: latentAsArcsSchema.optional(),
   })
   .superRefine((c, ctx) => {
     if (c.layout !== undefined) {
@@ -263,6 +289,7 @@ export const caseSchema = z
       }
     }
     exogenousOnly(ctx, c.model.variables, c.show_exogenous ?? [])
+    latentArcsValid(ctx, c.model.variables, c.latent_as_arcs ?? [], c)
     const variableIds = new Set(c.model.variables.map((v) => v.id))
     for (const locale of LOCALES) {
       c.story_tags?.[locale].forEach((t, i) => {
@@ -349,6 +376,7 @@ export const modelDocSchema = z
     normality: assignmentSchema.optional(),
     layout: layoutSchema.optional(),
     show_exogenous: showExogenousSchema.optional(),
+    latent_as_arcs: latentAsArcsSchema.optional(),
   })
   .superRefine((d, ctx) => {
     const kinds = new Map(d.model.variables.map((v) => [v.id, v.kind]))
@@ -361,6 +389,7 @@ export const modelDocSchema = z
     }
     known('layout', Object.keys(d.layout ?? {}), false)
     exogenousOnly(ctx, d.model.variables, d.show_exogenous ?? [])
+    latentArcsValid(ctx, d.model.variables, d.latent_as_arcs ?? [], d)
     known('normality', Object.keys(d.normality ?? {}), false)
     known('context', Object.keys(d.context ?? {}), true)
     if (d.priors !== undefined) {

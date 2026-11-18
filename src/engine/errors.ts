@@ -90,6 +90,8 @@ export interface ProblemParams {
   readonly 'no-such-act': { readonly act: string }
   readonly 'not-identifier': Record<string, never>
   readonly 'not-exogenous': { readonly id: string }
+  readonly 'arc-needs-children': { readonly id: string }
+  readonly 'arc-also-node': { readonly id: string }
   readonly 'needs-context-or-priors': Record<string, never>
   readonly 'too-large': Record<string, never>
   readonly 'not-json': { readonly detail: string }
@@ -184,6 +186,8 @@ export const PROBLEMS_EN: ProblemWording = {
     'no-such-act': (p) => `no act ${p.act}`,
     'not-identifier': () => 'must be an identifier',
     'not-exogenous': (p) => `${p.id} is not exogenous`,
+    'arc-needs-children': (p) => `${p.id} is drawn as an arc between its children, so it needs at least two`,
+    'arc-also-node': (p) => `${p.id} cannot be drawn as an arc and as a node (show_exogenous or layout)`,
     'needs-context-or-priors': () => 'needs a context or priors',
     'too-large': () => 'the data is too large',
     'not-json': (p) => `not JSON: ${p.detail}`,
