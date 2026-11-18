@@ -11,7 +11,8 @@ import { saveFile } from '../export/download.ts'
 import type { ExtraModel, LessonLink } from './catalog.ts'
 import { catalog, modelKey, textIn } from './catalog.ts'
 import type { Draft, DraftMode, DraftVariable } from './draft.ts'
-import { compileDraft, draftFromImport, freeCell, newKey, valueTexts } from './draft.ts'
+import { compileDraft, draftFromImport, valueTexts } from './draft.ts'
+import { priorsFor, withMove, withNewVariable, withVariable, withoutVariable } from './draft-edits.ts'
 import { NO_DO, NO_OBSERVATION, validInterventions, validObserved, validStochastic } from './do-state.ts'
 import { sessionReducer, startDraft, startFromDoc, startNamed, startSession } from './session.ts'
 import { useHashSync } from './use-hash-sync.ts'
@@ -83,11 +84,6 @@ const NO_TASKS: readonly EditorTask[] = []
 /** The list key that loads a task's start: an extra model's, or the case id. */
 function startKey(id: string, extras: readonly ExtraModel[]): string {
   return !caseIds.includes(id) && extras.some((m) => m.id === id) ? modelKey(id) : id
-}
-
-function priorsFor(v: DraftVariable): number[] {
-  const n = valueTexts(v).length
-  return v.domain === 'boolean' ? [0.5] : Array.from({ length: n }, () => 1 / Math.max(n, 1))
 }
 
 /**
@@ -191,61 +187,10 @@ function EditorBody({
   const headSubtitle = caseId === undefined ? undefined : getCase(caseId).data.subtitle?.[t.locale]
   const edit = (change: (d: Draft) => Draft): void => dispatch({ type: 'edit', edit: change })
   const update = (patch: Partial<Draft>): void => edit((d) => ({ ...d, ...patch }))
-  const setVariable = (key: string, patch: Partial<DraftVariable>): void =>
-    edit((d) => {
-      const variables = d.variables.map((v) => (v.key === key ? { ...v, ...patch } : v))
-      const v = variables.find((x) => x.key === key)
-      if (v === undefined) return d
-      const texts = valueTexts(v)
-      const context = { ...d.context }
-      if (v.kind === 'exogenous' && !texts.includes(context[key] ?? '')) context[key] = texts[0] ?? ''
-      const priors = { ...d.priors }
-      const want = v.domain === 'boolean' ? 1 : texts.length
-      if ((priors[key]?.length ?? 0) !== want) priors[key] = priorsFor(v)
-      const layout = { ...d.layout }
-      if (v.shown && layout[key] === undefined) layout[key] = freeCell(layout)
-      return { ...d, variables, context, priors, layout }
-    })
-  const addVariable = (): void =>
-    edit((d) => {
-      const ids = new Set(d.variables.map((v) => v.id))
-      let n = d.variables.length + 1
-      while (ids.has(`V${n}`)) n += 1
-      const key = newKey()
-      const v: DraftVariable = { key, id: `V${n}`, label: '', en: '', kind: 'endogenous', domain: 'boolean', values: '', shown: true }
-      return {
-        ...d,
-        variables: [...d.variables, v],
-        equations: { ...d.equations, [key]: '' },
-        context: { ...d.context, [key]: '1' },
-        priors: { ...d.priors, [key]: [0.5] },
-        layout: { ...d.layout, [key]: freeCell(d.layout) },
-      }
-    })
-  const removeVariable = (key: string): void =>
-    edit((d) => {
-      const drop = <T,>(r: Readonly<Record<string, T>>): Record<string, T> => {
-        const out = { ...r }
-        delete out[key]
-        return out
-      }
-      return {
-        ...d,
-        variables: d.variables.filter((v) => v.key !== key),
-        equations: drop(d.equations),
-        context: drop(d.context),
-        priors: drop(d.priors),
-        normality: drop(d.normality),
-        layout: drop(d.layout),
-      }
-    })
-  const move = (id: string, dCol: number, dRow: number): void =>
-    edit((d) => {
-      const v = d.variables.find((x) => x.id === id)
-      const at = v === undefined ? undefined : d.layout[v.key]
-      if (v === undefined || at === undefined) return d
-      return { ...d, layout: { ...d.layout, [v.key]: [at[0] + dCol, at[1] + dRow] } }
-    })
+  const setVariable = (key: string, patch: Partial<DraftVariable>): void => edit((d) => withVariable(d, key, patch))
+  const addVariable = (): void => edit(withNewVariable)
+  const removeVariable = (key: string): void => edit((d) => withoutVariable(d, key))
+  const move = (id: string, dCol: number, dRow: number): void => edit((d) => withMove(d, id, dCol, dRow))
 
   const summary: string[] = []
   const nameOf = (key: string): string => draft.variables.find((v) => v.key === key)?.id ?? key
