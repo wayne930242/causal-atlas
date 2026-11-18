@@ -73,6 +73,16 @@ export interface ProblemParams {
   readonly 'too-many-endogenous': { readonly limit: number }
   readonly 'effect-has-intervention': Record<string, never>
   readonly 'normality-missing': Record<string, never>
+  // responsibility and blame
+  readonly 'responsibility-butfor': Record<string, never>
+  readonly 'responsibility-single-event': { readonly cause: string }
+  readonly 'blame-no-mass': Record<string, never>
+  // mediation
+  readonly 'mediation-not-endogenous': { readonly id: string }
+  readonly 'mediation-no-mediators': Record<string, never>
+  readonly 'mediation-mediator-repeats': { readonly id: string }
+  readonly 'mediation-treatment-is-mediator': { readonly id: string }
+  readonly 'mediation-same-values': { readonly value: string }
   // decisions and arithmetic
   readonly 'utility-row-length': Record<string, never>
   readonly 'utility-no-row': { readonly values: string }
@@ -171,6 +181,14 @@ export const PROBLEMS_EN: ProblemWording = {
     'too-many-endogenous': (p) => `actual causation search is limited to ${p.limit} endogenous variables`,
     'effect-has-intervention': () => 'the effect must not contain interventions',
     'normality-missing': () => 'hp-normality needs default (normal) values',
+    'responsibility-butfor': () => 'degree of responsibility and blame are defined for the HP definitions, not for but-for',
+    'responsibility-single-event': (p) => `degree of responsibility is defined for a single event X=x, not ${JSON.stringify(p.cause)}`,
+    'blame-no-mass': () => 'the cause (with the observation, if any) has probability 0 under this prior',
+    'mediation-not-endogenous': (p) => `${p.id} must be an endogenous variable to be a treatment or a mediator`,
+    'mediation-no-mediators': () => 'name at least one mediator',
+    'mediation-mediator-repeats': (p) => `mediator ${p.id} is listed twice`,
+    'mediation-treatment-is-mediator': (p) => `the treatment ${p.id} cannot also be a mediator`,
+    'mediation-same-values': (p) => `the transition needs two different treatment values, got ${p.value} twice`,
     'utility-row-length': () => 'utility row has the wrong number of values',
     'utility-no-row': (p) => `utility table has no row for ${p.values}`,
     'prior-no-mass': () => 'prior has no mass',

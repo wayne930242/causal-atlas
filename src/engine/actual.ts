@@ -175,6 +175,11 @@ interface Setup {
   readonly budget: { left: number }
 }
 
+/** A fresh work budget of MAX_EVALUATIONS; one call, or one `blame` over all its contexts, shares one. */
+export function newBudget(): { left: number } {
+  return { left: MAX_EVALUATIONS }
+}
+
 function charge(setup: Setup, units: number): void {
   setup.budget.left -= units
   if (setup.budget.left < 0) {
@@ -236,11 +241,20 @@ function sufficient(setup: Setup, cause: Assignment, W: readonly string[], w: As
   return true
 }
 
-/** AC2(a^m) or AC2(a)+AC2(b), optionally with W⃗ forced empty (but-for). */
-function findWitness(setup: Setup, cause: Assignment, allowW: boolean): Witness | undefined {
+/**
+ * AC2(a^m) or AC2(a)+AC2(b), optionally with W⃗ forced empty (but-for). With `maxW`, only sets W⃗
+ * of at most that size are tried (and charged); W⃗ is still tried smallest first.
+ */
+function findWitness(setup: Setup, cause: Assignment, allowW: boolean, maxW?: number): Witness | undefined {
   const { model } = setup
   const others = model.endogenous.filter((id) => !Object.hasOwn(cause, id))
-  const candidates = allowW ? subsets(setup, others) : [[]]
+  let candidates: string[][]
+  if (!allowW) candidates = [[]]
+  else if (maxW === undefined || maxW >= others.length) candidates = subsets(setup, others)
+  else {
+    candidates = subsetsBySize(others).filter((s) => s.length <= maxW)
+    charge(setup, candidates.length)
+  }
   const alts = alternatives(setup, cause)
   for (const W of candidates) {
     const choices = setup.ac2 === 'm' ? [restrict(setup.actual, W)] : settings(setup, W)
@@ -283,13 +297,15 @@ export interface ActualCauseOptions {
   readonly normality?: Normality
 }
 
-export function actualCause(
+/** The parsed query and search state `actualCause` and `responsibility` share. */
+function prepare(
   model: CausalModel,
   context: Assignment,
   query: ActualCauseQuery,
   theory: CausalTheory,
-  options: ActualCauseOptions = {},
-): ActualCauseResult {
+  options: ActualCauseOptions,
+  budget: { left: number },
+): { readonly setup: Setup; readonly cause: Record<string, Value> } {
   if (model.endogenous.length > MAX_ENDOGENOUS) {
     throw new ModelError(problem('too-many-endogenous', { limit: MAX_ENDOGENOUS }))
   }
@@ -306,7 +322,18 @@ export function actualCause(
     admissible = (world) => atLeastAsNormal(world, actual, normality)
   }
   const ac2 = theory === 'hp-original' ? 'o' : theory === 'hp-updated' ? 'u' : 'm'
-  const setup: Setup = { model, context, effect, actual, admissible, ac2, theory, budget: { left: MAX_EVALUATIONS } }
+  return { setup: { model, context, effect, actual, admissible, ac2, theory, budget }, cause }
+}
+
+export function actualCause(
+  model: CausalModel,
+  context: Assignment,
+  query: ActualCauseQuery,
+  theory: CausalTheory,
+  options: ActualCauseOptions = {},
+): ActualCauseResult {
+  const { setup, cause } = prepare(model, context, query, theory, options, newBudget())
+  const { actual } = setup
 
   if (theory === 'butfor') {
     const check = checkButFor(setup, cause)
@@ -325,6 +352,143 @@ export function actualCause(
     if (larger.isCause) return { theory, verdict: 'part-of-cause', actual, check, containedIn: larger }
   }
   return { theory, verdict: 'not-cause', actual, check }
+}
+
+/** The HP definitions, which are the ones degree of responsibility is defined for. */
+export type ResponsibilityTheory = Exclude<CausalTheory, 'butfor'>
+
+export interface ResponsibilityResult {
+  readonly theory: ResponsibilityTheory
+  /** 0, or 1/k. */
+  readonly degree: number
+  /**
+   * |W⃗| + |X⃗| minimized over causes X⃗=x⃗ that contain X=x as a conjunct and their witnesses; for
+   * the single event itself this is |W⃗| + 1, Halpern's k + 1 in Def. 6.1.1. Absent when the degree is 0.
+   */
+  readonly k?: number
+  /** The cause X⃗=x⃗ attaining k: X=x itself, or X=x with other variables at their actual values. */
+  readonly cause?: Assignment
+  /** A witness of that cause with the smallest W⃗. */
+  readonly witness?: Witness
+  /** The same verdict `actualCause` gives for X=x. */
+  readonly verdict: CausalVerdict
+  readonly actual: Assignment
+}
+
+const causeKey = (cause: Assignment): string => Object.keys(cause).sort().join('\u0000')
+
+/**
+ * Degree of responsibility in one setting (M, u) of an already prepared single-event query, using
+ * (and charging) `setup.budget`.
+ *
+ * Halpern, Actual Causality (2016), Def. 6.1.1 (original) and Def. 6.1.6 (updated, modified): dr is
+ * 0 when X=x is not (part of) a cause, else 1/k with k = |W⃗| + |X⃗| minimal over causes X⃗=x⃗
+ * containing X=x and their witnesses (W⃗, w⃗, x⃗'). Under the original definition every cause is a
+ * single conjunct (Halpern 2016, Theorem 2.2.3(d)), so k = |W⃗| + 1 for the minimal witness of X=x and
+ * this is Def. 6.1.1. hp-normality uses the modified definition with witnesses restricted to worlds
+ * at least as normal as the actual one, as Halpern suggests after Def. 6.1.1 (p. 171).
+ *
+ * Search: X=x alone first (the witness search tries W⃗ smallest first, so the first witness is
+ * minimal); when X=x alone satisfies AC2, AC3 rules out every larger cause containing it. Otherwise
+ * extensions X=x ∧ Y⃗=y⃗* by increasing |Y⃗|, stopping once |X⃗| alone reaches the best k, and asking
+ * each extension only for witnesses small enough to improve on it.
+ */
+function responsibilityIn(setup: Setup, cause: Record<string, Value>, theory: ResponsibilityTheory): ResponsibilityResult {
+  const { model, actual } = setup
+  const none = (verdict: CausalVerdict): ResponsibilityResult => ({ theory, degree: 0, verdict, actual })
+  if (!ac1(setup, cause)) return none('not-cause')
+
+  // AC2 with W⃗ unrestricted, per conjunction (all at actual values, so keyed by variables).
+  const ac2Memo = new Map<string, Witness | null>()
+  const ac2 = (c: Assignment): Witness | undefined => {
+    const key = causeKey(c)
+    const known = ac2Memo.get(key)
+    if (known !== undefined) return known ?? undefined
+    const found = findWitness(setup, c, true)
+    ac2Memo.set(key, found ?? null)
+    return found
+  }
+  // AC3: no strict, non-empty sub-conjunction satisfies AC2 (AC1 is inherited).
+  const minimal = (c: Assignment): boolean => {
+    const ids = Object.keys(c)
+    for (const subset of subsets(setup, ids)) {
+      if (subset.length === 0 || subset.length === ids.length) continue
+      if (ac2(restrict(c, subset)) !== undefined) return false
+    }
+    return true
+  }
+
+  // X=x alone satisfies AC2: it is a cause, and no larger conjunction containing it is one (AC3).
+  const alone = ac2(cause)
+  if (alone !== undefined) {
+    const k = alone.W.length + 1
+    return { theory, degree: 1 / k, k, cause, witness: alone, verdict: 'cause', actual }
+  }
+
+  let best: { k: number; cause: Assignment; witness: Witness } | undefined
+  const rest = model.endogenous.filter((id) => !Object.hasOwn(cause, id))
+  const extensions = subsetsBySize(rest)
+  for (const extra of extensions) {
+    if (extra.length === 0) continue
+    // |X⃗| = 1 + |extra| alone already reaches the best k: no larger extension can improve on it.
+    if (best !== undefined && 1 + extra.length >= best.k) break
+    charge(setup, 1)
+    const larger = { ...cause, ...restrict(actual, extra) }
+    const witness =
+      best === undefined ? ac2(larger) : findWitness(setup, larger, true, best.k - 2 - extra.length)
+    if (witness === undefined || !minimal(larger)) continue
+    const k = witness.W.length + 1 + extra.length
+    if (best === undefined || k < best.k) best = { k, cause: larger, witness }
+  }
+  if (best === undefined) return none('not-cause')
+  return { theory, degree: 1 / best.k, k: best.k, cause: best.cause, witness: best.witness, verdict: 'part-of-cause', actual }
+}
+
+/** Parse and check a responsibility query: an HP theory and a single event X=x. */
+function prepareResponsibility(
+  model: CausalModel,
+  context: Assignment,
+  query: ActualCauseQuery,
+  theory: CausalTheory,
+  options: ActualCauseOptions,
+  budget: { left: number },
+): { readonly setup: Setup; readonly cause: Record<string, Value>; readonly theory: ResponsibilityTheory } {
+  if (theory === 'butfor') throw new ModelError(problem('responsibility-butfor', {}))
+  const prepared = prepare(model, context, query, theory, options, budget)
+  if (Object.keys(prepared.cause).length !== 1) {
+    const text = typeof query.cause === 'string' ? query.cause : Object.entries(query.cause).map(([id, v]) => `${id}=${String(v)}`).join(' and ')
+    throw new ModelError(problem('responsibility-single-event', { cause: text }))
+  }
+  return { ...prepared, theory }
+}
+
+/**
+ * Degree of responsibility of a single event X=x for φ in (M, u): Halpern, Actual Causality (2016),
+ * Def. 6.1.1 and 6.1.6; see `responsibilityIn` for the search. Its verdict is `actualCause`'s. The
+ * work is bounded by MAX_EVALUATIONS as in `actualCause`; past it a ModelError (`search-budget`).
+ */
+export function responsibility(
+  model: CausalModel,
+  context: Assignment,
+  query: ActualCauseQuery,
+  theory: CausalTheory,
+  options: ActualCauseOptions = {},
+): ResponsibilityResult {
+  const prepared = prepareResponsibility(model, context, query, theory, options, newBudget())
+  return responsibilityIn(prepared.setup, prepared.cause, prepared.theory)
+}
+
+/** `responsibility` charging a budget shared with other calls (one `blame` over many contexts). */
+export function responsibilityWithBudget(
+  model: CausalModel,
+  context: Assignment,
+  query: ActualCauseQuery,
+  theory: CausalTheory,
+  options: ActualCauseOptions,
+  budget: { left: number },
+): ResponsibilityResult {
+  const prepared = prepareResponsibility(model, context, query, theory, options, budget)
+  return responsibilityIn(prepared.setup, prepared.cause, prepared.theory)
 }
 
 /** Why a world is not a witness; see `witnessStatus`. */

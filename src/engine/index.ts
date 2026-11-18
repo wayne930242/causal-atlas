@@ -34,11 +34,17 @@ export type {
   CausalVerdict,
   CauseCheck,
   Normality,
+  ResponsibilityResult,
+  ResponsibilityTheory,
   Witness,
   WitnessFailure,
   WitnessStatus,
 } from './actual.ts'
-export { MAX_EVALUATIONS, actualCause, atLeastAsNormal, parseCause, witnessStatus } from './actual.ts'
+export { MAX_EVALUATIONS, actualCause, atLeastAsNormal, parseCause, responsibility, witnessStatus } from './actual.ts'
+export type { BlameQuery, BlameResult, BlameRow } from './blame.ts'
+export { blame } from './blame.ts'
+export type { ControlledEffect, MediationFormula, MediationQuery, MediationResult, MediationWorld } from './mediation.ts'
+export { mediation } from './mediation.ts'
 export type {
   ActEvaluation,
   DecisionProblem,
