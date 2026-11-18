@@ -20,10 +20,10 @@ const mode = (container: HTMLElement, name: string): HTMLElement =>
 const nervous = lessonModel('m00-firing-squad-nervous')
 const lesson07 = [{ label: 'D=1, A←0', observed: { D: 1 }, interventions: { A: 0 } }]
 
-describe('playground reading: 干預後再觀察｜反事實', () => {
+describe('playground reading: 干預｜反事實', () => {
   it('appears on probability graphs only', () => {
     const prob = render(<CausalPlayground doc={nervous} />)
-    expect(mode(prob.container, '干預後再觀察').getAttribute('aria-pressed')).toBe('true')
+    expect(mode(prob.container, '干預').getAttribute('aria-pressed')).toBe('true')
     expect(mode(prob.container, '反事實').getAttribute('aria-pressed')).toBe('false')
     prob.unmount()
     const values = render(<CausalPlayground caseId="forest-fire-disjunctive" />)
@@ -58,7 +58,7 @@ describe('playground reading: 干預後再觀察｜反事實', () => {
     fireEvent.click(node(container, 'A'))
     expect(node(container, 'A').getAttribute('data-observed')).toBe('0')
     expect(node(container, 'A').getAttribute('data-intervened')).toBe('true')
-    fireEvent.click(mode(container, '干預後再觀察'))
+    fireEvent.click(mode(container, '干預'))
     expect(node(container, 'A').getAttribute('data-observed')).toBeNull()
     expect(node(container, 'A').getAttribute('data-intervened')).toBe('true')
   })

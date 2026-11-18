@@ -411,7 +411,7 @@ const ZH = {
     heldActual: '固定（實際值）',
     heldPlain: '固定',
   },
-  reading: { interventional: '干預後再觀察', counterfactual: '反事實' },
+  reading: { interventional: '干預', counterfactual: '反事實' },
   actually: (value: string): string => `實際 ${value}`,
   cf: {
     kicker: '反事實',
@@ -941,7 +941,7 @@ const EN: Messages = {
     heldActual: 'held (actual)',
     heldPlain: 'held',
   },
-  reading: { interventional: 'Intervene, then observe', counterfactual: 'Counterfactual' },
+  reading: { interventional: 'Intervention', counterfactual: 'Counterfactual' },
   actually: (value) => `actually ${value}`,
   cf: {
     kicker: 'Counterfactual',

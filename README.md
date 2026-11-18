@@ -2,6 +2,9 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.4.1
+The playground reading switch reads 「干預｜反事實」 (en "Intervention | Counterfactual").
+
 ## 0.4.0
 Seven interactions for the lessons, with the 0.3.15 fixes. Step buttons: `presets` take `observed` and
 `hold` as well as do(), sit inside the figure's frame, and show which one is set. On a probability
@@ -110,7 +113,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.4.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.4.1) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -261,7 +264,7 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   通 · 0.000. The engine exports `dSeparation(model, x, y, given, cut, cutOut)` (each path, open or
   blocked and by what; `cutOut` removes the arrows out of those variables) and
   `dependence(model, prior, x, y, given, do, stochastic)`.
-- A probability playground has a reading switch in its head, 「干預後再觀察｜反事實」. The first
+- A probability playground has a reading switch in its head, 「干預｜反事實」. The first
   (default) reads what is set as P(· | do(…), observed), and a node is either observed or set. Under
   反事實 the same gestures mean evidence about the actual world (click) and the supposed action (long
   press, right-click, Shift+click); a node may be both (actual A=1, set A=0); the nodes show
@@ -385,9 +388,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.4.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.4.1 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.4.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.4.1) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -396,7 +399,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.4.0},
+  version = {0.4.1},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
