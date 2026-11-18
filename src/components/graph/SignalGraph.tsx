@@ -1,22 +1,21 @@
-import type { ReactNode } from 'react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Edge, Value } from '../../engine/index.ts'
 import { getVariable } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
-import { around, placePop, shifted } from './graph-labels.ts'
 import type { NodeToggle } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
+import type { Stochastic } from '../model/assignments.ts'
+import type { PathMarks } from '../model/dsep-view.ts'
+import { idWithName, probText, shortLabel } from '../model/wording.ts'
 import { Tip } from '../shared/parts.tsx'
 import { sub } from '../text/svg-text.tsx'
-import type { PathMarks } from '../model/dsep-view.ts'
-import type { Stochastic } from '../model/assignments.ts'
-import { idWithName, probText, shortLabel } from '../model/wording.ts'
-import { barLayout, textWidth } from '../text/text-measure.ts'
+import { textWidth } from '../text/text-measure.ts'
+import { BarChart } from './BarChart.tsx'
 import { layoutSignalGraph } from './signal-geometry.ts'
+import { EXO_INSET, arrowHead, clampPath, exoDash } from './signal-shapes.ts'
 import { useNodeGestures } from './use-node-gestures.ts'
-import type { Block } from './signal-shapes.ts'
-import { BAR_H, BAR_LABEL, EXO_INSET, arrowHead, clampPath, exoDash } from './signal-shapes.ts'
+import { ValuePicker } from './ValuePicker.tsx'
 
 export interface SignalGraphProps {
   readonly c: LoadedCase
@@ -77,9 +76,6 @@ export interface SignalGraphProps {
   /** Lets nodes be dragged (or moved with arrow keys); reports the move in grid columns and rows. */
   readonly onMove?: (id: string, dCol: number, dRow: number) => void
 }
-
-/** P*(X=1) slider step for a boolean node in probability mode. */
-const P_STEP = 0.05
 
 /** Direction 1 「訊號圖」: value nodes, signal edges, do() clamps and cut edges. */
 export function SignalGraph(props: SignalGraphProps) {
@@ -449,7 +445,7 @@ export function SignalGraph(props: SignalGraphProps) {
           {name === '' ? null : ` ${name}`}
         </text>
         {bars !== undefined
-          ? barChart(id, bars.map(formatValue), dist, block, barText)
+          ? <BarChart id={id} labels={bars.map(formatValue)} dist={dist} block={block} barText={barText} />
           : prob && (
               <text y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num" data-readout={id}>
                 {probText(pv ?? Number.NaN)}
@@ -463,142 +459,6 @@ export function SignalGraph(props: SignalGraphProps) {
       </g>
     )
   })
-
-  /** One bar per value, scaled so the most likely value fills the chart's height; that probability is written beside it. */
-  function barChart(
-    id: string,
-    labels: readonly string[],
-    dist: readonly number[] | undefined,
-    block: Block,
-    barText: (i: number) => string,
-  ): ReactNode {
-    const layout = barLayout(labels, BAR_LABEL)
-    const known = (dist ?? []).filter((x) => !Number.isNaN(x))
-    const max = known.length === 0 ? Number.NaN : Math.max(...known)
-    return (
-      <g className="ca-bars" data-bars={id} transform={`translate(${block.x0} ${block.baseline})`}>
-        <line x1={0} x2={layout.width} y1={0} y2={0} className="ca-hair" />
-        {!Number.isNaN(max) && (
-          <text x={-5} y={-BAR_H + 8} textAnchor="end" className="ca-mono ca-svg-tiny ca-fill-muted" data-max={max.toFixed(4)}>
-            {t.barMax(probText(max))}
-          </text>
-        )}
-        {labels.map((text, i) => {
-          const p = dist?.[i]
-          const ok = p !== undefined && !Number.isNaN(p)
-          const h = ok && max > 0 && p > 0 ? Math.max(1, (p / max) * BAR_H) : 0
-          const cx = i * layout.pitch + layout.pitch / 2
-          const edge = i === 0 || i === labels.length - 1
-          return (
-            <g key={text} data-bar={text} data-p={ok ? p.toFixed(4) : ''}>
-              <title>{barText(i)}</title>
-              <rect x={cx - layout.barW / 2} y={-h} width={layout.barW} height={h} className="ca-fill-fg" />
-              {(layout.labelsFit || edge) && (
-                <text x={cx} y={BAR_LABEL + 2} textAnchor="middle" className="ca-mono ca-svg-tiny ca-fill-muted">
-                  {text}
-                </text>
-              )}
-            </g>
-          )
-        })}
-      </g>
-    )
-  }
-
-  const pickPop = (): ReactNode => {
-    if (picking === undefined) return null
-    const p = pos.get(picking)
-    const variable = getVariable(c.model, picking)
-    if (p === undefined) return null
-    const id = picking
-    const who = idWithName(id, nameOf(id))
-    const forced = interventions[id]
-    const soft = stochastic[id]
-    let control: {
-      readonly max: number
-      readonly step: number
-      readonly index: number
-      readonly text: string
-      readonly label: string
-      readonly idle: boolean
-      readonly commit: (n: number) => void
-      readonly release: () => void
-    }
-    if (prob && variable.domain.kind === 'boolean' && onSetProbability !== undefined) {
-      // P*(X=1) in steps of P_STEP: the ends are do(X=0) and do(X=1), the rest a stochastic do().
-      const set = forced !== undefined ? (forced === true || forced === 1 ? 1 : 0) : soft
-      const shownP = set ?? Math.round((probs?.[id] ?? 0) / P_STEP) * P_STEP
-      control = {
-        max: 1,
-        step: P_STEP,
-        index: shownP,
-        text: forced !== undefined ? `${id}=${formatValue(forced)}` : `P(${id}=1)=${probText(shownP)}`,
-        label: t.doProbLabel(who),
-        idle: set === undefined,
-        commit: (n) => onSetProbability(id, n),
-        release: () => onSetProbability(id, undefined),
-      }
-    } else if (variable.domain.kind === 'finite' && onSetValue !== undefined) {
-      const options = variable.domain.values
-      const shownValue = forced ?? values?.[id]
-      const found = shownValue === undefined ? -1 : options.findIndex((o) => valuesEqual(o, shownValue))
-      const index = found < 0 ? 0 : found
-      control = {
-        max: options.length - 1,
-        step: 1,
-        index,
-        text: `${id}=${formatValue(options[index])}`,
-        label: t.doPickLabel(who),
-        idle: forced === undefined,
-        commit: (n) => onSetValue(id, options[n]),
-        release: () => onSetValue(id, undefined),
-      }
-    } else return null
-    const W = 184
-    const H = 72
-    // Beside the node, centred on it, so the nodes under it stay visible; the do tag sits above that line.
-    const others = shown.filter((o) => o !== id)
-    const nodes = others.flatMap((o) => {
-      const q = pos.get(o)
-      return q === undefined ? [] : [around(q.x - left, q.y - top, R + 4)]
-    })
-    const labels = others.flatMap((o) => {
-      const q = pos.get(o)
-      return q === undefined ? [] : (blocks.get(o)?.boxes ?? []).map((b) => shifted(b, q.x - left, q.y - top))
-    })
-    const at = placePop({ x: p.x - left, y: p.y - top }, R, { w: W, h: H }, { w: viewW, h: height }, 16, nodes, labels)
-    const release = (): void => {
-      control.release()
-      setPicking(undefined)
-      focusNode(id)
-    }
-    return (
-      <foreignObject className="ca-do-pop-box" x={at.x + left} y={at.y + top} width={W} height={H}>
-        <div ref={popRef} className="ca-do-pop" role="dialog" aria-label={control.label} data-pick={id}>
-          <div className="ca-do-pop-head">
-            <output className={`ca-do-pop-value ca-mono${control.idle ? ' is-idle' : ''}`}>{control.text}</output>
-            <button type="button" className="ca-do-pop-release" disabled={control.idle} onClick={release}>
-              {t.doRelease}
-            </button>
-          </div>
-          <input
-            ref={sliderRef}
-            className="ca-slider ca-do-pop-slider"
-            type="range"
-            min={0}
-            max={control.max}
-            step={control.step}
-            value={control.index}
-            aria-label={control.label}
-            aria-valuetext={control.text}
-            onChange={(e) => control.commit(Number(e.currentTarget.value))}
-            // A press that does not move the thumb is still a choice: set the value it shows.
-            onClick={() => control.idle && control.commit(control.index)}
-          />
-        </div>
-      </foreignObject>
-    )
-  }
 
   return (
     <svg
@@ -641,7 +501,26 @@ export function SignalGraph(props: SignalGraphProps) {
       {edgeEls}
       {arcEls}
       {nodeEls}
-      {pickPop()}
+      {picking !== undefined && (
+        <ValuePicker
+          c={c}
+          id={picking}
+          shown={shown}
+          layout={layout}
+          values={values}
+          probs={probs}
+          interventions={interventions}
+          stochastic={stochastic}
+          onSetValue={onSetValue}
+          onSetProbability={onSetProbability}
+          popRef={popRef}
+          sliderRef={sliderRef}
+          onClose={() => {
+            setPicking(undefined)
+            focusNode(picking)
+          }}
+        />
+      )}
     </svg>
   )
 }
