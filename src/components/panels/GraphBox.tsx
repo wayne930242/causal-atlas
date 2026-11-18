@@ -8,6 +8,7 @@ import type { ExportSource, ExportTag } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
+import { useDigits } from '../shared/digits.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import type { DoState, ModelWorld, Reading } from '../model/model-state.ts'
 import { observedNext, solve, toggled, withProbability, withValue } from '../model/model-state.ts'
@@ -122,6 +123,7 @@ export function GraphBox({
   paths,
 }: GraphBoxProps) {
   const t = useMessages()
+  const digits = useDigits()
   const [notice, setNotice] = useState<string | undefined>(undefined)
   const hasDo = Object.keys(interventions).length > 0 || Object.keys(stochastic).length > 0
   const hasObs = Object.keys(observed).length > 0
@@ -165,14 +167,14 @@ export function GraphBox({
   const abduced = useMemo(() => (cf ? solve(c, {}, {}, observed).probs : undefined), [c, cf, observed])
   const cfNotes = (m: Messages): Record<string, string> => {
     if (abduced === undefined || world.probs === undefined) return {}
-    const out: Record<string, string> = { ...changeNotes(m, abduced, world.probs, twoValued, m.actually) }
+    const out: Record<string, string> = { ...changeNotes(m, abduced, world.probs, twoValued, m.actually, digits) }
     for (const [id, v] of Object.entries(observed)) out[id] = m.actually(formatValue(v))
     return out
   }
   const probNotes =
     prior === undefined || world.probs === undefined
       ? undefined
-      : { ...(cf ? cfNotes(t) : changeNotes(t, prior, world.probs, twoValued)), ...notes }
+      : { ...(cf ? cfNotes(t) : changeNotes(t, prior, world.probs, twoValued, undefined, digits)), ...notes }
   const graph = (m: Messages, interactive: boolean) => (
     <SignalGraph
       compact={narrow}
@@ -212,7 +214,7 @@ export function GraphBox({
     />
   )
   const exportSource = (locale: Locale): ExportSource | undefined =>
-    singleGraphSource(c, locale, t, wrap, (m) => graph(m, false), (svg, m) => {
+    singleGraphSource(c, locale, t, wrap, digits, (m) => graph(m, false), (svg, m) => {
       const tags: ExportTag[] = hasSet
         ? [
             { text: headTag(m), tone: 'slate' },

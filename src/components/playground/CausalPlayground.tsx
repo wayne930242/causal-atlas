@@ -7,6 +7,7 @@ import { DEFAULT_URL, watermarkLine } from '../export/cite.ts'
 import { DEFAULT_EMBED_BASE, embedCode, embedHome, embedSrc, fitEmbedState, readEmbedState } from '../export/embed.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
+import { DigitsScope } from '../shared/digits.ts'
 import { sameAssignment } from '../model/assignments.ts'
 import { useCaseOrDoc } from '../model/doc-case.ts'
 import type { DsepPair } from '../model/dsep-view.ts'
@@ -67,6 +68,14 @@ export interface CausalPlaygroundOptions {
   readonly presets?: boolean | readonly PlaygroundPreset[]
   /** Link in exported images' watermark. Default https://wayneh.tw/causal/. */
   readonly exportUrl?: string
+  /**
+   * Decimals of the probability under each node (and a stochastic do()'s tag, a bar chart's top
+   * value and the 原本 notes): a whole number from 1 to 6, default 2. Set it to the digits the
+   * text quotes, e.g. 3 for 0.175; a number within 10^-digits of 0 or 1 still gets two significant
+   * digits of its distance from that end. Equation, table and slider numbers keep their own
+   * precision. The embed code does not record it.
+   */
+  readonly digits?: number
   /** Interface language. Default: the surrounding LocaleProvider's, else zh-TW. */
   readonly locale?: Locale
   /**
@@ -128,15 +137,17 @@ export interface CausalPlaygroundOptions {
 }
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
-export function CausalPlayground({ locale, ...props }: CausalPlaygroundProps) {
+export function CausalPlayground({ locale, digits, ...props }: CausalPlaygroundProps) {
   return (
     <LocaleScope locale={locale}>
-      <PlaygroundBody {...props} />
+      <DigitsScope digits={digits}>
+        <PlaygroundBody {...props} />
+      </DigitsScope>
     </LocaleScope>
   )
 }
 
-function PlaygroundBody({ doc, ...props }: Omit<CausalPlaygroundProps, 'locale'>) {
+function PlaygroundBody({ doc, ...props }: Omit<CausalPlaygroundProps, 'locale' | 'digits'>) {
   const resolved = useCaseOrDoc(props.caseId, doc)
   return resolved.ok ? <PlaygroundFor c={resolved.c} {...props} /> : <DocProblems problems={resolved.problems} />
 }
@@ -157,7 +168,7 @@ function PlaygroundFor({
   sliders = NO_TRACK,
   prior: startPrior,
   decision,
-}: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
+}: Omit<CausalPlaygroundOptions, 'locale' | 'digits'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
   const start = useMemo(() => sliderStart(base, sliders, startPrior), [base, sliders, startPrior])
   const [sliderValues, setSliderValues] = useState(start)

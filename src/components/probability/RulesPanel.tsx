@@ -10,6 +10,7 @@ import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
 import type { RuleStep } from './rules-view.ts'
 import { SIDE_TOLERANCE, ruleView, sideText } from './rules-view.ts'
+import { useDigits } from '../shared/digits.ts'
 import { Segmented, Tag, Tip } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
@@ -37,6 +38,7 @@ export function RulesPanel({
   readonly exportUrl?: string
 }) {
   const t = useMessages()
+  const digits = useDigits()
   if (steps.length === 0) throw new Error(`case ${c.data.id}: view="rules" needs at least one step`)
   const [at, setAt] = useState(0)
   const step = steps[Math.min(at, steps.length - 1)]
@@ -65,7 +67,7 @@ export function RulesPanel({
     />
   )
   const exportSource = (locale: Locale): ExportSource | undefined =>
-    singleGraphSource(c, locale, t, wrap, (m) => graph(m, false), (svg, m) => ({
+    singleGraphSource(c, locale, t, wrap, digits, (m) => graph(m, false), (svg, m) => ({
       name: `${c.data.id}-rule-${step.label}`,
       panels: [
         {

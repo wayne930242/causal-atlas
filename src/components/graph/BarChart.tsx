@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useMessages } from '../i18n/messages.ts'
 import { probText } from '../model/wording.ts'
+import { useDigits } from '../shared/digits.ts'
 import { barLayout } from '../text/text-measure.ts'
 import type { Block } from './signal-shapes.ts'
 import { BAR_H, BAR_LABEL } from './signal-shapes.ts'
@@ -20,6 +21,7 @@ export interface BarChartProps {
 /** One bar per value, scaled so the most likely value fills the chart's height; that probability is written beside it. */
 export function BarChart({ id, labels, dist, block, barText }: BarChartProps): ReactNode {
   const t = useMessages()
+  const digits = useDigits()
   const layout = barLayout(labels, BAR_LABEL)
   const known = (dist ?? []).filter((x) => !Number.isNaN(x))
   const max = known.length === 0 ? Number.NaN : Math.max(...known)
@@ -28,7 +30,7 @@ export function BarChart({ id, labels, dist, block, barText }: BarChartProps): R
       <line x1={0} x2={layout.width} y1={0} y2={0} className="ca-hair" />
       {!Number.isNaN(max) && (
         <text x={-5} y={-BAR_H + 8} textAnchor="end" className="ca-mono ca-svg-tiny ca-fill-muted" data-max={max.toFixed(4)}>
-          {t.barMax(probText(max))}
+          {t.barMax(probText(max, digits))}
         </text>
       )}
       {labels.map((text, i) => {

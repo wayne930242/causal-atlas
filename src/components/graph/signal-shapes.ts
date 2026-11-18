@@ -13,7 +13,7 @@ export const BAR_LABEL = 11
 /** What sits under a node's label: nothing, one number, or one bar per value (with the largest probability). */
 export type Readout =
   | { readonly kind: 'none'; readonly noteW?: number; readonly note2W?: number }
-  | { readonly kind: 'number'; readonly noteW?: number }
+  | { readonly kind: 'number'; readonly noteW?: number; readonly numberW?: number }
   | { readonly kind: 'bars'; readonly width: number; readonly maxW: number; readonly noteW?: number }
 
 /** A node's label and its readout as one block, in offsets from the node's centre. */
@@ -30,7 +30,10 @@ export interface Block {
   readonly boxes: readonly Box[]
 }
 
-const NUMBER_W = textWidth('0.00', 16) + 4
+/** The width a node's number reserves under its label: a probability of `digits` decimals at 16 px. */
+export function numberWidth(digits = 2): number {
+  return textWidth(`0.${'0'.repeat(digits)}`, 16) + 4
+}
 
 /** The block with its top edge at `top`. */
 function blockAt(top: number, side: Block['side'], labelW: number, readout: Readout): Block {
@@ -49,7 +52,7 @@ function blockAt(top: number, side: Block['side'], labelW: number, readout: Read
   } else if (readout.kind === 'number') {
     numberY = labelY + 22
     noteY = numberY + 19
-    boxes.push(textBox(0, numberY, 'middle', NUMBER_W, 16))
+    boxes.push(textBox(0, numberY, 'middle', readout.numberW ?? numberWidth(), 16))
     if (readout.noteW !== undefined) boxes.push(textBox(0, noteY, 'middle', readout.noteW, 12))
   } else if (readout.kind === 'bars') {
     const chartTop = labelY + BAR_GAP

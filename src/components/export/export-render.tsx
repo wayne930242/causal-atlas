@@ -5,6 +5,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { LocaleProvider, messagesFor } from '../i18n/messages.ts'
 import { originCitations, originSources } from '../model/verdict-rows.ts'
+import { DEFAULT_DIGITS, DigitsScope } from '../shared/digits.ts'
 import type { ExportPanel, ExportSource } from './export-image.ts'
 
 /**
@@ -36,9 +37,12 @@ export function graphExport(
   page: Messages,
   onPage: () => SVGSVGElement | null | undefined,
   draw: () => ReactNode,
+  digits = DEFAULT_DIGITS,
 ): { readonly svg: SVGSVGElement | null; readonly dispose?: () => void } {
   if (locale === page.locale) return { svg: onPage() ?? null }
-  const view = renderDetached(<LocaleProvider locale={locale}>{draw()}</LocaleProvider>)
+  const view = renderDetached(<LocaleProvider locale={locale}>
+      <DigitsScope digits={digits}>{draw()}</DigitsScope>
+    </LocaleProvider>)
   return { svg: view.container.querySelector<SVGSVGElement>('svg.ca-graph'), dispose: view.dispose }
 }
 
@@ -52,7 +56,8 @@ export interface GraphExportParts {
 /**
  * The export of a panel that draws one graph (`svg.ca-graph` inside `wrap`): the graph on the page,
  * or drawn off-screen in `locale` (see {@link graphExport}), with the case's title and sources.
- * `draw` draws the graph in a language's messages; `parts` names the export and lays out its panels.
+ * `draw` draws the graph in a language's messages (its probabilities written to `digits` decimals);
+ * `parts` names the export and lays out its panels.
  * Undefined when there is no graph to export.
  */
 export function singleGraphSource(
@@ -60,11 +65,12 @@ export function singleGraphSource(
   locale: Locale,
   page: Messages,
   wrap: RefObject<HTMLElement | null>,
+  digits: number,
   draw: (m: Messages) => ReactNode,
   parts: (svg: SVGSVGElement, m: Messages) => GraphExportParts,
 ): ExportSource | undefined {
   const m = messagesFor(locale)
-  const { svg, dispose } = graphExport(locale, page, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => draw(m))
+  const { svg, dispose } = graphExport(locale, page, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => draw(m), digits)
   if (svg === null) {
     dispose?.()
     return undefined

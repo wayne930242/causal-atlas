@@ -11,6 +11,7 @@ import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
+import { useDigits } from '../shared/digits.ts'
 import { FigureTabs } from '../shared/FigureTabs.tsx'
 import { Segmented, Tag, Tip } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
@@ -64,6 +65,7 @@ export function AdjustPanel({
   readonly sliderSection: ReactNode
 }) {
   const t = useMessages()
+  const digits = useDigits()
   const { x, y } = spec
   getVariable(c.model, x)
   getVariable(c.model, y)
@@ -93,7 +95,7 @@ export function AdjustPanel({
     />
   )
   const exportSource = (locale: Locale): ExportSource | undefined =>
-    singleGraphSource(c, locale, t, wrap, graph, (svg, m) => ({
+    singleGraphSource(c, locale, t, wrap, digits, graph, (svg, m) => ({
       name: `${c.data.id}-adjust`,
       panels: [{ svg, tags: [{ text: m.adj.by(setLabel(m, set)), tone: 'fg' }] }],
       legend: probLegend(m, c.model, drawn),

@@ -16,6 +16,7 @@ import type { SeeDoPair } from '../model/verdict-rows.ts'
 import { originCitations, originSources } from '../model/verdict-rows.ts'
 import { marginals, priorWithSliders } from '../model/probability-view.ts'
 import { changeNotes, doText, probLegend, probText, phraseOf } from '../model/wording.ts'
+import { DigitsScope, useDigits } from '../shared/digits.ts'
 
 function notesAgainst(
   t: Messages,
@@ -24,8 +25,9 @@ function notesAgainst(
   shown: readonly string[],
   own: string,
   ownNote: string,
+  digits: number,
 ): Record<string, string> {
-  const changed = changeNotes(t, base, now, shown)
+  const changed = changeNotes(t, base, now, shown, undefined, digits)
   const out: Record<string, string> = {}
   for (const id of shown) out[id] = id === own ? ownNote : (changed[id] ?? t.unchanged)
   return out
@@ -44,6 +46,7 @@ export interface ComparePanelProps {
 /** The compare view: the graph observing a value beside the graph setting it by do(), each with the event's probability. */
 export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, exportUrl }: ComparePanelProps) {
   const t = useMessages()
+  const digits = useDigits()
   const root = useRef<HTMLDivElement>(null)
   const [picked, setPicked] = useState(0)
   const pair = pairs[Math.min(picked, pairs.length - 1)]
@@ -78,7 +81,7 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
         shown={shown}
         probs={see}
         dists={seeDist}
-        probNotes={notesAgainst(m, base, see, shown, observedId, m.observed)}
+        probNotes={notesAgainst(m, base, see, shown, observedId, m.observed, digits)}
         observed={[observedId]}
         compact
         interventions={{}}
@@ -92,7 +95,7 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
       shown={shown}
       probs={doP}
       dists={doM.dist}
-      probNotes={notesAgainst(m, base, doP, shown, doId, m.setByDo)}
+      probNotes={notesAgainst(m, base, doP, shown, doId, m.setByDo, digits)}
       interventions={pair.intervene as Assignment}
       removedEdges={removed}
       compact
@@ -106,8 +109,10 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
         ? undefined
         : renderDetached(
             <LocaleProvider locale={locale}>
-              <div data-side="see">{seeGraph(m)}</div>
-              <div data-side="do">{doGraph(m)}</div>
+              <DigitsScope digits={digits}>
+                <div data-side="see">{seeGraph(m)}</div>
+                <div data-side="do">{doGraph(m)}</div>
+              </DigitsScope>
             </LocaleProvider>,
           )
     const scope = view?.container ?? root.current
@@ -116,7 +121,7 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
     const seeSvg = graph('see')
     const doSvg = graph('do')
     if (seeSvg !== null) {
-      panels.push({ svg: seeSvg, tags: [{ text: m.observing(pair.observe), tone: 'outline' }], foot: `${seeExpr} = ${probText(seeValue)}` })
+      panels.push({ svg: seeSvg, tags: [{ text: m.observing(pair.observe), tone: 'outline' }], foot: `${seeExpr} = ${probText(seeValue, digits)}` })
     }
     if (doSvg !== null) {
       panels.push({
@@ -125,7 +130,7 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
           { text: m.afterDo, tone: 'slate' },
           { text: doText(pair.intervene), tone: 'accent', mono: true },
         ],
-        foot: `${doExpr} = ${probText(doValue)}`,
+        foot: `${doExpr} = ${probText(doValue, digits)}`,
         tint: true,
       })
     }
@@ -169,7 +174,7 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
                 <Formula text={seeExpr} />
               </code>
               <p className="ca-big ca-mono" data-testid="see-value">
-                {probText(seeValue)}
+                {probText(seeValue, digits)}
               </p>
             </div>
             <p className="ca-compare-text">
@@ -193,7 +198,7 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
                 <Formula text={doExpr} />
               </code>
               <p className="ca-big ca-mono" data-testid="do-value">
-                {probText(doValue)}
+                {probText(doValue, digits)}
               </p>
             </div>
             <p className="ca-compare-text">

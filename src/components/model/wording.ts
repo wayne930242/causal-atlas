@@ -101,20 +101,19 @@ export function bracketText(a: Assignment): string {
 }
 
 /**
- * A probability as text: two decimals, except that a value within 0.01 of 0 or 1 (and not exactly
- * 0 or 1) gets enough decimals to show two significant digits of its distance from that end, so
- * 0.0001 reads 0.0001 and 0.9999 reads 0.9999 rather than 0.00 and 1.00 (trailing zeros past the
- * second decimal are dropped). Below 1e-6 from an end
- * it reads as a bound.
+ * A probability as text: `digits` decimals (default 2), except that a value within 10^-digits of 0
+ * or 1 (and not exactly 0 or 1) gets enough decimals to show two significant digits of its distance
+ * from that end, so at two decimals 0.0001 reads 0.0001 and 0.9999 reads 0.9999 rather than 0.00 and
+ * 1.00 (trailing zeros past the chosen decimals are dropped). Below 1e-6 from an end it reads as a bound.
  */
-export function probText(p: number): string {
+export function probText(p: number, digits = 2): string {
   if (Number.isNaN(p)) return '—'
-  if (p <= 0 || p >= 1) return fixed(p, 2)
+  if (p <= 0 || p >= 1) return fixed(p, digits)
   const gap = Math.min(p, 1 - p)
-  if (gap >= 0.01) return fixed(p, 2)
+  if (gap >= 10 ** -digits) return fixed(p, digits)
   if (gap < 1e-6) return p < 0.5 ? '<0.000001' : '>0.999999'
-  const digits = Math.ceil(-Math.log10(gap) - 1e-9) + 1
-  return fixed(p, Math.min(digits, 7)).replace(/(\.\d\d\d*?)0+$/, '$1')
+  const places = Math.ceil(-Math.log10(gap) - 1e-9) + 1
+  return fixed(p, Math.min(places, Math.max(7, digits))).replace(new RegExp(`(\\.\\d{${digits}}\\d*?)0+$`), '$1')
 }
 
 /**
@@ -141,13 +140,14 @@ export function changeNotes(
   now: Readonly<Record<string, number>>,
   shown: readonly string[],
   word: (value: string) => string = t.was,
+  digits = 2,
 ): Record<string, string> {
   const out: Record<string, string> = {}
   for (const id of shown) {
     const b = base[id]
     const n = now[id]
     if (b === undefined || n === undefined || Number.isNaN(b) || Number.isNaN(n)) continue
-    if (Math.abs(n - b) >= SAME_PROBABILITY) out[id] = word(probText(b))
+    if (Math.abs(n - b) >= SAME_PROBABILITY) out[id] = word(probText(b, digits))
   }
   return out
 }

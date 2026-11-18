@@ -21,7 +21,7 @@ import {
 import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, intersects, rectBox, segmentHitsBox, shifted, textBox } from './graph-labels.ts'
 import type { Block, Point, Readout } from './signal-shapes.ts'
-import { BAR_LABEL, blockOptions, unit } from './signal-shapes.ts'
+import { BAR_LABEL, blockOptions, numberWidth, unit } from './signal-shapes.ts'
 
 /**
  * Where everything in a signal graph goes, computed apart from drawing it: node positions, each
@@ -53,6 +53,8 @@ export interface SignalGraphInput {
   readonly compact: boolean
   /** The node being dragged and how far it has moved, in px. */
   readonly drag?: { readonly id: string; readonly dx: number; readonly dy: number }
+  /** Decimals of every probability written (default 2). */
+  readonly digits?: number
 }
 
 /** The tag beside a set node: `X←1` for do(), `P(X=1)=0.30` for a stochastic do(), `X=1` observed (`seen`). */
@@ -169,6 +171,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     clamped,
     compact,
     drag,
+    digits = 2,
   } = input
   const prob = probs !== undefined
   const { r: R, col: COL, row: ROW } = graphSpacing(prob, compact)
@@ -201,7 +204,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     if (forced === undefined && soft === undefined && (seen === undefined || evidence)) return undefined
     if (witness !== undefined && id in witness) return undefined
     const text =
-      forced !== undefined ? `${id}←${formatValue(forced)}` : soft !== undefined ? `P(${id}=1)=${probText(soft)}` : `${id}=${formatValue(seen as Value)}`
+      forced !== undefined ? `${id}←${formatValue(forced)}` : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : `${id}=${formatValue(seen as Value)}`
     const w = textWidth(text, 12) + 18
     const left = (grid.get(id)?.col ?? 0) === maxCol
     return { text, left, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
@@ -263,9 +266,9 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     let readout: Readout = { kind: 'none', noteW, note2W: deviant === undefined ? undefined : textWidth(deviant, 11) }
     if (barred(id) && variable.domain.kind === 'finite') {
       const known = (dists?.[id] ?? []).filter((x) => !Number.isNaN(x))
-      const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known))), 11)
+      const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known), digits)), 11)
       readout = { kind: 'bars', width: barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width, maxW, noteW }
-    } else if (prob) readout = { kind: 'number', noteW }
+    } else if (prob) readout = { kind: 'number', noteW, numberW: numberWidth(digits) }
     const labelW = textWidth(idWithName(id, nameOf(id)), 14)
     const touches = (b: Block): number => {
       let n = 0

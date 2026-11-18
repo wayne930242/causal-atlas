@@ -8,6 +8,7 @@ import { useMessages } from '../i18n/messages.ts'
 import type { Stochastic } from '../model/assignments.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import { idWithName, probText, shortLabel } from '../model/wording.ts'
+import { useDigits } from '../shared/digits.ts'
 import { Tip } from '../shared/parts.tsx'
 import { sub } from '../text/svg-text.tsx'
 import { textWidth } from '../text/text-measure.ts'
@@ -106,6 +107,7 @@ export function SignalGraph(props: SignalGraphProps) {
     onPick,
   } = props
   const t = useMessages()
+  const digits = useDigits()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
   const { drag, pressing, moveDrag, endDrag, cancelDrag, nodeHandlers } = useNodeGestures(svgRef, onMove)
@@ -159,6 +161,7 @@ export function SignalGraph(props: SignalGraphProps) {
       clamped,
       compact: props.compact === true,
       drag,
+      digits,
     },
     t,
   )
@@ -256,13 +259,13 @@ export function SignalGraph(props: SignalGraphProps) {
     // A non-boolean node shows one bar per value, so each value gets its own number.
     const bars = barred(id) && variable.domain.kind === 'finite' ? variable.domain.values : undefined
     const dist = dists?.[id]
-    const barText = (i: number): string => `P(${id}=${formatValue((bars ?? [])[i])})=${probText(dist?.[i] ?? Number.NaN)}`
+    const barText = (i: number): string => `P(${id}=${formatValue((bars ?? [])[i])})=${probText(dist?.[i] ?? Number.NaN, digits)}`
     const state = prob
       ? bars !== undefined
         ? bars.map((_, i) => barText(i)).join(', ')
-        : `P(${id}=1) ${probText(pv ?? Number.NaN)}`
+        : `P(${id}=1) ${probText(pv ?? Number.NaN, digits)}`
       : t.nodeValue(text)
-    const forcedText = forced !== undefined ? formatValue(forced) : soft !== undefined ? `P(${id}=1)=${probText(soft)}` : undefined
+    const forcedText = forced !== undefined ? formatValue(forced) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : undefined
     const seen = observedValues[id]
     const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen))
     // A multi-valued node does not flip: intervening on it sets a value and opens a control to pick
@@ -448,7 +451,7 @@ export function SignalGraph(props: SignalGraphProps) {
           ? <BarChart id={id} labels={bars.map(formatValue)} dist={dist} block={block} barText={barText} />
           : prob && (
               <text y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num" data-readout={id}>
-                {probText(pv ?? Number.NaN)}
+                {probText(pv ?? Number.NaN, digits)}
               </text>
             )}
         {prob && probNotes?.[id] !== undefined && hold === undefined && (

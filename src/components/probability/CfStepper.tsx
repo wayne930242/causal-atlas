@@ -5,6 +5,7 @@ import type { Prior } from '../../engine/index.ts'
 import { formatValue } from '../../engine/values.ts'
 import type { CfStepNumber, CounterfactualSpec } from './cf-steps.ts'
 import { cfText, cfView } from './cf-steps.ts'
+import { useDigits } from '../shared/digits.ts'
 import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
@@ -39,10 +40,11 @@ const STEPS: readonly CfStepNumber[] = [1, 2, 3]
  */
 export function CfStepper({ c, prior, shown, spec, actionLabel, initialStep = 1, sliderSection, exportUrl }: CfStepperProps) {
   const t = useMessages()
+  const digits = useDigits()
   const [step, setStep] = useState<CfStepNumber>(() => (STEPS.includes(initialStep as CfStepNumber) ? (initialStep as CfStepNumber) : 1))
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
-  const view = cfView(t, c, prior, spec, shown)
+  const view = cfView(t, c, prior, spec, shown, digits)
   const g = view.graphs[step]
   // `X=1 and Y=1` reads `X=1, Y=1` in the head and the table.
   const evidence = spec.evidence.replace(/\s+and\s+/g, ', ')
@@ -64,7 +66,7 @@ export function CfStepper({ c, prior, shown, spec, actionLabel, initialStep = 1,
     />
   )
   const exportSource = (locale: Locale): ExportSource | undefined =>
-    singleGraphSource(c, locale, t, wrap, (m) => graph(m, narrow), (svg, m) => ({
+    singleGraphSource(c, locale, t, wrap, digits, (m) => graph(m, narrow), (svg, m) => ({
       name: `${c.data.id}-counterfactual-${step}`,
       panels: [
         {

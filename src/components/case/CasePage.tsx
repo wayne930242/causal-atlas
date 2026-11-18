@@ -3,6 +3,7 @@ import { getCase } from '../../data/index.ts'
 import type { Assignment } from '../../engine/index.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
+import { DigitsScope } from '../shared/digits.ts'
 import { useModel } from '../model/model-state.ts'
 import { EquationPanel } from '../panels/EquationBox.tsx'
 import { GraphBox } from '../panels/GraphBox.tsx'
@@ -31,6 +32,14 @@ export interface CasePageProps {
   readonly next?: { readonly href: string; readonly label: string }
   /** Link in exported images' watermark. Default https://wayneh.tw/causal/. */
   readonly exportUrl?: string
+  /**
+   * Decimals of the probability under each node (and a stochastic do()'s tag, a bar chart's top
+   * value and the 原本 notes): a whole number from 1 to 6, default 2. Set it to the digits the
+   * text quotes, e.g. 3 for 0.175; a number within 10^-digits of 0 or 1 still gets two significant
+   * digits of its distance from that end. Equation, table and slider numbers keep their own
+   * precision.
+   */
+  readonly digits?: number
   /** Interface and case language. Default: the surrounding LocaleProvider's, else zh-TW. */
   readonly locale?: Locale
 }
@@ -49,15 +58,17 @@ function notationFor(step: number, fixed?: UiNotation): UiNotation {
  * Direction 1 case page: story → graph → do (or probabilities) → verdicts.
  * Each step adds one thing; 補充 stays closed until asked.
  */
-export function CasePage({ locale, ...props }: CasePageProps) {
+export function CasePage({ locale, digits, ...props }: CasePageProps) {
   return (
     <LocaleScope locale={locale}>
-      <CasePageBody {...props} />
+      <DigitsScope digits={digits}>
+        <CasePageBody {...props} />
+      </DigitsScope>
     </LocaleScope>
   )
 }
 
-function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl, defaultNotation }: Omit<CasePageProps, 'locale'>) {
+function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl, defaultNotation }: Omit<CasePageProps, 'locale' | 'digits'>) {
   const t = useMessages()
   const c = getCase(caseId)
   const probabilistic = c.context === undefined

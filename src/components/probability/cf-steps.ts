@@ -120,7 +120,7 @@ function descendants(edges: readonly Edge[], ids: readonly string[]): Set<string
  * not yet recomputed; 3 prediction, P(V in the changed world | evidence). The table lists every
  * background with its prior, its posterior and, for the kept ones, the event variable afterwards.
  */
-export function cfView(t: Messages, c: LoadedCase, prior: Prior, spec: CounterfactualSpec, shown: readonly string[]): CfView {
+export function cfView(t: Messages, c: LoadedCase, prior: Prior, spec: CounterfactualSpec, shown: readonly string[], digits = 2): CfView {
   const { model } = c
   const result = counterfactual(model, prior, spec)
   const base = marginals(model, prior)
@@ -161,12 +161,12 @@ export function cfView(t: Messages, c: LoadedCase, prior: Prior, spec: Counterfa
   for (const id of twoValued) {
     const a = abduced.p[id]
     const b = predicted.p[id]
-    if (a !== undefined && b !== undefined && Math.abs(a - b) >= SAME_PROBABILITY) actually[id] = t.actually(probText(a))
+    if (a !== undefined && b !== undefined && Math.abs(a - b) >= SAME_PROBABILITY) actually[id] = t.actually(probText(a, digits))
   }
 
   const observed = evidenceAssignment(c, spec.evidence)
   const graphs: Record<CfStepNumber, CfGraph> = {
-    1: { probs: abduced.p, dists: abduced.dist, observed, interventions: {}, removedEdges: [], notes: changeNotes(t, base.p, abduced.p, twoValued) },
+    1: { probs: abduced.p, dists: abduced.dist, observed, interventions: {}, removedEdges: [], notes: changeNotes(t, base.p, abduced.p, twoValued, undefined, digits) },
     2: { probs: acted, dists: abduced.dist, observed: {}, interventions: spec.do, removedEdges, notes: pending },
     3: { probs: predicted.p, dists: predicted.dist, observed: {}, interventions: spec.do, removedEdges, notes: actually },
   }

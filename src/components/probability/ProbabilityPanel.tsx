@@ -9,6 +9,7 @@ import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
 import type { UiNotation } from '../model/notation.ts'
+import { DigitsScope, useDigits } from '../shared/digits.ts'
 import { FigureTabs } from '../shared/FigureTabs.tsx'
 import { DocProblems, Segmented, Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
@@ -70,20 +71,30 @@ export interface ProbabilityOptions {
   readonly initialStep?: number
   /** Link in the exported image's watermark. */
   readonly exportUrl?: string
+  /**
+   * Decimals of the probability under each node (and a stochastic do()'s tag, a bar chart's top
+   * value, the 原本 notes, and in `compare` the two result numbers): a whole number from 1 to 6.
+   * Default 2. Set it to the digits the text quotes, e.g. 3 for 0.175; a number within 10^-digits
+   * of 0 or 1 still gets two significant digits of its distance from that end. Equation and table
+   * numbers keep their own precision.
+   */
+  readonly digits?: number
   /** Interface language. Default: the surrounding LocaleProvider's, else zh-TW. */
   readonly locale?: Locale
 }
 
 /** Direction 1 probability mode: per-exogenous p sliders; node fill is P(V=1); observing vs do() side by side. */
-export function ProbabilityPanel({ locale, ...props }: ProbabilityPanelProps) {
+export function ProbabilityPanel({ locale, digits, ...props }: ProbabilityPanelProps) {
   return (
     <LocaleScope locale={locale}>
-      <ProbabilityPanelResolved {...props} />
+      <DigitsScope digits={digits}>
+        <ProbabilityPanelResolved {...props} />
+      </DigitsScope>
     </LocaleScope>
   )
 }
 
-function ProbabilityPanelResolved({ caseId, doc, ...props }: Omit<ProbabilityPanelProps, 'locale'>) {
+function ProbabilityPanelResolved({ caseId, doc, ...props }: Omit<ProbabilityPanelProps, 'locale' | 'digits'>) {
   const resolved = useCaseOrDoc(caseId, doc)
   if (!resolved.ok) return <DocProblems problems={resolved.problems} />
   return <ProbabilityPanelFor c={resolved.c} {...props} />
@@ -118,6 +129,7 @@ export function ProbabilityPanelFor({
   onSliders?: (next: Readonly<Record<string, number>>) => void
 }) {
   const t = useMessages()
+  const digits = useDigits()
   const [ownSliders, setOwnSliders] = useState<Readonly<Record<string, number>>>(() => defaultSliders(c))
   const sliders = heldSliders ?? ownSliders
   const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
@@ -195,7 +207,7 @@ export function ProbabilityPanelFor({
     />
   )
   const exportSource = (locale: Locale): ExportSource | undefined =>
-    singleGraphSource(c, locale, t, wrap, graph, (svg, m) => ({
+    singleGraphSource(c, locale, t, wrap, digits, graph, (svg, m) => ({
       name: `${c.data.id}-probability`,
       panels: [{ svg, tags: [{ text: showValues ? m.actualWorld : m.probability, tone: 'fg' as const }] }],
       legend: showValues ? m.valueLegend : probLegend(m, c.model, shown),

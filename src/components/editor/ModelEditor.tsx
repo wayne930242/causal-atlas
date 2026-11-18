@@ -8,6 +8,7 @@ import { CaseInfo, ModelInfo } from './CaseInfo.tsx'
 import { CaseList, CaseSheet } from './CaseList.tsx'
 import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, draftIssueMessage, errorMessage, useMessages } from '../i18n/messages.ts'
+import { DigitsScope } from '../shared/digits.ts'
 import type { DoState, ModelWorld } from '../model/model-state.ts'
 import { solve } from '../model/model-state.ts'
 import type { UiNotation } from '../model/notation.ts'
@@ -59,6 +60,14 @@ export interface ModelEditorProps {
   readonly shareHref?: (value: string) => string
   /** Link in exported images' watermark. */
   readonly exportUrl?: string
+  /**
+   * Decimals of the probability under each node (and a stochastic do()'s tag, a bar chart's top
+   * value and the 原本 notes): a whole number from 1 to 6, default 2. Set it to the digits the
+   * text quotes, e.g. 3 for 0.175; a number within 10^-digits of 0 or 1 still gets two significant
+   * digits of its distance from that end. Equation, table and slider numbers keep their own
+   * precision.
+   */
+  readonly digits?: number
   /** Interface language; also the title a bundled case starts with. Default: the surrounding LocaleProvider's, else zh-TW. */
   readonly locale?: Locale
   /** Links per bundled case id, listed in the case panel as 講義中用到這個案例 (e.g. the lessons that use it). */
@@ -93,10 +102,12 @@ function startKey(id: string, extras: readonly ExtraModel[]): string {
  * Build a structural causal model yourself: variables, equations, context or priors, defaults,
  * layout. Draws it with the same graph and equations as the case pages; shares it by link or JSON.
  */
-export function ModelEditor({ locale, ...props }: ModelEditorProps) {
+export function ModelEditor({ locale, digits, ...props }: ModelEditorProps) {
   return (
     <LocaleScope locale={locale}>
-      <EditorBody {...props} />
+      <DigitsScope digits={digits}>
+        <EditorBody {...props} />
+      </DigitsScope>
     </LocaleScope>
   )
 }
@@ -115,7 +126,7 @@ function EditorBody({
   modelsLabel,
   syncUrl = true,
   tasks = NO_TASKS,
-}: Omit<ModelEditorProps, 'locale'>) {
+}: Omit<ModelEditorProps, 'locale' | 'digits'>) {
   const t = useMessages()
   const e = t.editor
   const [start] = useState(() => startDraft(initial, t, extraModels, initialDoc))
