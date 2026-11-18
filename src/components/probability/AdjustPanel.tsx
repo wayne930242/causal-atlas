@@ -11,7 +11,8 @@ import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
-import { Disclosure, Segmented, Tag, Tip } from '../shared/parts.tsx'
+import { FigureTabs } from '../shared/FigureTabs.tsx'
+import { Segmented, Tag, Tip } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
@@ -97,6 +98,73 @@ export function AdjustPanel({
       panels: [{ svg, tags: [{ text: m.adj.by(setLabel(m, set)), tone: 'fg' }] }],
       legend: probLegend(m, c.model, drawn),
     }))
+  const table = (
+    <div className="ca-table-wrap">
+      <table className="ca-table ca-adj-table">
+        <thead>
+          <tr>
+            <th scope="col">{t.adj.group}</th>
+            <th scope="col" className="ca-num">
+              {t.adj.pGroup}
+            </th>
+            {view.xs.map((_, i) => (
+              <th key={i} scope="col" className="ca-num">
+                <span className="ca-adj-formula">
+                  <Formula text={`P(${event} | ${xText(i)}, ${t.adj.group})`} />
+                </span>
+                <span className="ca-adj-short">
+                  <Formula text={xText(i)} />
+                </span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {view.strata.map((s) => (
+            <tr key={JSON.stringify(s.values)} data-empty={s.weight > 0 ? undefined : 'true'}>
+              <th scope="row">
+                <Formula text={set.length === 0 ? t.adj.all : set.map((id) => `${id}=${formatValue(s.values[id])}`).join(', ')} />
+              </th>
+              <td className="ca-mono ca-num">{tableNumber(s.weight)}</td>
+              {s.given.map((g, i) => (
+                <td key={i} className="ca-mono ca-num">
+                  {s.weight > 0 ? tableNumber(g) : '—'}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="ca-adj-sum">
+            <th scope="row" colSpan={2}>
+              {t.adj.weighted}{' '}
+              <span className="ca-adj-formula">
+                <Formula text={`Σ P(${event} | ${x}, ${t.adj.group}) P(${t.adj.group})`} />
+              </span>
+            </th>
+            {view.sums.map((s, i) => (
+              <td key={i} className="ca-mono ca-num" data-adj-sum={i}>
+                {tableNumber(s)}
+              </td>
+            ))}
+          </tr>
+          <tr>
+            <th scope="row" colSpan={2}>
+              {t.adj.doRow}{' '}
+              <span className="ca-adj-formula">
+                <Formula text={`P(${event} | do(${x}))`} />
+              </span>
+            </th>
+            {view.doValues.map((d, i) => (
+              <td key={i} className="ca-mono ca-num" data-adj-do={i}>
+                {tableNumber(d)}
+              </td>
+            ))}
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  )
   return (
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="adjust" lang={t.locale}>
       <div className="ca-box ca-graph-box">
@@ -121,75 +189,14 @@ export function AdjustPanel({
           </span>{' '}
           <strong>{view.equal ? t.adj.equal : t.adj.differ}</strong> <Tip tip={t.adj.tip} label={t.moreInfo} />
         </p>
-        <div className="ca-table-wrap">
-          <table className="ca-table ca-adj-table">
-            <thead>
-              <tr>
-                <th scope="col">{t.adj.group}</th>
-                <th scope="col" className="ca-num">
-                  {t.adj.pGroup}
-                </th>
-                {view.xs.map((_, i) => (
-                  <th key={i} scope="col" className="ca-num">
-                    <span className="ca-adj-formula">
-                      <Formula text={`P(${event} | ${xText(i)}, ${t.adj.group})`} />
-                    </span>
-                    <span className="ca-adj-short">
-                      <Formula text={xText(i)} />
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {view.strata.map((s) => (
-                <tr key={JSON.stringify(s.values)} data-empty={s.weight > 0 ? undefined : 'true'}>
-                  <th scope="row">
-                    <Formula text={set.length === 0 ? t.adj.all : set.map((id) => `${id}=${formatValue(s.values[id])}`).join(', ')} />
-                  </th>
-                  <td className="ca-mono ca-num">{tableNumber(s.weight)}</td>
-                  {s.given.map((g, i) => (
-                    <td key={i} className="ca-mono ca-num">
-                      {s.weight > 0 ? tableNumber(g) : '—'}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="ca-adj-sum">
-                <th scope="row" colSpan={2}>
-                  {t.adj.weighted}{' '}
-                  <span className="ca-adj-formula">
-                    <Formula text={`Σ P(${event} | ${x}, ${t.adj.group}) P(${t.adj.group})`} />
-                  </span>
-                </th>
-                {view.sums.map((s, i) => (
-                  <td key={i} className="ca-mono ca-num" data-adj-sum={i}>
-                    {tableNumber(s)}
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <th scope="row" colSpan={2}>
-                  {t.adj.doRow}{' '}
-                  <span className="ca-adj-formula">
-                    <Formula text={`P(${event} | do(${x}))`} />
-                  </span>
-                </th>
-                {view.doValues.map((d, i) => (
-                  <td key={i} className="ca-mono ca-num" data-adj-do={i}>
-                    {tableNumber(d)}
-                  </td>
-                ))}
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+        <FigureTabs
+          initial="strata"
+          blocks={[
+            { id: 'strata', label: t.tab.strata, children: table },
+            { id: 'probabilities', label: t.probEquations, children: sliderSection },
+          ]}
+        />
       </div>
-      <Disclosure kicker="" title={t.probEquations} className="ca-compare-more">
-        {sliderSection}
-      </Disclosure>
     </div>
   )
 }

@@ -16,6 +16,8 @@ import { sub } from '../text/svg-text.tsx'
 import { originCitations, originSources } from '../model/verdict-rows.ts'
 import type { UiNotation } from '../model/notation.ts'
 import { notations } from '../model/notation.ts'
+import { TabButton, TabPanel } from '../shared/FigureTabs.tsx'
+import { useTabs } from '../shared/use-tabs.ts'
 import { DocProblems, Arrow, Progress, Segmented } from '../shared/parts.tsx'
 import { Rich } from '../text/typeset.tsx'
 import { columnOrder, edgeLive, edgePolarity, shownEdges } from '../graph/graph-layout.ts'
@@ -122,7 +124,7 @@ function WorldLanesFor({
   const doAssign = interventions ?? preset?.interventions
   if (doAssign === undefined) throw new Error(`WorldLanes: case ${c.data.id} has no preset; pass interventions`)
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
-  const [showEq, setShowEq] = useState(false)
+  const tabs = useTabs(['equations'])
   const [notation, setNotation] = useState<UiNotation>(defaultNotation ?? 'propositional')
 
   const shown = useMemo(() => columnOrder(c, shownVariables(c)), [c])
@@ -486,9 +488,9 @@ function WorldLanesFor({
       <div className="ca-lanes-foot">
         <div className="ca-lanes-foot-left">
           <Progress step={step} total={total} />
-          <button type="button" className="ca-link" aria-expanded={showEq} onClick={() => setShowEq((s) => !s)}>
-            {showEq ? t.lanes.hideEquations : t.lanes.showEquations}
-          </button>
+          <TabButton tabs={tabs} id="equations" className="ca-link">
+            {tabs.open === 'equations' ? t.lanes.hideEquations : t.lanes.showEquations}
+          </TabButton>
           <ExportMenu url={exportUrl} source={exportSource} origins={originCitations(c)} />
         </div>
         <div className="ca-lanes-foot-right">
@@ -509,19 +511,10 @@ function WorldLanesFor({
           )}
         </div>
       </div>
-      {showEq && (
-        <div className="ca-lanes-eq">
-          <div className="ca-eq-head">
-            <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={setNotation} />
-            <CopyLatex
-              c={c}
-              shown={shown}
-              notation={notation}
-              values={visible[visible.length - 1].values}
-              interventions={visible[visible.length - 1].intervened}
-            />
-          </div>
-          <Equations
+      <TabPanel tabs={tabs} id="equations" className="ca-lanes-eq">
+        <div className="ca-eq-head">
+          <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={setNotation} />
+          <CopyLatex
             c={c}
             shown={shown}
             notation={notation}
@@ -529,7 +522,14 @@ function WorldLanesFor({
             interventions={visible[visible.length - 1].intervened}
           />
         </div>
-      )}
+        <Equations
+          c={c}
+          shown={shown}
+          notation={notation}
+          values={visible[visible.length - 1].values}
+          interventions={visible[visible.length - 1].intervened}
+        />
+      </TabPanel>
     </div>
   )
 }

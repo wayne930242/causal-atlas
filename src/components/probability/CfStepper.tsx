@@ -10,7 +10,8 @@ import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
-import { Disclosure, Segmented, Tag } from '../shared/parts.tsx'
+import { FigureTabs } from '../shared/FigureTabs.tsx'
+import { Segmented, Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Tex } from '../text/Tex.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
@@ -108,58 +109,6 @@ export function CfStepper({ c, prior, shown, spec, actionLabel, initialStep = 1,
         <p className="ca-cf-caption">
           <Rich text={t.cf.caption(step, evidence, assignmentText(spec.do))} ids={ids} />
         </p>
-      </div>
-      <div className="ca-box ca-cf-table-box">
-        <table className="ca-cf-table">
-          <thead>
-            <tr>
-              <th scope="col">{t.cf.background(c.model.exogenous)}</th>
-              <th scope="col">{t.cf.prior}</th>
-              <th scope="col">
-                <Rich text={t.cf.given(evidence)} ids={ids} />
-              </th>
-              {step === 3 && (
-                <th scope="col">
-                  <Rich text={t.cf.after(doText(spec.do), view.eventVariable ?? spec.event)} ids={ids} />
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {view.rows.map((r) => {
-              const zero = r.posterior === 0
-              const holds = step === 3 && r.eventHolds === true && !zero
-              return (
-                <tr
-                  key={assignmentText(r.context)}
-                  data-background={assignmentText(r.context)}
-                  data-zero={zero ? 'true' : undefined}
-                  data-event={holds ? 'true' : undefined}
-                  className={`${zero ? 'is-zero' : ''}${holds ? ' is-event' : ''}`}
-                >
-                  <th scope="row">
-                    <Formula text={assignmentText(r.context)} />
-                  </th>
-                  <td className="ca-mono">{cfText(r.prior)}</td>
-                  <td className="ca-mono" data-posterior={fixed(r.posterior, 4)}>
-                    {zero ? '0' : cfText(r.posterior)}
-                    {!zero && <span className="ca-cf-bar" style={{ width: `${Math.max(2, Math.round(r.posterior * 60))}px` }} aria-hidden="true" />}
-                  </td>
-                  {step === 3 && (
-                    <td className="ca-mono" data-cf-value="">
-                      {zero ? '—' : r.after !== undefined ? formatValue(r.after) : r.eventHolds === true ? t.holds : '—'}
-                    </td>
-                  )}
-                </tr>
-              )
-            })}
-            {view.hiddenZero > 0 && (
-              <tr className="is-zero" data-hidden-zero={view.hiddenZero}>
-                <td colSpan={step === 3 ? 4 : 3}>{t.cf.hiddenZero(view.hiddenZero)}</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
         {step === 3 && (
           <div className="ca-cf-result">
             <code className="ca-mono ca-muted ca-small" data-testid="cf-expression">
@@ -170,10 +119,69 @@ export function CfStepper({ c, prior, shown, spec, actionLabel, initialStep = 1,
             </p>
           </div>
         )}
+        <FigureTabs
+          initial="background"
+          blocks={[
+            {
+              id: 'background',
+              label: t.tab.background,
+              children: (
+                <table className="ca-cf-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">{t.cf.background(c.model.exogenous)}</th>
+                      <th scope="col">{t.cf.prior}</th>
+                      <th scope="col">
+                        <Rich text={t.cf.given(evidence)} ids={ids} />
+                      </th>
+                      {step === 3 && (
+                        <th scope="col">
+                          <Rich text={t.cf.after(doText(spec.do), view.eventVariable ?? spec.event)} ids={ids} />
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {view.rows.map((r) => {
+                      const zero = r.posterior === 0
+                      const holds = step === 3 && r.eventHolds === true && !zero
+                      return (
+                        <tr
+                          key={assignmentText(r.context)}
+                          data-background={assignmentText(r.context)}
+                          data-zero={zero ? 'true' : undefined}
+                          data-event={holds ? 'true' : undefined}
+                          className={`${zero ? 'is-zero' : ''}${holds ? ' is-event' : ''}`}
+                        >
+                          <th scope="row">
+                            <Formula text={assignmentText(r.context)} />
+                          </th>
+                          <td className="ca-mono">{cfText(r.prior)}</td>
+                          <td className="ca-mono" data-posterior={fixed(r.posterior, 4)}>
+                            {zero ? '0' : cfText(r.posterior)}
+                            {!zero && <span className="ca-cf-bar" style={{ width: `${Math.max(2, Math.round(r.posterior * 60))}px` }} aria-hidden="true" />}
+                          </td>
+                          {step === 3 && (
+                            <td className="ca-mono" data-cf-value="">
+                              {zero ? '—' : r.after !== undefined ? formatValue(r.after) : r.eventHolds === true ? t.holds : '—'}
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
+                    {view.hiddenZero > 0 && (
+                      <tr className="is-zero" data-hidden-zero={view.hiddenZero}>
+                        <td colSpan={step === 3 ? 4 : 3}>{t.cf.hiddenZero(view.hiddenZero)}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              ),
+            },
+            { id: 'probabilities', label: t.probEquations, children: sliderSection },
+          ]}
+        />
       </div>
-      <Disclosure kicker="" title={t.probEquations} className="ca-compare-more">
-        {sliderSection}
-      </Disclosure>
     </div>
   )
 }

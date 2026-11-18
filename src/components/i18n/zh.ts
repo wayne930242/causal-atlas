@@ -283,6 +283,8 @@ export const ZH = {
   // probability panel
   unchanged: '不變',
   probEquations: '式子和機率',
+  tabsLabel: '圖下方的內容',
+  tab: { verdicts: '判定', dsep: 'd-分離', strata: '分組表', background: '背景表' },
   jointOnly: '這個案例的機率是整張聯合分布，不能逐一調整。',
   sliderLabel: (label: string): string => `${label}的機率`,
   nodesShow: '節點顯示',

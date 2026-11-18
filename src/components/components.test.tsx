@@ -52,7 +52,10 @@ describe('CausalPlayground', () => {
     const { container } = render(<CausalPlayground caseId="rock-throwing" />)
     const eqs = (): string =>
       [...container.querySelectorAll('.ca-eqs .ca-tex')].map((e) => e.getAttribute('data-text') ?? '').join('\n')
+    // The equations start closed under the graph, still in the page.
+    expect(screen.getByRole('button', { name: '式子' }).getAttribute('aria-expanded')).toBe('false')
     expect(eqs()).toContain('BH ↔ (BT ∧ ¬SH)')
+    fireEvent.click(screen.getByRole('button', { name: '式子' }))
     fireEvent.click(screen.getByRole('button', { name: '數學式' }))
     expect(screen.getByRole('button', { name: '數學式' }).getAttribute('aria-pressed')).toBe('true')
     expect(eqs()).toContain('BH = BT·(1−SH)')
@@ -137,7 +140,7 @@ describe('CasePage verdicts follow the sliders', () => {
     const { container } = render(<CasePage caseId="newcomb" initialStep={4} />)
     const cdt = (): string => container.querySelector('.ca-decision-row[data-theory="cdt"]')?.textContent ?? ''
     expect(cdt()).toContain('500000')
-    fireEvent.click(container.querySelector('.ca-compare-more .ca-disclosure-head') as Element)
+    fireEvent.click(container.querySelector('button[data-tab="probabilities"]') as Element)
     const slider = container.querySelector('#ca-slider-newcomb-D') as HTMLInputElement
     fireEvent.change(slider, { target: { value: '0.1' } })
     expect(cdt()).toContain('108000')

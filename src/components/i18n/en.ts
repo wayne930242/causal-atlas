@@ -191,6 +191,8 @@ export const EN: Messages = {
 
   unchanged: 'unchanged',
   probEquations: 'Equations and probabilities',
+  tabsLabel: 'Under the figure',
+  tab: { verdicts: 'Verdicts', dsep: 'd-separation', strata: 'Strata', background: 'Backgrounds' },
   jointOnly: "This case's probabilities form one joint distribution and cannot be set one by one.",
   sliderLabel: (label) => `Probability: ${label}`,
   nodesShow: 'Nodes show',

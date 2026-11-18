@@ -10,7 +10,7 @@ import type { Stochastic } from '../model/assignments.ts'
 
 const NONE: Stochastic = {}
 
-export interface EquationBoxProps {
+export interface EquationPanelProps {
   readonly c: LoadedCase
   readonly world: ModelWorld
   readonly interventions: Assignment
@@ -27,11 +27,28 @@ export interface EquationBoxProps {
   readonly prior?: Prior
 }
 
-/** The equations box: its head with the notation switch and the LaTeX copy, then the equations. */
-export function EquationBox({ c, world, interventions, stochastic = NONE, notation, onNotation, defaults, observed, reading, prior }: EquationBoxProps) {
+/** The equations with the notation switch and the LaTeX copy above them: the block behind a figure's 式子 tab. */
+export function EquationPanel({ c, world, interventions, stochastic = NONE, notation, onNotation, defaults, observed, reading, prior }: EquationPanelProps) {
   const counterfactual = reading === 'counterfactual' && world.probs !== undefined
   const eq = { c, shown: world.shown, notation, values: world.values, interventions, stochastic, observed, prior, counterfactual }
   const t = useMessages()
+  return (
+    <div className="ca-eq-panel">
+      <div className="ca-eq-head">
+        <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
+        <CopyLatex {...eq} />
+      </div>
+      <Equations {...eq} defaults={defaults} />
+    </div>
+  )
+}
+
+/** The equations in a box of their own, always open: the editor's, where they are the thing being edited. */
+export function EquationBox(props: EquationPanelProps) {
+  const t = useMessages()
+  const { c, world, interventions, stochastic = NONE, notation, onNotation, defaults, observed, reading, prior } = props
+  const counterfactual = reading === 'counterfactual' && world.probs !== undefined
+  const eq = { c, shown: world.shown, notation, values: world.values, interventions, stochastic, observed, prior, counterfactual }
   return (
     <div className="ca-box ca-eq-box">
       <div className="ca-eq-head">

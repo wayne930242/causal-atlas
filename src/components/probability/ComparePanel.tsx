@@ -8,7 +8,8 @@ import type { ExportPanel, ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { LocaleProvider, messagesFor, useMessages } from '../i18n/messages.ts'
-import { Disclosure, Segmented, Tag } from '../shared/parts.tsx'
+import { FigureTabs } from '../shared/FigureTabs.tsx'
+import { Segmented, Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import type { SeeDoPair } from '../model/verdict-rows.ts'
@@ -201,9 +202,7 @@ export function ComparePanel({ c, pairs, prior, base, shown, sliderSection, expo
           </div>
         </div>
       </div>
-      <Disclosure kicker="" title={t.probEquations} className="ca-compare-more">
-        {sliderSection}
-      </Disclosure>
+      <FigureTabs blocks={[{ id: 'probabilities', label: t.probEquations, children: sliderSection }]} />
     </div>
   )
 }

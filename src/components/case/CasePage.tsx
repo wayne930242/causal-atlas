@@ -4,7 +4,7 @@ import type { Assignment } from '../../engine/index.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
 import { useModel } from '../model/model-state.ts'
-import { EquationBox } from '../panels/EquationBox.tsx'
+import { EquationPanel } from '../panels/EquationBox.tsx'
 import { GraphBox } from '../panels/GraphBox.tsx'
 import type { UiNotation } from '../model/notation.ts'
 import { Arrow, Progress } from '../shared/parts.tsx'
@@ -214,14 +214,22 @@ function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, les
                 witness={witness}
                 legend
                 exportUrl={exportUrl}
-              />
-              <EquationBox
-                c={c}
-                world={model.world}
-                interventions={model.interventions}
-                stochastic={model.stochastic}
-                notation={model.notation}
-                onNotation={model.setNotation}
+                blocks={[
+                  {
+                    id: 'equations',
+                    label: t.equations,
+                    children: (
+                      <EquationPanel
+                        c={c}
+                        world={model.world}
+                        interventions={model.interventions}
+                        stochastic={model.stochastic}
+                        notation={model.notation}
+                        onNotation={model.setNotation}
+                      />
+                    ),
+                  },
+                ]}
               />
             </>
           )}

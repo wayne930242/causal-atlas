@@ -11,6 +11,8 @@ import { useMessages } from '../i18n/messages.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import type { DoState, ModelWorld, Reading } from '../model/model-state.ts'
 import { observedNext, solve, toggled, withProbability, withValue } from '../model/model-state.ts'
+import type { FigureBlock } from '../shared/FigureTabs.tsx'
+import { FigureTabs } from '../shared/FigureTabs.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
@@ -47,6 +49,10 @@ export interface GraphBoxProps {
   readonly embedCode?: () => string
   /** Drawn inside the graph's frame under the legend (the playground's hint and step buttons); not exported. */
   readonly foot?: ReactNode
+  /** The blocks under the graph (verdicts, a table, the equations), behind one row of tab buttons (see `FigureTabs`). */
+  readonly blocks?: readonly FigureBlock[]
+  /** The block open at first, one of `blocks`' ids; none by default. */
+  readonly initialBlock?: string
   /** Called when the reader asks for the prior or actual world back (「回到原本」 or the chip's ×). */
   readonly onReset?: () => void
   /** Notes under nodes that replace the 原本 v notes of a probability graph. */
@@ -106,6 +112,8 @@ export function GraphBox({
   onMove,
   embedCode,
   foot,
+  blocks,
+  initialBlock,
   onReset,
   notes,
   reading = 'interventional',
@@ -258,6 +266,7 @@ export function GraphBox({
       )}
       {legend === true && <p className="ca-legend">{legendFor(t)}</p>}
       {foot}
+      {blocks !== undefined && <FigureTabs blocks={blocks} initial={initialBlock} />}
     </div>
   )
 }

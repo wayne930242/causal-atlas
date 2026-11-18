@@ -9,6 +9,7 @@ import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
 import type { UiNotation } from '../model/notation.ts'
+import { FigureTabs } from '../shared/FigureTabs.tsx'
 import { DocProblems, Segmented, Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import type { AdjustSpec } from './AdjustPanel.tsx'
@@ -24,7 +25,7 @@ import { shownVariables } from '../model/shown-variables.ts'
 import { defaultSliders, marginals, priorWithSliders } from '../model/probability-view.ts'
 import { probLegend } from '../model/wording.ts'
 import { ComparePanel } from './ComparePanel.tsx'
-import { SliderSection } from './SliderSection.tsx'
+import { SliderBlock, SliderEquations, SliderSection } from './SliderSection.tsx'
 
 export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual' | 'adjust' | 'rules'
 
@@ -138,7 +139,7 @@ export function ProbabilityPanelFor({
     const pairs: readonly SeeDoPair[] = pair === undefined ? (own === undefined ? [] : [own]) : isPairList(pair) ? pair : [pair]
     if (pairs.length === 0) throw new Error(`case ${c.data.id} has no observe/do pair for the comparison`)
     return <ComparePanel c={c} pairs={pairs} prior={prior} base={base} shown={shown} exportUrl={exportUrl} sliderSection={
-      <SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />
+      <SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} />
     } />
   }
 
@@ -151,7 +152,7 @@ export function ProbabilityPanelFor({
         spec={adjust}
         shown={shown}
         exportUrl={exportUrl}
-        sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />}
+        sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} />}
       />
     )
   }
@@ -172,7 +173,7 @@ export function ProbabilityPanelFor({
         actionLabel={actionLabel}
         initialStep={initialStep}
         exportUrl={exportUrl}
-        sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />}
+        sliderSection={<SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} />}
       />
     )
   }
@@ -222,9 +223,18 @@ export function ProbabilityPanelFor({
         <div className="ca-graph-wrap" ref={wrap}>
           {graph(t)}
         </div>
-      </div>
-      <div className="ca-box ca-eq-box">
-        <SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead />
+        <div className="ca-prob-sliders">
+          <SliderBlock c={c} sliders={sliders} onSlider={onSlider} />
+        </div>
+        <FigureTabs
+          blocks={[
+            {
+              id: 'equations',
+              label: t.equations,
+              children: <SliderEquations c={c} sliders={sliders} notation={notation} onNotation={setNotation} shown={shown} />,
+            },
+          ]}
+        />
       </div>
     </div>
   )

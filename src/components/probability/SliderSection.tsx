@@ -18,27 +18,40 @@ export interface SliderSectionProps {
   readonly notation: UiNotation
   readonly onNotation: (n: UiNotation) => void
   readonly shown: readonly string[]
-  readonly withHead: boolean
 }
 
-/** The exogenous variables' sliders with the equations under them, optionally under their own head with the notation switch. */
-export function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, withHead }: SliderSectionProps) {
+/** The sliders of the exogenous variables, or the note that the case's probabilities are one joint distribution. */
+export function SliderBlock({ c, sliders, onSlider }: Pick<SliderSectionProps, 'c' | 'sliders' | 'onSlider'>) {
+  const t = useMessages()
+  const ids = sliderVariables(c)
+  return ids.length === 0 ? (
+    <p className="ca-muted">{t.jointOnly}</p>
+  ) : (
+    <SliderList c={c} ids={ids} values={sliders} onChange={onSlider} idPrefix={`ca-slider-${c.data.id}`} />
+  )
+}
+
+/** The notation switch and the equations under it, for the prior the sliders set. */
+export function SliderEquations({ c, sliders, notation, onNotation, shown }: Omit<SliderSectionProps, 'onSlider'>) {
   const t = useMessages()
   const prior = useMemo(() => (c.prior === undefined ? undefined : priorWithSliders(c, sliders)), [c, sliders])
-  const ids = sliderVariables(c)
   return (
-    <div className="ca-prob-sliders">
+    <>
       <div className="ca-eq-head">
-        {withHead && <h3 className="ca-h3">{t.probEquations}</h3>}
         <Segmented label={t.notationLabel} options={notations(t)} value={notation} onChange={onNotation} />
         <CopyLatex c={c} shown={shown} notation={notation} interventions={NO_DO} prior={prior} />
       </div>
       <Equations c={c} shown={shown} notation={notation} interventions={NO_DO} prior={prior} />
-      {ids.length === 0 ? (
-        <p className="ca-muted">{t.jointOnly}</p>
-      ) : (
-        <SliderList c={c} ids={ids} values={sliders} onChange={onSlider} idPrefix={`ca-slider-${c.data.id}`} />
-      )}
+    </>
+  )
+}
+
+/** The exogenous variables' sliders with the equations above them (one block behind the 式子和機率 tab). */
+export function SliderSection({ c, sliders, onSlider, notation, onNotation, shown }: SliderSectionProps) {
+  return (
+    <div className="ca-prob-sliders">
+      <SliderEquations c={c} sliders={sliders} notation={notation} onNotation={onNotation} shown={shown} />
+      <SliderBlock c={c} sliders={sliders} onSlider={onSlider} />
     </div>
   )
 }

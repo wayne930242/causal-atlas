@@ -1187,9 +1187,62 @@
   line-height: 1.6;
 }
 
-.ca-compare-more {
-  border: 0;
+/* ---- tabs under a figure's graph: one row of buttons, one block open at a time ---- */
+
+.ca-tabs {
+  align-self: stretch;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
+}
+
+/* The compare view has no box of its own around the row. */
+.ca-prob > .ca-tabs {
+  margin: 0;
+  padding: 10px 16px 14px;
+}
+
+.ca-tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ca-tab {
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  min-width: 68px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--foreground);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.ca-tab[aria-expanded="true"] {
+  background: var(--foreground);
+  color: var(--background);
+  font-weight: 700;
+}
+
+.ca-tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ca-tab-panel {
+  padding-top: 12px;
+}
+
+.ca-tab-panel[hidden] {
+  display: none;
+}
+
+/* A wide table scrolls in its block instead of widening the figure. */
+.ca-tab-panel[data-tab-panel="background"] {
+  overflow-x: auto;
 }
 
 /* ---- lanes ---- */
@@ -1354,18 +1407,26 @@
     padding: 20px 0 0;
   }
 
-  .ca-eq-box .ca-eq-head {
+  .ca-tab {
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .ca-eq-box .ca-eq-head,
+  .ca-eq-panel .ca-eq-head {
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
   }
 
-  .ca-eq-box .ca-seg {
+  .ca-eq-box .ca-seg,
+  .ca-eq-panel .ca-seg {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .ca-eq-box .ca-seg-item {
+  .ca-eq-box .ca-seg-item,
+  .ca-eq-panel .ca-seg-item {
     height: 44px;
     font-size: 15px;
   }
@@ -2275,10 +2336,6 @@
   color: var(--muted-foreground);
 }
 
-.ca-cf-table-box {
-  overflow-x: auto;
-}
-
 .ca-cf-caption {
   margin: 8px 0 0;
   font-size: 13px;
@@ -2366,8 +2423,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border);
 }
 
 .ca-pg-question {

@@ -19,9 +19,10 @@ import { priorWithSliders } from '../model/probability-view.ts'
 import type { VerdictQuery } from '../model/verdict-rows.ts'
 import { actualGroups, defaultTheories, originCitations, originSources } from '../model/verdict-rows.ts'
 import { readingText } from '../model/wording.ts'
-import { EquationBox } from '../panels/EquationBox.tsx'
+import { EquationPanel } from '../panels/EquationBox.tsx'
 import { GraphBox } from '../panels/GraphBox.tsx'
 import { SliderList } from '../panels/SliderList.tsx'
+import type { FigureBlock } from '../shared/FigureTabs.tsx'
 import { DocProblems, Segmented, Tip } from '../shared/parts.tsx'
 import { Rich } from '../text/typeset.tsx'
 import { DecisionBars } from './DecisionBars.tsx'
@@ -237,6 +238,40 @@ function PlaygroundFor({
             url: exportUrl,
             origins: originCitations(c),
           })
+  // Under the graph, one block at a time: the figure's own (verdicts, expected utility, paths) open at first, the equations closed.
+  const blocks: FigureBlock[] = []
+  if (verdicts !== undefined) {
+    blocks.push({
+      id: 'verdicts',
+      label: t.tab.verdicts,
+      children: (
+        <PlaygroundVerdicts
+          c={c}
+          groups={groups}
+          queries={verdicts}
+          theories={theories}
+          active={active}
+          interventions={interventions}
+          onShow={(row) => {
+            const hold = row.fixed ?? NONE
+            const xPrime = Object.fromEntries(Object.entries(row.show ?? NONE).filter(([id]) => !(id in hold)))
+            applyPreset({ text: '', interventions: { ...xPrime, ...hold }, observed: NONE, hold })
+          }}
+        />
+      ),
+    })
+  }
+  if (problem !== undefined) {
+    blocks.push({ id: 'ev', label: t.ev.title, children: <DecisionBars c={c} problem={problem} observed={observed} interventions={interventions} /> })
+  }
+  if (dsepNow !== undefined && pair !== undefined) {
+    blocks.push({ id: 'dsep', label: t.tab.dsep, children: <DsepLine c={c} pair={pair} observed={observed} view={dsepNow} /> })
+  }
+  blocks.push({
+    id: 'equations',
+    label: t.equations,
+    children: <EquationPanel c={c} world={world} interventions={interventions} stochastic={stochastic} observed={observed} reading={reading} notation={notation} onNotation={setNotation} defaults={defaults} />,
+  })
   return (
     <div className="ca-root not-prose ca-playground" data-case={c.data.id} lang={t.locale} ref={root}>
       <div className="ca-panel">
@@ -305,23 +340,6 @@ function PlaygroundFor({
                   idPrefix={`ca-pg-slider-${sliderId}`}
                 />
               )}
-              {verdicts !== undefined && (
-                <PlaygroundVerdicts
-                  c={c}
-                  groups={groups}
-                  queries={verdicts}
-                  theories={theories}
-                  active={active}
-                  interventions={interventions}
-                  onShow={(row) => {
-                    const hold = row.fixed ?? NONE
-                    const xPrime = Object.fromEntries(Object.entries(row.show ?? NONE).filter(([id]) => !(id in hold)))
-                    applyPreset({ text: '', interventions: { ...xPrime, ...hold }, observed: NONE, hold })
-                  }}
-                />
-              )}
-              {problem !== undefined && <DecisionBars c={c} problem={problem} observed={observed} interventions={interventions} />}
-              {dsepNow !== undefined && pair !== undefined && <DsepLine c={c} pair={pair} observed={observed} view={dsepNow} />}
               {defaults !== undefined && world.values !== undefined && world.original !== undefined && (
                 <p className="ca-norm-line" data-normality="">
                   <span className="ca-pg-now-kicker">{t.normality.kicker}</span>{' '}
@@ -362,17 +380,8 @@ function PlaygroundFor({
               )}
             </div>
           }
-        />
-        <EquationBox
-          c={c}
-          world={world}
-          interventions={interventions}
-          stochastic={stochastic}
-          observed={observed}
-          reading={reading}
-          notation={notation}
-          onNotation={setNotation}
-          defaults={defaults}
+          blocks={blocks}
+          initialBlock={blocks.find((b) => b.id !== 'equations')?.id}
         />
       </div>
       {embedded && <EmbedCredit c={c} url={exportUrl ?? DEFAULT_URL} />}
