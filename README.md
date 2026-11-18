@@ -2,6 +2,14 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.4.3
+Internal restructuring, no change in behavior or API: the component sources sit in feature folders
+(`case/`, `playground/`, `probability/`, `lanes/`, `editor/`, `graph/`, `panels/`, `model/`,
+`export/`, `text/`, `i18n/`, `shared/`), the interface text in one file per language (`i18n/zh.ts`,
+`i18n/en.ts`), and the signal graph's layout is a pure function with its own tests. A markup
+baseline of every component (`src/components/golden/`) checks that a refactor leaves what is drawn
+unchanged.
+
 ## 0.4.2
 The reading switch is labelled 「視角」 (en "View") and shows one line under it for the chosen reading: 干預 「點選的是干預之後看到的結果」, 反事實 「點選的是實際發生過的事，再問：假如當初……會怎樣」.
 
@@ -116,7 +124,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.4.2) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.4.3) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -391,9 +399,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.4.2 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.4.3 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.4.2) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.4.3) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -402,7 +410,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.4.2},
+  version = {0.4.3},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

@@ -4,14 +4,15 @@ import type { ReactNode } from 'react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterAll, expect, it } from 'vitest'
+import { VERSION } from '../export/cite.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { LocaleProvider } from '../i18n/messages.ts'
 
 /**
  * The markup baseline recorded at 0.4.2 (f64af86) for the 0.4.3 refactor round: the server markup
  * of every subject, hashed. A refactor keeps every hash; an intended change of what is drawn
- * re-records them with `GOLDEN_UPDATE=1 pnpm vitest run src/components/golden` and says so in its
- * commit.
+ * re-records them with `GOLDEN_UPDATE=1 pnpm vitest run src/components/golden`, sets
+ * `BASELINE_VERSION` to the version it records at, and says so in its commit.
  */
 
 export const GOLDEN_LOCALES: readonly Locale[] = ['zh-TW', 'en']
@@ -31,8 +32,19 @@ export function normalizeIds(html: string): string {
   })
 }
 
+/**
+ * The package version the baseline was recorded at. The citation prints the package's version, so
+ * markup is hashed with the current version written as this one: a release bump keeps the baseline.
+ */
+export const BASELINE_VERSION = '0.4.2'
+
+/** `html` with the package version written as the baseline's. */
+export function atBaselineVersion(html: string): string {
+  return VERSION === BASELINE_VERSION ? html : html.split(VERSION).join(BASELINE_VERSION)
+}
+
 export function markupHash(html: string): string {
-  return createHash('sha256').update(normalizeIds(html)).digest('hex').slice(0, 16)
+  return createHash('sha256').update(normalizeIds(atBaselineVersion(html))).digest('hex').slice(0, 16)
 }
 
 /** The hash of a subject's markup in `locale`, or of the message it throws (bad-prop messages are part of the contract). */
