@@ -7,6 +7,7 @@ import { lessonModel } from './lesson-models.ts'
  * (`#/interactions/<item>`, or all of them). Labels are the lessons' own, in Chinese.
  */
 const ITEMS: Readonly<Record<string, () => ReactNode>> = {
+  'confound-slider': () => <CausalPlayground caseId="smoking-lesion" sliders={['N_S1']} />,
   'truth-table': () => (
     <>
       <CausalPlayground doc={lessonModel('m06-bow-a')} defaultNotation="causal" initialInterventions={{ X: 1 }} />

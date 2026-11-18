@@ -427,6 +427,7 @@ const ZH = {
   // playground
   playgroundHint: (probabilistic: boolean): string =>
     probabilistic ? '點一下節點是觀察；長按、右鍵或 Shift＋點是干預。' : '點一下節點是干預。',
+  sliderEmbed: '滑桿的位置不會記進嵌入碼，嵌入的圖從原本的機率開始。',
   playgroundHintMore: (probabilistic: boolean): string =>
     probabilistic
       ? '觀察：先觀察到 1，再點換成 0，第三下取消。干預：設成 1，旁邊的滑桿可以改成 0 或其他機率；Esc 關掉滑桿。'
@@ -901,6 +902,7 @@ const EN: Messages = {
 
   playgroundHint: (probabilistic) =>
     probabilistic ? 'Click a node to observe it; long-press, right-click or Shift+click to intervene.' : 'Click a node to intervene on it.',
+  sliderEmbed: ' The embed code does not keep the sliders: an embedded figure starts from the original probabilities.',
   playgroundHintMore: (probabilistic) =>
     probabilistic
       ? 'Observing: first as 1, again as 0, a third time to release. Intervening sets it to 1, and the slider beside it sets 0 or a probability in between; Esc closes the slider.'

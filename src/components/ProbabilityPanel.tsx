@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import type { Assignment } from '../engine/index.ts'
-import { evaluate, getVariable, probability } from '../engine/index.ts'
+import { evaluate, probability } from '../engine/index.ts'
 import { graphExport, renderDetached } from './export-render.tsx'
 import { useCaseOrDoc } from './doc-case.ts'
 import { CopyLatex, Equations } from './Equations.tsx'
@@ -15,9 +15,10 @@ import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { DocProblems, Disclosure, Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
+import { SliderList } from './SliderList.tsx'
 import type { CounterfactualSpec } from './cf-steps.ts'
 import { CfStepper } from './CfStepper.tsx'
-import { Formula, Ident, Rich } from './typeset.tsx'
+import { Formula, Rich } from './typeset.tsx'
 import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
 import { originCitations, originSources, seeDoPair } from './verdict-rows.ts'
@@ -25,14 +26,12 @@ import {
   changeNotes,
   defaultSliders,
   doText,
-  label,
   marginals,
   priorWithSliders,
   probLegend,
   probText,
   shownVariables,
   sliderVariables,
-  targetText,
   phraseOf,
 } from './view-model.ts'
 
@@ -111,36 +110,7 @@ function SliderSection({ c, sliders, onSlider, notation, onNotation, shown, with
       {ids.length === 0 ? (
         <p className="ca-muted">{t.jointOnly}</p>
       ) : (
-        <ul className="ca-slider-list">
-          {ids.map((id) => {
-            const variable = getVariable(c.model, id)
-            const p = sliders[id] ?? 0
-            return (
-              <li key={id} className="ca-slider-row">
-                <span className="ca-slider-var ca-mono">
-                  <Ident id={id} />
-                </span>
-                <label className="ca-slider-label" htmlFor={`ca-slider-${c.data.id}-${id}`}>
-                  {t.sliderLabel(label(c.model, id, t.locale))}
-                </label>
-                <input
-                  id={`ca-slider-${c.data.id}-${id}`}
-                  className="ca-slider"
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={p}
-                  aria-valuetext={`P(${targetText(variable)}) = ${probText(p)}`}
-                  onChange={(e) => onSlider(id, Number(e.currentTarget.value))}
-                />
-                <output className="ca-slider-value ca-mono" htmlFor={`ca-slider-${c.data.id}-${id}`}>
-                  p = {probText(p)}
-                </output>
-              </li>
-            )
-          })}
-        </ul>
+        <SliderList c={c} ids={ids} values={sliders} onChange={onSlider} idPrefix={`ca-slider-${c.data.id}`} />
       )}
     </div>
   )

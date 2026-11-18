@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import type { Assignment, LocalizedText } from '../engine/index.ts'
@@ -21,7 +21,8 @@ import type { DsepPair } from './dsep-view.ts'
 import { dsepView } from './dsep-view.ts'
 import { evaluate, getVariable, parseCause, valuesEqual } from '../engine/index.ts'
 import type { TrailEntry } from './view-model.ts'
-import { TRAIL_LENGTH, normalityLine, readingText, sameAssignment, trailEntry, trailText } from './view-model.ts'
+import { TRAIL_LENGTH, defaultSliders, normalityLine, priorWithSliders, readingText, sameAssignment, sliderVariables, trailEntry, trailText } from './view-model.ts'
+import { SliderList } from './SliderList.tsx'
 
 /**
  * A step button under the graph: one press sets these do()s and observations (and nothing else).
@@ -113,6 +114,14 @@ export interface CausalPlaygroundOptions {
    * dependence, given the observed values) and up to three paths with why.
    */
   readonly dsep?: DsepPair | readonly DsepPair[]
+  /**
+   * Exogenous variables with a slider under the graph (boolean or two-valued ones, on a probability
+   * graph): P(id = 1, or its first value). Dragging recomputes everything drawn with the new prior;
+   * 「回到原本的機率」 puts the sliders back. The embed code does not record them.
+   */
+  readonly sliders?: readonly string[]
+  /** Start values P(id = 1, or its first value) of exogenous variables, slider or not; the rest keep the case's prior. */
+  readonly prior?: Readonly<Record<string, number>>
 }
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
@@ -130,7 +139,7 @@ function PlaygroundBody({ doc, ...props }: Omit<CausalPlaygroundProps, 'locale'>
 }
 
 function PlaygroundFor({
-  c,
+  c: base,
   caseId,
   initialInterventions,
   presets = true,
@@ -142,8 +151,17 @@ function PlaygroundFor({
   verdicts,
   normality = true,
   dsep,
+  sliders = NO_TRACK,
+  prior: startPrior,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
+  const start = useMemo(() => sliderStart(base, sliders, startPrior), [base, sliders, startPrior])
+  const [sliderValues, setSliderValues] = useState(start)
+  // Everything below reads the case with the slider prior; an embed page reads its state from `base`.
+  const c = useMemo(
+    () => (Object.keys(sliderValues).length === 0 ? base : { ...base, prior: priorWithSliders(base, sliderValues) }),
+    [base, sliderValues],
+  )
   if (verdicts !== undefined && c.context === undefined) throw new Error(`${c.data.id}: verdicts need a graph with values (an actual context)`)
   const [reading, setReading] = useState<Reading>('interventional')
   const { interventions, stochastic, observed, setDo, setObserved, notation, setNotation, world } = useModel(
@@ -161,14 +179,15 @@ function PlaygroundFor({
     setReading(next)
   }
   const root = useRef<HTMLDivElement>(null)
+  const sliderId = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   // An embed page takes its state from the address once mounted (the server has no address hash).
   useEffect(() => {
     if (!embedded) return
-    const state = fitEmbedState(c, readEmbedState(window.location.hash))
+    const state = fitEmbedState(base, readEmbedState(window.location.hash))
     setDo({ interventions: state.interventions, stochastic: state.stochastic })
     setObserved(state.observed)
     // Read once per case: later clicks are the reader's own.
-  }, [c, embedded, setDo, setObserved])
+  }, [base, embedded, setDo, setObserved])
   const [held, setHeld] = useState<Assignment>(NONE)
   const soft = Object.keys(stochastic).length > 0
   const buttons = presetButtons(c, presets, t.locale)
@@ -242,7 +261,10 @@ function PlaygroundFor({
           legend
           exportUrl={exportUrl}
           embedCode={embed}
-          onReset={() => setTrail(startTrail())}
+          onReset={() => {
+            setSliderValues(start)
+            setTrail(startTrail())
+          }}
           reading={reading}
           paths={dsepNow?.marks}
           actions={
@@ -271,6 +293,15 @@ function PlaygroundFor({
           }
           foot={
             <div className="ca-playground-foot">
+              {sliders.length > 0 && (
+                <SliderList
+                  c={c}
+                  ids={sliders}
+                  values={sliderValues}
+                  onChange={(id, p) => setSliderValues({ ...sliderValues, [id]: p })}
+                  idPrefix={`ca-pg-slider-${sliderId}`}
+                />
+              )}
               {verdicts !== undefined && (
                 <PlaygroundVerdicts
                   c={c}
@@ -311,7 +342,10 @@ function PlaygroundFor({
               )}
               <p className="ca-hint">
                 {reading === 'counterfactual' && prob ? t.cfHint : t.playgroundHint(prob)}{' '}
-                <Tip tip={reading === 'counterfactual' && prob ? t.cfHintMore : t.playgroundHintMore(prob)} label={t.moreInfo} />
+                <Tip
+                  tip={`${reading === 'counterfactual' && prob ? t.cfHintMore : t.playgroundHintMore(prob)}${sliders.length > 0 ? t.sliderEmbed : ''}`}
+                  label={t.moreInfo}
+                />
               </p>
               {buttons.length > 0 && (
                 <div className="ca-presets" role="group" aria-label={t.presets}>
@@ -382,6 +416,23 @@ interface PresetButton {
   readonly interventions: Assignment
   readonly observed: Assignment
   readonly hold: Assignment
+}
+
+/** The sliders' and `prior`'s start values; throws on a variable no slider can set. */
+function sliderStart(c: LoadedCase, sliders: readonly string[], prior: Readonly<Record<string, number>> | undefined): Record<string, number> {
+  const ids = [...sliders, ...Object.keys(prior ?? {})]
+  if (ids.length === 0) return {}
+  if (c.context !== undefined || c.prior === undefined) throw new Error(`${c.data.id}: sliders and prior need a probability graph (priors, no context)`)
+  const settable = new Set(sliderVariables(c))
+  for (const id of ids) {
+    getVariable(c.model, id)
+    if (!settable.has(id)) throw new Error(`${c.data.id}: no slider can set ${id} (a boolean or two-valued exogenous variable, independent prior)`)
+  }
+  for (const [id, p] of Object.entries(prior ?? {})) {
+    if (!(p >= 0 && p <= 1)) throw new Error(`${c.data.id}: prior ${id} = ${p} is not a probability`)
+  }
+  const own = defaultSliders(c)
+  return Object.fromEntries(ids.map((id) => [id, prior?.[id] ?? own[id]]))
 }
 
 function isPair(dsep: DsepPair | readonly DsepPair[]): dsep is DsepPair {
