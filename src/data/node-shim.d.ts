@@ -1,4 +1,4 @@
-/** The Node APIs the tests read files with (the bibliography, model documents) and the markup baseline writes and hashes with; the project carries no @types/node. */
+/** Seen only by tsconfig.test.json (test and golden files), not by browser code. The Node APIs the tests read files with (the bibliography, model documents) and the markup baseline writes and hashes with; the project carries no @types/node. */
 declare module 'node:fs' {
   export function existsSync(path: string): boolean
   export function readFileSync(path: string | URL, encoding: 'utf8'): string

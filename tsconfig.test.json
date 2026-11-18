@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["vite/client"]
+  },
+  // Only the test and golden files see src/data/node-shim.d.ts (node:fs, node:crypto, process); browser code does not.
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/components/golden", "src/data/node-shim.d.ts"],
+  "exclude": []
+}
