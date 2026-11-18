@@ -13,6 +13,9 @@ const ALLOWED: Readonly<Record<string, readonly string[]>> = {
   'text/typeset-text.ts': ['。！？「'],
 }
 
+/** The string tables: the only sources that may hold interface text. The rest of i18n/ is scanned. */
+const TABLES = new Set(['i18n/messages.ts', 'i18n/zh.ts', 'i18n/en.ts', 'i18n/common.ts'])
+
 const CJK = /[　-〿㐀-䶿一-鿿＀-￯]+/g
 
 /** Every component source but the tests, keyed `./path`. */
@@ -32,7 +35,7 @@ describe('interface text', () => {
     expect(Object.keys(sources).length).toBeGreaterThan(20)
     for (const [path, code] of Object.entries(sources)) {
       const file = path.replace(/^\.\//, '')
-      if (file.startsWith('i18n/')) continue
+      if (TABLES.has(file)) continue
       const allowed = ALLOWED[file] ?? []
       for (const hit of withoutComments(code).match(CJK) ?? []) {
         if (!allowed.some((a) => a.includes(hit))) stray.push(`${file}: ${hit}`)
