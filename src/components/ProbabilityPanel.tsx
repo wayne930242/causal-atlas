@@ -20,6 +20,7 @@ import { useNarrow } from './use-narrow.ts'
 import type { SeeDoPair } from './verdict-rows.ts'
 import { originCitations, originSources, seeDoPair } from './verdict-rows.ts'
 import {
+  changeNotes,
   defaultSliders,
   doText,
   label,
@@ -47,15 +48,16 @@ export interface ProbabilityOptions {
   readonly defaultNotation?: UiNotation
   /** `sliders`: set p per exogenous variable. `compare`: observing vs do() side by side. */
   readonly view?: ProbabilityView
-  /** For `compare`: the observation, the do() and the event. Defaults to the case's own pair. */
-  readonly pair?: SeeDoPair
+  /**
+   * For `compare`: the observation, the do() and the event. Defaults to the case's own pair. Given
+   * several, a switch in the panel's head (labelled by each `observe`) changes both sides at once.
+   */
+  readonly pair?: SeeDoPair | readonly SeeDoPair[]
   /** Link in the exported image's watermark. */
   readonly exportUrl?: string
   /** Interface language. Default: the surrounding LocaleProvider's, else zh-TW. */
   readonly locale?: Locale
 }
-
-const SAME = 0.005
 
 function notesAgainst(
   t: Messages,
@@ -65,11 +67,9 @@ function notesAgainst(
   own: string,
   ownNote: string,
 ): Record<string, string> {
+  const changed = changeNotes(t, base, now, shown)
   const out: Record<string, string> = {}
-  for (const id of shown) {
-    if (id === own) out[id] = ownNote
-    else out[id] = Math.abs((now[id] ?? 0) - (base[id] ?? 0)) < SAME ? t.unchanged : t.was(probText(base[id] ?? Number.NaN))
-  }
+  for (const id of shown) out[id] = id === own ? ownNote : (changed[id] ?? t.unchanged)
   return out
 }
 
@@ -158,7 +158,7 @@ export function ProbabilityPanelFor({
 }: {
   c: LoadedCase
   view?: ProbabilityView
-  pair?: SeeDoPair
+  pair?: SeeDoPair | readonly SeeDoPair[]
   exportUrl?: string
   defaultNotation?: UiNotation
   /** The slider values, when the caller keeps them (with `onSliders`); else the panel does. */
@@ -183,9 +183,10 @@ export function ProbabilityPanelFor({
   const narrow = useNarrow(wrap, 560)
 
   if (view === 'compare') {
-    const p = pair ?? seeDoPair(c)
-    if (p === undefined) throw new Error(`case ${c.data.id} has no observe/do pair for the comparison`)
-    return <Compare c={c} pair={p} prior={prior} base={base} shown={shown} exportUrl={exportUrl} sliderSection={
+    const own = seeDoPair(c)
+    const pairs: readonly SeeDoPair[] = pair === undefined ? (own === undefined ? [] : [own]) : isPairList(pair) ? pair : [pair]
+    if (pairs.length === 0) throw new Error(`case ${c.data.id} has no observe/do pair for the comparison`)
+    return <Compare c={c} pairs={pairs} prior={prior} base={base} shown={shown} exportUrl={exportUrl} sliderSection={
       <SliderSection c={c} sliders={sliders} onSlider={onSlider} notation={notation} onNotation={setNotation} shown={shown} withHead={false} />
     } />
   }
@@ -254,9 +255,13 @@ export function ProbabilityPanelFor({
   )
 }
 
+function isPairList(pair: SeeDoPair | readonly SeeDoPair[]): pair is readonly SeeDoPair[] {
+  return Array.isArray(pair)
+}
+
 interface CompareProps {
   readonly c: LoadedCase
-  readonly pair: SeeDoPair
+  readonly pairs: readonly SeeDoPair[]
   readonly prior: ReturnType<typeof priorWithSliders>
   readonly base: Readonly<Record<string, number>>
   readonly shown: readonly string[]
@@ -264,9 +269,13 @@ interface CompareProps {
   readonly exportUrl?: string
 }
 
-function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: CompareProps) {
+function Compare({ c, pairs, prior, base, shown, sliderSection, exportUrl }: CompareProps) {
   const t = useMessages()
   const root = useRef<HTMLDivElement>(null)
+  const [picked, setPicked] = useState(0)
+  const pair = pairs[Math.min(picked, pairs.length - 1)]
+  const labels = pairs.map((p) => p.observe)
+  const pairLabel = (p: SeeDoPair, i: number): string => (labels.indexOf(p.observe) === i && labels.lastIndexOf(p.observe) === i ? p.observe : `${p.observe} · ${doText(p.intervene)}`)
   const observedId = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(pair.observe)?.[1] ?? ''
   const doId = Object.keys(pair.intervene)[0] ?? ''
   let see: Record<string, number> | undefined
@@ -361,7 +370,17 @@ function Compare({ c, pair, prior, base, shown, sliderSection, exportUrl }: Comp
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="compare" lang={t.locale} ref={root}>
       <div className="ca-box-head ca-compare-head">
         <span className="ca-muted ca-small">{probLegend(t, c.model, shown)}</span>
-        <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} />
+        <div className="ca-box-actions">
+          {pairs.length > 1 && (
+            <Segmented
+              label={t.comparePick}
+              options={pairs.map((p, i) => ({ value: String(i), label: pairLabel(p, i) }))}
+              value={String(Math.min(picked, pairs.length - 1))}
+              onChange={(v) => setPicked(Number(v))}
+            />
+          )}
+          <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} />
+        </div>
       </div>
       <div className="ca-compare">
         <div className="ca-compare-side" data-side="see">

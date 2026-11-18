@@ -658,6 +658,55 @@ export function fixed(x: number, digits: number): string {
   return ((Math.sign(x) * n) / scale).toFixed(digits)
 }
 
+/** One reading of a trail: what was set (`settingText`, '' for nothing) and each tracked node's number or value. */
+export interface TrailEntry {
+  readonly setting: string
+  readonly values: Readonly<Record<string, string>>
+}
+
+/** Entries a trail keeps; older ones give way to `…`. */
+export const TRAIL_LENGTH = 5
+
+/** The tracked nodes' numbers (a probability graph) or values in `world`, as text. */
+export function trailEntry(world: { readonly probs?: Readonly<Record<string, number>>; readonly values?: Assignment }, ids: readonly string[], setting: string): TrailEntry {
+  const values: Record<string, string> = {}
+  for (const id of ids) {
+    const p = world.probs?.[id]
+    const v = world.values?.[id]
+    values[id] = p !== undefined ? probText(p) : v !== undefined ? formatValue(v) : '—'
+  }
+  return { setting, values }
+}
+
+/** `Y：0.50 → 0.67（Z=1）→ 0.50（Z=1, X=1）`, with `…` first when older readings were dropped. */
+export function trailText(t: Messages, id: string, trail: readonly TrailEntry[], dropped: boolean): string {
+  const steps = trail.map((e) => t.trailStep(e.values[id] ?? '—', e.setting))
+  return t.trailLine(id, steps, dropped)
+}
+
+/** Two probabilities closer than this read as the same number (no 原本 note). */
+export const SAME_PROBABILITY = 0.005
+
+/**
+ * 原本 v under each number that moved from `base` by SAME_PROBABILITY or more; nodes that did not
+ * move get no entry. The playground and the compare panel use the same rule.
+ */
+export function changeNotes(
+  t: Messages,
+  base: Readonly<Record<string, number>>,
+  now: Readonly<Record<string, number>>,
+  shown: readonly string[],
+): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const id of shown) {
+    const b = base[id]
+    const n = now[id]
+    if (b === undefined || n === undefined || Number.isNaN(b) || Number.isNaN(n)) continue
+    if (Math.abs(n - b) >= SAME_PROBABILITY) out[id] = t.was(probText(b))
+  }
+  return out
+}
+
 /** Legend for probability readouts (the value legend is `t.valueLegend`): fill for 0/1 variables, bars for the others. */
 export function probLegend(t: Messages, model: CausalModel, shown: readonly string[]): string {
   const finite = shown.filter((id) => getVariable(model, id).domain.kind === 'finite').length

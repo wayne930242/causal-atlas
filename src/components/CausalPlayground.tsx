@@ -7,14 +7,15 @@ import type { Locale } from './i18n.ts'
 import { LocaleScope, useMessages } from './i18n.ts'
 import { DEFAULT_URL, watermarkLine } from './cite.ts'
 import { DEFAULT_EMBED_BASE, embedCode, embedHome, embedSrc, fitEmbedState, readEmbedState } from './embed.ts'
-import { useModel } from './model-state.ts'
+import { solve, useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
 import { DocProblems, Tip } from './parts.tsx'
 import { Rich } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
-import { valuesEqual } from '../engine/index.ts'
-import { sameAssignment } from './view-model.ts'
+import { getVariable, valuesEqual } from '../engine/index.ts'
+import type { TrailEntry } from './view-model.ts'
+import { TRAIL_LENGTH, sameAssignment, settingText, trailEntry, trailText } from './view-model.ts'
 
 /**
  * A step button under the graph: one press sets these do()s and observations (and nothing else).
@@ -78,6 +79,12 @@ export interface CausalPlaygroundOptions {
    * page it was copied from (`?from=`) sits under it.
    */
   readonly embedded?: boolean
+  /**
+   * Nodes whose number (or value) is followed under the graph: one line per node with its reading
+   * after each change of what is set, `Y：0.50 → 0.67（Z=1）→ 0.50（Z=1, X=1）`, the last five.
+   * 「回到原本」 and the step buttons start it again.
+   */
+  readonly track?: readonly string[]
 }
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
@@ -103,6 +110,7 @@ function PlaygroundFor({
   defaultNotation,
   embedUrl,
   embedded = false,
+  track = NO_TRACK,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
   const { interventions, stochastic, observed, setDo, setObserved, notation, setNotation, world } = useModel(
@@ -125,10 +133,19 @@ function PlaygroundFor({
   const prob = world.probs !== undefined
   // The hull shows what a step holds for as long as the reader leaves it at that value.
   const holding = Object.fromEntries(Object.entries(held).filter(([id, v]) => id in interventions && valuesEqual(interventions[id], v)))
+  for (const id of track) getVariable(c.model, id)
+  const startTrail = (): Trail => ({ entries: [trailEntry(solve(c, {}), track, '')], dropped: false })
+  const [trail, setTrail] = useState<Trail>(startTrail)
+  const setting = settingText(interventions, stochastic, observed)
+  if (track.length > 0 && trail.entries[trail.entries.length - 1]?.setting !== setting) {
+    const entries = [...trail.entries, trailEntry(world, track, setting)]
+    setTrail({ entries: entries.slice(-TRAIL_LENGTH), dropped: trail.dropped || entries.length > TRAIL_LENGTH })
+  }
   const applyPreset = (s: PresetButton): void => {
     setDo({ interventions: s.interventions, stochastic: {} })
     setObserved(s.observed)
     setHeld(s.hold)
+    setTrail(startTrail())
   }
   const pressed = (s: PresetButton): boolean =>
     !soft &&
@@ -164,8 +181,21 @@ function PlaygroundFor({
           legend
           exportUrl={exportUrl}
           embedCode={embed}
+          onReset={() => setTrail(startTrail())}
           foot={
             <div className="ca-playground-foot">
+              {track.length > 0 && (
+                <ul className="ca-trail" aria-label={t.trail}>
+                  {track.map((id) => {
+                    const text = trailText(t, id, trail.entries, trail.dropped)
+                    return (
+                      <li key={id} data-trail={id} data-text={text}>
+                        <span className="ca-trail-kicker">{t.trail}</span> <Rich text={text} ids={c.model.byId} />
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
               <p className="ca-hint">
                 {t.playgroundHint(prob)} <Tip tip={t.playgroundHintMore(prob)} label={t.moreInfo} />
               </p>
@@ -214,6 +244,13 @@ function EmbedCredit({ c, url }: { readonly c: LoadedCase; readonly url: string 
 }
 
 const NONE: Assignment = {}
+const NO_TRACK: readonly string[] = []
+
+interface Trail {
+  readonly entries: readonly TrailEntry[]
+  /** Older readings gave way to the last TRAIL_LENGTH. */
+  readonly dropped: boolean
+}
 
 interface PresetButton {
   readonly text: string

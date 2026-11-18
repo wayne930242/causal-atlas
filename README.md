@@ -189,6 +189,14 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   buttons sit inside the figure's frame under the graph; the one that matches what is set is
   `aria-pressed`. For a lesson step:
   `presets={[{ label: '第 1 步：看到 A 沒開槍', observed: { A: 0 } }, { label: '第 2 步：攔住 A', interventions: { A: 0 } }]}`.
+- Every probability graph writes 原本 v (grey) under each 0/1 node whose number moved by 0.005 or more
+  from the prior, the same rule as the compare panel; a node that did not move gets nothing.
+  `track={['Y']}` adds one line per tracked node under the graph with its reading after each change
+  of what is set, `Y：0.50 → 0.67（Z=1）→ 0.50（Z=1, X=1）` (the last five; 「回到原本」 and the step
+  buttons start it again; on a graph with values it follows the value).
+- `<ProbabilityPanel view="compare" pair>`: `pair` is one `{ event, observe, intervene }` or a list;
+  with two or more, a switch labelled by each `observe` (`S=1｜S=0`) changes both sides together:
+  `pair={[{ event: 'W=1', observe: 'S=1', intervene: { S: 1 } }, { event: 'W=1', observe: 'S=0', intervene: { S: 0 } }]}`.
 - `<ProbabilityPanel doc>` takes a document with priors or a `context` (a point mass);
   `<WorldLanes doc interventions>` needs a `context`, and `interventions` because a document has no preset.
 - `<ModelEditor initialDoc>` renders that model on the server instead of a blank one; a share hash

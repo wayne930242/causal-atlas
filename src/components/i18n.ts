@@ -304,6 +304,7 @@ const ZH = {
   zeroOne: '0／1',
   probGraphTitle: (title: string): string => `${title}：各變項等於 1 的機率`,
   observing: (event: string): string => `觀察 ${event}`,
+  comparePick: '切換比較的值',
   observed: '看到的',
   setByDo: '設定的',
   zeroObservation: '這個觀察的機率是 0，無法以它為條件。',
@@ -346,6 +347,10 @@ const ZH = {
       ? '觀察：先觀察到 1，再點換成 0，第三下取消。干預：設成 1，旁邊的滑桿可以改成 0 或其他機率；Esc 關掉滑桿。'
       : '先固定在目前的值，再點換成另一個值，第三下取消；多值的節點用滑桿選值。',
   moreInfo: '說明',
+  trail: '軌跡',
+  trailStep: (value: string, setting: string): string => (setting === '' ? value : `${value}（${setting}）`),
+  trailLine: (id: string, steps: readonly string[], dropped: boolean): string =>
+    `${id}：${dropped ? '…' : ''}${steps.reduce((acc, s, i) => (i === 0 ? s : `${acc}${acc.endsWith('）') ? '→ ' : ' → '}${s}`), '')}`,
   afterObserve: '觀察後',
   afterDoObserve: '干預並觀察後',
   clearSettings: (text: string): string => `取消 ${text}`,
@@ -688,6 +693,7 @@ const EN: Messages = {
   nodesShow: 'Nodes show',
   zeroOne: '0/1',
   probGraphTitle: (title) => `${title}: the probability that each variable equals 1`,
+  comparePick: 'Switch the compared value',
   observing: (event) => `Observing ${event}`,
   observed: 'observed',
   setByDo: 'set',
@@ -730,6 +736,9 @@ const EN: Messages = {
       ? 'Observing: first as 1, again as 0, a third time to release. Intervening sets it to 1, and the slider beside it sets 0 or a probability in between; Esc closes the slider.'
       : 'First at its current value, again at the other value, a third time to release; on a node with more than two values, pick the value with the slider.',
   moreInfo: 'Details',
+  trail: 'Trail',
+  trailStep: (value, setting) => (setting === '' ? value : `${value} (${setting})`),
+  trailLine: (id, steps, dropped) => `${id}: ${dropped ? '… ' : ''}${steps.join(' → ')}`,
   afterObserve: 'After observing',
   afterDoObserve: 'After intervening and observing',
   clearSettings: (text) => `Remove ${text}`,

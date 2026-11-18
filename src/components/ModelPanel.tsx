@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
+import { getVariable } from '../engine/index.ts'
 import { graphExport } from './export-render.tsx'
 import type { ExportSource, ExportTag } from './export-image.ts'
 import { ExportMenu } from './ExportMenu.tsx'
@@ -18,7 +19,7 @@ import { SignalGraph } from './SignalGraph.tsx'
 import { Formula, Rich } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
 import type { Stochastic } from './view-model.ts'
-import { assignmentText, probLegend, settingText } from './view-model.ts'
+import { assignmentText, changeNotes, probLegend, settingText } from './view-model.ts'
 
 export interface GraphBoxProps {
   readonly c: LoadedCase
@@ -46,6 +47,10 @@ export interface GraphBoxProps {
   readonly embedCode?: () => string
   /** Drawn inside the graph's frame under the legend (the playground's hint and step buttons); not exported. */
   readonly foot?: ReactNode
+  /** Called when the reader asks for the prior or actual world back (「回到原本」 or the chip's ×). */
+  readonly onReset?: () => void
+  /** Notes under nodes that replace the 原本 v notes of a probability graph. */
+  readonly notes?: Readonly<Record<string, string>>
 }
 
 const NONE: Stochastic = {}
@@ -87,6 +92,8 @@ export function GraphBox({
   onMove,
   embedCode,
   foot,
+  onReset,
+  notes,
 }: GraphBoxProps) {
   const t = useMessages()
   const [notice, setNotice] = useState<string | undefined>(undefined)
@@ -116,7 +123,15 @@ export function GraphBox({
   }
   // A do() on a node first drops its observation: the node keeps the value, now set by intervention.
   const doing = (next: DoState, id: string): void => commit(next, id in observed ? withoutKey(observed, id) : observed)
-  const clearAll = (): void => commit({ interventions: {}, stochastic: NONE }, NO_OBSERVATION)
+  const clearAll = (): void => {
+    commit({ interventions: {}, stochastic: NONE }, NO_OBSERVATION)
+    onReset?.()
+  }
+  // A probability graph keeps 原本 v under each 0/1 node whose number moved from the prior.
+  const prior = useMemo(() => (prob ? solve(c, {}).probs : undefined), [c, prob])
+  const twoValued = world.shown.filter((id) => getVariable(c.model, id).domain.kind === 'boolean')
+  const probNotes =
+    prior === undefined || world.probs === undefined ? undefined : { ...changeNotes(t, prior, world.probs, twoValued), ...notes }
   const graph = (m: Messages, interactive: boolean) => (
     <SignalGraph
       compact={narrow}
@@ -126,6 +141,7 @@ export function GraphBox({
       original={world.original}
       probs={world.probs}
       dists={world.dists}
+      probNotes={probNotes}
       observed={Object.keys(observed)}
       observedValues={observed}
       interventions={interventions}

@@ -747,7 +747,7 @@ export function SignalGraph(props: SignalGraphProps) {
               </text>
             )}
         {prob && probNotes?.[id] !== undefined && (
-          <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted">
+          <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted" data-note={id}>
             {probNotes[id]}
           </text>
         )}

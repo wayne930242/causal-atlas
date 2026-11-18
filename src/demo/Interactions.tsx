@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CausalPlayground } from '../components/index.ts'
+import { CausalPlayground, ProbabilityPanel } from '../components/index.ts'
 import { lessonModel } from './lesson-models.ts'
 
 /**
@@ -17,6 +17,19 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
         ]}
       />
       <CausalPlayground caseId="forest-fire-disjunctive" presets={[{ label: '見證：固定 MD=0，L 改成 0', interventions: { L: 0 }, hold: { MD: 0 } }]} />
+    </>
+  ),
+  trail: () => (
+    <>
+      <CausalPlayground doc={lessonModel('m02-collider')} track={['Y']} />
+      <ProbabilityPanel
+        doc={lessonModel('m03-sprinkler')}
+        view="compare"
+        pair={[
+          { event: 'W=1', observe: 'S=1', intervene: { S: 1 } },
+          { event: 'W=1', observe: 'S=0', intervene: { S: 0 } },
+        ]}
+      />
     </>
   ),
 }
