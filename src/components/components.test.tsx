@@ -18,12 +18,21 @@ function edge(container: HTMLElement, key: string): Element {
 }
 
 describe('CausalPlayground', () => {
-  it('toggles do() on a node: cuts its incoming edge and recomputes downstream', () => {
+  it('toggles do() on a node: pins it, cuts its incoming edge, flips it and recomputes downstream', () => {
     const { container } = render(<CausalPlayground caseId="rock-throwing" />)
     expect(node(container, 'SH').getAttribute('data-value')).toBe('1')
     expect(node(container, 'BH').getAttribute('data-value')).toBe('0')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('live')
 
+    // The first click pins SH at its current value: the edge is cut, nothing downstream changes.
+    fireEvent.click(screen.getByRole('button', { name: /^SH 小蘇擊中/ }))
+    expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')
+    expect(node(container, 'SH').getAttribute('data-value')).toBe('1')
+    expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('cut')
+    expect(node(container, 'BH').getAttribute('data-value')).toBe('0')
+    expect(container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text')).toBe('do(SH=1)')
+
+    // The second sets the other value.
     fireEvent.click(screen.getByRole('button', { name: /^SH 小蘇擊中/ }))
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')
     expect(node(container, 'SH').getAttribute('data-value')).toBe('0')
@@ -32,7 +41,7 @@ describe('CausalPlayground', () => {
     expect(node(container, 'BS').getAttribute('data-value')).toBe('1')
     expect(container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text')).toBe('do(SH=0)')
 
-    // Keyboard: Enter on the same node releases it.
+    // Keyboard: Enter on the same node, a third press, releases it.
     fireEvent.keyDown(screen.getByRole('button', { name: /^SH 小蘇擊中/ }), { key: 'Enter' })
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('false')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('live')

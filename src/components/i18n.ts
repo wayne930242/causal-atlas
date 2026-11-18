@@ -132,7 +132,7 @@ type DraftWording = { readonly [K in DraftIssue['code']]: (issue: Extract<DraftI
  * What a click on a node does: set or release a boolean one; choose or adjust the value of a
  * multi-valued one; choose or adjust P*(X=1) of a boolean one in probability mode.
  */
-export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb'
+export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb' | 'observe'
 
 const ZH = {
   locale: 'zh-TW' as Locale,
@@ -253,8 +253,8 @@ const ZH = {
   cut: '切斷',
   was: (value: string): string => `原本 ${value}`,
   nodeValue: (value: string): string => `值 ${value}`,
-  nodeAria: (who: string, state: string, forced: string | undefined, before: string | undefined): string =>
-    `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${before === undefined ? '' : `，原本 ${before}`}`,
+  nodeAria: (who: string, state: string, forced: string | undefined, before: string | undefined, seen?: string): string =>
+    `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${seen === undefined ? '' : `，已觀察到 ${seen}`}${before === undefined ? '' : `，原本 ${before}`}`,
   nodeHint: (toggle: NodeToggle | undefined, movable: boolean): string =>
     [
       toggle === undefined
@@ -269,7 +269,9 @@ const ZH = {
                 ? '按一下設定干預後等於 1 的機率'
                 : toggle === 'adjustProb'
                   ? '按一下改設干預後等於 1 的機率或放開'
-                  : '按一下套上干預',
+                  : toggle === 'observe'
+                    ? '按一下觀察（再按換值，第三下取消）；長按或 Shift 加按一下是干預'
+                    : '按一下套上干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
@@ -333,7 +335,15 @@ const ZH = {
   },
 
   // playground
-  playgroundHint: '點圖上的節點，可以點擊切換設定值。',
+  playgroundHint: (probabilistic: boolean): string =>
+    probabilistic
+      ? '點一下節點是觀察：先觀察到 1，再點換成 0，第三下取消。長按節點（或按住 Shift 再點）是干預：設成 1，旁邊的滑桿可以改成 0 或其他機率。'
+      : '點一下節點是干預：先固定在目前的值，再點換成另一個值，第三下取消。',
+  afterObserve: '觀察後',
+  afterDoObserve: '干預並觀察後',
+  clearSettings: (text: string): string => `取消 ${text}`,
+  backToPrior: '回到原本的機率',
+  observeImpossible: (event: string): string => `在目前的設定下，${event} 不可能發生，無法以它為條件。`,
   presets: '預設的干預',
   docInvalid: '這份模型文件無法顯示：',
 
@@ -394,7 +404,7 @@ const ZH = {
     lastGood: '模型有問題，圖上是上一次能算的版本：',
     addFirst: '先在「變項」裡加一個變項',
     fillEquations: '補上式子，圖就會出現',
-    hint: '點節點可以套上干預；拖曳節點（或選取後按方向鍵）可以調整位置。',
+    hint: '機率圖上，點一下節點是觀察，長按（或按住 Shift 再點）是干預；只有一組值的圖，點一下就是干預。拖曳節點（或選取後按方向鍵）可以調整位置。',
     variables: '變項',
     varId: (n: number): string => `第 ${n} 個變項：代號`,
     varZh: (n: number): string => `第 ${n} 個變項：中文名稱`,
@@ -617,8 +627,8 @@ const EN: Messages = {
   cut: 'cut',
   was: (value) => `was ${value}`,
   nodeValue: (value) => `value ${value}`,
-  nodeAria: (who, state, forced, before) =>
-    `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${before === undefined ? '' : `, was ${before}`}`,
+  nodeAria: (who, state, forced, before, seen) =>
+    `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${seen === undefined ? '' : `, observed as ${seen}`}${before === undefined ? '' : `, was ${before}`}`,
   nodeHint: (toggle, movable) =>
     [
       toggle === undefined
@@ -633,7 +643,9 @@ const EN: Messages = {
                 ? 'click to set the probability of 1 by intervention'
                 : toggle === 'adjustProb'
                   ? 'click to change the probability of 1 set by intervention, or release it'
-                  : 'click to intervene',
+                  : toggle === 'observe'
+                    ? 'click to observe (again for the other value, a third time to release); long-press or Shift+click to intervene'
+                    : 'click to intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
@@ -693,7 +705,15 @@ const EN: Messages = {
     again: 'Start again',
   },
 
-  playgroundHint: 'Click a node on the graph to intervene on it, and again to release it; on a node with more than two values, pick the value to set.',
+  playgroundHint: (probabilistic) =>
+    probabilistic
+      ? 'Click a node to observe it: first as 1, again as 0, a third time to release. Long-press a node (or Shift+click) to intervene: it is set to 1, and the slider beside it sets 0 or a probability in between.'
+      : 'Click a node to intervene on it: first at its current value, again at the other value, a third time to release; on a node with more than two values, pick the value to set.',
+  afterObserve: 'After observing',
+  afterDoObserve: 'After intervening and observing',
+  clearSettings: (text) => `Remove ${text}`,
+  backToPrior: 'Back to the prior probabilities',
+  observeImpossible: (event) => `With what is set now, ${event} cannot happen, so it cannot be observed.`,
   presets: 'Preset interventions',
   docInvalid: 'This model document cannot be shown:',
 
@@ -749,7 +769,7 @@ const EN: Messages = {
     lastGood: 'The model has problems; the graph shows the last version that worked:',
     addFirst: 'Add a variable under “Variables” first',
     fillEquations: 'Fill in the equations and the graph will appear',
-    hint: 'Click a node to intervene on it; drag a node (or select it and press the arrow keys) to move it.',
+    hint: 'With probabilities, click a node to observe it and long-press (or Shift+click) it to intervene; with one set of values, a click intervenes. Drag a node (or select it and press the arrow keys) to move it.',
     variables: 'Variables',
     varId: (n) => `Variable ${n}: id`,
     varZh: (n) => `Variable ${n}: Chinese name`,

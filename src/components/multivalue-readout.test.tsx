@@ -134,7 +134,8 @@ describe('do-value popover placement', () => {
 
   it('opens beside the node in the graph', () => {
     const { container } = render(<CausalPlayground doc={dice} />)
-    fireEvent.click(screen.getByRole('button', { name: /^D1 骰一/ }))
+    // In probability mode a click observes; Shift+click intervenes and opens the value control.
+    fireEvent.click(screen.getByRole('button', { name: /^D1 骰一/ }), { shiftKey: true })
     const box = container.querySelector('.ca-do-pop-box') as Element
     const [tx] = (node(container, 'D1').getAttribute('transform') ?? '').match(/-?[\d.]+/g)?.map(Number) ?? []
     expect(Number(box.getAttribute('x'))).toBeGreaterThan(tx)

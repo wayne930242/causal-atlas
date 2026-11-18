@@ -52,7 +52,7 @@ export interface CausalPlaygroundOptions {
   readonly locale?: Locale
 }
 
-/** One case's graph and equations; click a node to set or release do() on it. */
+/** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
 export function CausalPlayground({ locale, ...props }: CausalPlaygroundProps) {
   return (
     <LocaleScope locale={locale}>
@@ -74,17 +74,31 @@ function PlaygroundFor({
   defaultNotation,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase }) {
   const t = useMessages()
-  const { interventions, stochastic, setInterventions, setDo, notation, setNotation, world } = useModel(c, initialInterventions, defaultNotation)
+  const { interventions, stochastic, observed, setInterventions, setDo, setObserved, notation, setNotation, world } = useModel(
+    c,
+    initialInterventions,
+    defaultNotation,
+  )
   const soft = Object.keys(stochastic).length > 0
   const buttons = presetButtons(c, presets, t.locale)
   return (
     <div className="ca-root not-prose ca-playground" data-case={c.data.id} lang={t.locale}>
       <div className="ca-panel">
-        <GraphBox c={c} world={world} interventions={interventions} stochastic={stochastic} onDo={setDo} legend exportUrl={exportUrl} />
+        <GraphBox
+          c={c}
+          world={world}
+          interventions={interventions}
+          stochastic={stochastic}
+          onDo={setDo}
+          observed={observed}
+          onObserve={setObserved}
+          legend
+          exportUrl={exportUrl}
+        />
         <EquationBox c={c} world={world} interventions={interventions} stochastic={stochastic} notation={notation} onNotation={setNotation} />
       </div>
       <div className="ca-playground-foot">
-        <p className="ca-hint">{t.playgroundHint}</p>
+        <p className="ca-hint">{t.playgroundHint(world.probs !== undefined)}</p>
         {buttons.length > 0 && (
           <div className="ca-presets" role="group" aria-label={t.presets}>
             {buttons.map((s) => (
@@ -92,7 +106,7 @@ function PlaygroundFor({
                 key={s.text}
                 type="button"
                 className="ca-btn ca-btn-outline"
-                aria-pressed={!soft && assignmentText(s.interventions) === assignmentText(interventions)}
+                aria-pressed={!soft && Object.keys(observed).length === 0 && assignmentText(s.interventions) === assignmentText(interventions)}
                 onClick={() => setInterventions(s.interventions)}
               >
                 <Rich text={s.text} ids={c.model.byId} />

@@ -182,14 +182,16 @@ describe('do() as a probability on a boolean node', () => {
   it('opens a P(Z=1) slider: 0 is do(Z=0), 0.3 the mixture, Release clears', () => {
     const { container } = render(<CausalPlayground doc={fork} />)
     const z = screen.getByRole('button', { name: /^Z 共同原因/ })
-    expect(z.getAttribute('aria-label')).toContain('按一下設定干預後等於 1 的機率')
+    expect(z.getAttribute('aria-label')).toContain('長按或 Shift 加按一下是干預')
     expect(z.getAttribute('aria-haspopup')).toBe('dialog')
-    fireEvent.click(z)
+    // Shift+click intervenes at once, do(Z=1), and opens the slider.
+    fireEvent.click(z, { shiftKey: true })
     expect(container.querySelector('.ca-do-pop')).not.toBeNull()
-    expect(node(container, 'Z').getAttribute('data-intervened')).toBe('false')
+    expect(node(container, 'Z').getAttribute('data-intervened')).toBe('true')
+    expect(chip(container)).toBe('do(Z=1)')
     const slider = screen.getByRole('slider', { name: /Z 共同原因：干預後等於 1 的機率/ }) as HTMLInputElement
     expect([slider.min, slider.max, slider.step]).toEqual(['0', '1', '0.05'])
-    expect(slider.value).toBe('0.5')
+    expect(slider.value).toBe('1')
 
     fireEvent.change(slider, { target: { value: '0' } })
     expect(chip(container)).toBe('do(Z=0)')
@@ -243,6 +245,9 @@ describe('do() as a probability on a boolean node', () => {
     expect(z.getAttribute('aria-label')).toContain('按一下套上干預')
     fireEvent.click(z)
     expect(container.querySelector('.ca-do-pop')).toBeNull()
+    expect(chip(container)).toBe('do(Z=1)')
+    expect(node(container, 'X').getAttribute('data-value')).toBe('1')
+    fireEvent.click(z)
     expect(chip(container)).toBe('do(Z=0)')
     expect(node(container, 'X').getAttribute('data-value')).toBe('0')
     fireEvent.click(z)

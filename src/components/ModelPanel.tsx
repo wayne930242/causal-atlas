@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
 import { graphExport } from './export-render.tsx'
@@ -7,17 +7,17 @@ import { ExportMenu } from './ExportMenu.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { messagesFor, useMessages } from './i18n.ts'
 import type { DoState, ModelWorld } from './model-state.ts'
-import { toggled, withProbability, withValue } from './model-state.ts'
+import { observedNext, solve, toggled, withProbability, withValue } from './model-state.ts'
 import { useNarrow } from './use-narrow.ts'
 import { CopyLatex, Equations } from './Equations.tsx'
 import type { UiNotation } from './notation.ts'
 import { notations } from './notation.ts'
 import { Segmented, Tag } from './parts.tsx'
 import { SignalGraph } from './SignalGraph.tsx'
-import { Formula } from './typeset.tsx'
+import { Formula, Rich } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
 import type { Stochastic } from './view-model.ts'
-import { doText, probLegend } from './view-model.ts'
+import { assignmentText, probLegend, settingText } from './view-model.ts'
 
 export interface GraphBoxProps {
   readonly c: LoadedCase
@@ -27,6 +27,13 @@ export interface GraphBoxProps {
   readonly stochastic?: Stochastic
   /** A click on a node: the new do() state. */
   readonly onDo?: (next: DoState) => void
+  /** Observations the probabilities are conditioned on (probability mode only). */
+  readonly observed?: Assignment
+  /**
+   * The new observations after a click. Given in probability mode, a click observes and a long
+   * press or Shift+click intervenes; without it every click intervenes.
+   */
+  readonly onObserve?: (next: Assignment) => void
   readonly witness?: Assignment
   readonly legend?: boolean
   readonly title?: string
@@ -37,19 +44,72 @@ export interface GraphBoxProps {
 }
 
 const NONE: Stochastic = {}
+const NO_OBSERVATION: Assignment = {}
+
+/** `do` without `id`, hard or stochastic. */
+function withoutDo(state: DoState, id: string): DoState {
+  const interventions: Record<string, Assignment[string]> = { ...state.interventions }
+  const stochastic: Record<string, number> = { ...state.stochastic }
+  delete interventions[id]
+  delete stochastic[id]
+  return { interventions, stochastic }
+}
+
+function withoutKey(a: Assignment, id: string): Assignment {
+  const next: Record<string, Assignment[string]> = { ...a }
+  delete next[id]
+  return next
+}
 
 /**
- * The graph with its world tags; clicking a node toggles do() on it, or in probability mode opens a
- * slider for P*(X=1) of a boolean node or for the value of a multi-valued one.
+ * The graph with its world tags. With values, a click intervenes on a node. With probabilities and
+ * `onObserve`, a click observes it and a long press or Shift+click intervenes (a boolean node is set
+ * to 1 at once, with a slider for P*(X=1) beside it); an observation that cannot happen under what is
+ * set is refused with a note.
  */
-export function GraphBox({ c, world, interventions, stochastic = NONE, onDo, witness, legend, title, exportUrl, onMove }: GraphBoxProps) {
+export function GraphBox({
+  c,
+  world,
+  interventions,
+  stochastic = NONE,
+  onDo,
+  observed = NO_OBSERVATION,
+  onObserve,
+  witness,
+  legend,
+  title,
+  exportUrl,
+  onMove,
+}: GraphBoxProps) {
   const t = useMessages()
+  const [notice, setNotice] = useState<string | undefined>(undefined)
   const hasDo = Object.keys(interventions).length > 0 || Object.keys(stochastic).length > 0
+  const hasObs = Object.keys(observed).length > 0
+  const hasSet = hasDo || hasObs
   const state: DoState = { interventions, stochastic }
-  const doNow = doText(interventions, stochastic)
+  const setNow = settingText(interventions, stochastic, observed)
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
+  const prob = world.probs !== undefined
+  const observes = prob && onObserve !== undefined
   const legendFor = (m: Messages): string => (world.probs !== undefined ? probLegend(m, c.model, world.shown) : m.valueLegend)
+  const headTag = (m: Messages): string => (hasDo && hasObs ? m.afterDoObserve : hasObs ? m.afterObserve : m.afterDo)
+  /** Commit do() and observations together, unless the observations cannot happen under that do(). */
+  const commit = (next: DoState, nextObserved: Assignment): void => {
+    if (Object.keys(nextObserved).length > 0 && prob) {
+      const evidence = solve(c, next.interventions, next.stochastic, nextObserved).evidence ?? 1
+      if (!(evidence > 0)) {
+        setNotice(t.observeImpossible(assignmentText(nextObserved)))
+        return
+      }
+    }
+    setNotice(undefined)
+    if (nextObserved !== observed) onObserve?.(nextObserved)
+    if (next.interventions !== interventions || next.stochastic !== stochastic) onDo?.(next)
+  }
+  // A do() on a node first drops its observation: the node keeps the value, now set by intervention.
+  const doing = (next: DoState, id: string): void => commit(next, id in observed ? withoutKey(observed, id) : observed)
+  const clearAll = (): void => commit({ interventions: {}, stochastic: NONE }, NO_OBSERVATION)
   const graph = (m: Messages, interactive: boolean) => (
     <SignalGraph
       compact={narrow}
@@ -59,18 +119,25 @@ export function GraphBox({ c, world, interventions, stochastic = NONE, onDo, wit
       original={world.original}
       probs={world.probs}
       dists={world.dists}
+      observed={Object.keys(observed)}
+      observedValues={observed}
       interventions={interventions}
       stochastic={stochastic}
       removedEdges={world.removedEdges}
       witness={witness}
-      onToggle={
-        !interactive || onDo === undefined ? undefined : (id) => onDo({ stochastic, interventions: toggled(c, interventions, world, id) })
-      }
-      onSetValue={
-        !interactive || onDo === undefined ? undefined : (id, value) => onDo({ stochastic, interventions: withValue(interventions, id, value) })
-      }
-      onSetProbability={
-        !interactive || onDo === undefined || world.probs === undefined ? undefined : (id, p) => onDo(withProbability(state, id, p))
+      onToggle={!interactive || onDo === undefined ? undefined : (id) => doing({ stochastic, interventions: toggled(c, interventions, world, id) }, id)}
+      onSetValue={!interactive || onDo === undefined ? undefined : (id, value) => doing({ stochastic, interventions: withValue(interventions, id, value) }, id)}
+      onSetProbability={!interactive || onDo === undefined || !prob ? undefined : (id, p) => doing(withProbability(state, id, p), id)}
+      onObserve={
+        !interactive || !observes
+          ? undefined
+          : (id) => {
+              const forced = interventions[id]
+              if (forced !== undefined || id in stochastic) {
+                // Observing an intervened node: the same value, now observed (1 for a stochastic one).
+                commit(withoutDo(state, id), { ...observed, [id]: forced ?? true })
+              } else commit(state, observedNext(c, observed, id))
+            }
       }
       title={title ?? m.graphTitle(c.data.title[m.locale])}
       onMove={interactive ? onMove : undefined}
@@ -83,38 +150,34 @@ export function GraphBox({ c, world, interventions, stochastic = NONE, onDo, wit
       dispose?.()
       return undefined
     }
-    const tags: ExportTag[] = hasDo
+    const tags: ExportTag[] = hasSet
       ? [
-          { text: m.afterDo, tone: 'slate' },
-          { text: doNow, tone: 'accent', mono: true },
+          { text: headTag(m), tone: 'slate' },
+          { text: setNow, tone: 'accent', mono: true },
         ]
       : [{ text: world.probs !== undefined ? m.probability : m.actualWorld, tone: 'fg' }]
     return {
       name: `${c.data.id}-graph`,
       title: c.data.title[locale],
-      panels: [{ svg, tags, tint: hasDo }],
+      panels: [{ svg, tags, tint: hasSet }],
       legend: legendFor(m),
       origin: originSources(m, c),
       originCitations: originCitations(c),
       dispose,
     }
   }
+  const editable = onDo !== undefined || onObserve !== undefined
   return (
-    <div className={`ca-box ca-graph-box${hasDo ? ' is-cf' : ''}`} data-world={hasDo ? 'do' : 'actual'}>
+    <div className={`ca-box ca-graph-box${hasSet ? ' is-cf' : ''}`} data-world={hasDo ? 'do' : hasObs ? 'observed' : 'actual'}>
       <div className="ca-box-head">
         <div className="ca-tags">
-          {hasDo ? (
+          {hasSet ? (
             <>
-              <Tag tone="slate">{t.afterDo}</Tag>
+              <Tag tone="slate">{headTag(t)}</Tag>
               <span className="ca-do-chip ca-mono">
-                <Formula text={doNow} />
-                {onDo !== undefined && (
-                  <button
-                    type="button"
-                    className="ca-do-clear"
-                    aria-label={t.removeDo(doNow)}
-                    onClick={() => onDo({ interventions: {}, stochastic: NONE })}
-                  >
+                <Formula text={setNow} />
+                {editable && (
+                  <button type="button" className="ca-do-clear" aria-label={hasObs ? t.clearSettings(setNow) : t.removeDo(setNow)} onClick={clearAll}>
                     ×
                   </button>
                 )}
@@ -125,9 +188,9 @@ export function GraphBox({ c, world, interventions, stochastic = NONE, onDo, wit
           )}
         </div>
         <div className="ca-box-actions">
-          {hasDo && onDo !== undefined && (
-            <button type="button" className="ca-link" onClick={() => onDo({ interventions: {}, stochastic: NONE })}>
-              {t.backToActual}
+          {hasSet && editable && (
+            <button type="button" className="ca-link" onClick={clearAll}>
+              {prob ? t.backToPrior : t.backToActual}
             </button>
           )}
           <ExportMenu source={exportSource} url={exportUrl} origins={originCitations(c)} />
@@ -136,6 +199,11 @@ export function GraphBox({ c, world, interventions, stochastic = NONE, onDo, wit
       <div className="ca-graph-wrap" ref={wrap}>
         {graph(t, true)}
       </div>
+      {notice !== undefined && (
+        <p className="ca-notice" role="status">
+          <Rich text={notice} ids={c.model.byId} />
+        </p>
+      )}
       {legend === true && <p className="ca-legend">{legendFor(t)}</p>}
     </div>
   )

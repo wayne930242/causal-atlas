@@ -45,8 +45,9 @@ describe('do() on a multi-valued node', () => {
     fireEvent.click(screen.getByRole('button', { name: /^D1 骰子/ }))
     const dialog = container.querySelector('.ca-do-pop')
     expect(dialog).not.toBeNull()
-    // Opening alone intervenes on nothing.
-    expect(node(container, 'D1').getAttribute('data-intervened')).toBe('false')
+    // The click pins D1 at its current value at once.
+    expect(node(container, 'D1').getAttribute('data-intervened')).toBe('true')
+    expect(chip(container)).toBe('do(D1=1)')
     const slider = screen.getByRole('slider', { name: /D1 骰子/ }) as HTMLInputElement
     expect(slider.min).toBe('0')
     expect(slider.max).toBe('5')
@@ -94,6 +95,8 @@ describe('do() on a multi-valued node', () => {
     fireEvent.click(lamp)
     expect(container.querySelector('.ca-do-pop')).toBeNull()
     expect(node(container, 'Lamp').getAttribute('data-intervened')).toBe('true')
+    expect(node(container, 'Lamp').getAttribute('data-value')).toBe('1')
+    fireEvent.click(lamp)
     expect(node(container, 'Lamp').getAttribute('data-value')).toBe('0')
     expect(node(container, 'On').getAttribute('data-value')).toBe('0')
     fireEvent.click(lamp)

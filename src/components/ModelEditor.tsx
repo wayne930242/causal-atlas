@@ -145,6 +145,17 @@ function validStochastic(c: LoadedCase, state: DoState, hard: Assignment): DoSta
 }
 
 const NO_DO: DoState = { interventions: {}, stochastic: {} }
+const NO_OBSERVATION: Assignment = {}
+
+/** Observations that still name a variable with a value in its domain, not intervened on, in a model drawn with probabilities. */
+function validObserved(c: LoadedCase, observed: Assignment, active: DoState): Assignment {
+  if (c.context !== undefined) return NO_OBSERVATION
+  const out: Record<string, Value> = {}
+  for (const [id, value] of Object.entries(validInterventions(c, observed))) {
+    if (!(id in active.interventions) && !(id in active.stochastic)) out[id] = value
+  }
+  return out
+}
 
 function priorsFor(v: DraftVariable): number[] {
   const n = valueTexts(v).length
@@ -186,6 +197,8 @@ function EditorBody({
   // Problems of the document the editor started from or the extra model chosen.
   const [docProblems, setDocProblems] = useState<readonly Problem[]>(start.problems)
   const [doState, setDoState] = useState<DoState>(NO_DO)
+  // Observations are not written to the address: they last while the model is edited, as long as they still fit it.
+  const [observed, setObserved] = useState<Assignment>(NO_OBSERVATION)
   // The draft as a case or extra model was loaded, and its id: while the draft is still this very
   // object, the address names the id instead of encoding the model.
   const [base, setBase] = useState<{ readonly draft: Draft; readonly id: string } | undefined>(() =>
@@ -210,20 +223,27 @@ function EditorBody({
   const uid = useId()
 
   // Solving enumerates contexts: do it once per model and intervention, not on every render.
-  const { world, runtimeError, active } = useMemo((): {
+  const { world, runtimeError, active, seenNow } = useMemo((): {
     readonly world?: ModelWorld
     readonly runtimeError?: string
     readonly active: DoState
+    readonly seenNow: Assignment
   } => {
-    if (shown === undefined) return { active: NO_DO }
+    if (shown === undefined) return { active: NO_DO, seenNow: NO_OBSERVATION }
     const hard = validInterventions(shown, doState.interventions)
     const valid: DoState = { interventions: hard, stochastic: validStochastic(shown, doState, hard) }
     try {
-      return { world: solve(shown, valid.interventions, valid.stochastic), active: valid }
+      const obs = validObserved(shown, observed, valid)
+      const solved = solve(shown, valid.interventions, valid.stochastic, obs)
+      // An edit that leaves the observation impossible drops it rather than show no numbers.
+      if (Object.keys(obs).length > 0 && !((solved.evidence ?? 1) > 0)) {
+        return { world: solve(shown, valid.interventions, valid.stochastic), active: valid, seenNow: NO_OBSERVATION }
+      }
+      return { world: solved, active: valid, seenNow: obs }
     } catch (error) {
-      return { runtimeError: e.cannotCompute(errorMessage(error, t)), active: valid }
+      return { runtimeError: e.cannotCompute(errorMessage(error, t)), active: valid, seenNow: NO_OBSERVATION }
     }
-  }, [shown, doState, e, t])
+  }, [shown, doState, observed, e, t])
 
   // The state the address already shows: changes to anything else rewrite it.
   const synced = useRef<{ draft: Draft; doState: DoState }>({ draft: start.draft, doState })
@@ -235,6 +255,7 @@ function EditorBody({
   const showNamed = (next: Start, doNext: DoState): void => {
     setDraft(next.draft)
     setDoState(doNext)
+    setObserved(NO_OBSERVATION)
     setPicked(next.picked)
     setDocProblems(next.problems)
     setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
@@ -319,6 +340,7 @@ function EditorBody({
   const replace = (next: Draft): void => {
     setDraft(next)
     setDoState(NO_DO)
+    setObserved(NO_OBSERVATION)
     setPicked(undefined)
     setDocProblems([])
     setBase(undefined)
@@ -328,6 +350,7 @@ function EditorBody({
     const next = extra !== undefined ? startFromDoc(extra.doc, t, extra.id) : startNamed(key, t, NO_EXTRAS)
     setDraft(next.draft)
     setDoState(NO_DO)
+    setObserved(NO_OBSERVATION)
     setPicked(next.picked)
     setDocProblems(next.problems)
     setBase(next.named === undefined ? undefined : { draft: next.draft, id: next.named })
@@ -479,6 +502,8 @@ function EditorBody({
                     interventions={active.interventions}
                     stochastic={active.stochastic}
                     onDo={setDoState}
+                    observed={seenNow}
+                    onObserve={setObserved}
                     onMove={move}
                     legend
                     exportUrl={exportUrl}

@@ -1,4 +1,4 @@
-import type { KeyboardEvent, PointerEvent, ReactNode } from 'react'
+import type { KeyboardEvent, MouseEvent, PointerEvent, ReactNode } from 'react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment, Edge, Value } from '../engine/index.ts'
@@ -38,6 +38,8 @@ export interface SignalGraphProps {
   readonly probNotes?: Readonly<Record<string, string>>
   /** Observed variables (drawn with a second ring). */
   readonly observed?: readonly string[]
+  /** The observed values, written in a tag beside each observed node. */
+  readonly observedValues?: Assignment
   readonly interventions: Assignment
   /** Stochastic interventions: P*(X=1) of a boolean node, 0 < p < 1 (drawn like a do(), with that probability). */
   readonly stochastic?: Stochastic
@@ -49,10 +51,16 @@ export interface SignalGraphProps {
   /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
   readonly onSetValue?: (id: string, value: Value | undefined) => void
   /**
-   * Probability mode: a click on a boolean node opens a slider for P*(X=1), reported here; 0 and 1
-   * mean do(X=0) and do(X=1), undefined releases the intervention.
+   * Probability mode: intervening on a boolean node sets P*(X=1) = 1 at once (the observed value,
+   * when it was observed) and opens a slider for P*(X=1), reported here; 0 and 1 mean do(X=0) and
+   * do(X=1), undefined releases the intervention.
    */
   readonly onSetProbability?: (id: string, p: number | undefined) => void
+  /**
+   * Given, a click (or Enter) observes the node, and a long press, Shift+click or Shift+Enter
+   * intervenes on it; without it every click intervenes.
+   */
+  readonly onObserve?: (id: string) => void
   readonly title: string
   /** Narrower columns, for two graphs side by side. */
   readonly compact?: boolean
@@ -79,6 +87,8 @@ const BAR_GAP = 10
 const BAR_LABEL = 11
 /** P*(X=1) slider step for a boolean node in probability mode. */
 const P_STEP = 0.05
+/** How long a press must last to intervene instead of observe, in ms. */
+const LONG_PRESS = 500
 
 /** What sits under a node's label: nothing, one number, or one bar per value (with the largest probability). */
 type Readout =
@@ -175,7 +185,9 @@ export function SignalGraph(props: SignalGraphProps) {
     onToggle,
     onSetValue,
     onSetProbability,
+    onObserve,
     onMove,
+    observedValues = {},
   } = props
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -184,6 +196,18 @@ export function SignalGraph(props: SignalGraphProps) {
   // After a drag, the browser may still send a click to the node: ignore clicks until this time.
   const suppressUntil = useRef(0)
   const [picking, setPicking] = useState<string | undefined>(undefined)
+  // A long press in progress, and whether the last one fired (so the click after it is ignored).
+  const [pressing, setPressing] = useState<string | undefined>(undefined)
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const pressFired = useRef(false)
+  const cancelPress = (): void => {
+    if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
+    pressTimer.current = undefined
+    setPressing(undefined)
+  }
+  useEffect(() => () => {
+    if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
+  }, [])
   const popRef = useRef<HTMLDivElement>(null)
   const sliderRef = useRef<HTMLInputElement>(null)
   const focusNode = (id: string): void => svgRef.current?.querySelector<SVGGElement>(`[data-node="${id}"]`)?.focus()
@@ -248,7 +272,10 @@ export function SignalGraph(props: SignalGraphProps) {
     const dy = at.y - drag.y0
     const moved = drag.moved || Math.hypot(dx, dy) > 4
     // Capture only once it is a drag, so a plain press-release stays a click on the node.
-    if (moved && !drag.moved) svgRef.current?.setPointerCapture?.(e.pointerId)
+    if (moved && !drag.moved) {
+      svgRef.current?.setPointerCapture?.(e.pointerId)
+      cancelPress()
+    }
     setDrag({ ...drag, dx, dy, moved })
   }
   const endDrag = (e: PointerEvent<SVGSVGElement>): void => {
@@ -264,16 +291,18 @@ export function SignalGraph(props: SignalGraphProps) {
   const edges = shownEdges(c.model.edges, shown)
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
-  // The do tag beside an intervened node: `X←1`, or `P(X=1)=0.30` for a stochastic intervention.
-  const doTag = (id: string): { text: string; box: Box; left: boolean } | undefined => {
+  // The tag beside a set node: `X←1` for do(), `P(X=1)=0.30` for a stochastic do(), `X=1` observed.
+  const doTag = (id: string): { text: string; box: Box; left: boolean; seen: boolean } | undefined => {
     const forced = interventions[id]
     const soft = stochastic[id]
-    if (forced === undefined && soft === undefined) return undefined
+    const seen = observedValues[id]
+    if (forced === undefined && soft === undefined && seen === undefined) return undefined
     if (witness !== undefined && id in witness) return undefined
-    const text = forced !== undefined ? `${id}←${formatValue(forced)}` : `P(${id}=1)=${probText(soft)}`
+    const text =
+      forced !== undefined ? `${id}←${formatValue(forced)}` : soft !== undefined ? `P(${id}=1)=${probText(soft)}` : `${id}=${formatValue(seen as Value)}`
     const w = textWidth(text, 12) + 18
     const left = (grid.get(id)?.col ?? 0) === maxCol
-    return { text, left, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
+    return { text, left, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
   }
 
   // Each node's label and readout form one block right under it; only when that block touches an
@@ -507,22 +536,36 @@ export function SignalGraph(props: SignalGraphProps) {
         : `P(${id}=1) ${probText(pv ?? Number.NaN)}`
       : t.nodeValue(text)
     const forcedText = forced !== undefined ? formatValue(forced) : soft !== undefined ? `P(${id}=1)=${probText(soft)}` : undefined
-    const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined)
-    // A multi-valued node does not flip: a click opens a control to pick the value. In probability
-    // mode a boolean one opens a control for P*(X=1).
+    const seen = observedValues[id]
+    const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen))
+    // A multi-valued node does not flip: intervening on it sets a value and opens a control to pick
+    // another. In probability mode a boolean one is set to 1 and opens a control for P*(X=1).
     const picksValue = onToggle !== undefined && onSetValue !== undefined && !boolean
     const picksProb = prob && boolean && onSetProbability !== undefined
     const picks = picksValue || picksProb
-    const interactive = onToggle !== undefined || onMove !== undefined || picks
-    const activate = (): void => {
-      if (picks) setPicking(picking === id ? undefined : id)
-      else onToggle?.(id)
+    const observes = onObserve !== undefined
+    const interactive = onToggle !== undefined || onMove !== undefined || picks || observes
+    /** Intervene: set the node at once (to its observed or current value) and open its control. */
+    const intervene = (): void => {
+      if (picksProb) {
+        if (!intervened) onSetProbability?.(id, seen === undefined || seen === true || seen === 1 ? 1 : 0)
+        setPicking(intervened && picking === id ? undefined : id)
+      } else if (picksValue && variable.domain.kind === 'finite') {
+        if (!intervened) onSetValue?.(id, seen ?? v ?? variable.domain.values[0])
+        setPicking(intervened && picking === id ? undefined : id)
+      } else onToggle?.(id)
+    }
+    const activate = (shift: boolean): void => {
+      if (observes && !shift) {
+        setPicking(undefined)
+        onObserve(id)
+      } else intervene()
     }
     const arrows: Record<string, [number, number]> = { ArrowLeft: [-0.5, 0], ArrowRight: [0.5, 0], ArrowUp: [0, -0.5], ArrowDown: [0, 0.5] }
     const onKey = (event: KeyboardEvent<SVGGElement>): void => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        activate()
+        activate(event.shiftKey)
         return
       }
       const step = arrows[event.key]
@@ -531,11 +574,30 @@ export function SignalGraph(props: SignalGraphProps) {
         onMove(id, step[0], step[1])
       }
     }
-    const onClick = (): void => {
+    const onClick = (event: MouseEvent<SVGGElement>): void => {
+      if (pressFired.current) {
+        pressFired.current = false
+        return
+      }
       if (Date.now() < suppressUntil.current) return
-      activate()
+      activate(event.shiftKey)
     }
-    const toggle: NodeToggle | undefined = picksProb
+    const onPointerDown = (e: PointerEvent<SVGGElement>): void => {
+      startDrag(id, e)
+      if (!observes || e.button !== 0 || e.shiftKey) return
+      pressFired.current = false
+      cancelPress()
+      setPressing(id)
+      pressTimer.current = setTimeout(() => {
+        pressTimer.current = undefined
+        pressFired.current = true
+        setPressing(undefined)
+        intervene()
+      }, LONG_PRESS)
+    }
+    const toggle: NodeToggle | undefined = observes
+      ? 'observe'
+      : picksProb
       ? intervened
         ? 'adjustProb'
         : 'chooseProb'
@@ -558,6 +620,8 @@ export function SignalGraph(props: SignalGraphProps) {
         data-node={id}
         data-value={text}
         data-intervened={intervened ? 'true' : 'false'}
+        data-observed={seen === undefined ? undefined : formatValue(seen)}
+        data-pressing={pressing === id ? 'true' : undefined}
         data-do-p={soft === undefined ? undefined : soft.toFixed(2)}
         data-block={block.side}
         transform={`translate(${p.x} ${p.y})`}
@@ -571,11 +635,16 @@ export function SignalGraph(props: SignalGraphProps) {
               'aria-label': t.withHint(aria, hint),
               onClick,
               onKeyDown: onKey,
-              onPointerDown: (e: PointerEvent<SVGGElement>) => startDrag(id, e),
+              onPointerDown,
+              onPointerUp: cancelPress,
+              onPointerLeave: cancelPress,
+              onPointerCancel: cancelPress,
+              onContextMenu: observes ? (e: MouseEvent<SVGGElement>) => e.preventDefault() : undefined,
             }
           : { role: 'img', 'aria-label': aria })}
       >
         <circle r={R + 12} className="ca-focus-ring" />
+        {pressing === id && <circle r={R + 8} className="ca-press-ring" pathLength={100} />}
         {observed.includes(id) && <circle r={R + 5} className="ca-ring" />}
         {prob ? (
           <>
@@ -626,6 +695,14 @@ export function SignalGraph(props: SignalGraphProps) {
               </g>
             )}
           </>
+        )}
+        {!intervened && tag !== undefined && tag.seen && (
+          <g transform={`translate(${tag.box.x0} ${tag.box.y0})`} className="ca-seen-tag">
+            <rect width={tag.box.x1 - tag.box.x0} height={22} className="ca-seen-tag-box" />
+            <text x={(tag.box.x1 - tag.box.x0) / 2} y={15.5} textAnchor="middle" className="ca-mono ca-svg-small ca-svg-bold">
+              {sub(tag.text)}
+            </text>
+          </g>
         )}
         {changed && (
           <text x={R + 14} y={R + 14} className="ca-svg-small ca-fill-muted">

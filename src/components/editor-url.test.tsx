@@ -121,7 +121,8 @@ describe('ModelEditor address sync', () => {
     const node = container.querySelector('.ca-graph [data-node="ST"]')
     if (node === null) throw new Error('no node ST')
     fireEvent.click(node)
-    expect(window.location.hash).toBe('#case=rock-throwing&do=ST:0')
+    // The first click pins ST at its current value, 1.
+    expect(window.location.hash).toBe('#case=rock-throwing&do=ST:1')
   })
 
   it('loads #case=newcomb, also under StrictMode', async () => {

@@ -2,6 +2,9 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.3.13
+Observation and intervention are separate gestures. On a graph drawn with probabilities a click (or Enter) observes a node: =1, again =0, a third time released; the numbers become P(· | do(…), observed), conditioned in the intervened model, and no arrow is cut. A long press (0.5 s, with a filling ring), Shift+click or Shift+Enter intervenes: a boolean node is set to 1 at once and its P(X=1) slider opens. On a graph with one set of values a click intervenes: first at the current value, then the other value, then released. Each set node keeps its kind (a ring and `X=1` tag when observed, a clamp and `X←1` tag when intervened), the chip reads `do(X=1), Z=1`, and an observation that cannot happen under what is set is refused with a note. The editor keeps observations out of its address.
+
 ## 0.3.12
 Probabilities within 0.01 of 0 or 1 show two significant digits (0.0001, 0.9999) instead of rounding to 0.00 or 1.00.
 
@@ -166,7 +169,7 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 <ModelEditor client:visible initialDoc={doc} />
 ```
 
-- `<CausalPlayground doc>`: graph, notation toggle, do() on click and the export menu, server-rendered
+- `<CausalPlayground doc>`: graph, notation toggle, observation and do() on the nodes (see 0.3.13) and the export menu, server-rendered
   with values, no editor chrome. `presets` is `true` (a bundled case's own; a document has none),
   `false`, or a list of `{ label: string | { 'zh-TW', en }, interventions }`.
 - `<ProbabilityPanel doc>` takes a document with priors or a `context` (a point mass);

@@ -202,6 +202,20 @@ export function doText(a: Assignment, s: Stochastic = {}): string {
   return `do(${[assignmentText(a), stochasticText(s)].filter((x) => x !== '').join(', ')})`
 }
 
+/**
+ * What the graph is conditioned on: `do(X=1), Z=1`, `do(X=1)` or `Z=1` (the do() first, then the
+ * observations, read as P(· | do(…), …)); '' when nothing is set.
+ */
+export function settingText(a: Assignment, s: Stochastic = {}, observed: Assignment = {}): string {
+  const hasDo = Object.keys(a).length > 0 || Object.keys(s).length > 0
+  return [hasDo ? doText(a, s) : '', assignmentText(observed)].filter((x) => x !== '').join(', ')
+}
+
+/** An observation as a formula for `marginals`' `given`: `Z=1 and X=1`; undefined when empty. */
+export function observationFormula(observed: Assignment): string | undefined {
+  return Object.keys(observed).length === 0 ? undefined : assignmentText(observed, ' and ')
+}
+
 export function bracketText(a: Assignment): string {
   return `[${Object.entries(a)
     .map(([id, v]) => `${id}←${formatValue(v)}`)
@@ -459,12 +473,15 @@ export function marginals(
  * Marginals under the hard interventions `hard` and the stochastic ones `stochastic`: the mixture
  * Σ ∏ w · P(· | do(hard, X₁=x₁, …)) over every 0/1 setting of the stochastic variables, each
  * weighted by P*(Xᵢ=xᵢ) (Pearl 2009, pp. 113–114). Without stochastic ones it is `marginals`.
+ * With `given`, each part is conditioned in its own intervened model and the parts are weighted by
+ * P*(setting) · P(given | do(setting)), so the result is P(· | do(…), given); `evidence` is P(given).
  */
-export function mixedMarginals(model: CausalModel, prior: Prior, hard: Assignment, stochastic: Stochastic): Marginals {
+export function mixedMarginals(model: CausalModel, prior: Prior, hard: Assignment, stochastic: Stochastic, given?: string): Marginals {
   const ids = Object.keys(stochastic)
-  if (ids.length === 0) return marginals(model, prior, { do: hard })
+  if (ids.length === 0) return marginals(model, prior, { do: hard, given })
   const p: Record<string, number> = {}
   const dist: Record<string, number[]> = {}
+  let evidence = 0
   for (let mask = 0; mask < 1 << ids.length; mask++) {
     const setting: Record<string, Value> = { ...hard }
     let weight = 1
@@ -476,15 +493,19 @@ export function mixedMarginals(model: CausalModel, prior: Prior, hard: Assignmen
       setting[id] = on
       weight *= on ? q : 1 - q
     })
-    const part = marginals(model, prior, { do: setting })
-    for (const [id, v] of Object.entries(part.p)) p[id] = (p[id] ?? 0) + weight * v
+    const part = marginals(model, prior, { do: setting, given })
+    const w = weight * part.evidence
+    evidence += w
+    for (const [id, v] of Object.entries(part.p)) p[id] = (p[id] ?? 0) + (w > 0 ? w * v : 0)
     for (const [id, row] of Object.entries(part.dist)) {
       const acc = dist[id] ?? row.map(() => 0)
-      row.forEach((v, i) => (acc[i] += weight * v))
+      row.forEach((v, i) => (acc[i] += w > 0 ? w * v : 0))
       dist[id] = acc
     }
   }
-  return { p, dist, evidence: 1 }
+  for (const id of Object.keys(p)) p[id] = evidence > 0 ? p[id] / evidence : Number.NaN
+  for (const row of Object.values(dist)) row.forEach((v, i) => (row[i] = evidence > 0 ? v / evidence : Number.NaN))
+  return { p, dist, evidence }
 }
 
 /** Geometry of one node's per-value bars (a chart `width` wide, `barW` bars every `pitch`, in px). */
