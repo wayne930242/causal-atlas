@@ -1654,33 +1654,21 @@
   min-width: 0;
 }
 
-/* A wide right side: the graph and equations on the left, the case and the editing panels on the right. */
+/*
+ * A wide right side: the graph and equations on the left, held in view while the right column
+ * scrolls (tasks, then the inputs, then the case and its verdicts).
+ */
 @container ca-editor-content (min-width: 960px) {
   .ca-editor-layout {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "main info"
-      "main panels";
     align-items: start;
   }
 
-  .ca-editor-layout:has(> .ca-editor-info:empty) {
-    grid-template-areas:
-      "main panels"
-      "main panels";
-  }
-
   .ca-editor-main {
-    grid-area: main;
-  }
-
-  .ca-editor-info {
-    grid-area: info;
-  }
-
-  .ca-editor-panels {
-    grid-area: panels;
+    position: sticky;
+    top: var(--ca-sticky-top, 16px);
+    max-height: calc(100vh - 2 * var(--ca-sticky-top, 16px));
+    overflow-y: auto;
   }
 
   .ca-editor .ca-editor-case {
@@ -2623,4 +2611,52 @@
     min-width: 0;
     padding: 0 4px;
   }
+}
+
+/* The editor list: the blank model first, marked +, then a note that a case starts as a copy. */
+.ca-editor-option[data-key="blank"] .ca-editor-option-title::before {
+  content: "+ ";
+  font-weight: 700;
+}
+
+.ca-editor-copy-note {
+  padding: 2px 8px 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.ca-editor-right {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+
+.ca-editor-tasks {
+  display: grid;
+  gap: 12px;
+}
+
+.ca-editor-task {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--foreground);
+  font-size: 14px;
+}
+
+.ca-editor .ca-editor-task p {
+  margin: 0;
+}
+
+.ca-editor-task-guess {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ca-editor-task-guess > span {
+  flex-basis: 100%;
 }

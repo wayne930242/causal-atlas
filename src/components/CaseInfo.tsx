@@ -17,6 +17,8 @@ export interface CaseInfoProps {
   readonly links?: readonly LessonLink[]
   /** The model on screen no longer is the case's: say that the verdicts are the case's own. */
   readonly edited?: boolean
+  /** The edited model: the engine column (headed 你的模型) recomputes each verdict on it. */
+  readonly recompute?: LoadedCase
   /** Show the title, family and subtitle; off where the host already heads the panel (the editor). Default true. */
   readonly heading?: boolean
   readonly locale?: Locale
@@ -73,11 +75,12 @@ export function CaseInfo({ locale, ...props }: CaseInfoProps) {
   )
 }
 
-function CaseInfoBody({ c, links = [], edited = false, heading = true }: Omit<CaseInfoProps, 'locale'>) {
+function CaseInfoBody({ c, links = [], edited = false, recompute, heading = true }: Omit<CaseInfoProps, 'locale'>) {
   const t = useMessages()
   const e = t.editor
   const ids = c.model.byId
-  const rows = useMemo(() => verdictTable(t, c), [t, c])
+  const on = edited ? recompute : undefined
+  const rows = useMemo(() => verdictTable(t, c, on), [t, c, on])
   const intu = intuition(t, c)
   const iq = c.data.intuition?.query
   const sources = [...c.data.sources].sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role])
@@ -125,7 +128,7 @@ function CaseInfoBody({ c, links = [], edited = false, heading = true }: Omit<Ca
         <div className="ca-editor-case-side">
           <section className="ca-editor-verdicts" aria-label={e.verdictTable.heading}>
             <h3 className="ca-h3">{e.verdictTable.heading}</h3>
-            {edited && <p className="ca-editor-case-edited ca-muted ca-small">{e.editedNote}</p>}
+            {edited && <p className="ca-editor-case-edited ca-muted ca-small">{on === undefined ? e.editedNote : e.recomputedNote}</p>}
             <div className="ca-table-wrap">
               <table className="ca-table">
                 <thead>
@@ -133,7 +136,7 @@ function CaseInfoBody({ c, links = [], edited = false, heading = true }: Omit<Ca
                     <th scope="col">{e.verdictTable.theory}</th>
                     <th scope="col">{e.verdictTable.query}</th>
                     <th scope="col">{e.verdictTable.expected}</th>
-                    <th scope="col">{e.verdictTable.engine}</th>
+                    <th scope="col">{on === undefined ? e.verdictTable.engine : e.verdictTable.yours}</th>
                     <th scope="col">{e.verdictTable.match}</th>
                   </tr>
                 </thead>

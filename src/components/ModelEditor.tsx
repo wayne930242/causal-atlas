@@ -15,6 +15,8 @@ import { catalog, modelKey, textIn } from './editor/catalog.ts'
 import type { Draft, DraftMode, DraftVariable } from './editor/draft.ts'
 import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './editor/draft.ts'
 import { hashFragment, readHashState, replaceHash } from './editor/url-state.ts'
+import type { EditorTask } from './editor/tasks.ts'
+import { TaskCard } from './TaskCard.tsx'
 import type { Locale, Messages } from './i18n.ts'
 import { LocaleScope, draftIssueMessage, errorMessage, problemMessage, useMessages } from './i18n.ts'
 import type { DoState, ModelWorld } from './model-state.ts'
@@ -64,6 +66,13 @@ export interface ModelEditorProps {
   readonly extraModels?: readonly ExtraModel[]
   /** The case list's one filter chip for all `extraModels`. Default 講義模型 / Lesson models. */
   readonly modelsLabel?: string
+  /**
+   * Guided tasks, one card each above the inputs: the question, 從它開始 (loads `start`), the
+   * guesses (which definitions count `predict.cause` a cause of `predict.effect`), and 檢查, which
+   * compares the edited equations with `goal.equations` at every value of their parents and then
+   * reveals the edited model's verdicts, or names one setting where they differ. Not kept in the link.
+   */
+  readonly tasks?: readonly EditorTask[]
 }
 
 export type { ExtraModel, LessonLink } from './editor/catalog.ts'
@@ -95,6 +104,13 @@ function startNamed(id: string, t: Messages, extras: readonly ExtraModel[]): Sta
 function startDraft(initial: string, t: Messages, extras: readonly ExtraModel[], initialDoc?: ModelDoc): Start {
   if (initialDoc !== undefined) return { ...startFromDoc(initialDoc, t), named: undefined }
   return startNamed(initial, t, extras)
+}
+
+const NO_TASKS: readonly EditorTask[] = []
+
+/** The list key that loads a task's start: an extra model's, or the case id. */
+function startKey(id: string, extras: readonly ExtraModel[]): string {
+  return !caseIds.includes(id) && extras.some((m) => m.id === id) ? modelKey(id) : id
 }
 
 /** Whether `#case=<id>` names something the editor can show. */
@@ -187,6 +203,7 @@ function EditorBody({
   extraModels = NO_EXTRAS,
   modelsLabel,
   syncUrl = true,
+  tasks = NO_TASKS,
 }: Omit<ModelEditorProps, 'locale'>) {
   const t = useMessages()
   const e = t.editor
@@ -526,13 +543,14 @@ function EditorBody({
               <p className="ca-hint">{e.hint}</p>
             </div>
 
-            <div className="ca-editor-info">
-              {caseId !== undefined && <CaseInfo c={getCase(caseId)} links={caseLinks?.[caseId]} edited={edited} heading={false} />}
-              {pickedModel !== undefined && (pickedModel.links?.length ?? 0) > 0 && (
-                <ModelInfo title={textIn(pickedModel.title, t.locale)} links={pickedModel.links} heading={false} />
-              )}
-            </div>
-
+            <div className="ca-editor-right">
+            {tasks.length > 0 && (
+              <div className="ca-editor-tasks">
+                {tasks.map((task, i) => (
+                  <TaskCard key={task.id} n={i + 1} task={task} model={compiled.loaded} onStart={() => pick(startKey(task.start, extraModels))} />
+                ))}
+              </div>
+            )}
             <div className="ca-editor-panels">
               <label className="ca-field ca-editor-name">
                 <span className="ca-field-label">{e.title}</span>
@@ -793,6 +811,16 @@ function EditorBody({
                   onImport={(doc) => replace(draftFromImport(doc))}
                 />
               </Disclosure>
+            </div>
+
+            <div className="ca-editor-info">
+              {caseId !== undefined && (
+                <CaseInfo c={getCase(caseId)} links={caseLinks?.[caseId]} edited={edited} recompute={edited ? compiled.loaded : undefined} heading={false} />
+              )}
+              {pickedModel !== undefined && (pickedModel.links?.length ?? 0) > 0 && (
+                <ModelInfo title={textIn(pickedModel.title, t.locale)} links={pickedModel.links} heading={false} />
+              )}
+            </div>
             </div>
           </div>
         </div>

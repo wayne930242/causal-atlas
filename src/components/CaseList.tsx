@@ -57,7 +57,8 @@ export function CaseList({ groups, value, onPick, autoFocus = false, modelsLabel
   const family = only !== undefined && chips.some((c) => c.id === only) ? only : undefined
   const shown = useMemo(() => filterCatalog(groups, query, family), [groups, query, family])
   const blankShown = family === undefined && matches({ key: BLANK, label: e.blank, search: e.blankSearch.toLowerCase() }, query)
-  const order = useMemo(() => [...shown.flatMap((g) => g.entries.map((x) => x.key)), ...(blankShown ? [BLANK] : [])], [shown, blankShown])
+  // The blank model heads the list: picking a case starts from a copy of it anyway.
+  const order = useMemo(() => [...(blankShown ? [BLANK] : []), ...shown.flatMap((g) => g.entries.map((x) => x.key))], [shown, blankShown])
   // Option ids stay the same while the list is filtered, so the active descendant keeps its id.
   const optionIds = useMemo(() => {
     const ids = new Map<string, string>([[BLANK, `${uid}-o-blank`]])
@@ -198,6 +199,12 @@ export function CaseList({ groups, value, onPick, autoFocus = false, modelsLabel
           setActive(order.includes(value) ? value : order[0])
         }}
       >
+        {blankShown && renderOption({ key: BLANK, label: e.blank })}
+        {!filtering && (
+          <div role="presentation" className="ca-editor-copy-note">
+            {e.copyNote}
+          </div>
+        )}
         {shown.map((g, gi) => {
           const headId = `${uid}-g${gi}`
           return (
@@ -209,7 +216,6 @@ export function CaseList({ groups, value, onPick, autoFocus = false, modelsLabel
             </div>
           )
         })}
-        {blankShown && renderOption({ key: BLANK, label: e.blank })}
       </div>
     </div>
   )

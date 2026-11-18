@@ -92,7 +92,8 @@ describe('ModelEditor case panel', () => {
 
   it('keeps variable names typeset in the panel', () => {
     const out = html({ initial: 'rock-throwing' })
-    const panel = out.slice(out.indexOf('ca-editor-case'), out.indexOf('ca-editor-panels'))
+    // The case panel follows the inputs.
+    const panel = out.slice(out.indexOf('ca-editor-case'), out.indexOf('ca-editor-sources'))
     expect(panel).toContain('ca-story')
     expect(panel).toContain('class="katex"')
   })

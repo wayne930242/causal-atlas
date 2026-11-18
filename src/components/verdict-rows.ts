@@ -335,10 +335,14 @@ export interface VerdictTableRow {
 
 const numberText = (x: number): string => (Number.isInteger(x) ? String(x) : fixed(x, 2))
 
-/** Every verdict of the case, recomputed by the engine, in the case file's order. */
-export function verdictTable(t: Messages, c: LoadedCase): VerdictTableRow[] {
+/**
+ * Every verdict of the case, recomputed by the engine, in the case file's order; with `on`, each
+ * is recomputed on that model instead (the editor's edited one), its decision falling back to the case's.
+ */
+export function verdictTable(t: Messages, c: LoadedCase, on?: LoadedCase): VerdictTableRow[] {
   const e = t.editor
-  const decision = c.decision
+  const target: LoadedCase = on === undefined ? c : { ...on, decision: on.decision ?? c.decision, data: { ...on.data, verdicts: c.data.verdicts } }
+  const decision = target.decision
   let decided: ReturnType<typeof evaluateDecision> | undefined
   const act = (a: Value): string => `${decision?.act ?? ''}=${formatValue(a)}`
   return c.data.verdicts.map((v): VerdictTableRow => {
@@ -384,10 +388,10 @@ export function verdictTable(t: Messages, c: LoadedCase): VerdictTableRow[] {
       }
     }
     try {
-      const check = checkVerdict(c, v)
+      const check = checkVerdict(target, v)
       let engine = show(check.actual)
-      if ((v.theory === 'edt' || v.theory === 'cdt') && 'choice' in v.query && decision !== undefined && c.prior !== undefined) {
-        decided ??= evaluateDecision(c.model, c.prior, decision)
+      if ((v.theory === 'edt' || v.theory === 'cdt') && 'choice' in v.query && decision !== undefined && target.prior !== undefined) {
+        decided ??= evaluateDecision(target.model, target.prior, decision)
         const choice = v.theory === 'edt' ? decided.edtChoice : decided.cdtChoice
         if (choice.length !== 1) engine = e.tie(t.list(choice.map(act)))
       }

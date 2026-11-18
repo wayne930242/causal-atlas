@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { CausalPlayground, ProbabilityPanel } from '../components/index.ts'
+import { CausalPlayground, ModelEditor, ProbabilityPanel } from '../components/index.ts'
 import { FRONT_DOOR_STEPS } from './front-door-steps.ts'
 import { lessonModel } from './lesson-models.ts'
 
@@ -9,6 +9,22 @@ import { lessonModel } from './lesson-models.ts'
  */
 const ITEMS: Readonly<Record<string, () => ReactNode>> = {
   'adjust-calc': () => <ProbabilityPanel doc={lessonModel('m05-backdoor')} view="adjust" adjust={{ x: 'X', y: 'Y' }} />,
+  editor: () => (
+    <ModelEditor
+      initial="forest-fire-conjunctive"
+      syncUrl={false}
+      tasks={[
+        {
+          id: 'disjunctive',
+          title: '只改一條式子，把連言版森林大火改成選言版。',
+          prompt: '把 FF 改成：閃電或丟菸蒂，任一個就起火。',
+          start: 'forest-fire-conjunctive',
+          goal: { equations: { FF: 'L or MD' } },
+          predict: { cause: 'L=1', effect: 'FF=1' },
+        },
+      ]}
+    />
+  ),
   'cut-graphs': () => <ProbabilityPanel doc={{ ...lessonModel('m05-frontdoor'), latent_as_arcs: ['U'] }} view="rules" rules={FRONT_DOOR_STEPS} />,
   'confound-slider': () => <CausalPlayground caseId="smoking-lesion" sliders={['N_S1']} decision />,
   utilities: () => (
