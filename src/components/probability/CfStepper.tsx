@@ -5,17 +5,17 @@ import type { Prior } from '../../engine/index.ts'
 import { formatValue } from '../../engine/values.ts'
 import type { CfStepNumber, CounterfactualSpec } from './cf-steps.ts'
 import { cfText, cfView } from './cf-steps.ts'
-import { graphExport } from '../export/export-render.tsx'
+import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
-import { messagesFor, useMessages } from '../i18n/messages.ts'
+import { useMessages } from '../i18n/messages.ts'
 import { Disclosure, Segmented, Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Tex } from '../text/Tex.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
-import { originCitations, originSources } from '../model/verdict-rows.ts'
+import { originCitations } from '../model/verdict-rows.ts'
 import { assignmentText, doText, fixed, probLegend } from '../model/wording.ts'
 
 export interface CfStepperProps {
@@ -62,16 +62,9 @@ export function CfStepper({ c, prior, shown, spec, actionLabel, initialStep = 1,
       title={m.cf.graphTitle(c.data.title[m.locale], m.cf.steps[step - 1])}
     />
   )
-  const exportSource = (locale: Locale): ExportSource | undefined => {
-    const m = messagesFor(locale)
-    const { svg, dispose } = graphExport(locale, t, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => graph(m, narrow))
-    if (svg === null) {
-      dispose?.()
-      return undefined
-    }
-    return {
+  const exportSource = (locale: Locale): ExportSource | undefined =>
+    singleGraphSource(c, locale, t, wrap, (m) => graph(m, narrow), (svg, m) => ({
       name: `${c.data.id}-counterfactual-${step}`,
-      title: c.data.title[locale],
       panels: [
         {
           svg,
@@ -84,11 +77,7 @@ export function CfStepper({ c, prior, shown, spec, actionLabel, initialStep = 1,
         },
       ],
       legend: probLegend(m, c.model, shown),
-      origin: originSources(m, c),
-      originCitations: originCitations(c),
-      dispose,
-    }
-  }
+    }))
   return (
     <div className="ca-root not-prose ca-panel ca-prob ca-cf" data-case={c.data.id} data-view="counterfactual" data-step={step} lang={t.locale}>
       <div className={`ca-box ca-graph-box${step > 1 ? ' is-cf' : ''}`}>

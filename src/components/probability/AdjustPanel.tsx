@@ -6,16 +6,16 @@ import { formatValue, getVariable } from '../../engine/index.ts'
 import type { AdjustView } from './adjust-view.ts'
 import { adjustSets, adjustView, tableNumber } from './adjust-view.ts'
 import { pathText } from '../model/dsep-view.ts'
-import { graphExport } from '../export/export-render.tsx'
+import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
-import { messagesFor, useMessages } from '../i18n/messages.ts'
+import { useMessages } from '../i18n/messages.ts'
 import { Disclosure, Segmented, Tag, Tip } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
-import { originCitations, originSources } from '../model/verdict-rows.ts'
+import { originCitations } from '../model/verdict-rows.ts'
 import { marginals } from '../model/probability-view.ts'
 import { probLegend } from '../model/wording.ts'
 
@@ -91,23 +91,12 @@ export function AdjustPanel({
       title={m.probGraphTitle(c.data.title[m.locale])}
     />
   )
-  const exportSource = (locale: Locale): ExportSource | undefined => {
-    const m = messagesFor(locale)
-    const { svg, dispose } = graphExport(locale, t, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => graph(m))
-    if (svg === null) {
-      dispose?.()
-      return undefined
-    }
-    return {
+  const exportSource = (locale: Locale): ExportSource | undefined =>
+    singleGraphSource(c, locale, t, wrap, graph, (svg, m) => ({
       name: `${c.data.id}-adjust`,
-      title: c.data.title[locale],
       panels: [{ svg, tags: [{ text: m.adj.by(setLabel(m, set)), tone: 'fg' }] }],
       legend: probLegend(m, c.model, drawn),
-      origin: originSources(m, c),
-      originCitations: originCitations(c),
-      dispose,
-    }
-  }
+    }))
   return (
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="adjust" lang={t.locale}>
       <div className="ca-box ca-graph-box">

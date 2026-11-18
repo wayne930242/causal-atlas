@@ -4,7 +4,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { ModelDoc } from '../../data/schema.ts'
 import type { Assignment } from '../../engine/index.ts'
 import { evaluate, probability } from '../../engine/index.ts'
-import { graphExport, renderDetached } from '../export/export-render.tsx'
+import { renderDetached, singleGraphSource } from '../export/export-render.tsx'
 import { useCaseOrDoc } from '../model/doc-case.ts'
 import { CopyLatex, Equations } from '../panels/Equations.tsx'
 import type { ExportPanel, ExportSource } from '../export/export-image.ts'
@@ -244,23 +244,12 @@ export function ProbabilityPanelFor({
       title={m.probGraphTitle(c.data.title[m.locale])}
     />
   )
-  const exportSource = (locale: Locale): ExportSource | undefined => {
-    const m = messagesFor(locale)
-    const { svg, dispose } = graphExport(locale, t, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => graph(m))
-    if (svg === null) {
-      dispose?.()
-      return undefined
-    }
-    return {
+  const exportSource = (locale: Locale): ExportSource | undefined =>
+    singleGraphSource(c, locale, t, wrap, graph, (svg, m) => ({
       name: `${c.data.id}-probability`,
-      title: c.data.title[locale],
       panels: [{ svg, tags: [{ text: showValues ? m.actualWorld : m.probability, tone: 'fg' as const }] }],
       legend: showValues ? m.valueLegend : probLegend(m, c.model, shown),
-      origin: originSources(m, c),
-      originCitations: originCitations(c),
-      dispose,
-    }
-  }
+    }))
   return (
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="sliders" lang={t.locale}>
       <div className="ca-box ca-graph-box">

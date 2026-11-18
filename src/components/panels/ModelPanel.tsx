@@ -3,11 +3,11 @@ import { useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Prior } from '../../engine/index.ts'
 import { formatValue, getVariable } from '../../engine/index.ts'
-import { graphExport } from '../export/export-render.tsx'
+import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource, ExportTag } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
-import { messagesFor, useMessages } from '../i18n/messages.ts'
+import { useMessages } from '../i18n/messages.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import type { DoState, ModelWorld, Reading } from '../model/model-state.ts'
 import { observedNext, solve, toggled, withProbability, withValue } from '../model/model-state.ts'
@@ -18,7 +18,7 @@ import { notations } from '../model/notation.ts'
 import { Segmented, Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
-import { originCitations, originSources } from '../model/verdict-rows.ts'
+import { originCitations } from '../model/verdict-rows.ts'
 import type { Stochastic } from '../model/assignments.ts'
 import { assignmentText, changeNotes, probLegend, readingText } from '../model/wording.ts'
 
@@ -205,29 +205,20 @@ export function GraphBox({
       onMove={interactive ? onMove : undefined}
     />
   )
-  const exportSource = (locale: Locale): ExportSource | undefined => {
-    const m = messagesFor(locale)
-    const { svg, dispose } = graphExport(locale, t, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => graph(m, false))
-    if (svg === null) {
-      dispose?.()
-      return undefined
-    }
-    const tags: ExportTag[] = hasSet
-      ? [
-          { text: headTag(m), tone: 'slate' },
-          { text: chipText(m), tone: 'accent', mono: true },
-        ]
-      : [{ text: world.probs !== undefined ? m.probability : m.actualWorld, tone: 'fg' }]
-    return {
-      name: `${c.data.id}-graph`,
-      title: c.data.title[locale],
-      panels: [{ svg, tags, tint: hasSet }],
-      legend: legendFor(m),
-      origin: originSources(m, c),
-      originCitations: originCitations(c),
-      dispose,
-    }
-  }
+  const exportSource = (locale: Locale): ExportSource | undefined =>
+    singleGraphSource(c, locale, t, wrap, (m) => graph(m, false), (svg, m) => {
+      const tags: ExportTag[] = hasSet
+        ? [
+            { text: headTag(m), tone: 'slate' },
+            { text: chipText(m), tone: 'accent', mono: true },
+          ]
+        : [{ text: world.probs !== undefined ? m.probability : m.actualWorld, tone: 'fg' }]
+      return {
+        name: `${c.data.id}-graph`,
+        panels: [{ svg, tags, tint: hasSet }],
+        legend: legendFor(m),
+      }
+    })
   const editable = onDo !== undefined || onObserve !== undefined
   return (
     <div className={`ca-box ca-graph-box${hasSet ? ' is-cf' : ''}`} data-world={cf && hasDo ? 'counterfactual' : hasDo ? 'do' : hasObs ? 'observed' : 'actual'}>

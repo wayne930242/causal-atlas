@@ -3,18 +3,18 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Prior } from '../../engine/index.ts'
 import { tableNumber } from './adjust-view.ts'
 import { MAX_PATHS, pathReason, pathText } from '../model/dsep-view.ts'
-import { graphExport } from '../export/export-render.tsx'
+import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
-import { messagesFor, useMessages } from '../i18n/messages.ts'
+import { useMessages } from '../i18n/messages.ts'
 import type { RuleStep } from './rules-view.ts'
 import { SIDE_TOLERANCE, ruleView, sideText } from './rules-view.ts'
 import { Segmented, Tag, Tip } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
-import { originCitations, originSources } from '../model/verdict-rows.ts'
+import { originCitations } from '../model/verdict-rows.ts'
 
 /**
  * The do-calculus rules on their cut graphs (lesson 06): a step button per step of the
@@ -64,16 +64,9 @@ export function RulesPanel({
       title={m.rules.graphTitle(c.data.title[m.locale], m.rules.rule(step.rule))}
     />
   )
-  const exportSource = (locale: Locale): ExportSource | undefined => {
-    const m = messagesFor(locale)
-    const { svg, dispose } = graphExport(locale, t, () => wrap.current?.querySelector<SVGSVGElement>('svg.ca-graph'), () => graph(m, false))
-    if (svg === null) {
-      dispose?.()
-      return undefined
-    }
-    return {
+  const exportSource = (locale: Locale): ExportSource | undefined =>
+    singleGraphSource(c, locale, t, wrap, (m) => graph(m, false), (svg, m) => ({
       name: `${c.data.id}-rule-${step.label}`,
-      title: c.data.title[locale],
       panels: [
         {
           svg,
@@ -84,11 +77,7 @@ export function RulesPanel({
         },
       ],
       legend: '',
-      origin: originSources(m, c),
-      originCitations: originCitations(c),
-      dispose,
-    }
-  }
+    }))
   const d = t.dsep
   const ids = c.model.byId
   const { result } = view
