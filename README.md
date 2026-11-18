@@ -18,6 +18,21 @@ graph with values, loads each witness onto it, and says whether the world on the
 lesson 04's dependence δ (`dSeparation`, `dependence` in the engine). See the playground and
 probability panel notes under Package for each prop.
 
+Exogenous nodes are drawn as dashed circles: the ring is always hollow, a value of 1 is a filled disc
+inside it, and a probability graph fills inside the ring. The dashes are whole dashes round the circle
+and the ring keeps the text colour, so it differs from a cut edge (grey, straight, with 切斷), the
+witness hull (amber) and the focus ring; image exports carry it in both styles. A model document or
+case file may also name `latent_as_arcs: ["U"]`: exogenous variables with two or more children that
+are not drawn as nodes but as Pearl's bidirected arc, a dashed curve with a head at each end between
+their children (one arc per pair of children when there are three or more), labelled 不明共因
+with the explanation in a tooltip. The arc is not a control and U cannot be observed; do() or a
+stochastic do() on either end removes the arc, as in the graph with the arrows into that child cut.
+U stays in the model, so d-separation, counterfactuals and witnesses are unchanged, and a
+d-separation path through U lights the arc. A variable that is also in `show_exogenous` or the
+`layout`, or that has fewer than two children, is refused. Without the field U is drawn as a node,
+as before. The do() note names the cut parents in the order of the equation (`A = C or W`: 切斷
+C、W).
+
 It also carries the fixes prepared as 0.3.15, never published on their own: fixes from a classroom
 test of the lessons. Automatic layout no longer runs an edge under a node it does not join (the sprinkler's R→W, the back-door and front-door graphs): a node in the way steps half a row aside, each node sits at the mean row of its parents, and 切斷 is placed off the edges still drawn; two bundled layouts (train switching, trumping) moved for the same reason. On a graph with values, a click pins the value a node shows under the other do()s, then the other value, then releases, so do(C=0) followed by B can reach B=0. A click observes a multi-valued node too (each value in turn, then released). Exogenous nodes are the context: they can be observed, never set by do() (and the pen-fiasco preset that set `U_N` is gone). The case page works its probability and decision verdicts out at the current sliders. Numbers round halves away from zero (0.175 → 0.18). The equations panel lists every endogenous equation (`Y = U2`); `show_exogenous` in a case file or model document names exogenous variables to draw without a layout, and do() then names every drawn parent it cuts. A witness lane says whether each held variable keeps its actual value or another one. The do() popover closes when what it sets is reset from the keyboard, and avoids the other nodes; header chips and footer controls no longer break mid-word on narrow screens. Normality wording: a witness that deviates where the actual world does not, and the other way round, is incomparable with it, so not at least as normal (gardener and Queen, the pen cases, red light, antidote); the sharks source note cites what Halpern's pp. 82 and 91 say.
 
@@ -295,7 +310,9 @@ A case may give graph positions as `layout: { "ST": [column, row], … }`; only 
 drawn. Without it the graph shows endogenous variables plus exogenous ones with two or more children,
 laid out in layers, and no edge passes over a node it does not join. A case file or model document may
 name more exogenous variables to draw without a layout: `show_exogenous: ["W"]` (each must be
-exogenous; a `layout` wins over it). The equations panel lists every endogenous variable's equation,
+exogenous; a `layout` wins over it). `latent_as_arcs: ["U"]` draws an exogenous variable with two or
+more children as a dashed two-headed arc between them instead of a node (not allowed together with
+`show_exogenous` or a `layout` entry for the same variable). The equations panel lists every endogenous variable's equation,
 also one whose parents are not drawn (`Y = U2`).
 
 ## Scripts
