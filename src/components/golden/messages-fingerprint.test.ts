@@ -4,12 +4,12 @@ import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { MESSAGES } from '../i18n/messages.ts'
 
-/** A function's source with the test transform's import bindings (`(0, __vi_import_3__.f)`, `__vi_import_3__.f`) written as `f`. */
+/** A function's source with the test transform's import bindings (`(0,__vite_ssr_import_3__.f)`, `__vite_ssr_import_3__.f`) written as `f`. */
 function source(fn: (...args: never[]) => unknown): string {
   return fn
     .toString()
-    .replace(/\(0,\s*__vi_import_\d+__\.([A-Za-z_$][\w$]*)\)/g, '$1')
-    .replace(/__vi_import_\d+__\.([A-Za-z_$][\w$]*)/g, '$1')
+    .replace(/\(0,\s*__vite_ssr_import_\d+__\.([A-Za-z_$][\w$]*)\)/g, '$1')
+    .replace(/__vite_ssr_import_\d+__\.([A-Za-z_$][\w$]*)/g, '$1')
 }
 
 function serialize(value: unknown): unknown {
@@ -23,6 +23,6 @@ const fingerprint = (value: unknown): string => createHash('sha256').update(JSON
 
 describe('message tables', () => {
   it('keep their fingerprint per locale', () => {
-    expect({ zh: fingerprint(MESSAGES['zh-TW']), en: fingerprint(MESSAGES.en) }).toEqual({ zh: '225810dccdb7d994', en: '83c2bc656dd00abf' })
+    expect({ zh: fingerprint(MESSAGES['zh-TW']), en: fingerprint(MESSAGES.en) }).toEqual({ zh: 'd6452b4b43b9c4e7', en: 'fa7c811afe3af922' })
   })
 })
