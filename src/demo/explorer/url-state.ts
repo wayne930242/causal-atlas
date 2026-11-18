@@ -101,7 +101,7 @@ export function serialize(state: ExplorerState): string {
   }
   if (unset.length > 0) params.set('unset', unset.join(','))
   if (state.lang === 'en') params.set('lang', 'en')
-  if (state.theme === 'dark') params.set('theme', 'dark')
+  params.set('theme', state.theme)
   return `#${EXPLORER_PATH}?${params.toString()}`
 }
 
@@ -111,7 +111,7 @@ export interface Parsed {
 }
 
 /** The state an explorer hash describes. What cannot be used falls back to the story's value and gives one notice. */
-export function parseHash(hash: string): Parsed {
+export function parseHash(hash: string, fallbackTheme: Theme = 'light'): Parsed {
   const [, query = ''] = hash.replace(/^#/, '').split('?', 2)
   const params = new URLSearchParams(query)
   const notices: Notice[] = []
@@ -173,7 +173,7 @@ export function parseHash(hash: string): Parsed {
     ...(hasPatch(patch) ? { patch } : {}),
     args,
     lang: params.get('lang') === 'en' ? 'en' : 'zh-TW',
-    theme: params.get('theme') === 'dark' ? 'dark' : 'light',
+    theme: params.get('theme') === 'dark' ? 'dark' : params.get('theme') === 'light' ? 'light' : fallbackTheme,
   }
   return { state, notices }
 }

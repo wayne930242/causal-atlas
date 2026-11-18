@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react'
 import type { Locale } from '../components/index.ts'
 import { CasePage, CausalPlayground, CiteBlock, LANGUAGE_NAMES, LocaleProvider, ModelEditor, Supplement, WorldLanes } from '../components/index.ts'
 import { caseIds, getCase } from '../data/index.ts'
+import { Explorer } from './explorer/Explorer.tsx'
 import { Interactions } from './Interactions.tsx'
 
 interface Route {
-  readonly page: 'index' | 'playground' | 'case' | 'lesson' | 'editor' | 'interactions'
+  readonly page: 'index' | 'explorer' | 'playground' | 'case' | 'lesson' | 'editor' | 'interactions'
   readonly id: string
   readonly step: number
   /** `lang=en` in the route (`#/case/x?lang=en`) or in the page's query string; default zh-TW. */
   readonly locale: Locale
+  /** `theme=dark|light` in the route: the explorer keeps its theme in its address. */
+  readonly theme?: 'light' | 'dark'
 }
 
 function parse(hash: string, search: string): Route {
@@ -19,6 +22,10 @@ function parse(hash: string, search: string): Route {
   const lang = params.get('lang') ?? new URLSearchParams(search).get('lang')
   const locale: Locale = lang === 'en' ? 'en' : 'zh-TW'
   const parts = path.split('/').filter((p) => p !== '')
+  const themeParam = params.get('theme')
+  if (parts[0] === 'explorer') {
+    return { page: 'explorer', id: 'rock-throwing', step, locale, theme: themeParam === 'dark' || themeParam === 'light' ? themeParam : undefined }
+  }
   if (parts[0] === 'interactions') return { page: 'interactions', id: parts[1] ?? 'all', step, locale }
   const id = parts[1] !== undefined && caseIds.includes(parts[1]) ? parts[1] : 'rock-throwing'
   if (parts[0] === 'playground') return { page: 'playground', id, step, locale }
@@ -60,6 +67,13 @@ function href(path: string, locale: Locale, extra = ''): string {
 
 /** The current route in another language, keeping page, case and step. */
 function switchHref(route: Route, locale: Locale): string {
+  if (route.page === 'explorer') {
+    const [path, query = ''] = window.location.hash.replace(/^#/, '').split('?')
+    const params = new URLSearchParams(query)
+    if (locale === 'en') params.set('lang', 'en')
+    else params.delete('lang')
+    return `#${path}?${params.toString()}`
+  }
   const path =
     route.page === 'index' ? '/' : route.page === 'lesson' || route.page === 'editor' ? `/${route.page}` : `/${route.page}/${route.id}`
   return href(path, locale, route.page === 'case' && route.step > 1 ? `step=${route.step}` : '')
@@ -75,6 +89,8 @@ const DEMO = {
     lessonLink: '講義示範：世界分道',
     editor: '自己建模型',
     editorLink: '自己建一個因果模型',
+    explorer: '元件瀏覽器',
+    explorerLink: '元件瀏覽器：挑元件、調設定、複製寫法',
     pages: '示範頁面',
     case: '案例',
     light: '淺色',
@@ -90,6 +106,8 @@ const DEMO = {
     lessonLink: 'Lesson demo: world lanes',
     editor: 'Build a model',
     editorLink: 'Build a causal model yourself',
+    explorer: 'Explorer',
+    explorerLink: 'Explorer: pick a component, tune its props, copy the code',
     pages: 'Demo pages',
     case: 'Case',
     light: 'Light',
@@ -117,6 +135,9 @@ function Index({ locale }: { readonly locale: Locale }) {
           )
         })}
       </ul>
+      <p>
+        <a href={href('/explorer', locale)}>{d.explorerLink}</a>
+      </p>
       <p>
         <a href={href('/lesson', locale)}>{d.lessonLink}</a>
       </p>
@@ -192,6 +213,18 @@ export function App() {
   const [theme, toggleTheme] = useTheme()
   const { locale } = route
   const d = DEMO[locale]
+  const shownTheme = route.page === 'explorer' && route.theme !== undefined ? route.theme : theme
+  useEffect(() => {
+    document.documentElement.dataset.theme = shownTheme
+  }, [shownTheme])
+  const flipTheme = (): void => {
+    if (route.page !== 'explorer') return toggleTheme()
+    const [path, query = ''] = window.location.hash.replace(/^#/, '').split('?')
+    const params = new URLSearchParams(query)
+    params.set('theme', shownTheme === 'dark' ? 'light' : 'dark')
+    window.history.replaceState(null, '', `#${path}?${params.toString()}`)
+    window.dispatchEvent(new Event('hashchange'))
+  }
   useEffect(() => {
     document.documentElement.lang = locale
     document.title = DEMO[locale].title
@@ -207,6 +240,9 @@ export function App() {
             causal-atlas
           </a>
           <nav aria-label={d.pages}>
+            <a href={href('/explorer', locale)} aria-current={route.page === 'explorer' ? 'page' : undefined}>
+              {d.explorer}
+            </a>
             <a href={href(`/playground/${route.id}`, locale)} aria-current={route.page === 'playground' ? 'page' : undefined}>
               {d.playground}
             </a>
@@ -240,12 +276,13 @@ export function App() {
               </a>
             ))}
           </nav>
-          <button type="button" onClick={toggleTheme} aria-pressed={theme === 'dark'}>
-            {theme === 'dark' ? d.light : d.dark}
+          <button type="button" onClick={flipTheme} aria-pressed={shownTheme === 'dark'}>
+            {shownTheme === 'dark' ? d.light : d.dark}
           </button>
         </header>
         <main>
           {route.page === 'index' && <Index locale={locale} />}
+          {route.page === 'explorer' && <Explorer />}
           {route.page === 'playground' && <CausalPlayground key={`${route.id}-${locale}`} caseId={route.id} digits={pageDigits()} />}
           {route.page === 'case' && <CasePage key={`${route.id}-${route.step}-${locale}`} caseId={route.id} initialStep={route.step} digits={pageDigits()} />}
           {route.page === 'lesson' && (locale === 'en' ? <LessonEn /> : <LessonZh />)}

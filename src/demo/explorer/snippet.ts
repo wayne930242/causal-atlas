@@ -98,7 +98,7 @@ export function snippet(input: SnippetInput): Snippet {
   if (def.id === 'editor') {
     if (source.kind === 'blank') sourceAttrs.push(attr('initial', 'blank'))
     else if (source.kind === 'case' && !patched) sourceAttrs.push(attr('initial', source.id))
-    else if (source.kind !== 'blank') {
+    else {
       if (source.kind === 'lesson') imports.push(`import doc from './${source.id}.json'`)
       sourceAttrs.push(`initialDoc={${patched ? patchLiteral(input.patch as DocPatch) : 'doc'}}`)
     }
