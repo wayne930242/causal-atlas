@@ -104,7 +104,10 @@ export function MediationStepper({ c, prior, shown, spec, actionLabel, initialSt
   const formula = view.result.formula
   const rows = view.result.worlds
   const shownRows = all || rows.length <= MAX_ROWS ? rows : rows.slice(0, MAX_ROWS)
-  const outcomeId = view.outcomeVariable ?? spec.outcome
+  // The cells show whether the outcome event holds (1 or 0): label the column with the event unless it is Y=1.
+  const outcomeEvent = /^\s*[^=\s]+\s*=\s*(.+?)\s*$/.exec(spec.outcome)?.[1]
+  const outcomeId =
+    view.outcomeVariable === undefined ? spec.outcome : outcomeEvent === '1' || outcomeEvent === 'true' ? view.outcomeVariable : `[${spec.outcome}]`
   const xAt = (x: string): string => `${spec.treatment}=${x}`
   const mediatorId = spec.mediators.join(', ')
   return (

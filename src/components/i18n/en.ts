@@ -333,7 +333,7 @@ export const EN: Messages = {
     differ: (name) => `≠ ${name}`,
     undefinedCell: '—',
     missing: (cells) => `Cells with no data: ${cells}`,
-    tip: 'Total effect TE = P(Y_x*) − P(Y_x). The controlled direct effect holds the mediators as constants; the natural direct effect NDE = P(Y_{x*, Z_x}) − P(Y_x) lets the mediators keep the value they would take under x; the natural indirect effect NIE = P(Y_{x, Z_x*}) − P(Y_x). The indirect effect of the reverse transition IE(reverse) = P(Y_{x*, Z_x}) − P(Y_x*), Pearl (2009, 4.15): TE = NDE − IE(reverse). The mediation formula (4.17, 4.18) uses only the observed distribution and equals NDE and NIE when the mediators and the outcome share no common cause; a cell with P(x, z) = 0 cannot be computed and reads —.',
+    tip: 'Total effect TE = P(Y_x*) − P(Y_x). The controlled direct effect holds the mediators as constants; the natural direct effect NDE = P(Y_{x*, Z_x}) − P(Y_x) lets the mediators keep the value they would take under x; the natural indirect effect NIE = P(Y_{x, Z_x*}) − P(Y_x). The indirect effect of the reverse transition IE(reverse) = P(Y_{x*, Z_x}) − P(Y_x*), Pearl (2009, 4.15): TE = NDE − IE(reverse). The mediation formula (4.17, 4.18) uses only the observed distribution and equals NDE and NIE when treatment, mediators and outcome share no unobserved common cause (for example X randomized and no mediator–outcome confounder; Pearl 2009, p. 132); a cell with P(x, z) = 0 cannot be computed and reads —.',
     background: {
       p: 'Probability',
       zAt: (ids, x) => `${ids}(${x})`,
@@ -347,7 +347,7 @@ export const EN: Messages = {
     cell: (degree) => `responsibility ${degree}`,
     tipZero: 'Degree of responsibility (Halpern 2016, Def. 6.1.1, 6.1.6): not a cause and not part of one, so 0.',
     tip: (k, held, cause, normality) =>
-      `Degree of responsibility 1/k (Halpern 2016, Def. 6.1.1, 6.1.6): k is the number of variables that have to change, at least: the variables in the cause plus the ones the witness holds fixed. Here k = ${k}: ${held === '' ? 'the witness holds nothing fixed' : `the witness holds ${held} fixed`}, the cause is ${cause}.${normality ? ' Only witnesses no less normal than the actual world count.' : ''}`,
+      `Degree of responsibility 1/k (Halpern 2016, Def. 6.1.1, 6.1.6): k is the number of variables in the cause plus the ones the witness holds fixed, at least; held variables need not change value (Halpern Ex. 6.1.4). Here k = ${k}: ${held === '' ? 'the witness holds nothing fixed' : `the witness holds ${held} fixed`}, the cause is ${cause}.${normality ? ' Only witnesses no less normal than the actual world count.' : ''}`,
   },
   blame: {
     question: (cause, effect) => `How much blame does ${cause} carry for ${effect}?`,

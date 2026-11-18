@@ -77,6 +77,7 @@ export interface ProblemParams {
   readonly 'responsibility-butfor': Record<string, never>
   readonly 'responsibility-single-event': { readonly cause: string }
   readonly 'blame-no-mass': Record<string, never>
+  readonly 'blame-no-theories': Record<string, never>
   // mediation
   readonly 'mediation-not-endogenous': { readonly id: string }
   readonly 'mediation-no-mediators': Record<string, never>
@@ -183,6 +184,7 @@ export const PROBLEMS_EN: ProblemWording = {
     'normality-missing': () => 'hp-normality needs default (normal) values',
     'responsibility-butfor': () => 'degree of responsibility and blame are defined for the HP definitions, not for but-for',
     'responsibility-single-event': (p) => `degree of responsibility is defined for a single event X=x, not ${JSON.stringify(p.cause)}`,
+    'blame-no-theories': () => 'blame needs at least one theory',
     'blame-no-mass': () => 'the cause (with the observation, if any) has probability 0 under this prior',
     'mediation-not-endogenous': (p) => `${p.id} must be an endogenous variable to be a treatment or a mediator`,
     'mediation-no-mediators': () => 'name at least one mediator',

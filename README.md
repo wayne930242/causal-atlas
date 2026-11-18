@@ -2,6 +2,22 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.7.0
+Responsibility, blame and mediation. Engine: `responsibility(model, context, query, theory)` is the degree
+of responsibility 1/k of a single event X=x (Halpern 2016, Def. 6.1.1 and 6.1.6; k is the variables in the
+cause plus the ones the witness holds, held variables need not change value, Ex. 6.1.4); its verdict is
+`actualCause`'s. `blame(model, prior, query, theory)` is the expected degree of responsibility over an
+epistemic state (Def. 6.2.1), with an optional `given` observation. `mediation(model, prior, query)` gives
+TE, NDE, NIE, IE(reverse), the controlled direct effects and, with `formula`, the mediation formula
+(Pearl 2009, 4.11-4.18). The `theory` parameter of `responsibility` and `blame` is the exported
+`ResponsibilityTheory` (the HP definitions; but-for is a type error, and still a `responsibility-butfor`
+ModelError for JS callers). Under hp-original `responsibility` returns not-cause as soon as X=x alone has
+no witness (Halpern Thm 2.2.3(d)). Components: `responsibility` on the verdict rows of `CausalPlayground`,
+a `blame` prop and tab (`BlameSpec`, `BlameState`; an empty `theories` throws `blame-no-theories`), and a
+`mediation` view in `ProbabilityPanel` (`MediationSpec`). Nine new problem codes widen
+`ProblemWording.messages`, so a third-party wording table needs them. Existing markup and every existing
+figure are unchanged; the new props are opt-in.
+
 ## 0.6.0
 Node precision. `CausalPlayground`, `ProbabilityPanel`, `CasePage` and `ModelEditor` take an optional
 `digits`: a whole number from 1 to 6 (default 2, which is today's output exactly) for the decimals of
@@ -164,7 +180,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.6.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.7.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -308,8 +324,8 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 - `verdicts={[{ cause: 'V1=1', effect: 'W=1', responsibility: true }]}`: each Halpern–Pearl cell (the
   original, updated and modified definitions, and HP with normality when the model has defaults)
   adds 責任 1/3 (en "responsibility 1/3"), the degree of responsibility of the single event
-  `cause` (Halpern 2016, Def. 6.1.1 and 6.1.6: 1/k, k the fewest variables the cause and its
-  witness change); its ⓘ says which k, which variables the witness holds fixed and which cause
+  `cause` (Halpern 2016, Def. 6.1.1 and 6.1.6: 1/k, k the fewest variables in the cause plus the
+  ones its witness holds; held variables need not change value, Ex. 6.1.4); its ⓘ says which k, which variables the witness holds fixed and which cause
   attains it. The but-for cell has none. Without the flag the cells are unchanged. A cause of more
   than one event throws the engine's `responsibility-single-event` problem. `responsibility` in the
   engine takes the same query.
@@ -474,9 +490,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.6.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.7.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.6.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.7.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -485,7 +501,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.6.0},
+  version = {0.7.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

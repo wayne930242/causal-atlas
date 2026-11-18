@@ -113,7 +113,7 @@ describe('degree of responsibility (Halpern 2016, ch. 6)', () => {
 
   it('refuses but-for and conjunctive causes', () => {
     const u = { U_L: true, U_MD: true }
-    expect(() => responsibility(forestFire('or'), u, { cause: 'L=1', effect: 'FF=1' }, 'butfor')).toThrow(
+    expect(() => responsibility(forestFire('or'), u, { cause: 'L=1', effect: 'FF=1' }, 'butfor' as never)).toThrow(
       expect.objectContaining({ problem: expect.objectContaining({ code: 'responsibility-butfor' }) }),
     )
     expect(() => responsibility(forestFire('or'), u, { cause: 'L=1 and MD=1', effect: 'FF=1' }, 'hp-modified')).toThrow(

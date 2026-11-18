@@ -120,6 +120,18 @@ describe('ProbabilityPanel view="mediation": the pill, step by step', () => {
     expect(container.querySelector('[data-effect="formula-direct"] td')?.textContent).toContain('+0.115')
   })
 
+  it('the background table labels its Y columns with the event when the outcome is not Y=1', () => {
+    const heads = (outcome: string): string =>
+      Array.from(
+        render(<ProbabilityPanel doc={pill} view="mediation" mediation={{ ...query, outcome }} />).container.querySelectorAll('th[scope="col"] [data-text]'),
+      )
+        .map((n) => n.getAttribute('data-text'))
+        .join('|')
+    expect(heads('Y=0')).toContain('[Y=0](')
+    cleanup()
+    expect(heads('Y=1')).not.toContain('[Y=1]')
+  })
+
   it('a mediator that copies the treatment leaves cells without data: the formula reads — and names them', () => {
     const copy: ModelDoc = modelDocSchema.parse({
       format: 'causal-atlas/model',

@@ -2,7 +2,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import { priorOf } from '../../data/load.ts'
 import type { ModelDoc } from '../../data/schema.ts'
 import type { BlameResult, LocalizedText, Prior, ResponsibilityTheory } from '../../engine/index.ts'
-import { blame, parseCause } from '../../engine/index.ts'
+import { blame, ModelError, parseCause, problem } from '../../engine/index.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { cfText } from '../probability/cf-steps.ts'
 
@@ -67,6 +67,7 @@ export function blameView(c: LoadedCase, spec: BlameSpec, locale: Locale): Blame
   parseCause(c.model, spec.cause)
   const own: Prior | undefined = c.data.priors === undefined ? undefined : c.prior
   const theories = spec.theories ?? defaultBlameTheories(c)
+  if (theories.length === 0) throw new ModelError(problem('blame-no-theories', {}))
   const states = given.map((state): BlameStateView => {
     const prior = state.prior === undefined ? own : priorOf(state.prior, c.model)
     if (prior === undefined) throw new Error(`${c.data.id}: blame needs priors, in the document or in each state`)

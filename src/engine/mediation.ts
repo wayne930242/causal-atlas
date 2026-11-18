@@ -81,8 +81,8 @@ function restrict(values: Assignment, ids: readonly string[]): Record<string, Va
  * direct effect (4.11), the natural indirect effect (4.14) and the decomposition (4.15), computed
  * from the full model by evaluating, per context, Z⃗ under do(x) and do(x*) and Y under do(x),
  * do(x*), do(x*, Z⃗(x)) and do(x, Z⃗(x*)). With `formula`, also the mediation formula (4.17)/(4.18)
- * from the observational distribution; it equals the natural effects when the mediators are
- * unconfounded (Pearl p. 131 n. 9) and is undefined where a conditional it needs has no data.
+ * from the observational distribution; it equals the natural effects when treatment, mediators and
+ * outcome have no unobserved common cause (Pearl p. 132, "the simple case of unconfounded mediators") and is undefined where a conditional it needs has no data.
  */
 export function mediation(model: CausalModel, prior: Prior, query: MediationQuery): MediationResult {
   const endogenous = (id: string) => {

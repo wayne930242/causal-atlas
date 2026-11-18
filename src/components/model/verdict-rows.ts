@@ -1,7 +1,7 @@
 import type { LoadedCase } from '../../data/load.ts'
 import { checkVerdict } from '../../data/load.ts'
 import type { CaseVerdict } from '../../data/schema.ts'
-import type { Assignment, CausalTheory, CausalVerdict, Value } from '../../engine/index.ts'
+import type { Assignment, CausalTheory, CausalVerdict, ResponsibilityTheory, Value } from '../../engine/index.ts'
 import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability, responsibility, witnessStatus } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
 import type { Messages } from '../i18n/messages.ts'
@@ -219,7 +219,7 @@ export function actualGroups(t: Messages, c: LoadedCase, queries?: readonly Verd
   })
 }
 
-function responsibilityCell(c: LoadedCase, context: Assignment, cause: string, effect: string, theory: CausalTheory): ResponsibilityCell {
+function responsibilityCell(c: LoadedCase, context: Assignment, cause: string, effect: string, theory: ResponsibilityTheory): ResponsibilityCell {
   const r = responsibility(c.model, context, { cause, effect }, theory, { normality: c.normality })
   if (r.degree === 0 || r.k === undefined) return { degree: 0 }
   const held = r.witness === undefined || r.witness.W.length === 0 ? '' : assignmentText(r.witness.w, ', ')

@@ -54,10 +54,10 @@ export function blame(
   model: CausalModel,
   prior: Prior,
   query: BlameQuery,
-  theory: CausalTheory,
+  theory: ResponsibilityTheory,
   options: ActualCauseOptions = {},
 ): BlameResult {
-  if (theory === 'butfor') throw new ModelError(problem('responsibility-butfor', {}))
+  if ((theory as CausalTheory) === 'butfor') throw new ModelError(problem('responsibility-butfor', {}))
   const cause = parseCause(model, query.cause)
   if (Object.keys(cause).length !== 1) {
     const text = typeof query.cause === 'string' ? query.cause : Object.keys(cause).map((id) => `${id}=${String(cause[id])}`).join(' and ')

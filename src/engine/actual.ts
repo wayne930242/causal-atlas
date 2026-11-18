@@ -425,6 +425,9 @@ function responsibilityIn(setup: Setup, cause: Record<string, Value>, theory: Re
     return { theory, degree: 1 / k, k, cause, witness: alone, verdict: 'cause', actual }
   }
 
+  // Halpern Thm 2.2.3(d): under the original definition part of a cause is a cause, so no larger X⃗ can be one.
+  if (setup.ac2 === 'o') return none('not-cause')
+
   let best: { k: number; cause: Assignment; witness: Witness } | undefined
   const rest = model.endogenous.filter((id) => !Object.hasOwn(cause, id))
   const extensions = subsetsBySize(rest)
@@ -449,11 +452,12 @@ function prepareResponsibility(
   model: CausalModel,
   context: Assignment,
   query: ActualCauseQuery,
-  theory: CausalTheory,
+  theory: ResponsibilityTheory,
   options: ActualCauseOptions,
   budget: { left: number },
 ): { readonly setup: Setup; readonly cause: Record<string, Value>; readonly theory: ResponsibilityTheory } {
-  if (theory === 'butfor') throw new ModelError(problem('responsibility-butfor', {}))
+  // The type excludes but-for; the check is for JS callers.
+  if ((theory as CausalTheory) === 'butfor') throw new ModelError(problem('responsibility-butfor', {}))
   const prepared = prepare(model, context, query, theory, options, budget)
   if (Object.keys(prepared.cause).length !== 1) {
     const text = typeof query.cause === 'string' ? query.cause : Object.entries(query.cause).map(([id, v]) => `${id}=${String(v)}`).join(' and ')
@@ -471,7 +475,7 @@ export function responsibility(
   model: CausalModel,
   context: Assignment,
   query: ActualCauseQuery,
-  theory: CausalTheory,
+  theory: ResponsibilityTheory,
   options: ActualCauseOptions = {},
 ): ResponsibilityResult {
   const prepared = prepareResponsibility(model, context, query, theory, options, newBudget())
@@ -483,7 +487,7 @@ export function responsibilityWithBudget(
   model: CausalModel,
   context: Assignment,
   query: ActualCauseQuery,
-  theory: CausalTheory,
+  theory: ResponsibilityTheory,
   options: ActualCauseOptions,
   budget: { left: number },
 ): ResponsibilityResult {

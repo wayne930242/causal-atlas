@@ -52,6 +52,7 @@ const ZH_PROBLEMS: ProblemWording = {
     'normality-missing': () => '「HP 加上常態」需要常態值',
     'responsibility-butfor': () => '責任程度與責備程度只對 HP 定義成立，不適用於簡單反事實',
     'responsibility-single-event': (p) => `責任程度只對單一事件 X=x 有定義，${p.cause} 不是`,
+    'blame-no-theories': () => '責備程度至少要指定一個定義',
     'blame-no-mass': () => '在這個機率分布下，原因（連同觀察）的機率是 0',
     'mediation-not-endogenous': (p) => `處置和中介都要是內生變項，${p.id} 不是`,
     'mediation-no-mediators': () => '至少要指定一個中介變項',
@@ -434,7 +435,7 @@ export const ZH = {
     differ: (name: string): string => `≠ ${name}`,
     undefinedCell: '—',
     missing: (cells: string): string => `沒有資料的格子：${cells}`,
-    tip: '總效應 TE = P(Y_x*) − P(Y_x)。受控直接效應把中介變項當常數固定；自然直接效應 NDE = P(Y_{x*, Z_x}) − P(Y_x) 讓中介變項維持在 x 時它自己會有的值；自然間接效應 NIE = P(Y_{x, Z_x*}) − P(Y_x)。反向的間接效應 IE(reverse) = P(Y_{x*, Z_x}) − P(Y_x*)，Pearl（2009，4.15）：TE = NDE − IE(reverse)。中介公式（4.17、4.18）只用觀察到的分布，沒有中介變項與結果的共同原因時才等於 NDE、NIE；某一格 P(x, z) 為 0 就算不出來，寫「—」。',
+    tip: '總效應 TE = P(Y_x*) − P(Y_x)。受控直接效應把中介變項當常數固定；自然直接效應 NDE = P(Y_{x*, Z_x}) − P(Y_x) 讓中介變項維持在 x 時它自己會有的值；自然間接效應 NIE = P(Y_{x, Z_x*}) − P(Y_x)。反向的間接效應 IE(reverse) = P(Y_{x*, Z_x}) − P(Y_x*)，Pearl（2009，4.15）：TE = NDE − IE(reverse)。中介公式（4.17、4.18）只用觀察到的分布，處置、中介變項與結果之間沒有未觀察的共同原因時（例如 X 隨機分派，且中介與結果沒有混淆）等於 NDE、NIE（Pearl 2009，p. 132）；某一格 P(x, z) 為 0 就算不出來，寫「—」。',
     background: { p: '機率', zAt: (ids: string, x: string): string => `${ids}(${x})`, yAt: (y: string, x: string): string => `${y}(${x})`, yAtZ: (y: string, x: string, z: string): string => `${y}(${x}, ${z})` },
     showAll: (n: number): string => `看全部 ${n} 種背景`,
     fewer: '收起',
@@ -443,7 +444,7 @@ export const ZH = {
     cell: (degree: string): string => `責任 ${degree}`,
     tipZero: '責任程度（Halpern 2016，定義 6.1.1、6.1.6）：不是原因，也不是原因的一部分，所以是 0。',
     tip: (k: number, held: string, cause: string, normality: boolean): string =>
-      `責任程度 1/k（Halpern 2016，定義 6.1.1、6.1.6）：k 是要改動的變項數，取最小：原因裡的變項，加上見證固定住的變項。這裡 k = ${k}：${held === '' ? '見證不固定任何變項' : `見證固定 ${held}`}，原因是 ${cause}。${normality ? '只算不比實際世界更不正常的見證。' : ''}`,
+      `責任程度 1/k（Halpern 2016，定義 6.1.1、6.1.6）：k 是原因裡的變項，加上見證固定住的變項，取最小；被固定的變項不一定要改值（Halpern 例 6.1.4）。這裡 k = ${k}：${held === '' ? '見證不固定任何變項' : `見證固定 ${held}`}，原因是 ${cause}。${normality ? '只算不比實際世界更不正常的見證。' : ''}`,
   },
   blame: {
     question: (cause: string, effect: string): string => `${cause} 要為 ${effect} 負多少責備？`,

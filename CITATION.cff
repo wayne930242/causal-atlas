@@ -7,8 +7,8 @@ authors:
   - given-names: Wei
     family-names: Hung
     alias: 洪偉
-version: 0.6.0
-date-released: "2026-11-18"
+version: 0.7.0
+date-released: "2026-11-19"
 url: "https://wayneh.tw/causal/"
 license:
   - MIT

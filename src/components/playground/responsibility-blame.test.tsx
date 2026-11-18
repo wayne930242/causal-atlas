@@ -169,6 +169,12 @@ describe('blame: one row per epistemic state, one column per standard', () => {
     spy.mockRestore()
   })
 
+  it('an empty theories list throws a clear problem', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() => render(<CausalPlayground doc={doctor} blame={{ cause: 'T=1', effect: 'D=1', theories: [] }} />)).toThrow(/at least one theory/)
+    spy.mockRestore()
+  })
+
   it('no blame, no tab', () => {
     const { container } = render(<CausalPlayground doc={doctor} />)
     expect(container.querySelector('[data-tab="blame"]')).toBeNull()

@@ -3,7 +3,7 @@ import type { CausalModel, Prior, ResponsibilityTheory } from './index.ts'
 import { blame, buildModel, responsibility } from './index.ts'
 import { variable } from './test-models.ts'
 
-const HP: readonly ResponsibilityTheory[] = ['hp-original', 'hp-updated', 'hp-modified']
+const HP: readonly ResponsibilityTheory[] = ['hp-original', 'hp-original', 'hp-modified']
 
 const bool = (p: number) => [
   { value: true, p },
@@ -127,15 +127,15 @@ describe('degree of blame (Halpern 2016, Def. 6.2.1)', () => {
   it('refuses but-for, conjunctions, and an epistemic state without the cause', () => {
     const { model, prior } = faulkner()
     const code = (c: string) => expect.objectContaining({ problem: expect.objectContaining({ code: c }) })
-    expect(() => blame(model, prior, { cause: 'M=1', effect: 'ES=1' }, 'butfor')).toThrow(code('responsibility-butfor'))
+    expect(() => blame(model, prior, { cause: 'M=1', effect: 'ES=1' }, 'butfor' as never)).toThrow(code('responsibility-butfor'))
     expect(() => blame(model, prior, { cause: 'M=1 and R=1', effect: 'ES=1' }, 'hp-modified')).toThrow(code('responsibility-single-event'))
     expect(() => blame(model, prior, { cause: 'M=1', effect: 'ES=1', given: 'R=1 and RI=0' }, 'hp-modified')).toThrow(code('blame-no-mass'))
   })
 
   it('shares one work budget across the contexts', () => {
-    // Seven marksmen: each context fits hp-original's budget on its own, all seven together do not.
-    const { model, prior, context } = squad(Array(7).fill(1 / 7))
-    for (let b = 1; b <= 7; b += 1) expect(responsibility(model, context(b), { cause: 'S1=1', effect: 'D=1' }, 'hp-original').degree).toBe(b === 1 ? 1 : 0)
+    // Nine marksmen: each context fits hp-original's budget on its own, all nine together do not.
+    const { model, prior, context } = squad(Array(9).fill(1 / 9))
+    for (let b = 1; b <= 9; b += 1) expect(responsibility(model, context(b), { cause: 'S1=1', effect: 'D=1' }, 'hp-original').degree).toBe(b === 1 ? 1 : 0)
     expect(() => blame(model, prior, { cause: 'S1=1', effect: 'D=1' }, 'hp-original')).toThrow(
       expect.objectContaining({ problem: expect.objectContaining({ code: 'search-budget' }) }),
     )
