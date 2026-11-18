@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fixed, probText } from './view-model.ts'
+import { fixed, probText } from './wording.ts'
 
 describe('probText', () => {
   it('keeps two decimals away from the ends', () => {

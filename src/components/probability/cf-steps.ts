@@ -4,8 +4,10 @@ import { counterfactual, enumerateContexts, getVariable, renderIdent, toFormula 
 import { formatValue, valuesEqual } from '../../engine/values.ts'
 import type { Messages } from '../i18n/messages.ts'
 import { textToLatex } from '../text/typeset-text.ts'
-import type { Marginals } from '../model/view-model.ts'
-import { assignmentText, changeNotes, fixed, marginals, probText, shownEdges, SAME_PROBABILITY, targetValue } from '../model/view-model.ts'
+import type { Marginals } from '../model/probability-view.ts'
+import { shownEdges } from '../graph/graph-layout.ts'
+import { marginals, targetValue } from '../model/probability-view.ts'
+import { assignmentText, changeNotes, fixed, probText, SAME_PROBABILITY } from '../model/wording.ts'
 
 /** Pure helpers for the counterfactual stepper: Pearl's three steps drawn on one graph and a background table. */
 

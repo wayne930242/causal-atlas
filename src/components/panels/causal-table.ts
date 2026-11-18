@@ -1,8 +1,19 @@
 import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Prior, Value } from '../../engine/index.ts'
-import { causalRows, domainValues, enumerateContexts, evaluate, formatValue, getVariable, renderExpr, renderIdent, renderValue, valuesEqual } from '../../engine/index.ts'
-import type { Stochastic } from '../model/view-model.ts'
-import { probText } from '../model/view-model.ts'
+import {
+  causalRows,
+  domainValues,
+  enumerateContexts,
+  evaluate,
+  formatValue,
+  getVariable,
+  renderExpr,
+  renderIdent,
+  renderValue,
+  valuesEqual,
+} from '../../engine/index.ts'
+import type { Stochastic } from '../model/assignments.ts'
+import { probText } from '../model/wording.ts'
 
 /** The causal notation's default rows: the ones that can hold under what is set, with the parents that do not matter left out. */
 

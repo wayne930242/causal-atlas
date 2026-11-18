@@ -11,23 +11,10 @@ import { useMessages } from '../i18n/messages.ts'
 import { Tip } from '../shared/parts.tsx'
 import { sub } from '../text/svg-text.tsx'
 import type { PathMarks } from '../model/dsep-view.ts'
-import type { Stochastic } from '../model/view-model.ts'
-import {
-  arcCurve,
-  assignmentText,
-  barLayout,
-  edgeLive,
-  edgePolarity,
-  graphSpacing,
-  gridLayout,
-  idWithName,
-  latentArcs,
-  planArcs,
-  probText,
-  shortLabel,
-  shownEdges,
-  textWidth,
-} from '../model/view-model.ts'
+import type { Stochastic } from '../model/assignments.ts'
+import { arcCurve, edgeLive, edgePolarity, graphSpacing, gridLayout, latentArcs, planArcs, shownEdges } from './graph-layout.ts'
+import { assignmentText, idWithName, probText, shortLabel } from '../model/wording.ts'
+import { barLayout, textWidth } from '../text/text-measure.ts'
 
 export interface SignalGraphProps {
   readonly c: LoadedCase

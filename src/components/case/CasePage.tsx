@@ -12,7 +12,8 @@ import { Rich } from '../text/typeset.tsx'
 import { ProbabilityPanelFor } from '../probability/ProbabilityPanel.tsx'
 import { Verdicts } from './Verdicts.tsx'
 import { intuitionSummary, seeDoPair, shortSources } from '../model/verdict-rows.ts'
-import { defaultSliders, doText, phraseOf, priorWithSliders } from '../model/view-model.ts'
+import { defaultSliders, priorWithSliders } from '../model/probability-view.ts'
+import { doText, phraseOf } from '../model/wording.ts'
 
 export interface CasePageProps {
   /** Notation the equations start in; the reader can still switch. Default 'propositional'. */

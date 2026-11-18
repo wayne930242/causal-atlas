@@ -10,8 +10,9 @@ import { causalTable } from './causal-table.ts'
 import { equationsLatex } from './equations-latex.ts'
 import { Tex } from '../text/Tex.tsx'
 import { Rich } from '../text/typeset.tsx'
-import type { Stochastic } from '../model/view-model.ts'
-import { bracketText, doText, equationIds, equationRows, label, outcomeVariable, readingText } from '../model/view-model.ts'
+import type { Stochastic } from '../model/assignments.ts'
+import { bracketText, doText, label, readingText } from '../model/wording.ts'
+import { equationIds, equationRows, outcomeVariable } from './equation-rows.ts'
 
 export interface EquationsProps {
   readonly c: LoadedCase

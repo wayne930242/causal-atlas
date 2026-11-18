@@ -7,7 +7,7 @@ import { Disclosure, NoIcon, OkIcon, PartIcon, Pin, Tag } from '../shared/parts.
 import type { ActualGroup, ActualRow, Intuition } from '../model/verdict-rows.ts'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { THEORY_REF, actualGroups, decisionRows, intuition, numberRows } from '../model/verdict-rows.ts'
-import { assignmentText, fixed, probText } from '../model/view-model.ts'
+import { assignmentText, fixed, probText } from '../model/wording.ts'
 
 export interface VerdictsProps {
   readonly c: LoadedCase

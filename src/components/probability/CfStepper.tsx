@@ -16,7 +16,7 @@ import { Tex } from '../text/Tex.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { originCitations, originSources } from '../model/verdict-rows.ts'
-import { assignmentText, doText, fixed, probLegend } from '../model/view-model.ts'
+import { assignmentText, doText, fixed, probLegend } from '../model/wording.ts'
 
 export interface CfStepperProps {
   readonly c: LoadedCase

@@ -26,18 +26,9 @@ import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import type { SeeDoPair } from '../model/verdict-rows.ts'
 import { originCitations, originSources, seeDoPair } from '../model/verdict-rows.ts'
-import {
-  changeNotes,
-  defaultSliders,
-  doText,
-  marginals,
-  priorWithSliders,
-  probLegend,
-  probText,
-  shownVariables,
-  sliderVariables,
-  phraseOf,
-} from '../model/view-model.ts'
+import { shownVariables } from '../graph/graph-layout.ts'
+import { defaultSliders, marginals, priorWithSliders, sliderVariables } from '../model/probability-view.ts'
+import { changeNotes, doText, probLegend, probText, phraseOf } from '../model/wording.ts'
 
 export type ProbabilityView = 'sliders' | 'compare' | 'counterfactual' | 'adjust' | 'rules'
 

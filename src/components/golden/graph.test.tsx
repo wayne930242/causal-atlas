@@ -10,7 +10,9 @@ import { dsepView } from '../model/dsep-view.ts'
 import { solve } from '../model/model-state.ts'
 import type { SignalGraphProps } from '../graph/SignalGraph.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
-import { flipValue, shownVariables, targetValue } from '../model/view-model.ts'
+import { shownVariables } from '../graph/graph-layout.ts'
+import { flipValue } from '../model/assignments.ts'
+import { targetValue } from '../model/probability-view.ts'
 import { goldenSuite } from './harness.ts'
 
 const noop = (): void => {}

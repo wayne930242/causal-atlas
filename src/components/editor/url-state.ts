@@ -1,8 +1,8 @@
 import { shareFromHash } from '../../data/model-doc.ts'
 import type { Assignment, Value } from '../../engine/index.ts'
 import { formatValue } from '../../engine/index.ts'
-import type { Stochastic } from '../model/view-model.ts'
-import { probText } from '../model/view-model.ts'
+import type { Stochastic } from '../model/assignments.ts'
+import { probText } from '../model/wording.ts'
 
 /**
  * The editor's state in the page address: `#case=<id>` for an unedited bundled case or host model,

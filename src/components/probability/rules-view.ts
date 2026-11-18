@@ -2,7 +2,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { DSeparationResult, Edge, Interventions, Prior } from '../../engine/index.ts'
 import { dSeparation, getVariable, probability } from '../../engine/index.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
-import { doText } from '../model/view-model.ts'
+import { doText } from '../model/wording.ts'
 
 /** Pure helpers for the probability panel's do-calculus view (lesson 06). */
 

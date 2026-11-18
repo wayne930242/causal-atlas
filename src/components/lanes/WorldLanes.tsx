@@ -18,20 +18,10 @@ import type { UiNotation } from '../model/notation.ts'
 import { notations } from '../model/notation.ts'
 import { DocProblems, Arrow, Progress, Segmented } from '../shared/parts.tsx'
 import { Rich } from '../text/typeset.tsx'
-import {
-  assignmentText,
-  columnOrder,
-  doText,
-  edgeLive,
-  edgePolarity,
-  idWithName,
-  label,
-  outcomeVariable,
-  shownEdges,
-  shortLabel,
-  shownVariables,
-  textWidth,
-} from '../model/view-model.ts'
+import { columnOrder, edgeLive, edgePolarity, shownEdges, shownVariables } from '../graph/graph-layout.ts'
+import { assignmentText, doText, idWithName, label, shortLabel } from '../model/wording.ts'
+import { outcomeVariable } from '../panels/equation-rows.ts'
+import { textWidth } from '../text/text-measure.ts'
 
 export type WorldLanesProps = WorldLanesSource & WorldLanesOptions
 

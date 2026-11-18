@@ -3,7 +3,7 @@ import { renderExpr } from '../../engine/index.ts'
 import { causalTable } from './causal-table.ts'
 import { messagesFor } from '../i18n/messages.ts'
 import type { EquationsProps } from './Equations.tsx'
-import { equationIds, equationRows, outcomeVariable } from '../model/view-model.ts'
+import { equationIds, equationRows, outcomeVariable } from './equation-rows.ts'
 
 /** One `aligned` line: `&` goes before the main relation, or at the start when there is none. */
 function alignedLine(latex: string): string {

@@ -6,7 +6,7 @@ import { formatDo, formatPdo, parseDo, parsePdo } from '../editor/url-state.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { messagesFor } from '../i18n/messages.ts'
 import { solve } from '../model/model-state.ts'
-import type { Stochastic } from '../model/view-model.ts'
+import type { Stochastic } from '../model/assignments.ts'
 
 /**
  * An embedded figure's state in its address: `#do=<id>:<value>,…&pdo=<id>:<p>,…&obs=<id>:<value>,…`,

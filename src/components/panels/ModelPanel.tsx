@@ -19,8 +19,8 @@ import { Segmented, Tag } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { originCitations, originSources } from '../model/verdict-rows.ts'
-import type { Stochastic } from '../model/view-model.ts'
-import { assignmentText, changeNotes, probLegend, readingText } from '../model/view-model.ts'
+import type { Stochastic } from '../model/assignments.ts'
+import { assignmentText, changeNotes, probLegend, readingText } from '../model/wording.ts'
 
 export interface GraphBoxProps {
   readonly c: LoadedCase

@@ -3,7 +3,7 @@ import type { Locale } from '../i18n/messages.ts'
 import { DEFAULT_LOCALE, messagesFor } from '../i18n/messages.ts'
 import { saveFile } from './download.ts'
 import { SUB_DY, SUB_IDENT, SUB_SIZE, ZWSP } from '../text/subscript.ts'
-import { textWidth } from '../model/view-model.ts'
+import { textWidth } from '../text/text-measure.ts'
 
 /**
  * Image export: copy a live graph SVG, replace every class with literal presentation attributes

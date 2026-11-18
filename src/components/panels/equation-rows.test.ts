@@ -3,7 +3,8 @@ import { getCase } from '../../data/index.ts'
 import { caseToDoc, docToCase } from '../../data/model-doc.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import { messagesFor } from '../i18n/messages.ts'
-import { equationIds, equationRows, shownVariables } from './view-model.ts'
+import { shownVariables } from '../graph/graph-layout.ts'
+import { equationIds, equationRows } from './equation-rows.ts'
 
 describe('equationRows worked values (arithmetic)', () => {
   const c = getCase('firing-squad')

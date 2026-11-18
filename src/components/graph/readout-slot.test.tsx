@@ -7,7 +7,8 @@ import type { LoadedCase } from '../../data/load.ts'
 import { resolveDoc } from '../model/doc-case.ts'
 import { CausalPlayground, ModelEditor } from '../index.ts'
 import { withProbability } from '../model/model-state.ts'
-import { marginals, mixedMarginals, nameAfterId, priorWithSliders } from '../model/view-model.ts'
+import { marginals, mixedMarginals, priorWithSliders } from '../model/probability-view.ts'
+import { nameAfterId } from '../model/wording.ts'
 
 afterEach(cleanup)
 

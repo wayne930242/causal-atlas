@@ -4,7 +4,7 @@ import { evaluateDecision, formatValue, getVariable, valuesEqual } from '../../e
 import { useMessages } from '../i18n/messages.ts'
 import { Tip } from '../shared/parts.tsx'
 import { Rich } from '../text/typeset.tsx'
-import { fixed } from '../model/view-model.ts'
+import { fixed } from '../model/wording.ts'
 
 export interface DecisionBarsProps {
   readonly c: LoadedCase

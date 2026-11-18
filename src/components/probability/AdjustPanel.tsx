@@ -16,7 +16,8 @@ import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { originCitations, originSources } from '../model/verdict-rows.ts'
-import { marginals, probLegend } from '../model/view-model.ts'
+import { marginals } from '../model/probability-view.ts'
+import { probLegend } from '../model/wording.ts'
 
 /** What the adjustment calculator compares: the cause, the effect, and optionally the groupings offered. */
 export interface AdjustSpec {

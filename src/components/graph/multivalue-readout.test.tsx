@@ -6,7 +6,7 @@ import { modelDocSchema } from '../../data/schema.ts'
 import { PALETTES, inlineSvg } from '../export/export-image.ts'
 import { intersects, placePop } from './graph-labels.ts'
 import { CausalPlayground, ProbabilityPanel } from '../index.ts'
-import { barLayout } from '../model/view-model.ts'
+import { barLayout } from '../text/text-measure.ts'
 
 afterEach(cleanup)
 

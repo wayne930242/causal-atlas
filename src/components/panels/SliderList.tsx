@@ -2,7 +2,8 @@ import type { LoadedCase } from '../../data/load.ts'
 import { getVariable } from '../../engine/index.ts'
 import { useMessages } from '../i18n/messages.ts'
 import { Ident } from '../text/typeset.tsx'
-import { label, probText, targetText } from '../model/view-model.ts'
+import { targetText } from '../model/probability-view.ts'
+import { label, probText } from '../model/wording.ts'
 
 export interface SliderListProps {
   readonly c: LoadedCase

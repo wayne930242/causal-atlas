@@ -2,8 +2,8 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, DPath, DSeparationResult } from '../../engine/index.ts'
 import { dSeparation, dependence } from '../../engine/index.ts'
 import type { Messages } from '../i18n/messages.ts'
-import type { Stochastic } from './view-model.ts'
-import { fixed } from './view-model.ts'
+import type { Stochastic } from './assignments.ts'
+import { fixed } from './wording.ts'
 
 /** Pure helpers for the playground's d-separation line. */
 

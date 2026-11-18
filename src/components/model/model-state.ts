@@ -3,8 +3,10 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Edge, Value } from '../../engine/index.ts'
 import { counterfactual, evaluate, getVariable, valuesEqual } from '../../engine/index.ts'
 import type { UiNotation } from './notation.ts'
-import type { Stochastic } from './view-model.ts'
-import { flipValue, mixedMarginals, observationFormula, shownVariables, targetValue } from './view-model.ts'
+import type { Stochastic } from './assignments.ts'
+import { shownVariables } from '../graph/graph-layout.ts'
+import { flipValue, observationFormula } from './assignments.ts'
+import { mixedMarginals, targetValue } from './probability-view.ts'
 
 /** What is set by do(): hard interventions, and stochastic ones (P*(X=1) of a boolean, 0 < p < 1). */
 export interface DoState {

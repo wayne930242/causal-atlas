@@ -3,7 +3,8 @@ import type { Assignment, DPath, Prior, Value } from '../../engine/index.ts'
 import { dSeparation, descendants, domainValues, enumerateContexts, evaluate, getVariable, valuesEqual } from '../../engine/index.ts'
 import { enumerateAssignments } from '../../engine/values.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
-import { fixed, targetValue } from '../model/view-model.ts'
+import { targetValue } from '../model/probability-view.ts'
+import { fixed } from '../model/wording.ts'
 
 /** Pure helpers for the probability panel's adjustment calculator (lesson 05's back-door formula). */
 

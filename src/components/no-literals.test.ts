@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
  */
 const ALLOWED: Readonly<Record<string, readonly string[]>> = {
   // Full-width characters counted as one em when estimating label widths.
-  'model/view-model.ts': ['，。：；（）「」？！…—＝／、《》・'],
+  'text/text-measure.ts': ['，。：；（）「」？！…—＝／、《》・'],
   // Value lists may be typed with full-width commas and the enumeration comma.
   'editor/draft.ts': ['，、'],
   // Sentence-ending punctuation: where a sentence starts, to tell the article A from the variable A.

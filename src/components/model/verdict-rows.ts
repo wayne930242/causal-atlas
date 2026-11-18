@@ -5,7 +5,9 @@ import type { Assignment, CausalTheory, CausalVerdict, Value } from '../../engin
 import { actualCause, counterfactual, evaluate, evaluateDecision, getVariable, parseCause, probability, witnessStatus } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
 import type { Messages } from '../i18n/messages.ts'
-import { assignmentText, bracketText, fixed, flipValue, label, normalityLine, probText } from './view-model.ts'
+import { flipValue } from './assignments.ts'
+import { normalityLine } from './normality-view.ts'
+import { assignmentText, bracketText, fixed, label, probText } from './wording.ts'
 
 /** Verdict rows computed by the engine, with short plain-language sentences in the table's language. */
 
