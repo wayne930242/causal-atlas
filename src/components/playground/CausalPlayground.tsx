@@ -1,52 +1,38 @@
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
 import type { CaseDecision, ModelDoc } from '../../data/schema.ts'
-import { decisionProblem } from '../../data/load.ts'
-import type { Assignment, DecisionProblem, LocalizedText } from '../../engine/index.ts'
-import { useCaseOrDoc } from '../model/doc-case.ts'
-import type { Locale } from '../i18n/messages.ts'
-import { LocaleScope, useMessages } from '../i18n/messages.ts'
+import type { Assignment } from '../../engine/index.ts'
+import { parseCause, valuesEqual } from '../../engine/index.ts'
 import { DEFAULT_URL, watermarkLine } from '../export/cite.ts'
 import { DEFAULT_EMBED_BASE, embedCode, embedHome, embedSrc, fitEmbedState, readEmbedState } from '../export/embed.ts'
-import type { Reading } from '../model/model-state.ts'
-import { solve, useModel } from '../model/model-state.ts'
-import { EquationBox } from '../panels/EquationBox.tsx'
-import { GraphBox } from '../panels/GraphBox.tsx'
-import type { UiNotation } from '../model/notation.ts'
-import { DocProblems, Segmented, Tip } from '../shared/parts.tsx'
-import { Rich } from '../text/typeset.tsx'
-import type { VerdictQuery } from '../model/verdict-rows.ts'
-import { actualGroups, defaultTheories, originCitations, originSources } from '../model/verdict-rows.ts'
-import { PlaygroundVerdicts } from './PlaygroundVerdicts.tsx'
-import { DsepLine } from './DsepLine.tsx'
+import type { Locale } from '../i18n/messages.ts'
+import { LocaleScope, useMessages } from '../i18n/messages.ts'
+import { sameAssignment } from '../model/assignments.ts'
+import { useCaseOrDoc } from '../model/doc-case.ts'
 import type { DsepPair } from '../model/dsep-view.ts'
 import { dsepView } from '../model/dsep-view.ts'
-import { evaluate, getVariable, parseCause, valuesEqual } from '../../engine/index.ts'
-import type { TrailEntry } from './trail.ts'
-import { sameAssignment } from '../model/assignments.ts'
+import type { Reading } from '../model/model-state.ts'
+import { useModel } from '../model/model-state.ts'
 import { normalityLine } from '../model/normality-view.ts'
-import { defaultSliders, priorWithSliders, sliderVariables } from '../model/probability-view.ts'
+import type { UiNotation } from '../model/notation.ts'
+import { priorWithSliders } from '../model/probability-view.ts'
+import type { VerdictQuery } from '../model/verdict-rows.ts'
+import { actualGroups, defaultTheories, originCitations, originSources } from '../model/verdict-rows.ts'
 import { readingText } from '../model/wording.ts'
-import { TRAIL_LENGTH, trailEntry, trailText } from './trail.ts'
+import { EquationBox } from '../panels/EquationBox.tsx'
+import { GraphBox } from '../panels/GraphBox.tsx'
 import { SliderList } from '../panels/SliderList.tsx'
+import { DocProblems, Segmented, Tip } from '../shared/parts.tsx'
+import { Rich } from '../text/typeset.tsx'
 import { DecisionBars } from './DecisionBars.tsx'
+import { DsepLine } from './DsepLine.tsx'
+import type { PlaygroundPreset, PresetButton } from './playground-options.ts'
+import { NONE, activeQuery, checkTrack, checkVerdicts, decisionFor, dsepPairs, presetButtons, sliderStart } from './playground-options.ts'
+import { PlaygroundVerdicts } from './PlaygroundVerdicts.tsx'
+import { trailText } from './trail.ts'
+import { useTrail } from './use-trail.ts'
 
-/**
- * A step button under the graph: one press sets these do()s and observations (and nothing else).
- * A bundled case brings its own (do() only); a document takes a list.
- */
-export interface PlaygroundPreset {
-  readonly label: string | LocalizedText
-  /** do() to set. */
-  readonly interventions?: Assignment
-  /** Observations to set; probability graphs only (a graph with values throws). */
-  readonly observed?: Assignment
-  /**
-   * Variables an HP witness holds fixed: set by do() like `interventions`, but drawn in the amber
-   * hull (固定) instead of with a clamp.
-   */
-  readonly hold?: Assignment
-}
+export type { PlaygroundPreset } from './playground-options.ts'
 
 export type CausalPlaygroundProps = CausalPlaygroundSource & CausalPlaygroundOptions
 
@@ -179,7 +165,7 @@ function PlaygroundFor({
     () => (Object.keys(sliderValues).length === 0 ? base : { ...base, prior: priorWithSliders(base, sliderValues) }),
     [base, sliderValues],
   )
-  if (verdicts !== undefined && c.context === undefined) throw new Error(`${c.data.id}: verdicts need a graph with values (an actual context)`)
+  checkVerdicts(c, verdicts)
   const [reading, setReading] = useState<Reading>('interventional')
   const { interventions, stochastic, observed, setDo, setObserved, notation, setNotation, world } = useModel(
     c,
@@ -210,12 +196,7 @@ function PlaygroundFor({
   const buttons = presetButtons(c, presets, t.locale)
   const prob = world.probs !== undefined
   const defaults = normality && c.context !== undefined ? c.normality : undefined
-  const pairs: readonly DsepPair[] = dsep === undefined ? [] : isPair(dsep) ? [dsep] : dsep
-  if (pairs.length > 0 && (c.context !== undefined || c.prior === undefined)) throw new Error(`${c.data.id}: dsep needs a probability graph (priors, no context)`)
-  for (const [x, y] of pairs) {
-    getVariable(c.model, x)
-    getVariable(c.model, y)
-  }
+  const pairs = dsepPairs(c, dsep)
   const [pairAt, setPairAt] = useState(0)
   const pair = pairs[Math.min(pairAt, pairs.length - 1)]
   const dsepNow = pair === undefined || !prob ? undefined : dsepView(c, pair, observed, interventions, stochastic)
@@ -228,19 +209,14 @@ function PlaygroundFor({
   const holding = Object.fromEntries(
     Object.entries(interventions).filter(([id, v]) => (id in held && valuesEqual(held[id], v)) || (verdicts !== undefined && !(id in activeCause))),
   )
-  for (const id of track) getVariable(c.model, id)
-  const startTrail = (): Trail => ({ entries: [trailEntry(solve(c, {}), track, '')], dropped: false })
-  const [trail, setTrail] = useState<Trail>(startTrail)
+  checkTrack(c, track)
   const setting = readingText(t, reading === 'counterfactual' && prob, interventions, stochastic, observed)
-  if (track.length > 0 && trail.entries[trail.entries.length - 1]?.setting !== setting) {
-    const entries = [...trail.entries, trailEntry(world, track, setting)]
-    setTrail({ entries: entries.slice(-TRAIL_LENGTH), dropped: trail.dropped || entries.length > TRAIL_LENGTH })
-  }
+  const [trail, restartTrail] = useTrail(c, track, world, setting)
   const applyPreset = (s: PresetButton): void => {
     setDo({ interventions: s.interventions, stochastic: {} })
     setObserved(s.observed)
     setHeld(s.hold)
-    setTrail(startTrail())
+    restartTrail()
   }
   const pressed = (s: PresetButton): boolean =>
     !soft &&
@@ -280,7 +256,7 @@ function PlaygroundFor({
           embedCode={embed}
           onReset={() => {
             setSliderValues(start)
-            setTrail(startTrail())
+            restartTrail()
           }}
           reading={reading}
           paths={dsepNow?.marks}
@@ -429,74 +405,5 @@ function EmbedCredit({ c, url }: { readonly c: LoadedCase; readonly url: string 
   )
 }
 
-const NONE: Assignment = {}
 const NO_TRACK: readonly string[] = []
 
-interface Trail {
-  readonly entries: readonly TrailEntry[]
-  /** Older readings gave way to the last TRAIL_LENGTH. */
-  readonly dropped: boolean
-}
-
-interface PresetButton {
-  readonly text: string
-  /** Every do(), the held variables included. */
-  readonly interventions: Assignment
-  readonly observed: Assignment
-  readonly hold: Assignment
-}
-
-/** The decision problem the bars show: the case's own for `true`. */
-function decisionFor(c: LoadedCase, decision: true | CaseDecision | undefined): DecisionProblem | undefined {
-  if (decision === undefined) return undefined
-  if (c.context !== undefined || c.prior === undefined) throw new Error(`${c.data.id}: decision needs a probability graph (priors, no context)`)
-  if (decision !== true) return decisionProblem(decision)
-  if (c.decision === undefined) throw new Error(`${c.data.id}: decision={true} needs the case's own decision; give one instead`)
-  return c.decision
-}
-
-/** The sliders' and `prior`'s start values; throws on a variable no slider can set. */
-function sliderStart(c: LoadedCase, sliders: readonly string[], prior: Readonly<Record<string, number>> | undefined): Record<string, number> {
-  const ids = [...sliders, ...Object.keys(prior ?? {})]
-  if (ids.length === 0) return {}
-  if (c.context !== undefined || c.prior === undefined) throw new Error(`${c.data.id}: sliders and prior need a probability graph (priors, no context)`)
-  const settable = new Set(sliderVariables(c))
-  for (const id of ids) {
-    getVariable(c.model, id)
-    if (!settable.has(id)) throw new Error(`${c.data.id}: no slider can set ${id} (a boolean or two-valued exogenous variable, independent prior)`)
-  }
-  for (const [id, p] of Object.entries(prior ?? {})) {
-    if (!(p >= 0 && p <= 1)) throw new Error(`${c.data.id}: prior ${id} = ${p} is not a probability`)
-  }
-  const own = defaultSliders(c)
-  return Object.fromEntries(ids.map((id) => [id, prior?.[id] ?? own[id]]))
-}
-
-function isPair(dsep: DsepPair | readonly DsepPair[]): dsep is DsepPair {
-  return typeof dsep[0] === 'string'
-}
-
-/** The query whose cause is set, every cause variable, not all at actual values; else the first. */
-function activeQuery(c: LoadedCase, queries: readonly VerdictQuery[], interventions: Assignment): number {
-  const actual = c.context === undefined ? NONE : evaluate(c.model, c.context).values
-  const i = queries.findIndex((q) => {
-    const cause = parseCause(c.model, q.cause)
-    const ids = Object.keys(cause)
-    return ids.every((id) => id in interventions) && ids.some((id) => !valuesEqual(interventions[id], actual[id]))
-  })
-  return i < 0 ? 0 : i
-}
-
-function presetButtons(c: LoadedCase, presets: boolean | readonly PlaygroundPreset[], locale: Locale): PresetButton[] {
-  if (presets === false) return []
-  const list: readonly PlaygroundPreset[] = presets === true ? c.data.showcase : presets
-  return list.map((s) => {
-    const text = typeof s.label === 'string' ? s.label : s.label[locale]
-    const observed = s.observed ?? NONE
-    if (c.context !== undefined && Object.keys(observed).length > 0) {
-      throw new Error(`preset "${text}": observed needs probabilities, and ${c.data.id} has an actual context`)
-    }
-    const hold = s.hold ?? NONE
-    return { text, interventions: { ...(s.interventions ?? NONE), ...hold }, observed, hold }
-  })
-}
