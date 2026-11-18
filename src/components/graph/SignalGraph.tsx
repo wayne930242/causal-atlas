@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent, PointerEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Edge, Value } from '../../engine/index.ts'
@@ -14,8 +14,9 @@ import type { Stochastic } from '../model/assignments.ts'
 import { idWithName, probText, shortLabel } from '../model/wording.ts'
 import { barLayout, textWidth } from '../text/text-measure.ts'
 import { layoutSignalGraph } from './signal-geometry.ts'
-import type { Block, Point } from './signal-shapes.ts'
-import { BAR_H, BAR_LABEL, EXO_INSET, arrowHead, clampPath, exoDash, snap } from './signal-shapes.ts'
+import { useNodeGestures } from './use-node-gestures.ts'
+import type { Block } from './signal-shapes.ts'
+import { BAR_H, BAR_LABEL, EXO_INSET, arrowHead, clampPath, exoDash } from './signal-shapes.ts'
 
 export interface SignalGraphProps {
   readonly c: LoadedCase
@@ -77,20 +78,8 @@ export interface SignalGraphProps {
   readonly onMove?: (id: string, dCol: number, dRow: number) => void
 }
 
-interface Drag {
-  readonly id: string
-  readonly pointer: number
-  readonly x0: number
-  readonly y0: number
-  readonly dx: number
-  readonly dy: number
-  readonly moved: boolean
-}
-
 /** P*(X=1) slider step for a boolean node in probability mode. */
 const P_STEP = 0.05
-/** How long a press must last to intervene instead of observe, in ms. */
-const LONG_PRESS = 500
 
 /** Direction 1 「訊號圖」: value nodes, signal edges, do() clamps and cut edges. */
 export function SignalGraph(props: SignalGraphProps) {
@@ -123,25 +112,8 @@ export function SignalGraph(props: SignalGraphProps) {
   const t = useMessages()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
-  const [drag, setDrag] = useState<Drag | undefined>(undefined)
-  // After a drag, the browser may still send a click to the node: ignore clicks until this time.
-  const suppressUntil = useRef(0)
+  const { drag, pressing, moveDrag, endDrag, cancelDrag, nodeHandlers } = useNodeGestures(svgRef, onMove)
   const [picking, setPicking] = useState<string | undefined>(undefined)
-  // A long press in progress, and whether the last one fired (so the click after it is ignored).
-  const [pressing, setPressing] = useState<string | undefined>(undefined)
-  const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const pressFired = useRef(false)
-  // The kind of pointer that last pressed a node: a contextmenu from a mouse intervenes, one from
-  // a touch (Android sends it on a long press) does not, since the long-press timer already did.
-  const lastPointer = useRef('')
-  const cancelPress = (): void => {
-    if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
-    pressTimer.current = undefined
-    setPressing(undefined)
-  }
-  useEffect(() => () => {
-    if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
-  }, [])
   // The control belongs to a node under do(): once that do() is gone (reset by a button, a preset,
   // the keyboard), the control closes.
   if (picking !== undefined && !(picking in interventions) && !(picking in stochastic)) setPicking(undefined)
@@ -197,39 +169,6 @@ export function SignalGraph(props: SignalGraphProps) {
   const { prob, r: R, col: COL, row: ROW, pos, blocks, arcs, hull, left, top, width: viewW, height } = layout
   const barred = (id: string): boolean => prob && getVariable(c.model, id).domain.kind === 'finite'
 
-  const toSvg = (e: PointerEvent): Point => {
-    const ctm = svgRef.current?.getScreenCTM?.()
-    if (ctm === null || ctm === undefined) return { x: e.clientX, y: e.clientY }
-    const inv = ctm.inverse()
-    return { x: inv.a * e.clientX + inv.c * e.clientY + inv.e, y: inv.b * e.clientX + inv.d * e.clientY + inv.f }
-  }
-  const startDrag = (id: string, e: PointerEvent<SVGGElement>): void => {
-    if (onMove === undefined || e.button !== 0) return
-    const at = toSvg(e)
-    setDrag({ id, pointer: e.pointerId, x0: at.x, y0: at.y, dx: 0, dy: 0, moved: false })
-  }
-  const moveDrag = (e: PointerEvent<SVGSVGElement>): void => {
-    if (drag === undefined || e.pointerId !== drag.pointer) return
-    const at = toSvg(e)
-    const dx = at.x - drag.x0
-    const dy = at.y - drag.y0
-    const moved = drag.moved || Math.hypot(dx, dy) > 4
-    // Capture only once it is a drag, so a plain press-release stays a click on the node.
-    if (moved && !drag.moved) {
-      svgRef.current?.setPointerCapture?.(e.pointerId)
-      cancelPress()
-    }
-    setDrag({ ...drag, dx, dy, moved })
-  }
-  const endDrag = (e: PointerEvent<SVGSVGElement>): void => {
-    if (drag === undefined || e.pointerId !== drag.pointer) return
-    setDrag(undefined)
-    if (!drag.moved) return
-    suppressUntil.current = Date.now() + 400
-    const dCol = snap(drag.dx / COL)
-    const dRow = snap(drag.dy / ROW)
-    if (dCol !== 0 || dRow !== 0) onMove?.(drag.id, dCol, dRow)
-  }
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
   const edgeEls = layout.edges.map((edge) => {
@@ -360,50 +299,6 @@ export function SignalGraph(props: SignalGraphProps) {
         onObserve(id)
       } else intervene()
     }
-    const arrows: Record<string, [number, number]> = { ArrowLeft: [-0.5, 0], ArrowRight: [0.5, 0], ArrowUp: [0, -0.5], ArrowDown: [0, 0.5] }
-    const onKey = (event: KeyboardEvent<SVGGElement>): void => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault()
-        activate(event.shiftKey)
-        return
-      }
-      const step = arrows[event.key]
-      if (onMove !== undefined && step !== undefined) {
-        event.preventDefault()
-        onMove(id, step[0], step[1])
-      }
-    }
-    const onClick = (event: MouseEvent<SVGGElement>): void => {
-      if (pressFired.current) {
-        pressFired.current = false
-        return
-      }
-      if (Date.now() < suppressUntil.current) return
-      activate(event.shiftKey)
-    }
-    const onPointerDown = (e: PointerEvent<SVGGElement>): void => {
-      lastPointer.current = e.pointerType
-      startDrag(id, e)
-      if (!observes || !settable || e.button !== 0 || e.shiftKey) return
-      pressFired.current = false
-      cancelPress()
-      setPressing(id)
-      pressTimer.current = setTimeout(() => {
-        pressTimer.current = undefined
-        pressFired.current = true
-        setPressing(undefined)
-        intervene()
-      }, LONG_PRESS)
-    }
-    /** A right-click intervenes, as a long press does; only from a mouse (see `lastPointer`). */
-    const onContextMenu = (e: MouseEvent<SVGGElement>): void => {
-      e.preventDefault()
-      const own = (e.nativeEvent as { pointerType?: string }).pointerType
-      const kind = own === undefined ? lastPointer.current : own
-      if (kind !== 'mouse' || !settable) return
-      cancelPress()
-      intervene()
-    }
     const toggle: NodeToggle | undefined = onPick !== undefined
       ? 'pick'
       : observes
@@ -451,13 +346,7 @@ export function SignalGraph(props: SignalGraphProps) {
               'aria-haspopup': picks ? 'dialog' : undefined,
               'aria-expanded': picks ? picking === id : undefined,
               'aria-label': t.withHint(aria, hint),
-              onClick,
-              onKeyDown: onKey,
-              onPointerDown,
-              onPointerUp: cancelPress,
-              onPointerLeave: cancelPress,
-              onPointerCancel: cancelPress,
-              onContextMenu: observes ? onContextMenu : undefined,
+              ...nodeHandlers(id, { settable, observes, activate, intervene }),
             }
           : { role: 'img', 'aria-label': aria })}
       >
@@ -715,8 +604,8 @@ export function SignalGraph(props: SignalGraphProps) {
     <svg
       ref={svgRef}
       onPointerMove={onMove === undefined ? undefined : moveDrag}
-      onPointerUp={onMove === undefined ? undefined : endDrag}
-      onPointerCancel={onMove === undefined ? undefined : () => setDrag(undefined)}
+      onPointerUp={onMove === undefined ? undefined : (e) => endDrag(e, COL, ROW)}
+      onPointerCancel={onMove === undefined ? undefined : cancelDrag}
       className="ca-graph"
       viewBox={`${left} ${top} ${viewW} ${height}`}
       width={viewW}
