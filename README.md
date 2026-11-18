@@ -2,6 +2,22 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.8.0
+The component explorer. The demo site gets a Storybook-style page, `#/explorer`, first in its header: pick a
+component (`CausalPlayground`, `ProbabilityPanel` with its six views, `WorldLanes`, `CasePage`, `ModelEditor`,
+`CiteBlock`) and a ready-made figure (one per figure of the lesson interaction page), pick a model (the 41
+lesson models or the 45 bundled cases, searchable and grouped; `ModelEditor` also takes the blank model), edit
+the component's props with generated controls (forms for the common props, JSON fields for the complex ones;
+a control a model cannot use is disabled with its reason), and watch the figure re-render. A prop combination
+the component rejects shows its message and `problem.code` in place of the figure. Two tabs under the figure
+give the JSX for package users and the MDX tag for the blog (`CausalModel id=…` for a lesson model), each with a
+copy button, and 「複製連結」 copies the address. The whole state (component, story, model, the props that differ
+from the story's, language, theme) lives in the hash, so a pasted link restores the same figure; edits replace
+the history entry, picking a component or model adds one. The demo is built with a relative base and a
+`pages.yml` workflow deploys it to GitHub Pages when a `v*` tag is pushed (Pages must be enabled once under
+Settings > Pages > Source: GitHub Actions). The library is unchanged: no component, engine or data file
+differs from 0.7.0.
+
 ## 0.7.0
 Responsibility, blame and mediation. Engine: `responsibility(model, context, query, theory)` is the degree
 of responsibility 1/k of a single event X=x (Halpern 2016, Def. 6.1.1 and 6.1.6; k is the variables in the
@@ -180,7 +196,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.7.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.8.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -478,7 +494,7 @@ also one whose parents are not drawn (`Y = U2`).
 
 ## Scripts
 
-- `pnpm dev`: the demo site (playground, a page per case, a lesson with world lanes); the header
+- `pnpm dev`: the demo site (the component explorer at `#/explorer`, the playground, a page per case, a lesson with world lanes); the header
   switches language, or add `lang=en` to the route (`#/case/rock-throwing?lang=en`)
 - `pnpm typecheck`, `pnpm test`, `pnpm lint`
 - `pnpm build`: the demo site into `dist-demo/`
@@ -490,9 +506,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.7.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.8.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.7.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.8.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -501,7 +517,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.7.0},
+  version = {0.8.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
