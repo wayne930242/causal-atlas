@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import type { Locale } from '../components/index.ts'
 import { CasePage, CausalPlayground, CiteBlock, LANGUAGE_NAMES, LocaleProvider, ModelEditor, Supplement, WorldLanes } from '../components/index.ts'
 import { caseIds, getCase } from '../data/index.ts'
+import { Interactions } from './Interactions.tsx'
 
 interface Route {
-  readonly page: 'index' | 'playground' | 'case' | 'lesson' | 'editor'
+  readonly page: 'index' | 'playground' | 'case' | 'lesson' | 'editor' | 'interactions'
   readonly id: string
   readonly step: number
   /** `lang=en` in the route (`#/case/x?lang=en`) or in the page's query string; default zh-TW. */
@@ -18,6 +19,7 @@ function parse(hash: string, search: string): Route {
   const lang = params.get('lang') ?? new URLSearchParams(search).get('lang')
   const locale: Locale = lang === 'en' ? 'en' : 'zh-TW'
   const parts = path.split('/').filter((p) => p !== '')
+  if (parts[0] === 'interactions') return { page: 'interactions', id: parts[1] ?? 'all', step, locale }
   const id = parts[1] !== undefined && caseIds.includes(parts[1]) ? parts[1] : 'rock-throwing'
   if (parts[0] === 'playground') return { page: 'playground', id, step, locale }
   if (parts[0] === 'case') return { page: 'case', id, step, locale }
@@ -241,6 +243,7 @@ export function App() {
           {route.page === 'playground' && <CausalPlayground key={`${route.id}-${locale}`} caseId={route.id} />}
           {route.page === 'case' && <CasePage key={`${route.id}-${route.step}-${locale}`} caseId={route.id} initialStep={route.step} />}
           {route.page === 'lesson' && (locale === 'en' ? <LessonEn /> : <LessonZh />)}
+          {route.page === 'interactions' && <Interactions key={`${route.id}-${locale}`} item={route.id} />}
           {route.page === 'editor' && (
             <ModelEditor
               key={`${route.id}-${locale}`}

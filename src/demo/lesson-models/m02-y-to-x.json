@@ -1,0 +1,65 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "Y → X",
+  "model": {
+    "variables": [
+      {
+        "id": "U_Y",
+        "label": {
+          "zh-TW": "Y 的背景",
+          "en": "Background of Y"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "M1",
+        "label": {
+          "zh-TW": "Y 成立時 X 的雜訊",
+          "en": "X noise given Y"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "M0",
+        "label": {
+          "zh-TW": "Y 不成立時 X 的雜訊",
+          "en": "X noise given not Y"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "X",
+          "en": "X"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "Y",
+          "en": "Y"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "Y": "U_Y",
+      "X": "if Y then M1 else M0"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_Y": 0.5,
+      "M1": 0.8,
+      "M0": 0.2
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "對撞：X → Z ← Y",
+  "model": {
+    "variables": [
+      {
+        "id": "U_X",
+        "label": {
+          "zh-TW": "X 的背景",
+          "en": "Background of X"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_Y",
+        "label": {
+          "zh-TW": "Y 的背景",
+          "en": "Background of Y"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "X",
+          "en": "X"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "Y",
+          "en": "Y"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "Z",
+          "en": "Z"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "U_X",
+      "Y": "U_Y",
+      "Z": "X or Y"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_X": 0.5,
+      "U_Y": 0.5
+    }
+  }
+}

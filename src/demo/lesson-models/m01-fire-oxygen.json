@@ -1,0 +1,89 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "森林大火：把氧氣升格為內生變數（氧氣通常存在）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_L",
+        "label": {
+          "zh-TW": "雷擊條件",
+          "en": "Lightning conditions"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_MD",
+        "label": {
+          "zh-TW": "縱火者意圖",
+          "en": "Arsonist's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_O",
+        "label": {
+          "zh-TW": "空氣條件",
+          "en": "Air conditions"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "L",
+        "label": {
+          "zh-TW": "雷擊",
+          "en": "Lightning"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "MD",
+        "label": {
+          "zh-TW": "丟下火柴",
+          "en": "Match dropped"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "O",
+        "label": {
+          "zh-TW": "有足夠氧氣",
+          "en": "Enough oxygen"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "FF",
+        "label": {
+          "zh-TW": "森林大火",
+          "en": "Forest fire"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "L": "U_L",
+      "MD": "U_MD",
+      "O": "U_O",
+      "FF": "(L or MD) and O"
+    }
+  },
+  "context": {
+    "U_L": 1,
+    "U_MD": 1,
+    "U_O": 1
+  },
+  "normality": {
+    "L": 0,
+    "MD": 0,
+    "O": 1,
+    "FF": 0
+  }
+}

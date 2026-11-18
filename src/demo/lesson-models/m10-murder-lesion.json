@@ -1,0 +1,85 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "謀殺病灶（Egan 2007 的 Murder Lesion；機率為本清單自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "L",
+        "label": {
+          "zh-TW": "病灶",
+          "en": "Lesion"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S1",
+        "label": {
+          "zh-TW": "有病灶時開槍",
+          "en": "Shoots given lesion"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S0",
+        "label": {
+          "zh-TW": "無病灶時開槍",
+          "en": "Shoots given no lesion"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_H1",
+        "label": {
+          "zh-TW": "有病灶時打中",
+          "en": "Hits given lesion"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_H0",
+        "label": {
+          "zh-TW": "無病灶時打中",
+          "en": "Hits given no lesion"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "S",
+        "label": {
+          "zh-TW": "Mary 開槍",
+          "en": "Mary shoots"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "H",
+        "label": {
+          "zh-TW": "打中",
+          "en": "Hits"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "S": "if L then N_S1 else N_S0",
+      "H": "S and (if L then N_H1 else N_H0)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "L": 0.2,
+      "N_S1": 0.9,
+      "N_S0": 0.05,
+      "N_H1": 0.1,
+      "N_H0": 0.95
+    }
+  }
+}

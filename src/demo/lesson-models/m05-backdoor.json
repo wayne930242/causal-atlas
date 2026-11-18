@@ -1,0 +1,135 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "後門：年紀影響運動與心臟病，另有一個被兩者影響的復健班名冊",
+  "model": {
+    "variables": [
+      {
+        "id": "U_Z",
+        "label": {
+          "zh-TW": "年紀背景",
+          "en": "Age background"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X1",
+        "label": {
+          "zh-TW": "年長者運動",
+          "en": "Older people exercise"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X0",
+        "label": {
+          "zh-TW": "年輕人運動",
+          "en": "Younger people exercise"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y11",
+        "label": {
+          "zh-TW": "年長且運動者發病",
+          "en": "Older exercisers fall ill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y10",
+        "label": {
+          "zh-TW": "年長不運動者發病",
+          "en": "Older non-exercisers fall ill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y01",
+        "label": {
+          "zh-TW": "年輕且運動者發病",
+          "en": "Younger exercisers fall ill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y00",
+        "label": {
+          "zh-TW": "年輕不運動者發病",
+          "en": "Younger non-exercisers fall ill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_C",
+        "label": {
+          "zh-TW": "有運動者順道報名",
+          "en": "Exercisers sign up anyway"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "年長",
+          "en": "Older"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "規律運動",
+          "en": "Exercises"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "心臟病",
+          "en": "Heart disease"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "C",
+        "label": {
+          "zh-TW": "在心臟復健運動班名冊上",
+          "en": "On the cardiac exercise class roster"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "Z": "U_Z",
+      "X": "if Z then N_X1 else N_X0",
+      "Y": "if Z then (if X then N_Y11 else N_Y10) else (if X then N_Y01 else N_Y00)",
+      "C": "Y or (X and N_C)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_Z": 0.5,
+      "N_X1": 0.2,
+      "N_X0": 0.7,
+      "N_Y11": 0.3,
+      "N_Y10": 0.5,
+      "N_Y01": 0.05,
+      "N_Y00": 0.15,
+      "N_C": 0.4
+    }
+  }
+}

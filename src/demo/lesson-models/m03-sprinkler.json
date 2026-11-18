@@ -1,0 +1,85 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "下雨、灑水器、草地濕（簡化自 Pearl 圖 1.2）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_R",
+        "label": {
+          "zh-TW": "天氣背景",
+          "en": "Weather background"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S1",
+        "label": {
+          "zh-TW": "下雨天仍開灑水器",
+          "en": "Sprinkler on despite rain"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S0",
+        "label": {
+          "zh-TW": "晴天開灑水器",
+          "en": "Sprinkler on when dry"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_W",
+        "label": {
+          "zh-TW": "灑水器把草地弄濕",
+          "en": "Sprinkler wets the grass"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "R",
+        "label": {
+          "zh-TW": "下雨",
+          "en": "Rain"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "S",
+        "label": {
+          "zh-TW": "灑水器開著",
+          "en": "Sprinkler on"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "W",
+        "label": {
+          "zh-TW": "草地濕",
+          "en": "Grass wet"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "R": "U_R",
+      "S": "if R then N_S1 else N_S0",
+      "W": "R or (S and N_W)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_R": 0.4,
+      "N_S1": 0.1,
+      "N_S0": 0.6,
+      "N_W": 0.9
+    }
+  }
+}

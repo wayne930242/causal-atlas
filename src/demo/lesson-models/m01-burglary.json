@@ -1,0 +1,65 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "防盜警報（Pearl 例 1.1.1）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_B",
+        "label": {
+          "zh-TW": "今晚是否有人闖入的背景",
+          "en": "Burglary background"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_A1",
+        "label": {
+          "zh-TW": "有闖入時警報響",
+          "en": "Alarm mechanism given burglary"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_A0",
+        "label": {
+          "zh-TW": "沒闖入時誤響",
+          "en": "False-alarm mechanism"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "B",
+        "label": {
+          "zh-TW": "有人闖入",
+          "en": "Burglary"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A",
+        "label": {
+          "zh-TW": "警報響",
+          "en": "Alarm"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "B": "U_B",
+      "A": "if B then N_A1 else N_A0"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_B": 0.0001,
+      "N_A1": 0.95,
+      "N_A0": 0.01
+    }
+  }
+}

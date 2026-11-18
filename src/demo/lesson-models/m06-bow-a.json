@@ -1,0 +1,95 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "弓形 A：同一份觀察資料，治療效果小",
+  "model": {
+    "variables": [
+      {
+        "id": "U",
+        "label": {
+          "zh-TW": "看不到的共同因素",
+          "en": "Unobserved common factor"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X1",
+        "label": {
+          "zh-TW": "U 成立時選擇治療",
+          "en": "Takes treatment given U"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X0",
+        "label": {
+          "zh-TW": "U 不成立時選擇治療",
+          "en": "Takes treatment given not U"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A11",
+        "label": {
+          "zh-TW": "X=1, U=1 時康復",
+          "en": "Recovers, X=1, U=1"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A10",
+        "label": {
+          "zh-TW": "X=1, U=0 時康復",
+          "en": "Recovers, X=1, U=0"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A0",
+        "label": {
+          "zh-TW": "X=0 時康復",
+          "en": "Recovers, X=0"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "接受治療",
+          "en": "Treated"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "康復",
+          "en": "Recovers"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "if U then N_X1 else N_X0",
+      "Y": "if X then (if U then A11 else A10) else A0"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U": 0.5,
+      "N_X1": 0.8,
+      "N_X0": 0.2,
+      "A11": 0.9,
+      "A10": 0.1,
+      "A0": 0.3
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import type { Assignment, LocalizedText } from '../engine/index.ts'
@@ -10,15 +10,27 @@ import { DEFAULT_EMBED_BASE, embedCode, embedHome, embedSrc, fitEmbedState, read
 import { useModel } from './model-state.ts'
 import { EquationBox, GraphBox } from './ModelPanel.tsx'
 import type { UiNotation } from './notation.ts'
-import { DocProblems } from './parts.tsx'
+import { DocProblems, Tip } from './parts.tsx'
 import { Rich } from './typeset.tsx'
 import { originCitations, originSources } from './verdict-rows.ts'
-import { assignmentText } from './view-model.ts'
+import { valuesEqual } from '../engine/index.ts'
+import { sameAssignment } from './view-model.ts'
 
-/** A preset intervention button for a model document (a bundled case brings its own). */
+/**
+ * A step button under the graph: one press sets these do()s and observations (and nothing else).
+ * A bundled case brings its own (do() only); a document takes a list.
+ */
 export interface PlaygroundPreset {
   readonly label: string | LocalizedText
-  readonly interventions: Assignment
+  /** do() to set. */
+  readonly interventions?: Assignment
+  /** Observations to set; probability graphs only (a graph with values throws). */
+  readonly observed?: Assignment
+  /**
+   * Variables an HP witness holds fixed: set by do() like `interventions`, but drawn in the amber
+   * hull (固定) instead of with a clamp.
+   */
+  readonly hold?: Assignment
 }
 
 export type CausalPlaygroundProps = CausalPlaygroundSource & CausalPlaygroundOptions
@@ -93,7 +105,7 @@ function PlaygroundFor({
   embedded = false,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
-  const { interventions, stochastic, observed, setInterventions, setDo, setObserved, notation, setNotation, world } = useModel(
+  const { interventions, stochastic, observed, setDo, setObserved, notation, setNotation, world } = useModel(
     c,
     initialInterventions,
     defaultNotation,
@@ -107,8 +119,22 @@ function PlaygroundFor({
     setObserved(state.observed)
     // Read once per case: later clicks are the reader's own.
   }, [c, embedded, setDo, setObserved])
+  const [held, setHeld] = useState<Assignment>(NONE)
   const soft = Object.keys(stochastic).length > 0
   const buttons = presetButtons(c, presets, t.locale)
+  const prob = world.probs !== undefined
+  // The hull shows what a step holds for as long as the reader leaves it at that value.
+  const holding = Object.fromEntries(Object.entries(held).filter(([id, v]) => id in interventions && valuesEqual(interventions[id], v)))
+  const applyPreset = (s: PresetButton): void => {
+    setDo({ interventions: s.interventions, stochastic: {} })
+    setObserved(s.observed)
+    setHeld(s.hold)
+  }
+  const pressed = (s: PresetButton): boolean =>
+    !soft &&
+    sameAssignment(observed, s.observed) &&
+    sameAssignment(interventions, s.interventions) &&
+    sameAssignment(holding, s.hold)
   const src = embedded || embedUrl === false ? undefined : (embedUrl ?? (caseId === undefined ? undefined : `${DEFAULT_EMBED_BASE}case/${encodeURIComponent(caseId)}/`))
   const embed =
     src === undefined
@@ -134,29 +160,28 @@ function PlaygroundFor({
           onDo={setDo}
           observed={observed}
           onObserve={setObserved}
+          witness={Object.keys(holding).length > 0 ? holding : undefined}
           legend
           exportUrl={exportUrl}
           embedCode={embed}
+          foot={
+            <div className="ca-playground-foot">
+              <p className="ca-hint">
+                {t.playgroundHint(prob)} <Tip tip={t.playgroundHintMore(prob)} label={t.moreInfo} />
+              </p>
+              {buttons.length > 0 && (
+                <div className="ca-presets" role="group" aria-label={t.presets}>
+                  {buttons.map((s) => (
+                    <button key={s.text} type="button" className="ca-btn ca-btn-outline" aria-pressed={pressed(s)} onClick={() => applyPreset(s)}>
+                      <Rich text={s.text} ids={c.model.byId} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          }
         />
         <EquationBox c={c} world={world} interventions={interventions} stochastic={stochastic} notation={notation} onNotation={setNotation} />
-      </div>
-      <div className="ca-playground-foot">
-        <p className="ca-hint">{t.playgroundHint(world.probs !== undefined)}</p>
-        {buttons.length > 0 && (
-          <div className="ca-presets" role="group" aria-label={t.presets}>
-            {buttons.map((s) => (
-              <button
-                key={s.text}
-                type="button"
-                className="ca-btn ca-btn-outline"
-                aria-pressed={!soft && Object.keys(observed).length === 0 && assignmentText(s.interventions) === assignmentText(interventions)}
-                onClick={() => setInterventions(s.interventions)}
-              >
-                <Rich text={s.text} ids={c.model.byId} />
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       {embedded && <EmbedCredit c={c} url={exportUrl ?? DEFAULT_URL} />}
     </div>
@@ -188,11 +213,26 @@ function EmbedCredit({ c, url }: { readonly c: LoadedCase; readonly url: string 
   )
 }
 
-function presetButtons(c: LoadedCase, presets: boolean | readonly PlaygroundPreset[], locale: Locale): { text: string; interventions: Assignment }[] {
+const NONE: Assignment = {}
+
+interface PresetButton {
+  readonly text: string
+  /** Every do(), the held variables included. */
+  readonly interventions: Assignment
+  readonly observed: Assignment
+  readonly hold: Assignment
+}
+
+function presetButtons(c: LoadedCase, presets: boolean | readonly PlaygroundPreset[], locale: Locale): PresetButton[] {
   if (presets === false) return []
   const list: readonly PlaygroundPreset[] = presets === true ? c.data.showcase : presets
-  return list.map((s) => ({
-    text: typeof s.label === 'string' ? s.label : s.label[locale],
-    interventions: s.interventions,
-  }))
+  return list.map((s) => {
+    const text = typeof s.label === 'string' ? s.label : s.label[locale]
+    const observed = s.observed ?? NONE
+    if (c.context !== undefined && Object.keys(observed).length > 0) {
+      throw new Error(`preset "${text}": observed needs probabilities, and ${c.data.id} has an actual context`)
+    }
+    const hold = s.hold ?? NONE
+    return { text, interventions: { ...(s.interventions ?? NONE), ...hold }, observed, hold }
+  })
 }

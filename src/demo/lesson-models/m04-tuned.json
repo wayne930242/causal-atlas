@@ -1,0 +1,55 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "箭頭在、相關卻消失：參數剛好抵銷",
+  "model": {
+    "variables": [
+      {
+        "id": "U_X",
+        "label": {
+          "zh-TW": "X 的背景",
+          "en": "Background of X"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N",
+        "label": {
+          "zh-TW": "翻轉開關",
+          "en": "Flip switch"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "X",
+          "en": "X"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "Y",
+          "en": "Y"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "U_X",
+      "Y": "X <-> N"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_X": 0.3,
+      "N": 0.5
+    }
+  }
+}

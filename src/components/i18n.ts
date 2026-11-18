@@ -270,7 +270,7 @@ const ZH = {
                 : toggle === 'adjustProb'
                   ? '按一下改設干預後等於 1 的機率或放開'
                   : toggle === 'observe'
-                    ? '按一下觀察（再按換值，第三下取消）；長按或 Shift 加按一下是干預'
+                    ? '按一下觀察（再按換值，第三下取消）；長按、右鍵或 Shift 加按一下是干預'
                     : toggle === 'observeOnly'
                       ? '按一下觀察（再按換值，第三下取消）'
                       : '按一下套上干預',
@@ -340,9 +340,12 @@ const ZH = {
 
   // playground
   playgroundHint: (probabilistic: boolean): string =>
+    probabilistic ? '點一下節點是觀察；長按、右鍵或 Shift＋點是干預。' : '點一下節點是干預。',
+  playgroundHintMore: (probabilistic: boolean): string =>
     probabilistic
-      ? '點一下節點是觀察：先觀察到 1，再點換成 0，第三下取消。長按節點（或按住 Shift 再點）是干預：設成 1，旁邊的滑桿可以改成 0 或其他機率。'
-      : '點一下節點是干預：先固定在目前的值，再點換成另一個值，第三下取消。',
+      ? '觀察：先觀察到 1，再點換成 0，第三下取消。干預：設成 1，旁邊的滑桿可以改成 0 或其他機率；Esc 關掉滑桿。'
+      : '先固定在目前的值，再點換成另一個值，第三下取消；多值的節點用滑桿選值。',
+  moreInfo: '說明',
   afterObserve: '觀察後',
   afterDoObserve: '干預並觀察後',
   clearSettings: (text: string): string => `取消 ${text}`,
@@ -654,7 +657,7 @@ const EN: Messages = {
                 : toggle === 'adjustProb'
                   ? 'click to change the probability of 1 set by intervention, or release it'
                   : toggle === 'observe'
-                    ? 'click to observe (again for the other value, a third time to release); long-press or Shift+click to intervene'
+                    ? 'click to observe (again for the other value, a third time to release); long-press, right-click or Shift+click to intervene'
                     : toggle === 'observeOnly'
                       ? 'click to observe (again for the other value, a third time to release)'
                       : 'click to intervene',
@@ -721,9 +724,12 @@ const EN: Messages = {
   },
 
   playgroundHint: (probabilistic) =>
+    probabilistic ? 'Click a node to observe it; long-press, right-click or Shift+click to intervene.' : 'Click a node to intervene on it.',
+  playgroundHintMore: (probabilistic) =>
     probabilistic
-      ? 'Click a node to observe it: first as 1, again as 0, a third time to release. Long-press a node (or Shift+click) to intervene: it is set to 1, and the slider beside it sets 0 or a probability in between.'
-      : 'Click a node to intervene on it: first at its current value, again at the other value, a third time to release; on a node with more than two values, pick the value to set.',
+      ? 'Observing: first as 1, again as 0, a third time to release. Intervening sets it to 1, and the slider beside it sets 0 or a probability in between; Esc closes the slider.'
+      : 'First at its current value, again at the other value, a third time to release; on a node with more than two values, pick the value with the slider.',
+  moreInfo: 'Details',
   afterObserve: 'After observing',
   afterDoObserve: 'After intervening and observing',
   clearSettings: (text) => `Remove ${text}`,

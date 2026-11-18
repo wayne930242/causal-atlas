@@ -178,8 +178,17 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 ```
 
 - `<CausalPlayground doc>`: graph, notation toggle, observation and do() on the nodes (see 0.3.13) and the export menu, server-rendered
-  with values, no editor chrome. `presets` is `true` (a bundled case's own; a document has none),
-  `false`, or a list of `{ label: string | { 'zh-TW', en }, interventions }`.
+  with values, no editor chrome. On a probability graph a click observes, and a long press, a mouse
+  right-click or Shift+click intervenes (a touch long press intervenes once, though Android also sends
+  `contextmenu`); a graph with values keeps the browser's menu. The hint under the graph is one line;
+  its ⓘ opens the details in a tooltip (hover, keyboard focus or a tap; `aria-describedby`).
+- `presets` (step buttons) is `true` (a bundled case's own; a document has none), `false`, or a list of
+  `{ label: string | { 'zh-TW', en }, interventions?, observed?, hold? }`. One press sets exactly
+  those do()s and observations; `observed` needs a probability graph (on a graph with values it
+  throws), `hold` sets do() too but draws the held variables in the amber witness hull (固定). The
+  buttons sit inside the figure's frame under the graph; the one that matches what is set is
+  `aria-pressed`. For a lesson step:
+  `presets={[{ label: '第 1 步：看到 A 沒開槍', observed: { A: 0 } }, { label: '第 2 步：攔住 A', interventions: { A: 0 } }]}`.
 - `<ProbabilityPanel doc>` takes a document with priors or a `context` (a point mass);
   `<WorldLanes doc interventions>` needs a `context`, and `interventions` because a document has no preset.
 - `<ModelEditor initialDoc>` renders that model on the server instead of a blank one; a share hash

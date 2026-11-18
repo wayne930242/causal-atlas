@@ -1,0 +1,68 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "假阻止：刺客沒下毒，保鑣放了解藥（Halpern 2016 例 3.4.1）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_A",
+        "label": {
+          "zh-TW": "刺客的情況",
+          "en": "Assassin's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_B",
+        "label": {
+          "zh-TW": "保鑣的情況",
+          "en": "Bodyguard's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A",
+        "label": {
+          "zh-TW": "刺客沒下毒",
+          "en": "Assassin does not poison"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "B",
+        "label": {
+          "zh-TW": "保鑣放解藥",
+          "en": "Bodyguard adds antidote"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "VS",
+        "label": {
+          "zh-TW": "受害者活著",
+          "en": "Victim survives"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "A": "U_A",
+      "B": "U_B",
+      "VS": "A or B"
+    }
+  },
+  "context": {
+    "U_A": 1,
+    "U_B": 1
+  },
+  "normality": {
+    "A": 1,
+    "B": 0,
+    "VS": 1
+  }
+}

@@ -199,6 +199,9 @@ export function SignalGraph(props: SignalGraphProps) {
   const [pressing, setPressing] = useState<string | undefined>(undefined)
   const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const pressFired = useRef(false)
+  // The kind of pointer that last pressed a node: a contextmenu from a mouse intervenes, one from
+  // a touch (Android sends it on a long press) does not, since the long-press timer already did.
+  const lastPointer = useRef('')
   const cancelPress = (): void => {
     if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
     pressTimer.current = undefined
@@ -594,6 +597,7 @@ export function SignalGraph(props: SignalGraphProps) {
       activate(event.shiftKey)
     }
     const onPointerDown = (e: PointerEvent<SVGGElement>): void => {
+      lastPointer.current = e.pointerType
       startDrag(id, e)
       if (!observes || !settable || e.button !== 0 || e.shiftKey) return
       pressFired.current = false
@@ -605,6 +609,15 @@ export function SignalGraph(props: SignalGraphProps) {
         setPressing(undefined)
         intervene()
       }, LONG_PRESS)
+    }
+    /** A right-click intervenes, as a long press does; only from a mouse (see `lastPointer`). */
+    const onContextMenu = (e: MouseEvent<SVGGElement>): void => {
+      e.preventDefault()
+      const own = (e.nativeEvent as { pointerType?: string }).pointerType
+      const kind = own === undefined ? lastPointer.current : own
+      if (kind !== 'mouse' || !settable) return
+      cancelPress()
+      intervene()
     }
     const toggle: NodeToggle | undefined = observes
       ? settable
@@ -652,7 +665,7 @@ export function SignalGraph(props: SignalGraphProps) {
               onPointerUp: cancelPress,
               onPointerLeave: cancelPress,
               onPointerCancel: cancelPress,
-              onContextMenu: observes ? (e: MouseEvent<SVGGElement>) => e.preventDefault() : undefined,
+              onContextMenu: observes ? onContextMenu : undefined,
             }
           : { role: 'img', 'aria-label': aria })}
       >

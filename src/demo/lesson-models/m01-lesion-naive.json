@@ -1,0 +1,65 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "吸菸病灶：把病灶留在背景、誤當獨立雜訊",
+  "model": {
+    "variables": [
+      {
+        "id": "U_S",
+        "label": {
+          "zh-TW": "想吸菸的背景",
+          "en": "Urge to smoke"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_C1",
+        "label": {
+          "zh-TW": "吸菸者的致癌機制",
+          "en": "Cancer mechanism for smokers"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_C0",
+        "label": {
+          "zh-TW": "不吸菸者的致癌機制",
+          "en": "Cancer mechanism for non-smokers"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "S",
+        "label": {
+          "zh-TW": "吸菸",
+          "en": "Smokes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "C",
+        "label": {
+          "zh-TW": "癌症",
+          "en": "Cancer"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "S": "U_S",
+      "C": "if S then N_C1 else N_C0"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_S": 0.38,
+      "N_C1": 0.41578947368421054,
+      "N_C0": 0.14838709677419354
+    }
+  }
+}

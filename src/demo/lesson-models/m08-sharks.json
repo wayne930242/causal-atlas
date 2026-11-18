@@ -1,0 +1,73 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "鯊魚（Sartorio 2005 的 Sharks；方程式為本清單自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_J",
+        "label": {
+          "zh-TW": "旁觀者的決定",
+          "en": "My decision"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_SH",
+        "label": {
+          "zh-TW": "水裡的情況",
+          "en": "Conditions in the water"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "J",
+        "label": {
+          "zh-TW": "旁觀者跳下水",
+          "en": "I jump in"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "SH",
+        "label": {
+          "zh-TW": "水裡有鯊魚",
+          "en": "Sharks in the water"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "CS",
+        "label": {
+          "zh-TW": "孩子獲救",
+          "en": "Child is saved"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "CD",
+        "label": {
+          "zh-TW": "孩子溺死",
+          "en": "Child drowns"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "J": "U_J",
+      "SH": "U_SH",
+      "CS": "J and not SH",
+      "CD": "not CS"
+    }
+  },
+  "context": {
+    "U_J": 0,
+    "U_SH": 1
+  }
+}

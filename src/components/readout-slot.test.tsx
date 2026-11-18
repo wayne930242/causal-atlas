@@ -182,7 +182,7 @@ describe('do() as a probability on a boolean node', () => {
   it('opens a P(Z=1) slider: 0 is do(Z=0), 0.3 the mixture, Release clears', () => {
     const { container } = render(<CausalPlayground doc={fork} />)
     const z = screen.getByRole('button', { name: /^Z 共同原因/ })
-    expect(z.getAttribute('aria-label')).toContain('長按或 Shift 加按一下是干預')
+    expect(z.getAttribute('aria-label')).toContain('長按、右鍵或 Shift 加按一下是干預')
     expect(z.getAttribute('aria-haspopup')).toBe('dialog')
     // Shift+click intervenes at once, do(Z=1), and opens the slider.
     fireEvent.click(z, { shiftKey: true })

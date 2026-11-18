@@ -243,6 +243,12 @@ export function valueText(value: Value | undefined): string {
   return value === undefined ? '' : formatValue(value)
 }
 
+/** The same variables at the same values, in any order. */
+export function sameAssignment(a: Assignment, b: Assignment): boolean {
+  const keys = Object.keys(a)
+  return keys.length === Object.keys(b).length && keys.every((id) => id in b && valuesEqual(a[id], b[id]))
+}
+
 export function assignmentText(a: Assignment, sep = ', '): string {
   return Object.entries(a)
     .map(([id, v]) => `${id}=${formatValue(v)}`)

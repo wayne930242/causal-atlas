@@ -1,0 +1,77 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "早期阻斷（Hall 2004 圖 2，省略中介神經元 d）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_C",
+        "label": {
+          "zh-TW": "c 的觸發條件",
+          "en": "trigger of c"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_A",
+        "label": {
+          "zh-TW": "a 的觸發條件",
+          "en": "trigger of a"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "C",
+        "label": {
+          "zh-TW": "神經元 c 發射",
+          "en": "c fires"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "B",
+        "label": {
+          "zh-TW": "備援神經元 b 發射",
+          "en": "backup b fires"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "E",
+        "label": {
+          "zh-TW": "神經元 e 發射",
+          "en": "e fires"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "C": "U_C",
+      "B": "U_A and not C",
+      "E": "C or B"
+    }
+  },
+  "context": {
+    "U_C": 1,
+    "U_A": 1
+  },
+  "layout": {
+    "C": [
+      0,
+      0
+    ],
+    "B": [
+      0,
+      1
+    ],
+    "E": [
+      1,
+      0.5
+    ]
+  }
+}

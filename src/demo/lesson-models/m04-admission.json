@@ -1,0 +1,85 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "研究所錄取：成績好或有音樂才華（Pearl p. 17 的例子）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_G",
+        "label": {
+          "zh-TW": "成績背景",
+          "en": "Grades background"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_M",
+        "label": {
+          "zh-TW": "音樂背景",
+          "en": "Music background"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_L",
+        "label": {
+          "zh-TW": "錄取者寫信通知家人",
+          "en": "Admitted student writes home"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "G",
+        "label": {
+          "zh-TW": "大學成績好",
+          "en": "High grades"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "M",
+        "label": {
+          "zh-TW": "有音樂才華",
+          "en": "Musical talent"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A",
+        "label": {
+          "zh-TW": "被錄取",
+          "en": "Admitted"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "L",
+        "label": {
+          "zh-TW": "家人收到錄取信",
+          "en": "Family gets the letter"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "G": "U_G",
+      "M": "U_M",
+      "A": "G or M",
+      "L": "A and N_L"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_G": 0.3,
+      "U_M": 0.2,
+      "N_L": 0.9
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "Pearl 表 3.1 的觀察資料（只用來算前門公式；本模型的 do 值不是前門答案）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_X",
+        "label": {
+          "zh-TW": "是否吸菸",
+          "en": "Smoking background"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z1",
+        "label": {
+          "zh-TW": "吸菸者積焦油",
+          "en": "Smokers build tar"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z0",
+        "label": {
+          "zh-TW": "不吸菸者積焦油",
+          "en": "Non-smokers build tar"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y00",
+        "label": {
+          "zh-TW": "不吸菸、無焦油者得癌",
+          "en": "X=0, Z=0: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y10",
+        "label": {
+          "zh-TW": "吸菸、無焦油者得癌",
+          "en": "X=1, Z=0: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y01",
+        "label": {
+          "zh-TW": "不吸菸、有焦油者得癌",
+          "en": "X=0, Z=1: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y11",
+        "label": {
+          "zh-TW": "吸菸、有焦油者得癌",
+          "en": "X=1, Z=1: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "吸菸",
+          "en": "Smokes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "肺部焦油",
+          "en": "Tar in lungs"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "肺癌",
+          "en": "Lung cancer"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "U_X",
+      "Z": "if X then N_Z1 else N_Z0",
+      "Y": "if X then (if Z then N_Y11 else N_Y10) else (if Z then N_Y01 else N_Y00)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_X": 0.5,
+      "N_Z1": 0.95,
+      "N_Z0": 0.05,
+      "N_Y00": 0.1,
+      "N_Y10": 0.9,
+      "N_Y01": 0.05,
+      "N_Y11": 0.85
+    }
+  }
+}

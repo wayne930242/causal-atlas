@@ -1,0 +1,77 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "Frankfurt 案例：Black 備而未用",
+  "model": {
+    "variables": [
+      {
+        "id": "U_J",
+        "label": {
+          "zh-TW": "Jones 自己的理由",
+          "en": "Jones's own reasons"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_B",
+        "label": {
+          "zh-TW": "Black 在場待命",
+          "en": "Black stands ready"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "JD",
+        "label": {
+          "zh-TW": "Jones 自己決定去做",
+          "en": "Jones decides on his own"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BI",
+        "label": {
+          "zh-TW": "Black 出手干預",
+          "en": "Black intervenes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "K",
+        "label": {
+          "zh-TW": "Jones 做了那件事",
+          "en": "Jones performs the act"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "JD": "U_J",
+      "BI": "U_B and not JD",
+      "K": "JD or BI"
+    }
+  },
+  "context": {
+    "U_J": 1,
+    "U_B": 1
+  },
+  "layout": {
+    "JD": [
+      0,
+      0
+    ],
+    "BI": [
+      0,
+      1
+    ],
+    "K": [
+      1,
+      0.5
+    ]
+  }
+}

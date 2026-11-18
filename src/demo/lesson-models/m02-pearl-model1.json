@@ -1,0 +1,55 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "Pearl 模型 1：治療對誰都沒有作用",
+  "model": {
+    "variables": [
+      {
+        "id": "U1",
+        "label": {
+          "zh-TW": "是否接受治療的背景",
+          "en": "Treatment assignment"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U2",
+        "label": {
+          "zh-TW": "病人的體質",
+          "en": "Patient's constitution"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "接受治療",
+          "en": "Treated"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "死亡",
+          "en": "Dies"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "U1",
+      "Y": "U2"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U1": 0.5,
+      "U2": 0.5
+    }
+  }
+}

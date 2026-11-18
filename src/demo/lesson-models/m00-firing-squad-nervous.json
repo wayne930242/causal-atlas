@@ -1,0 +1,78 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "行刑隊：A 可能因緊張而開槍（Pearl §7.1.3）",
+  "model": {
+    "variables": [
+      {
+        "id": "U",
+        "label": {
+          "zh-TW": "法院下令",
+          "en": "Court order"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "W",
+        "label": {
+          "zh-TW": "槍手 A 緊張",
+          "en": "Rifleman A's nervousness"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "C",
+        "label": {
+          "zh-TW": "隊長發令",
+          "en": "Captain signals"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A",
+        "label": {
+          "zh-TW": "槍手 A 開槍",
+          "en": "Rifleman A shoots"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "B",
+        "label": {
+          "zh-TW": "槍手 B 開槍",
+          "en": "Rifleman B shoots"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "D",
+        "label": {
+          "zh-TW": "囚犯死亡",
+          "en": "Prisoner dies"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "C": "U",
+      "A": "C or W",
+      "B": "C",
+      "D": "A or B"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U": 0.7,
+      "W": 0.2
+    }
+  },
+  "show_exogenous": [
+    "W"
+  ]
+}

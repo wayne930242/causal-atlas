@@ -1,0 +1,135 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "前門：基因影響吸菸與癌症，吸菸只經由焦油致癌",
+  "model": {
+    "variables": [
+      {
+        "id": "U",
+        "label": {
+          "zh-TW": "看不到的基因",
+          "en": "Unobserved genotype"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X1",
+        "label": {
+          "zh-TW": "有該基因者吸菸",
+          "en": "Carriers smoke"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X0",
+        "label": {
+          "zh-TW": "無該基因者吸菸",
+          "en": "Non-carriers smoke"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z1",
+        "label": {
+          "zh-TW": "吸菸者積焦油",
+          "en": "Smokers build tar"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z0",
+        "label": {
+          "zh-TW": "不吸菸者積焦油",
+          "en": "Non-smokers build tar"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y11",
+        "label": {
+          "zh-TW": "有焦油且帶基因者得癌",
+          "en": "Tar, carrier: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y10",
+        "label": {
+          "zh-TW": "有焦油、無基因者得癌",
+          "en": "Tar, non-carrier: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y01",
+        "label": {
+          "zh-TW": "無焦油、帶基因者得癌",
+          "en": "No tar, carrier: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y00",
+        "label": {
+          "zh-TW": "無焦油、無基因者得癌",
+          "en": "No tar, non-carrier: cancer"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "吸菸",
+          "en": "Smokes"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "肺部焦油",
+          "en": "Tar in lungs"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "肺癌",
+          "en": "Lung cancer"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "X": "if U then N_X1 else N_X0",
+      "Z": "if X then N_Z1 else N_Z0",
+      "Y": "if Z then (if U then N_Y11 else N_Y10) else (if U then N_Y01 else N_Y00)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U": 0.3,
+      "N_X1": 0.8,
+      "N_X0": 0.2,
+      "N_Z1": 0.9,
+      "N_Z0": 0.1,
+      "N_Y11": 0.6,
+      "N_Y10": 0.3,
+      "N_Y01": 0.4,
+      "N_Y00": 0.1
+    }
+  }
+}

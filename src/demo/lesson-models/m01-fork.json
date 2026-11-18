@@ -1,0 +1,95 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "共同原因：Z 影響 X 與 Y",
+  "model": {
+    "variables": [
+      {
+        "id": "U_Z",
+        "label": {
+          "zh-TW": "Z 的背景",
+          "en": "Background of Z"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X1",
+        "label": {
+          "zh-TW": "Z 成立時 X 的雜訊",
+          "en": "X noise given Z"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X0",
+        "label": {
+          "zh-TW": "Z 不成立時 X 的雜訊",
+          "en": "X noise given not Z"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y1",
+        "label": {
+          "zh-TW": "Z 成立時 Y 的雜訊",
+          "en": "Y noise given Z"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y0",
+        "label": {
+          "zh-TW": "Z 不成立時 Y 的雜訊",
+          "en": "Y noise given not Z"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "共同原因 Z",
+          "en": "Common cause Z"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "X",
+          "en": "X"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "Y",
+          "en": "Y"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "Z": "U_Z",
+      "X": "if Z then N_X1 else N_X0",
+      "Y": "if Z then N_Y1 else N_Y0"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_Z": 0.5,
+      "N_X1": 0.9,
+      "N_X0": 0.2,
+      "N_Y1": 0.8,
+      "N_Y0": 0.1
+    }
+  }
+}

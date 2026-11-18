@@ -1,0 +1,93 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "上膛的槍，加上「B 開了上膛的槍」（Halpern 2016 p. 59）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_A",
+        "label": {
+          "zh-TW": "A 的情況",
+          "en": "A's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_B",
+        "label": {
+          "zh-TW": "B 的情況",
+          "en": "B's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_C",
+        "label": {
+          "zh-TW": "C 的情況",
+          "en": "C's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A",
+        "label": {
+          "zh-TW": "A 替 B 的槍上膛",
+          "en": "A loads B's gun"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "B",
+        "label": {
+          "zh-TW": "B 開槍",
+          "en": "B shoots"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "C",
+        "label": {
+          "zh-TW": "C 上膛並開槍",
+          "en": "C loads and shoots"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BL",
+        "label": {
+          "zh-TW": "B 開了上膛的槍",
+          "en": "B shoots a loaded gun"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "D",
+        "label": {
+          "zh-TW": "囚犯死亡",
+          "en": "Prisoner dies"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "A": "U_A",
+      "B": "U_B",
+      "C": "U_C",
+      "BL": "A and B",
+      "D": "BL or C"
+    }
+  },
+  "context": {
+    "U_A": 1,
+    "U_B": 0,
+    "U_C": 1
+  }
+}

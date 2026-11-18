@@ -1206,11 +1206,21 @@
 
 .ca-playground-foot {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.ca-playground-foot .ca-hint {
+  font-size: 12px;
+  margin: 0;
+}
+
+.ca-playground-foot .ca-presets {
+  align-self: stretch;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
 
 .ca-presets {
@@ -2117,4 +2127,50 @@
   .ca-editor-case-body {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ---- tooltip (one primitive: hover, focus, tap) ---- */
+
+.ca-tip {
+  position: relative;
+  display: inline-block;
+}
+
+.ca-tip-trigger {
+  cursor: help;
+  border-radius: 2px;
+}
+
+.ca-tip-trigger.is-mark {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  padding: 0 2px;
+}
+
+.ca-tip-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.ca-tip-body {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(320px, 80vw);
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  white-space: normal;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.18);
+}
+
+.ca-tip-body[hidden] {
+  display: none;
 }

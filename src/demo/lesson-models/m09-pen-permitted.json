@@ -1,0 +1,68 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "筆的案例變體：兩人都被允許拿筆（預設值為本清單自訂）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_P",
+        "label": {
+          "zh-TW": "教授的情況",
+          "en": "Professor's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_A",
+        "label": {
+          "zh-TW": "助理的情況",
+          "en": "Assistant's circumstances"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "PT",
+        "label": {
+          "zh-TW": "教授拿筆",
+          "en": "Professor takes a pen"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "AT",
+        "label": {
+          "zh-TW": "助理拿筆",
+          "en": "Assistant takes a pen"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "PO",
+        "label": {
+          "zh-TW": "櫃檯沒筆可用",
+          "en": "No pens left"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "PT": "U_P",
+      "AT": "U_A",
+      "PO": "PT and AT"
+    }
+  },
+  "context": {
+    "U_P": 1,
+    "U_A": 1
+  },
+  "normality": {
+    "PT": 1,
+    "AT": 1,
+    "PO": 0
+  }
+}

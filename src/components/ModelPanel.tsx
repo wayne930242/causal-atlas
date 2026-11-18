@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useRef, useState } from 'react'
 import type { LoadedCase } from '../data/load.ts'
 import type { Assignment } from '../engine/index.ts'
@@ -43,6 +44,8 @@ export interface GraphBoxProps {
   readonly onMove?: (id: string, dCol: number, dRow: number) => void
   /** Builds the embed code (iframe and citation) for the figure as it stands; the export menu offers it when given. */
   readonly embedCode?: () => string
+  /** Drawn inside the graph's frame under the legend (the playground's hint and step buttons); not exported. */
+  readonly foot?: ReactNode
 }
 
 const NONE: Stochastic = {}
@@ -83,6 +86,7 @@ export function GraphBox({
   exportUrl,
   onMove,
   embedCode,
+  foot,
 }: GraphBoxProps) {
   const t = useMessages()
   const [notice, setNotice] = useState<string | undefined>(undefined)
@@ -208,6 +212,7 @@ export function GraphBox({
         </p>
       )}
       {legend === true && <p className="ca-legend">{legendFor(t)}</p>}
+      {foot}
     </div>
   )
 }

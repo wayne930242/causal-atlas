@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { Problem } from '../engine/index.ts'
 import { problemMessage, useMessages } from './i18n.ts'
 
@@ -63,6 +63,61 @@ export function Disclosure({ kicker: kickerProp, title, children, defaultOpen = 
         {open && children}
       </div>
     </section>
+  )
+}
+
+export interface TipProps {
+  /** What the tooltip explains; shown on hover, keyboard focus or a tap. */
+  readonly tip: ReactNode
+  /** The trigger's own content; default a small ⓘ mark. */
+  readonly children?: ReactNode
+  /** Accessible name of the default mark. */
+  readonly label?: string
+  readonly className?: string
+}
+
+/**
+ * The one tooltip primitive: a focusable trigger described by (`aria-describedby`) a
+ * `role="tooltip"` element. Hover or focus shows it, a tap or click toggles it, Escape or leaving
+ * hides it. Short on-graph notes stay as they are; anything longer goes in here.
+ */
+export function Tip({ tip, children, label, className }: TipProps) {
+  const id = useId()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const outside = (e: Event): void => {
+      if (e.target instanceof Node && ref.current?.contains(e.target) !== true) setOpen(false)
+    }
+    document.addEventListener('pointerdown', outside)
+    return () => document.removeEventListener('pointerdown', outside)
+  }, [open])
+  return (
+    <span className={`ca-tip ${className ?? ''}`} ref={ref} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <span
+        className={`ca-tip-trigger${children === undefined ? ' is-mark' : ''}`}
+        role={children === undefined ? 'button' : undefined}
+        tabIndex={0}
+        aria-label={children === undefined ? label : undefined}
+        aria-describedby={id}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') setOpen(false)
+          else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setOpen((o) => !o)
+          }
+        }}
+      >
+        {children ?? <span aria-hidden="true">ⓘ</span>}
+      </span>
+      <span id={id} role="tooltip" className="ca-tip-body" hidden={!open}>
+        {tip}
+      </span>
+    </span>
   )
 }
 
