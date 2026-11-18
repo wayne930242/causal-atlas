@@ -71,6 +71,16 @@ export function solveCounterfactual(c: LoadedCase, interventions: Assignment, st
   if (c.prior === undefined) throw new Error(`case ${c.data.id} has an actual context: a counterfactual reading needs probabilities`)
   const prior = c.prior
   const given = observationFormula(evidence)
+  const cut = new Set([...Object.keys(interventions), ...Object.keys(stochastic)])
+  const removedEdges = c.model.edges.filter((e) => cut.has(e.to))
+  // Evidence the actual world cannot show leaves nothing to abduce: every number reads —.
+  if (given !== undefined && !((solve(c, {}, {}, evidence).evidence ?? 0) > 0)) {
+    const none: Record<string, number> = Object.fromEntries(c.model.variables.map((v) => [v.id, Number.NaN]))
+    const noDist: Record<string, number[]> = Object.fromEntries(
+      c.model.variables.flatMap((v) => (v.domain.kind === 'finite' ? [[v.id, v.domain.values.map(() => Number.NaN)]] : [])),
+    )
+    return { shown, probs: none, dists: noDist, evidence: 0, removedEdges }
+  }
   const ids = Object.keys(stochastic)
   const p: Record<string, number> = {}
   const dist: Record<string, number[]> = {}
@@ -101,8 +111,7 @@ export function solveCounterfactual(c: LoadedCase, interventions: Assignment, st
       }
     }
   }
-  const cut = new Set([...Object.keys(interventions), ...ids])
-  return { shown, probs: p, dists: dist, evidence: pEvidence, removedEdges: c.model.edges.filter((e) => cut.has(e.to)) }
+  return { shown, probs: p, dists: dist, evidence: pEvidence, removedEdges }
 }
 
 /** The interventions with `id` set to `value`, or released when `value` is undefined. */

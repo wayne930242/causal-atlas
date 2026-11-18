@@ -86,3 +86,12 @@ describe('playground reading: 干預後再觀察｜反事實', () => {
     }
   })
 })
+
+describe('counterfactual reading with impossible evidence', () => {
+  it('reads — instead of throwing', () => {
+    const { container } = render(<CausalPlayground doc={nervous} presets={[{ label: 'no', observed: { A: 0, D: 1 } }]} />)
+    fireEvent.click(mode(container, '反事實'))
+    fireEvent.click(within(container).getByRole('button', { name: 'no' }))
+    expect(readout(container, 'D')).toBe('—')
+  })
+})
