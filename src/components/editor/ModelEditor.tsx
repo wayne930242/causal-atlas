@@ -5,8 +5,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import { caseToDoc, decodeShare, encodeShare, parseModelJson, sameModel, schemaProblems } from '../../data/model-doc.ts'
 import type { ModelDoc } from '../../data/schema.ts'
 import { modelDocSchema } from '../../data/schema.ts'
-import type { Assignment, Problem, Value } from '../../engine/index.ts'
-import { coerceToDomain } from '../../engine/index.ts'
+import type { Assignment, Problem } from '../../engine/index.ts'
 import { CaseInfo, ModelInfo } from '../case/CaseInfo.tsx'
 import { CaseList, CaseSheet } from '../case/CaseList.tsx'
 import { saveFile } from '../export/download.ts'
@@ -14,6 +13,7 @@ import type { ExtraModel, LessonLink } from './catalog.ts'
 import { catalog, modelKey, textIn } from './catalog.ts'
 import type { Draft, DraftMode, DraftVariable } from './draft.ts'
 import { blankDraft, compileDraft, draftFromCase, draftFromImport, freeCell, newKey, valueTexts } from './draft.ts'
+import { NO_DO, NO_OBSERVATION, validInterventions, validObserved, validStochastic } from './do-state.ts'
 import { hashFragment, readHashState, replaceHash } from './url-state.ts'
 import type { EditorTask } from './tasks.ts'
 import { TaskCard } from './TaskCard.tsx'
@@ -124,54 +124,6 @@ const URL_DEBOUNCE_MS = 400
 function startFromCase(initial: string, t: Messages): Draft {
   if (initial === 'blank' || !caseIds.includes(initial)) return blankDraft(t.editor.defaultTitle)
   return draftFromCase(getCase(initial), t.locale)
-}
-
-/** Interventions that still name a variable of the model with a value in its domain. */
-function validInterventions(c: LoadedCase, interventions: Assignment): Assignment {
-  const out: Record<string, Value> = {}
-  for (const [id, value] of Object.entries(interventions)) {
-    const v = c.model.byId.get(id)
-    if (v === undefined || v.kind === 'exogenous') continue
-    try {
-      out[id] = coerceToDomain(v, value)
-    } catch {
-      // A value read from the address as a number may name a text value, e.g. '2'.
-      try {
-        if (typeof value === 'number') out[id] = coerceToDomain(v, String(value))
-      } catch {
-        // dropped: the domain changed
-      }
-    }
-  }
-  return out
-}
-
-/**
- * Stochastic interventions that still name a boolean endogenous variable not set otherwise, in a
- * model drawn with probabilities (one without an actual context).
- */
-function validStochastic(c: LoadedCase, state: DoState, hard: Assignment): DoState['stochastic'] {
-  if (c.context !== undefined) return {}
-  const out: Record<string, number> = {}
-  for (const [id, p] of Object.entries(state.stochastic)) {
-    const v = c.model.byId.get(id)
-    if (v === undefined || v.kind === 'exogenous' || v.domain.kind !== 'boolean' || id in hard || !(p > 0 && p < 1)) continue
-    out[id] = p
-  }
-  return out
-}
-
-const NO_DO: DoState = { interventions: {}, stochastic: {} }
-const NO_OBSERVATION: Assignment = {}
-
-/** Observations that still name a variable with a value in its domain, not intervened on, in a model drawn with probabilities. */
-function validObserved(c: LoadedCase, observed: Assignment, active: DoState): Assignment {
-  if (c.context !== undefined) return NO_OBSERVATION
-  const out: Record<string, Value> = {}
-  for (const [id, value] of Object.entries(validInterventions(c, observed))) {
-    if (!(id in active.interventions) && !(id in active.stochastic)) out[id] = value
-  }
-  return out
 }
 
 function priorsFor(v: DraftVariable): number[] {
