@@ -403,6 +403,8 @@ export const modelDocSchema = z
 export type ModelDoc = z.infer<typeof modelDocSchema>
 
 export type CaseFile = z.infer<typeof caseSchema>
+/** A case file's `decision`: the act variable, the acts (default its domain), the utility rows `[...values, utility]`. */
+export type CaseDecision = z.infer<typeof decisionSchema>
 export type CaseVerdict = z.infer<typeof verdictSchema>
 export type CaseFamily = z.infer<typeof familySchema>
 export type CaseTheory = CaseVerdict['theory']

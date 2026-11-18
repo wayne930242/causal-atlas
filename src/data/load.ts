@@ -14,7 +14,7 @@ import {
 } from '../engine/index.ts'
 import type { Where } from '../engine/errors.ts'
 import { problem } from '../engine/errors.ts'
-import type { CaseFile, CaseVerdict } from './schema.ts'
+import type { CaseDecision, CaseFile, CaseVerdict } from './schema.ts'
 import { caseSchema } from './schema.ts'
 
 /** A case file turned into engine objects. */
@@ -104,8 +104,11 @@ function toPrior(data: CaseFile, model: CausalModel): Prior | undefined {
 }
 
 function toDecision(data: CaseFile): DecisionProblem | undefined {
-  const decision = data.decision
-  if (decision === undefined) return undefined
+  return data.decision === undefined ? undefined : decisionProblem(data.decision)
+}
+
+/** A case file's `decision` (rows as `[...values, utility]`) as the engine's decision problem. */
+export function decisionProblem(decision: CaseDecision): DecisionProblem {
   const { variables, rows } = decision.utility
   return {
     act: decision.variable,

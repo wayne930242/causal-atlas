@@ -7,7 +7,44 @@ import { lessonModel } from './lesson-models.ts'
  * (`#/interactions/<item>`, or all of them). Labels are the lessons' own, in Chinese.
  */
 const ITEMS: Readonly<Record<string, () => ReactNode>> = {
-  'confound-slider': () => <CausalPlayground caseId="smoking-lesion" sliders={['N_S1']} />,
+  'confound-slider': () => <CausalPlayground caseId="smoking-lesion" sliders={['N_S1']} decision />,
+  utilities: () => (
+    <>
+      <CausalPlayground
+        caseId="newcomb"
+        sliders={['D']}
+        prior={{ D: 0.1, E: 0.1 }}
+        decision={{
+          variable: 'A',
+          utility: {
+            variables: ['A', 'M'],
+            rows: [
+              ['one', 1, 100],
+              ['one', 0, 0],
+              ['two', 1, 101],
+              ['two', 0, 10],
+            ],
+          },
+        }}
+      />
+      <CausalPlayground
+        doc={lessonModel('m10-murder-lesion')}
+        decision={{
+          variable: 'S',
+          utility: {
+            variables: ['S', 'H'],
+            rows: [
+              [1, 1, 10],
+              [1, 0, -10],
+              [0, 0, 0],
+              [0, 1, 0],
+            ],
+          },
+        }}
+      />
+      <CausalPlayground caseId="newcomb" decision />
+    </>
+  ),
   'truth-table': () => (
     <>
       <CausalPlayground doc={lessonModel('m06-bow-a')} defaultNotation="causal" initialInterventions={{ X: 1 }} />

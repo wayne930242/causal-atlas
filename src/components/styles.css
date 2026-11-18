@@ -2461,3 +2461,94 @@
   margin: 4px 0 0;
   padding: 0 0 0 12px;
 }
+
+/* Expected-utility bars under the playground graph: one row per theory, one bar per act on a shared zero. */
+.ca-ev {
+  align-self: stretch;
+  font-size: 13px;
+}
+
+.ca-ev-head {
+  margin: 0 0 4px;
+}
+
+.ca-ev-row {
+  display: grid;
+  grid-template-columns: 4.5em repeat(var(--ca-ev-acts, 2), minmax(0, 1fr)) minmax(9em, max-content);
+  column-gap: 16px;
+  align-items: end;
+}
+
+.ca-ev-acts {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.ca-ev-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  padding-bottom: 1px;
+}
+
+.ca-ev-cell {
+  position: relative;
+  display: block;
+  height: 34px;
+}
+
+.ca-ev-num {
+  position: absolute;
+  top: 0;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.ca-ev-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 3px;
+  height: 10px;
+}
+
+.ca-ev-zero {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--muted-foreground);
+}
+
+.ca-ev-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--foreground);
+}
+
+.ca-ev-cell[data-lit="true"] .ca-ev-bar {
+  background: var(--accent);
+}
+
+.ca-ev-choice {
+  white-space: nowrap;
+  padding-bottom: 1px;
+}
+
+@media (max-width: 760px) {
+  .ca-ev-row {
+    grid-template-columns: 3.5em repeat(var(--ca-ev-acts, 2), minmax(0, 1fr));
+    column-gap: 12px;
+  }
+
+  .ca-ev-choice {
+    grid-column: 2 / -1;
+    margin-bottom: 6px;
+  }
+
+  .ca-ev-acts > :last-child {
+    display: none;
+  }
+}

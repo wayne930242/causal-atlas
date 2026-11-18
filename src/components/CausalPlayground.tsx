@@ -1,7 +1,8 @@
 import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { LoadedCase } from '../data/load.ts'
-import type { ModelDoc } from '../data/schema.ts'
-import type { Assignment, LocalizedText } from '../engine/index.ts'
+import type { CaseDecision, ModelDoc } from '../data/schema.ts'
+import { decisionProblem } from '../data/load.ts'
+import type { Assignment, DecisionProblem, LocalizedText } from '../engine/index.ts'
 import { useCaseOrDoc } from './doc-case.ts'
 import type { Locale } from './i18n.ts'
 import { LocaleScope, useMessages } from './i18n.ts'
@@ -23,6 +24,7 @@ import { evaluate, getVariable, parseCause, valuesEqual } from '../engine/index.
 import type { TrailEntry } from './view-model.ts'
 import { TRAIL_LENGTH, defaultSliders, normalityLine, priorWithSliders, readingText, sameAssignment, sliderVariables, trailEntry, trailText } from './view-model.ts'
 import { SliderList } from './SliderList.tsx'
+import { DecisionBars } from './DecisionBars.tsx'
 
 /**
  * A step button under the graph: one press sets these do()s and observations (and nothing else).
@@ -122,6 +124,14 @@ export interface CausalPlaygroundOptions {
   readonly sliders?: readonly string[]
   /** Start values P(id = 1, or its first value) of exogenous variables, slider or not; the rest keep the case's prior. */
   readonly prior?: Readonly<Record<string, number>>
+  /**
+   * Expected-utility bars under the graph (a probability graph): one row per theory (evidential,
+   * causal), one bar per act, the act each picks and by how much; the utilities sit in its ⓘ.
+   * `true` takes the case's own `decision`; or give one in the case-file format
+   * (`{ variable, acts?, utility: { variables, rows: [[...values, utility]] } }`). Observing the act
+   * lights its evidential bar, do() on it the causal one; the sliders move both rows.
+   */
+  readonly decision?: true | CaseDecision
 }
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
@@ -153,10 +163,12 @@ function PlaygroundFor({
   dsep,
   sliders = NO_TRACK,
   prior: startPrior,
+  decision,
 }: Omit<CausalPlaygroundOptions, 'locale'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
   const start = useMemo(() => sliderStart(base, sliders, startPrior), [base, sliders, startPrior])
   const [sliderValues, setSliderValues] = useState(start)
+  const problem = useMemo(() => decisionFor(base, decision), [base, decision])
   // Everything below reads the case with the slider prior; an embed page reads its state from `base`.
   const c = useMemo(
     () => (Object.keys(sliderValues).length === 0 ? base : { ...base, prior: priorWithSliders(base, sliderValues) }),
@@ -317,6 +329,7 @@ function PlaygroundFor({
                   }}
                 />
               )}
+              {problem !== undefined && <DecisionBars c={c} problem={problem} observed={observed} interventions={interventions} />}
               {dsepNow !== undefined && pair !== undefined && <DsepLine c={c} pair={pair} observed={observed} view={dsepNow} />}
               {defaults !== undefined && world.values !== undefined && world.original !== undefined && (
                 <p className="ca-norm-line" data-normality="">
@@ -416,6 +429,15 @@ interface PresetButton {
   readonly interventions: Assignment
   readonly observed: Assignment
   readonly hold: Assignment
+}
+
+/** The decision problem the bars show: the case's own for `true`. */
+function decisionFor(c: LoadedCase, decision: true | CaseDecision | undefined): DecisionProblem | undefined {
+  if (decision === undefined) return undefined
+  if (c.context !== undefined || c.prior === undefined) throw new Error(`${c.data.id}: decision needs a probability graph (priors, no context)`)
+  if (decision !== true) return decisionProblem(decision)
+  if (c.decision === undefined) throw new Error(`${c.data.id}: decision={true} needs the case's own decision; give one instead`)
+  return c.decision
 }
 
 /** The sliders' and `prior`'s start values; throws on a variable no slider can set. */

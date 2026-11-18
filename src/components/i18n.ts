@@ -234,6 +234,12 @@ const ZH = {
     effectIs: 'φ 是',
     ref: 'Halpern 2016，第 2 章',
   },
+  ev: {
+    title: '期望值',
+    edt: '證據',
+    cdt: '因果',
+    choose: (acts: string, by: string | undefined): string => (by === undefined ? `選 ${acts}` : `選 ${acts}（多 ${by}）`),
+  },
   eu: {
     edt: '：看到自己做了 a 之後，結果的機率。',
     cdt: '：採取行動 a 之後，結果的機率。',
@@ -712,6 +718,12 @@ const EN: Messages = {
     witnessIs: (w, values) => `W is {${w}}, w* is ${values}`,
     effectIs: 'φ is',
     ref: 'Halpern 2016, chapter 2',
+  },
+  ev: {
+    title: 'Expected utility',
+    edt: 'Evidential',
+    cdt: 'Causal',
+    choose: (acts, by) => (by === undefined ? `Pick ${acts}` : `Pick ${acts} (by ${by})`),
   },
   eu: {
     edt: ': the probability of each outcome on seeing yourself do a.',
