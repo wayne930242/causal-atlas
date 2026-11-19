@@ -96,6 +96,9 @@ const DEMO = {
     light: '淺色',
     dark: '深色',
     language: '語言',
+    blog: '洪偉的部落格',
+    about: '關於作者',
+    site: '作者網站',
   },
   en: {
     title: 'causal-atlas demo',
@@ -113,6 +116,9 @@ const DEMO = {
     light: 'Light',
     dark: 'Dark',
     language: 'Language',
+    blog: "Wei Hung's blog",
+    about: 'About the author',
+    site: "Author's site",
   },
 } as const satisfies Record<Locale, Record<string, string>>
 
@@ -257,6 +263,10 @@ export function App() {
             </a>
           </nav>
           <span className="demo-spacer" />
+          <nav className="demo-site" aria-label={d.site}>
+            <a href={locale === 'en' ? 'https://www.wayneh.tw/en/' : 'https://www.wayneh.tw/'}>{d.blog}</a>
+            <a href="https://www.wayneh.tw/about/">{d.about}</a>
+          </nav>
           {(route.page === 'playground' || route.page === 'case') && (
             <label>
               <span className="demo-muted">{d.case} </span>

@@ -81,7 +81,8 @@ body {
   color: var(--accent);
 }
 
-.demo-bar .demo-lang {
+.demo-bar .demo-lang,
+.demo-bar .demo-site {
   gap: 12px;
 }
 
