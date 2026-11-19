@@ -2,6 +2,10 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.8.2
+The zh path wording follows the lessons: an unblocked path reads `暢通` instead of `通` (d-separation
+verdicts, back-door lines, the adjustment tip), and a known collider reads `已知 C 讓 X→C←Y 暢通`.
+
 ## 0.8.1
 Clearer numbers in the probability graph. A node nobody has set reads `P(=1) 0.80` (the second line `原本 0.50`
 stays), an observed node reads `已知 = 1` (`observed = 1`) and an intervened one `do = 1`, both without the 原本
@@ -202,7 +206,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.8.1) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.8.2) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -512,9 +516,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.8.1 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.8.2 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.8.1) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.8.2) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -523,7 +527,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.8.1},
+  version = {0.8.2},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
