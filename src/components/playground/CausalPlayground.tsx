@@ -248,11 +248,17 @@ function PlaygroundFor({
     setHeld(s.hold)
     restartTrail()
   }
-  const pressed = (s: PresetButton): boolean =>
-    !soft &&
-    sameAssignment(observed, s.observed) &&
-    sameAssignment(interventions, s.interventions) &&
-    sameAssignment(holding, s.hold)
+  // A step stays pressed while everything it set still holds, even after the reader sets more; of the
+  // steps that still hold, only the ones that set the most are pressed (so an empty step 1 does not light
+  // up next to step 2).
+  const within = (state: Assignment, part: Assignment): boolean =>
+    sameAssignment(Object.fromEntries(Object.keys(part).filter((id) => id in state).map((id) => [id, state[id]])), part)
+  const holds = (s: PresetButton): boolean =>
+    within(observed, s.observed) && within(interventions, s.interventions) && within(holding, s.hold)
+  const size = (s: PresetButton): number =>
+    Object.keys(s.observed).length + Object.keys(s.interventions).length + Object.keys(s.hold).length
+  const pressedSize = soft ? -1 : Math.max(-1, ...buttons.filter(holds).map(size))
+  const pressed = (s: PresetButton): boolean => !soft && holds(s) && size(s) === pressedSize
   const src = embedded || embedUrl === false ? undefined : (embedUrl ?? (caseId === undefined ? undefined : `${DEFAULT_EMBED_BASE}case/${encodeURIComponent(caseId)}/`))
   // Under the graph, one block at a time: the figure's own (verdicts, expected utility, paths) open at first, the equations closed.
   const blocks: FigureBlock[] = []

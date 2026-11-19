@@ -46,9 +46,9 @@ describe('step buttons (presets with observed and hold)', () => {
     expect(second.getAttribute('aria-pressed')).toBe('true')
     expect(first.getAttribute('aria-pressed')).toBe('false')
 
-    // The reader's own click after a step: no step is pressed any more.
+    // The reader's own click after a step adds to it: the step still holds, so it stays pressed.
     fireEvent.click(node(container, 'C'))
-    expect(second.getAttribute('aria-pressed')).toBe('false')
+    expect(second.getAttribute('aria-pressed')).toBe('true')
   })
 
   it('UATSB-F018: the step row sits inside the figure frame, under the graph', () => {
@@ -142,5 +142,26 @@ describe('the hint under the graph', () => {
   it('says a click intervenes on a graph with values, in one line', () => {
     const { container } = render(<CausalPlayground caseId="forest-fire-disjunctive" />)
     expect(container.querySelector('.ca-hint')?.textContent?.startsWith('點一下節點是干預。')).toBe(true)
+  })
+
+  it('a step stays pressed when the reader sets more on top of it', () => {
+    const chain = lessonModel('m02-chain')
+    const known = [
+      { label: '第 1 步：不知道 Z' },
+      { label: '第 2 步：已知 Z', observed: { Z: 1 } },
+    ]
+    const { container } = render(<CausalPlayground doc={chain} presets={known} />)
+    const first = button(container, '第 1 步：不知道 Z')
+    const second = button(container, '第 2 步：已知 Z')
+    expect(first.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(second)
+    expect(second.getAttribute('aria-pressed')).toBe('true')
+    expect(first.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(node(container, 'X'))
+    expect(chip(container)).toContain('Z=1')
+    expect(second.getAttribute('aria-pressed')).toBe('true')
+    expect(first.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(node(container, 'Z'))
+    expect(second.getAttribute('aria-pressed')).toBe('false')
   })
 })
