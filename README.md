@@ -2,6 +2,12 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.8.1
+Clearer numbers in the probability graph. A node nobody has set reads `P(=1) 0.80` (the second line `原本 0.50`
+stays), an observed node reads `已知 = 1` (`observed = 1`) and an intervened one `do = 1`, both without the 原本
+line; the fill height is still P(=1). The tab `d-分離` is now `d 分隔`, and the interventional reading hint shows
+only while an intervention is set.
+
 ## 0.8.0
 The component explorer. The demo site gets a Storybook-style page, `#/explorer`, first in its header: pick a
 component (`CausalPlayground`, `ProbabilityPanel` with its six views, `WorldLanes`, `CasePage`, `ModelEditor`,
@@ -196,7 +202,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.8.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.8.1) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -506,9 +512,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.8.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.8.1 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.8.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.8.1) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -517,7 +523,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.8.0},
+  version = {0.8.1},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

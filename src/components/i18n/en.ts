@@ -139,6 +139,11 @@ export const EN: Messages = {
       `${a} and ${b} share a common cause ${cause} that cannot be seen. It is drawn as a dashed double-headed arc, not a node, and cannot be observed. do() on ${a} or ${b} cuts that end, and the arc disappears.`,
   },
   was: (value) => `was ${value}`,
+  nodeReadout: {
+    unknown: 'P(=1)',
+    observed: (value) => `observed = ${value}`,
+    intervened: (value) => `do = ${value}`,
+  },
   nodeValue: (value) => `value ${value}`,
   nodeAria: (who, state, forced, before, seen) =>
     `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${seen === undefined ? '' : `, observed as ${seen}`}${before === undefined ? '' : `, was ${before}`}`,

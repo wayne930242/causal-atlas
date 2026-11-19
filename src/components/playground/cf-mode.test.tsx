@@ -25,6 +25,9 @@ describe('playground reading: 干預｜反事實', () => {
     const { container } = render(<CausalPlayground doc={nervous} />)
     const box = container.querySelector('.ca-reading-box')
     expect(box?.querySelector('.ca-reading-label')?.textContent).toBe('視角')
+    // No intervention yet: the interventional hint stays hidden.
+    expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('')
+    fireEvent.click(node(container, 'A'), { shiftKey: true })
     expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('點選的是干預之後看到的結果')
     fireEvent.click(mode(container, '反事實'))
     expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('點選的是實際發生過的事，再問：假如當初……會怎樣')
@@ -44,7 +47,7 @@ describe('playground reading: 干預｜反事實', () => {
     const { container } = render(<CausalPlayground doc={nervous} presets={lesson07} />)
     fireEvent.click(within(container).getByRole('button', { name: 'D=1, A←0' }))
     // P(D=1 | do(A=0), D=1) = 1: the observation conditions the intervened model.
-    expect(readout(container, 'D')).toBe('1.00')
+    expect(readout(container, 'D')).toBe('已知 = 1')
     fireEvent.click(mode(container, '反事實'))
     // P(D_{A=0}=1 | D=1) = 1 − 0.0789.
     expect(readout(container, 'D')).toBe('0.92')

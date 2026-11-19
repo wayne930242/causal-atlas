@@ -357,7 +357,7 @@ function PlaygroundFor({
                   />
                 </div>
                 <p className="ca-reading-hint" aria-live="polite">
-                  {t.readingHint[reading]}
+                  {reading === 'interventional' && Object.keys(interventions).length + Object.keys(stochastic).length === 0 ? '' : t.readingHint[reading]}
                 </p>
               </div>
               </>

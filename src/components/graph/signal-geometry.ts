@@ -21,7 +21,7 @@ import {
 import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, intersects, rectBox, segmentHitsBox, shifted, textBox } from './graph-labels.ts'
 import type { Block, Point, Readout } from './signal-shapes.ts'
-import { BAR_LABEL, blockOptions, numberWidth, unit } from './signal-shapes.ts'
+import { BAR_LABEL, blockOptions, nodeReadout, readoutWidth, unit } from './signal-shapes.ts'
 
 /**
  * Where everything in a signal graph goes, computed apart from drawing it: node positions, each
@@ -263,7 +263,8 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     const p = pos.get(id)
     if (p === undefined) continue
     const variable = getVariable(c.model, id)
-    const note = holdNote(id) ?? probNotes?.[id]
+    const settledRead = prob ? nodeReadout(t, digits, probs?.[id], interventions[id], evidence ? undefined : observedValues[id]) : undefined
+    const note = holdNote(id) ?? (settledRead?.settled === true && !evidence ? undefined : probNotes?.[id])
     const noteW = note === undefined ? undefined : textWidth(note, 12)
     const deviant = deviantNote(id)
     let readout: Readout = { kind: 'none', noteW, note2W: deviant === undefined ? undefined : textWidth(deviant, 11) }
@@ -271,7 +272,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       const known = (dists?.[id] ?? []).filter((x) => !Number.isNaN(x))
       const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known), digits)), 11)
       readout = { kind: 'bars', width: barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width, maxW, noteW }
-    } else if (prob) readout = { kind: 'number', noteW, numberW: numberWidth(digits) }
+    } else if (prob) readout = { kind: 'number', noteW, numberW: readoutWidth(settledRead ?? nodeReadout(t, digits, undefined, undefined, undefined), digits) }
     const labelW = textWidth(idWithName(id, nameOf(id)), 14)
     const touches = (b: Block): number => {
       let n = 0

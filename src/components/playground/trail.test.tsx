@@ -23,7 +23,9 @@ describe('trail (a): a probability graph keeps 原本 v under each changed numbe
     fireEvent.click(node(container, 'Z'))
     expect(note(container, 'Y')).toBe('原本 0.50')
     expect(note(container, 'X')).toBe('原本 0.50')
-    expect(note(container, 'Z')).toBe('原本 0.75')
+    // Z is observed: it reads 已知 = 1 and carries no 原本 line.
+    expect(note(container, 'Z')).toBeNull()
+    expect(container.querySelector('[data-node="Z"] [data-readout]')?.textContent).toBe('已知 = 1')
     fireEvent.click(node(container, 'X'))
     // Y is back at 0.50: no note.
     expect(note(container, 'Y')).toBeNull()

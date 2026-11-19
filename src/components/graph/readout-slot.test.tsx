@@ -76,7 +76,7 @@ const node = (container: HTMLElement, id: string): Element => {
   return el
 }
 const labelOf = (container: HTMLElement, id: string): Element => node(container, id).querySelector('text.ca-svg-label') as Element
-const readout = (container: HTMLElement, id: string): Element => node(container, id).querySelector(`[data-readout="${id}"]`) as Element
+const readout = (container: HTMLElement, id: string): Element => node(container, id).querySelector(`[data-readout="${id}"]`)?.closest('text') as Element
 const y = (el: Element): number => Number(el.getAttribute('y'))
 const chip = (container: HTMLElement): string | null => container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text') ?? null
 const level = (container: HTMLElement, id: string): number => Number(node(container, id).querySelector('[data-level]')?.getAttribute('data-level'))
@@ -169,7 +169,7 @@ describe('bar scaling', () => {
     const eq = node(container, 'EQ')
     expect(eq.querySelector('[data-bar]')).toBeNull()
     expect(eq.querySelector('[data-max]')).toBeNull()
-    expect(readout(container, 'EQ').textContent).toBe('0.17')
+    expect(readout(container, 'EQ').textContent).toBe('P(=1) 0.17')
   })
 })
 
@@ -197,13 +197,13 @@ describe('do() as a probability on a boolean node', () => {
     fireEvent.change(slider, { target: { value: '0' } })
     expect(chip(container)).toBe('do(Z=0)')
     expect(level(container, 'Z')).toBe(0)
-    expect(readout(container, 'Z').textContent).toBe('0.00')
+    expect(readout(container, 'Z').textContent).toBe('do = 0')
     expect(level(container, 'X')).toBe(0)
 
     fireEvent.change(slider, { target: { value: '0.3' } })
     expect(chip(container)).toBe('do(P(Z=1)=0.30)')
     expect(node(container, 'Z').getAttribute('data-do-p')).toBe('0.30')
-    expect(readout(container, 'Z').textContent).toBe('0.30')
+    expect(readout(container, 'Z').textContent).toBe('P(=1) 0.30')
     expect(level(container, 'Z')).toBeCloseTo(0.3, 4)
     const x = 0.3 * at(true).X + 0.7 * at(false).X
     const yP = 0.3 * at(true).Y + 0.7 * at(false).Y

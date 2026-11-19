@@ -238,6 +238,11 @@ export const ZH = {
       `${a} 與 ${b} 有一個看不見的共同原因 ${cause}。圖上不畫成節點，畫成虛線雙箭頭弧線，也不能觀察它。對 ${a} 或 ${b} 做 do()，就切斷那一端，弧線隨之消失。`,
   },
   was: (value: string): string => `原本 ${value}`,
+  nodeReadout: {
+    unknown: 'P(=1)',
+    observed: (value: string): string => `已知 = ${value}`,
+    intervened: (value: string): string => `do = ${value}`,
+  },
   nodeValue: (value: string): string => `值 ${value}`,
   nodeAria: (who: string, state: string, forced: string | undefined, before: string | undefined, seen?: string): string =>
     `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${seen === undefined ? '' : `，已觀察到 ${seen}`}${before === undefined ? '' : `，原本 ${before}`}`,
@@ -293,7 +298,7 @@ export const ZH = {
   unchanged: '不變',
   probEquations: '式子和機率',
   tabsLabel: '圖下方的內容',
-  tab: { verdicts: '判定', dsep: 'd-分離', strata: '分組表', background: '背景表', effects: '效應', blame: '責備' },
+  tab: { verdicts: '判定', dsep: 'd 分隔', strata: '分組表', background: '背景表', effects: '效應', blame: '責備' },
   jointOnly: '這個案例的機率是整張聯合分布，不能逐一調整。',
   sliderLabel: (label: string): string => `${label}的機率`,
   nodesShow: '節點顯示',

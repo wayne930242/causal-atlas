@@ -99,7 +99,7 @@ describe('CausalPlayground', () => {
   it('with a d-separation pair, the paths are open', () => {
     const { container } = render(<CausalPlayground doc={lessonModel('m04-admission')} dsep={['G', 'M']} />)
     expect(tabs(container)).toEqual(['dsep', 'equations'])
-    expect(tab(container, 'dsep').textContent).toBe('d-分離')
+    expect(tab(container, 'dsep').textContent).toBe('d 分隔')
     expect(open(container)).toEqual(['dsep'])
     expect(inside(container, '[data-dsep]', 'dsep')).toBe(true)
   })

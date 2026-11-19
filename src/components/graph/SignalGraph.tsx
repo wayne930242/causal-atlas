@@ -14,7 +14,7 @@ import { sub } from '../text/svg-text.tsx'
 import { textWidth } from '../text/text-measure.ts'
 import { BarChart } from './BarChart.tsx'
 import { layoutSignalGraph } from './signal-geometry.ts'
-import { EXO_INSET, arrowHead, clampPath, exoDash } from './signal-shapes.ts'
+import { EXO_INSET, arrowHead, clampPath, exoDash, nodeReadout } from './signal-shapes.ts'
 import { useNodeGestures } from './use-node-gestures.ts'
 import { ValuePicker } from './ValuePicker.tsx'
 
@@ -269,6 +269,7 @@ export function SignalGraph(props: SignalGraphProps) {
         ? bars.map((_, i) => barText(i)).join(', ')
         : `P(${id}=1) ${probText(pv ?? Number.NaN, digits)}`
       : t.nodeValue(text)
+    const readout = nodeReadout(t, digits, pv, forced, evidence ? undefined : observedValues[id])
     const forcedText = forced !== undefined ? (tagText?.[id] ?? formatValue(forced)) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : undefined
     const seen = observedValues[id]
     const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen))
@@ -454,11 +455,14 @@ export function SignalGraph(props: SignalGraphProps) {
         {bars !== undefined
           ? <BarChart id={id} labels={bars.map(formatValue)} dist={dist} block={block} barText={barText} />
           : prob && (
-              <text y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num" data-readout={id}>
-                {probText(pv ?? Number.NaN, digits)}
+              <text y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num">
+                {readout.prefix !== '' && <tspan className="ca-svg-small ca-fill-muted">{readout.prefix}</tspan>}
+                <tspan data-readout={id} fontSize={readout.settled ? 14 : undefined}>
+                  {readout.text}
+                </tspan>
               </text>
             )}
-        {prob && probNotes?.[id] !== undefined && hold === undefined && (
+        {prob && (!readout.settled || evidence) && probNotes?.[id] !== undefined && hold === undefined && (
           <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted" data-note={id}>
             {probNotes[id]}
           </text>

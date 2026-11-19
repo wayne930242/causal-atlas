@@ -1,6 +1,10 @@
 import type { Box } from './graph-labels.ts'
 import { rectBox, textBox } from './graph-labels.ts'
 import { textWidth } from '../text/text-measure.ts'
+import type { Value } from '../../engine/index.ts'
+import { formatValue } from '../../engine/values.ts'
+import type { Messages } from '../i18n/messages.ts'
+import { probText } from '../model/wording.ts'
 
 /** The shapes a signal graph draws with: a node's label block and its readout, and the path strings of arrowheads, clamps and dashed rings. Pure. */
 
@@ -33,6 +37,31 @@ export interface Block {
 /** The width a node's number reserves under its label: a probability of `digits` decimals at 16 px. */
 export function numberWidth(digits = 2): number {
   return textWidth(`0.${'0'.repeat(digits)}`, 16) + 4
+}
+
+/** What a probability node shows as its number: a small prefix and the text. `settled` nodes (observed or do()) carry no 原本 note. */
+export interface NodeReadout {
+  readonly prefix: string
+  readonly text: string
+  readonly settled: boolean
+}
+
+export function nodeReadout(
+  t: Messages,
+  digits: number,
+  p: number | undefined,
+  forced: Value | undefined,
+  seen: Value | undefined,
+): NodeReadout {
+  if (forced !== undefined) return { prefix: '', text: t.nodeReadout.intervened(formatValue(forced)), settled: true }
+  if (seen !== undefined) return { prefix: '', text: t.nodeReadout.observed(formatValue(seen)), settled: true }
+  return { prefix: `${t.nodeReadout.unknown} `, text: probText(p ?? Number.NaN, digits), settled: false }
+}
+
+/** The width a readout reserves: the number at 16 px, or the settled text at 14 px, after its prefix at 11 px. */
+export function readoutWidth(r: NodeReadout, digits: number): number {
+  const prefixW = r.prefix === '' ? 0 : textWidth(r.prefix, 11)
+  return prefixW + (r.settled ? textWidth(r.text, 14) + 4 : numberWidth(digits))
 }
 
 /** The block with its top edge at `top`. */

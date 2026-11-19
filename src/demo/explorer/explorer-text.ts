@@ -100,7 +100,7 @@ export const TEXT: Readonly<Record<Locale, Text>> = {
       verdicts: '實際原因的問題',
       blame: '責備',
       normality: '預設值（常態）',
-      dsep: 'd-分離的變項對',
+      dsep: 'd 分隔的變項對',
       sliders: '拉桿',
       prior: '外生變項的機率',
       decision: '決策長條',

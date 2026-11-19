@@ -134,7 +134,7 @@ describe('node readouts with digits', () => {
     const cf = render(
       <ProbabilityPanel doc={fork} view="counterfactual" counterfactual={{ evidence: 'Y=1', do: { Z: 0 }, event: 'Y=1' }} digits={4} />,
     )
-    for (const id of ['Z', 'X', 'Y']) expect(readout(cf.container, id)).toMatch(/^[01]\.\d{4}$/)
+    for (const id of ['Z', 'X', 'Y']) expect(readout(cf.container, id)).toMatch(/^([01]\.\d{4}|已知 = 1|do = 0)$/)
     cleanup()
     const adjust = render(<ProbabilityPanel doc={fork} view="adjust" adjust={{ x: 'Z', y: 'Y' }} digits={4} />)
     for (const id of ['Z', 'X', 'Y']) expect(readout(adjust.container, id)).toMatch(/^[01]\.\d{4}$/)
