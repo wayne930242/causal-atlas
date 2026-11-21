@@ -17,6 +17,8 @@ import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { originCitations } from '../model/verdict-rows.ts'
 
+const RULE_SYMBOLS = new Set(['Z', 'W'])
+
 /**
  * The do-calculus rules on their cut graphs (lesson 06): a step button per step of the
  * derivation, the step's cut graph with no numbers (cut arrows struck, the variables whose
@@ -105,15 +107,15 @@ export function RulesPanel({
         </div>
         <div className="ca-rules-line ca-dsep-line" data-dsep={result.separated ? 'blocked' : 'open'}>
           <p className="ca-dsep-head">
-            <span className="ca-pg-now-kicker">{d.pair(step.pair[0], step.pair[1])}</span> <Rich text={d.known([...known])} ids={ids} /> →{' '}
+            <span className="ca-pg-now-kicker"><Rich text={d.pair(step.pair[0], step.pair[1])} ids={ids} /></span> <Rich text={d.known([...known])} ids={ids} /> →{' '}
             <strong>{result.separated ? t.rules.separated : d.open}</strong>
-            {result.separated ? t.rules.applies(ruleName) : t.rules.notApplies(ruleName)} <Tip tip={t.rules.tip} label={t.moreInfo} />
+            {result.separated ? t.rules.applies(ruleName) : t.rules.notApplies(ruleName)} <Tip tip={<Rich text={t.rules.tip} ids={RULE_SYMBOLS} />} label={t.moreInfo} />
           </p>
           <ul className="ca-dsep-paths">
             {result.paths.length === 0 && <li>{d.noPath}</li>}
             {result.paths.slice(0, MAX_PATHS).map((p) => (
               <li key={p.nodes.join('-')} data-path-open={p.open ? 'true' : 'false'}>
-                <Formula text={pathText(p)} />
+                <Formula text={pathText(p)} ids={ids} />
                 {d.pathSep}
                 <Rich text={pathReason(t, p)} ids={ids} />
               </li>

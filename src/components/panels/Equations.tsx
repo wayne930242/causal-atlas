@@ -9,10 +9,12 @@ import { Disclosure, OkIcon, Tag, Tip } from '../shared/parts.tsx'
 import { causalTable } from './causal-table.ts'
 import { equationsLatex } from './equations-latex.ts'
 import { Tex } from '../text/Tex.tsx'
-import { Rich } from '../text/typeset.tsx'
+import { MathProse, Rich } from '../text/typeset.tsx'
 import type { Stochastic } from '../model/assignments.ts'
 import { bracketText, doText, label, readingText } from '../model/wording.ts'
 import { equationIds, equationRows, outcomeVariable } from './equation-rows.ts'
+
+const CAUSAL_SYMBOLS = new Set(['X', 'Y', 'x', 'y'])
 
 export interface EquationsProps {
   readonly c: LoadedCase
@@ -96,7 +98,7 @@ export function Equations({ c, shown, notation, values, interventions, stochasti
             </Disclosure>
           </>
         )}
-        <p className="ca-eq-reading">{t.readCausal}</p>
+        <p className="ca-eq-reading"><MathProse text={t.readCausal} math={{ '[X←x](Y=y)': '[X\\leftarrow x](Y=y)' }} ids={CAUSAL_SYMBOLS} /></p>
       </div>
     )
   }

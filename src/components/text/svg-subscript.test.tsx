@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { getCase } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
+import { sub } from './svg-text.tsx'
 import { WorldLanes } from '../index.ts'
 
 afterEach(cleanup)
@@ -19,6 +20,12 @@ const subscripts = (root: ParentNode): string[] =>
   [...root.querySelectorAll('tspan[dy="0.25em"]')].map((t) => t.textContent ?? '')
 
 describe('subscripts inside SVG', () => {
+  it('lowers digit suffixes in identifier slots, not bare numbers', () => {
+    const { container } = render(<svg><text>{sub('¬D1, U2=0.10, A10, MD1, A1B20, N_S1, 2026')}</text></svg>)
+    expect(subscripts(container)).toEqual(['1', '2', '10', '1', '20', 'S1'])
+    expect(container.textContent).toContain('=0.10')
+    expect(container.textContent).toContain('2026')
+  })
   it('draws an X_Y node id as X with a lowered Y, and keeps the plain id in the aria-label', () => {
     const c = everything('forest-fire-conjunctive')
     const { container } = render(

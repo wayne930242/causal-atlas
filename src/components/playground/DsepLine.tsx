@@ -4,7 +4,7 @@ import type { DsepPair, DsepView } from '../model/dsep-view.ts'
 import { MAX_PATHS, deltaText, pathReason, pathText } from '../model/dsep-view.ts'
 import { useMessages } from '../i18n/messages.ts'
 import { Tip } from '../shared/parts.tsx'
-import { Formula, Rich } from '../text/typeset.tsx'
+import { Formula, MathProse, Rich } from '../text/typeset.tsx'
 
 /** The line under the graph: the pair, what is known, open or blocked, δ, and up to three paths with why. */
 export function DsepLine({ c, pair, observed, view }: { readonly c: LoadedCase; readonly pair: DsepPair; readonly observed: Assignment; readonly view: DsepView }) {
@@ -17,16 +17,16 @@ export function DsepLine({ c, pair, observed, view }: { readonly c: LoadedCase; 
   return (
     <div className="ca-dsep-line" data-dsep={result.separated ? 'blocked' : 'open'}>
       <p className="ca-dsep-head">
-        <span className="ca-pg-now-kicker">{d.pair(pair[0], pair[1])}</span>{' '}
+        <span className="ca-pg-now-kicker"><Rich text={d.pair(pair[0], pair[1])} ids={ids} /></span>{' '}
         <Rich text={d.known(known)} ids={ids} /> → <strong>{result.separated ? d.blocked : d.open}</strong>
 {' '}
-        <span className="ca-dsep-delta ca-mono">{d.delta(deltaText(view.delta))}</span> <Tip tip={d.tip} label={t.moreInfo} />
+        <span className="ca-dsep-delta ca-mono">{d.delta(deltaText(view.delta))}</span> <Tip tip={<MathProse text={d.tip} math={{ '|P(x,y|z) − P(x|z)P(y|z)|': '\\left|P(x,y\\mid z)-P(x\\mid z)P(y\\mid z)\\right|' }} />} label={t.moreInfo} />
       </p>
       <ul className="ca-dsep-paths">
         {result.paths.length === 0 && <li>{d.noPath}</li>}
         {shown.map((p) => (
           <li key={p.nodes.join('-')} data-path-open={p.open ? 'true' : 'false'}>
-            <Formula text={pathText(p)} />
+            <Formula text={pathText(p)} ids={ids} />
             {d.pathSep}
             <Rich text={pathReason(t, p)} ids={ids} />
           </li>

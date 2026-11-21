@@ -105,7 +105,10 @@ export function Tip({ tip, children, label, className }: TipProps) {
         onBlur={() => setOpen(false)}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') setOpen(false)
+          if (e.key === 'Escape') {
+            if (open) e.stopPropagation()
+            setOpen(false)
+          }
           else if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             setOpen((o) => !o)

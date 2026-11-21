@@ -4,6 +4,8 @@ import { renderToString } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { caseIds, getCase } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
+import { FRONT_DOOR_STEPS } from '../../demo/front-door-steps.ts'
+import { lessonModel } from '../../demo/lesson-models.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { CasePage, CausalPlayground, ModelEditor, ProbabilityPanel, WorldLanes } from '../index.ts'
 
@@ -61,6 +63,26 @@ describe('smoking-lesion probability panel', () => {
     const text = visibleText(html)
     for (const id of ['N_S1', 'N_S0', 'N_C1', 'N_C0']) expect(text).not.toContain(id)
     expect(html).not.toContain('katex-error')
+  })
+})
+
+describe.each(LOCALES)('lesson formulas (%s)', (locale) => {
+  it('typesets the fixed tips without KaTeX errors in the reader panels', () => {
+    const views = {
+      adjust: renderToString(<ProbabilityPanel doc={lessonModel('m05-backdoor')} locale={locale} view="adjust" adjust={{ x: 'X', y: 'Y' }} />),
+      rules: renderToString(<ProbabilityPanel doc={lessonModel('m05-frontdoor')} locale={locale} view="rules" rules={FRONT_DOOR_STEPS} />),
+      mediation: renderToString(<ProbabilityPanel doc={lessonModel('m08-pill')} locale={locale} view="mediation" initialStep={4}
+        mediation={{ treatment: 'X', mediators: ['Z'], outcome: 'Y=1', from: 0, to: 1, formula: true }} />),
+      causal: renderToString(<CausalPlayground doc={lessonModel('m05-frontdoor')} locale={locale} defaultNotation="causal" />),
+    }
+    for (const [where, html] of Object.entries(views)) expect(html, where).not.toContain('katex-error')
+    expect(views.rules).toContain('data-tex="Z(W)"')
+    expect(views.mediation).toContain('data-tex="NDE=P(Y_{x^*,Z_x})-P(Y_x)"')
+    expect(views.causal).toContain('data-tex="[X\\leftarrow x](Y=y)"')
+    if (locale === 'en') {
+      expect(views.adjust).toContain('data-tex="P(\\text{group})"')
+      expect(views.adjust).toContain('data-tex="\\text{Everyone}"')
+    }
   })
 })
 

@@ -7,6 +7,7 @@ import { useMessages } from '../i18n/messages.ts'
 import type { Stochastic } from '../model/assignments.ts'
 import type { ModelWorld } from '../model/model-state.ts'
 import { idWithName, probText, shortLabel } from '../model/wording.ts'
+import { Tip } from '../shared/parts.tsx'
 import { useDigits } from '../shared/digits.ts'
 import { Rich } from '../text/typeset.tsx'
 
@@ -30,6 +31,7 @@ export interface NodeMenuProps {
   readonly pair?: readonly string[]
   /** Under the actions: the node's own probability sliders. */
   readonly extra?: ReactNode
+  readonly help?: string
   readonly onObserve: (value: Value | undefined) => void
   readonly onDo: (value: Value | undefined) => void
   /** Probability mode, boolean node: P*(X=1), 0 and 1 meaning do(X=0) and do(X=1). */
@@ -98,6 +100,7 @@ export function NodeMenu(props: NodeMenuProps) {
         <span className="ca-node-menu-title">
           <Rich text={who} ids={c.model.byId} />
         </span>
+        {props.help !== undefined && <Tip className="ca-node-menu-help" tip={<Rich text={props.help} ids={c.model.byId} />} label={t.moreInfo} />}
         <button type="button" className="ca-node-menu-close" aria-label={t.menu.close} onClick={onClose}>
           ×
         </button>
@@ -105,7 +108,7 @@ export function NodeMenu(props: NodeMenuProps) {
       {notes.length > 0 && (
         <ul className="ca-node-menu-notes">
           {notes.map((n) => (
-            <li key={n}>{n}</li>
+            <li key={n}><Rich text={n} ids={c.model.byId} /></li>
           ))}
         </ul>
       )}
@@ -158,7 +161,7 @@ export function NodeMenu(props: NodeMenuProps) {
             </span>
             {prob && boolean && (
               <label className="ca-node-menu-soft">
-                <span className="ca-mono">{t.menu.doProb(id)}</span>
+                <span><Rich text={t.menu.doProb(id)} ids={c.model.byId} /></span>
                 <input
                   className="ca-slider"
                   type="range"

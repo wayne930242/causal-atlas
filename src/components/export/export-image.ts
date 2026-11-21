@@ -2,7 +2,7 @@ import { DEFAULT_URL, authorYear, authorYearEn, bibtex, watermarkLine } from './
 import type { Locale } from '../i18n/messages.ts'
 import { DEFAULT_LOCALE, messagesFor } from '../i18n/messages.ts'
 import { saveFile } from './download.ts'
-import { SUB_DY, SUB_IDENT, SUB_SIZE, ZWSP } from '../text/subscript.ts'
+import { SUB_DY, SUB_IDENT, SUB_SIZE, ZWSP, subscriptParts } from '../text/subscript.ts'
 import { textWidth } from '../text/text-measure.ts'
 
 /**
@@ -302,13 +302,10 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-/** Escaped text with `X_Y` identifiers drawn as X with a smaller, lowered Y (dy pairs, which every SVG renderer honours). */
-function withSubscripts(escaped: string): string {
-  return escaped.replace(
-    SUB_IDENT,
-    (_m, head: string, sub: string) =>
-      `${head}<tspan dy="${SUB_DY}" font-size="${SUB_SIZE}">${sub}</tspan><tspan dy="-${SUB_DY}">${ZWSP}</tspan>`,
-  )
+/** Math labels use lowered tspans; prose, titles and citations use plain escaping. */
+function withSubscripts(text: string): string {
+  return subscriptParts(text).map((part) => typeof part === 'string' ? esc(part) :
+    `${part.head}<tspan dy="${SUB_DY}" font-size="${SUB_SIZE}">${part.sub}</tspan><tspan dy="-${SUB_DY}">${ZWSP}</tspan>`).join('')
 }
 
 /** The same, on the text nodes of a cloned `<text>` tree. */
@@ -393,7 +390,7 @@ function tagSvg(t: ExportTag, x: number, y: number, p: Palette): string {
   const family = t.mono === true ? ` font-family="${esc(MONO)}"` : ''
   return (
     `<g transform="translate(${x} ${y})"><rect width="${w}" height="${TAG_H}" fill="${bg}"${opacity}${strokeAttr}/>` +
-    `<text x="${w / 2}" y="15.5" text-anchor="middle" font-size="${TAG_SIZE}" font-weight="700" fill="${fg}"${family}>${withSubscripts(esc(t.text))}</text></g>`
+    `<text x="${w / 2}" y="15.5" text-anchor="middle" font-size="${TAG_SIZE}" font-weight="700" fill="${fg}"${family}>${withSubscripts(t.text)}</text></g>`
   )
 }
 
@@ -454,7 +451,7 @@ function buildExportSvg(source: ExportSource, options: ExportOptions): BuiltSvg 
   const parts: string[] = []
   parts.push(`<rect width="${width}" height="${height}" fill="${p.background}"/>`)
   parts.push(
-    `<text x="${PAD}" y="${PAD + TITLE - 2}" font-size="${TITLE}" font-weight="900" fill="${p.foreground}">${withSubscripts(esc(title))}</text>`,
+    `<text x="${PAD}" y="${PAD + TITLE - 2}" font-size="${TITLE}" font-weight="900" fill="${p.foreground}">${esc(title)}</text>`,
   )
   let x = PAD + (width - PAD * 2 - contentW) / 2
   const top = PAD + headH
@@ -481,14 +478,14 @@ function buildExportSvg(source: ExportSource, options: ExportOptions): BuiltSvg 
     y += box.h
     if (panel.foot !== undefined) {
       parts.push(
-        `<text x="${x + INNER}" y="${y + 20}" font-size="13" font-weight="700" font-family="${esc(MONO)}" fill="${p.foreground}">${withSubscripts(esc(panel.foot))}</text>`,
+        `<text x="${x + INNER}" y="${y + 20}" font-size="13" font-weight="700" font-family="${esc(MONO)}" fill="${p.foreground}">${withSubscripts(panel.foot)}</text>`,
       )
     }
     x += w + GAP
   }
   let y = top + contentH
   if (source.legend !== undefined) {
-    parts.push(`<text x="${PAD}" y="${y + 19}" font-size="12" fill="${p.mutedForeground}">${withSubscripts(esc(source.legend))}</text>`)
+    parts.push(`<text x="${PAD}" y="${y + 19}" font-size="12" fill="${p.mutedForeground}">${esc(source.legend)}</text>`)
     y += legendH
   }
   if (!academic) {
@@ -496,7 +493,7 @@ function buildExportSvg(source: ExportSource, options: ExportOptions): BuiltSvg 
     parts.push(`<rect x="0" y="${wmTop}" width="${width}" height="${wmH}" fill="${p.muted}"/>`)
     lines.forEach((line, i) => {
       parts.push(
-        `<text x="${PAD}" y="${wmTop + 14 + 12 + i * 18}" font-size="${WM_SIZE}" ${i === 0 ? 'font-weight="700" ' : ''}fill="${i === 0 ? p.foreground : p.mutedForeground}">${withSubscripts(esc(line))}</text>`,
+        `<text x="${PAD}" y="${wmTop + 14 + 12 + i * 18}" font-size="${WM_SIZE}" ${i === 0 ? 'font-weight="700" ' : ''}fill="${i === 0 ? p.foreground : p.mutedForeground}">${esc(line)}</text>`,
       )
     })
   }

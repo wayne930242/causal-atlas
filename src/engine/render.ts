@@ -2,6 +2,7 @@ import type { Arith } from './arithmetic.ts'
 import { toArith } from './arithmetic.ts'
 import type { Expr, LookupExpr } from './expr.ts'
 import { evalExpr } from './expr.ts'
+import { digitSubscript } from './identifier-format.ts'
 import type { CausalModel } from './model.ts'
 import { getVariable } from './model.ts'
 import type { Assignment, Value, Variable } from './types.ts'
@@ -55,6 +56,11 @@ function latexIdent(name: string): string {
   const underscore = name.indexOf('_')
   if (underscore > 0 && underscore < name.length - 1) {
     return `${word(name.slice(0, underscore))}_{${word(name.slice(underscore + 1))}}`
+  }
+  const digit = digitSubscript(name)
+  if (digit !== undefined) {
+    const { head, sub } = digit
+    return `${word(head)}_${sub.length === 1 ? sub : `{${sub}}`}`
   }
   return word(name)
 }

@@ -12,7 +12,7 @@ import { FigureTabs } from '../shared/FigureTabs.tsx'
 import { NoIcon, OkIcon, Segmented, Tag, Tip } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Tex } from '../text/Tex.tsx'
-import { Formula, Rich } from '../text/typeset.tsx'
+import { Formula, MathProse, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { originCitations } from '../model/verdict-rows.ts'
 import { assignmentText, probLegend } from '../model/wording.ts'
@@ -29,6 +29,18 @@ export interface MediationStepperProps {
   readonly initialStep?: number
   readonly sliderSection: ReactNode
   readonly exportUrl?: string
+}
+
+const MED_DECOMPOSITION = 'TE = NDE − IE(reverse)'
+const MED_MATH = {
+  'TE = P(Y_x*) − P(Y_x)': 'TE=P(Y_{x^*})-P(Y_x)',
+  'NDE = P(Y_{x*, Z_x}) − P(Y_x)': 'NDE=P(Y_{x^*,Z_x})-P(Y_x)',
+  'NIE = P(Y_{x, Z_x*}) − P(Y_x)': 'NIE=P(Y_{x,Z_{x^*}})-P(Y_x)',
+  'IE(reverse) = P(Y_{x*, Z_x}) − P(Y_x*)': 'IE(\\text{reverse})=P(Y_{x^*,Z_x})-P(Y_{x^*})',
+  [MED_DECOMPOSITION]: 'TE=NDE-IE(\\text{reverse})',
+  'P(x, z) = 0': 'P(x,z)=0',
+  'P(x, z)': 'P(x,z)',
+  x: 'x', X: 'X', NDE: 'NDE', NIE: 'NIE',
 }
 
 const STEPS: readonly MediationStepNumber[] = [1, 2, 3, 4]
@@ -195,7 +207,7 @@ export function MediationStepper({ c, prior, shown, spec, actionLabel, initialSt
                         </tr>
                         {view.result.controlled.map((entry) => (
                           <tr key={assignmentText(entry.z)} data-effect="controlled" data-z={assignmentText(entry.z)}>
-                            <th scope="row">{t.med.controlledAt(assignmentText(entry.z))}</th>
+                            <th scope="row"><Rich text={t.med.controlledAt(assignmentText(entry.z))} ids={c.model.byId} /></th>
                             <td className="ca-mono" data-value={entry.value}>
                               {effectText(entry.value)}
                             </td>
@@ -220,7 +232,7 @@ export function MediationStepper({ c, prior, shown, spec, actionLabel, initialSt
                           </td>
                         </tr>
                         <tr data-effect="decomposition" data-ok={checks.decomposes ? 'true' : 'false'}>
-                          <th scope="row">{t.med.decomposition}</th>
+                          <th scope="row"><Tex tex={MED_MATH[MED_DECOMPOSITION]} text={t.med.decomposition} /></th>
                           <td className="ca-mono">
                             {t.med.decomposes(
                               effectText(view.result.total),
@@ -239,7 +251,7 @@ export function MediationStepper({ c, prior, shown, spec, actionLabel, initialSt
                                 {checks.formulaDirect !== 'undefined' && (
                                   <>
                                     {' '}
-                                    {checks.formulaDirect === 'equal' ? t.med.equal('NDE') : t.med.differ('NDE')}{' '}
+                                    <Tex tex={checks.formulaDirect === 'equal' ? '=NDE' : '\\neq NDE'} text={checks.formulaDirect === 'equal' ? t.med.equal('NDE') : t.med.differ('NDE')} />{' '}
                                     {ok(checks.formulaDirect === 'equal')}
                                   </>
                                 )}
@@ -252,7 +264,7 @@ export function MediationStepper({ c, prior, shown, spec, actionLabel, initialSt
                                 {checks.formulaIndirect !== 'undefined' && (
                                   <>
                                     {' '}
-                                    {checks.formulaIndirect === 'equal' ? t.med.equal('NIE') : t.med.differ('NIE')}{' '}
+                                    <Tex tex={checks.formulaIndirect === 'equal' ? '=NIE' : '\\neq NIE'} text={checks.formulaIndirect === 'equal' ? t.med.equal('NIE') : t.med.differ('NIE')} />{' '}
                                     {ok(checks.formulaIndirect === 'equal')}
                                   </>
                                 )}
@@ -265,11 +277,11 @@ export function MediationStepper({ c, prior, shown, spec, actionLabel, initialSt
                   </div>
                   {formula !== undefined && formula.missing.length > 0 && (
                     <p className="ca-small ca-muted" data-testid="med-missing">
-                      {t.med.missing(t.list(formula.missing.map((cell) => assignmentText(cell))))}
+                      <Rich text={t.med.missing(t.list(formula.missing.map((cell) => assignmentText(cell))))} ids={c.model.byId} />
                     </p>
                   )}
                   <p className="ca-small ca-muted">
-                    <Tip tip={t.med.tip} label={t.moreInfo} />
+                    <Tip tip={<MathProse text={t.med.tip} math={MED_MATH} />} label={t.moreInfo} />
                   </p>
                 </>
               ),
@@ -282,7 +294,7 @@ export function MediationStepper({ c, prior, shown, spec, actionLabel, initialSt
                   <table className="ca-cf-table ca-med-background" data-testid="med-background">
                     <thead>
                       <tr>
-                        <th scope="col">{t.cf.background(c.model.exogenous)}</th>
+                        <th scope="col"><Rich text={t.cf.background(c.model.exogenous)} ids={c.model.byId} /></th>
                         <th scope="col">{t.med.background.p}</th>
                         <th scope="col">
                           <Formula text={t.med.background.zAt(mediatorId, xAt(view.fromText))} />

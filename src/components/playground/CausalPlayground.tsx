@@ -368,7 +368,7 @@ function PlaygroundFor({
           witness={Object.keys(holding).length > 0 ? holding : undefined}
           holdNotes
           defaults={defaults}
-          legend
+          menuHelp={`${reading === 'counterfactual' && prob ? t.cfHintMore : t.playgroundHintMore(prob)}${sliders.length > 0 ? ` ${t.sliderEmbed.trim()}` : ''}`}
           exportUrl={exportUrl}
           embedCode={embed}
           moved={moved(sliders)}
@@ -455,18 +455,11 @@ function PlaygroundFor({
                   })}
                 </ul>
               )}
-              <p className="ca-hint">
-                {reading === 'counterfactual' && prob ? t.cfHint : t.playgroundHint(prob)}{' '}
-                <Tip
-                  tip={`${reading === 'counterfactual' && prob ? t.cfHintMore : t.playgroundHintMore(prob)}${sliders.length > 0 ? t.sliderEmbed : ''}`}
-                  label={t.moreInfo}
-                />
-              </p>
               {buttons.length > 0 && (
                 <div className="ca-presets" role="group" aria-label={t.presets}>
                   {buttons.map((s) => (
                     <button key={s.text} type="button" className="ca-btn ca-btn-outline" aria-pressed={pressed(s)} onClick={() => applyPreset(s)}>
-                      <Rich text={s.text} ids={c.model.byId} />
+                      {s.text}
                     </button>
                   ))}
                 </div>

@@ -36,7 +36,7 @@ const type = (label: string | RegExp, value: string): void => {
 describe('ModelEditor', () => {
   it('starts with every editing panel closed', () => {
     render(<ModelEditor />)
-    for (const name of ['變項', '式子', '外生變項的值', '常態', '存檔與分享']) {
+    for (const name of ['變數', '式子', '外生變數的值', '常態', '存檔與分享']) {
       expect(screen.getByRole('button', { name }).getAttribute('aria-expanded')).toBe('false')
     }
   })
@@ -44,17 +44,17 @@ describe('ModelEditor', () => {
   it('builds and evaluates a model from inputs', () => {
     const { container } = render(<ModelEditor initial="blank" />)
     expect(container.querySelector('.ca-graph')).toBeNull()
-    open('變項')
-    fireEvent.click(screen.getByRole('button', { name: '加一個變項' }))
-    fireEvent.click(screen.getByRole('button', { name: '加一個變項' }))
-    type('第 1 個變項：代號', 'U')
-    type('第 1 個變項：中文名稱', '開關')
-    type('第 1 個變項：種類', 'exogenous')
-    type('第 2 個變項：代號', 'A')
-    type('第 2 個變項：中文名稱', '燈亮')
+    open('變數')
+    fireEvent.click(screen.getByRole('button', { name: '加一個變數' }))
+    fireEvent.click(screen.getByRole('button', { name: '加一個變數' }))
+    type('第 1 個變數：代號', 'U')
+    type('第 1 個變數：中文名稱', '開關')
+    type('第 1 個變數：種類', 'exogenous')
+    type('第 2 個變數：代號', 'A')
+    type('第 2 個變數：中文名稱', '燈亮')
     open('式子')
     type('A 的式子', 'not U')
-    open('外生變項的值')
+    open('外生變數的值')
     type('U 的值', '0')
     expect(node(container, 'A').getAttribute('data-value')).toBe('1')
     expect(node(container, 'U').getAttribute('data-value')).toBe('0')
@@ -62,8 +62,8 @@ describe('ModelEditor', () => {
     expect(node(container, 'A').getAttribute('data-value')).toBe('0')
 
     // A finite domain and probabilities.
-    type('第 2 個變項：值域', 'list')
-    type('第 2 個變項：可能的值', 'dark, bright')
+    type('第 2 個變數：值域', 'list')
+    type('第 2 個變數：可能的值', 'dark, bright')
     type('A 的式子', "if U then 'bright' else 'dark'")
     fireEvent.click(screen.getByRole('button', { name: '機率' }))
     type('P(U=1)', '0.25')

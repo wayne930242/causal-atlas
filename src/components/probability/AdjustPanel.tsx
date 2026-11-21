@@ -16,10 +16,14 @@ import { FigureTabs } from '../shared/FigureTabs.tsx'
 import { Segmented, Tag, Tip } from '../shared/parts.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
+import { Tex } from '../text/Tex.tsx'
+import { textToLatex } from '../text/typeset-text.ts'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { originCitations } from '../model/verdict-rows.ts'
 import { marginals } from '../model/probability-view.ts'
 import { probLegend } from '../model/wording.ts'
+
+const ADJUST_SYMBOLS = new Set(['X', 'Y'])
 
 /** What the adjustment calculator compares: the cause, the effect, and optionally the groupings offered. */
 export interface AdjustSpec {
@@ -100,6 +104,9 @@ export function AdjustPanel({
       panels: [{ svg, tags: [{ text: m.adj.by(setLabel(m, set)), tone: 'fg' }] }],
       legend: probLegend(m, c.model, drawn),
     }))
+  const groupFormula = (make: (group: string) => string) => (
+    <Tex text={make(t.adj.group)} tex={textToLatex(make(`'${t.adj.group}'`))} />
+  )
   const table = (
     <div className="ca-table-wrap">
       <table className="ca-table ca-adj-table">
@@ -107,12 +114,12 @@ export function AdjustPanel({
           <tr>
             <th scope="col">{t.adj.group}</th>
             <th scope="col" className="ca-num">
-              {t.adj.pGroup}
+              {groupFormula((group) => `P(${group})`)}
             </th>
             {view.xs.map((_, i) => (
               <th key={i} scope="col" className="ca-num">
                 <span className="ca-adj-formula">
-                  <Formula text={`P(${event} | ${xText(i)}, ${t.adj.group})`} />
+                  {groupFormula((group) => `P(${event} | ${xText(i)}, ${group})`)}
                 </span>
                 <span className="ca-adj-short">
                   <Formula text={xText(i)} />
@@ -125,7 +132,9 @@ export function AdjustPanel({
           {view.strata.map((s) => (
             <tr key={JSON.stringify(s.values)} data-empty={s.weight > 0 ? undefined : 'true'}>
               <th scope="row">
-                <Formula text={set.length === 0 ? t.adj.all : set.map((id) => `${id}=${formatValue(s.values[id])}`).join(', ')} />
+                {set.length === 0
+                  ? <Tex text={t.adj.all} tex={textToLatex(`'${t.adj.all}'`)} />
+                  : <Formula text={set.map((id) => `${id}=${formatValue(s.values[id])}`).join(', ')} />}
               </th>
               <td className="ca-mono ca-num">{tableNumber(s.weight)}</td>
               {s.given.map((g, i) => (
@@ -141,7 +150,7 @@ export function AdjustPanel({
             <th scope="row" colSpan={2}>
               {t.adj.weighted}{' '}
               <span className="ca-adj-formula">
-                <Formula text={`Σ P(${event} | ${x}, ${t.adj.group}) P(${t.adj.group})`} />
+                {groupFormula((group) => `Σ P(${event} | ${x}, ${group}) P(${group})`)}
               </span>
             </th>
             {view.sums.map((s, i) => (
@@ -189,7 +198,7 @@ export function AdjustPanel({
           <span className={view.criterion ? 'ca-adj-ok' : 'ca-adj-no'}>
             <Rich text={verdictLine(t, view, x)} ids={c.model.byId} />
           </span>{' '}
-          <strong>{view.equal ? t.adj.equal : t.adj.differ}</strong> <Tip tip={t.adj.tip} label={t.moreInfo} />
+          <strong><Rich text={view.equal ? t.adj.equal : t.adj.differ} ids={c.model.byId} /></strong> <Tip tip={<Rich text={t.adj.tip} ids={ADJUST_SYMBOLS} />} label={t.moreInfo} />
         </p>
         <FigureTabs
           initial="strata"

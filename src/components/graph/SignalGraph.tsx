@@ -15,6 +15,7 @@ import { focusVisible } from '../shared/focus-visible.ts'
 import { Tip } from '../shared/parts.tsx'
 import { sub } from '../text/svg-text.tsx'
 import { textWidth } from '../text/text-measure.ts'
+import { Rich } from '../text/typeset.tsx'
 import { BarChart } from './BarChart.tsx'
 import { layoutSignalGraph } from './signal-geometry.ts'
 import { EXO_INSET, arrowHead, clampPath, exoDash, nodeReadout } from './signal-shapes.ts'
@@ -259,7 +260,7 @@ export function SignalGraph(props: SignalGraphProps) {
           {t.arc.label}
         </text>
         <foreignObject className="ca-arc-tip-box" x={box.x0} y={box.y0} width={box.x1 - box.x0} height={box.y1 - box.y0}>
-          <Tip tip={t.arc.tip(plan.via, plan.a, plan.b)} className="ca-arc-tip">
+          <Tip tip={<Rich text={t.arc.tip(plan.via, plan.a, plan.b)} ids={c.model.byId} />} className="ca-arc-tip">
             <span className="ca-arc-hit">{t.arc.label}</span>
           </Tip>
         </foreignObject>

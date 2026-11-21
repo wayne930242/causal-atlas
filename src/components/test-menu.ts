@@ -6,6 +6,14 @@ import { fireEvent } from '@testing-library/react'
  * that node, press the button, and leave the menu open.
  */
 
+/** Read a rendered label without coupling assertions to KaTeX's internal markup. */
+export function textWithMath(element: Element | null): string {
+  if (element === null) return ''
+  const copy = element.cloneNode(true) as Element
+  for (const tex of copy.querySelectorAll('.ca-tex')) tex.replaceWith(tex.getAttribute('data-text') ?? '')
+  return copy.textContent ?? ''
+}
+
 /** The open menu of node `id`, opened by a click on the node when it is not. */
 export function openMenu(root: ParentNode, id: string): HTMLElement {
   const open = root.querySelector<HTMLElement>(`[data-menu="${id}"]`)

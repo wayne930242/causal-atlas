@@ -42,6 +42,8 @@ describe('do() on a multi-valued node, in its menu', () => {
     expect(node(container, 'D1').getAttribute('data-value')).toBe('1')
     expect(node(container, 'Three').getAttribute('data-value')).toBe('0')
     const menu = openMenu(container, 'D1')
+    expect(menu.querySelector('[data-do] .katex')).toBeNull()
+    expect(menu.querySelector('.ca-node-menu-notes [data-text="D1=1"]')?.getAttribute('data-tex')).toBe('D_1=1')
     expect([...menu.querySelectorAll('[data-do]')].map((b) => b.textContent)).toEqual(['do(D1=1)', 'do(D1=2)', 'do(D1=3)', 'do(D1=4)', 'do(D1=5)', 'do(D1=6)', '放開'])
     // Opening sets nothing.
     expect(node(container, 'D1').getAttribute('data-intervened')).toBe('false')
@@ -50,6 +52,7 @@ describe('do() on a multi-valued node, in its menu', () => {
     expect(node(container, 'D1').getAttribute('data-value')).toBe('3')
     expect(node(container, 'Three').getAttribute('data-value')).toBe('1')
     expect(chip(container)).toBe('do(D1=3)')
+    expect(container.querySelector('.ca-do-chip [data-tex]')?.getAttribute('data-tex')).toBe('\\operatorname{do}(D_1=3)')
     expect(openMenu(container, 'D1').querySelector('[aria-pressed="true"]')?.textContent).toBe('do(D1=3)')
 
     doNode(container, 'D1')

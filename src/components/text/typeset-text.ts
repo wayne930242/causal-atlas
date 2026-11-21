@@ -53,7 +53,7 @@ const SYMBOLS: Readonly<Record<string, string>> = {
   φ: '\\varphi ',
 }
 
-const FUNCTION_LATEX: Readonly<Record<string, string>> = { do: '\\mathrm{do}', P: 'P', max: '\\max ', abs: '\\operatorname{abs}' }
+const FUNCTION_LATEX: Readonly<Record<string, string>> = { do: '\\operatorname{do}', P: 'P', max: '\\max ', abs: '\\operatorname{abs}' }
 
 const WORD = /[A-Za-z][A-Za-z0-9_]*/y
 const NUMBER = /\d+(?:\.\d+)?/y
@@ -66,9 +66,9 @@ function wordAt(text: string, at: number): string | undefined {
 const isWordChar = (ch: string | undefined): boolean => ch !== undefined && /[A-Za-z0-9_]/.test(ch)
 
 /** The LaTeX for a string that is entirely a formula: ids as in the equations, operators spaced by KaTeX. */
-export function textToLatex(text: string): string {
+export function textToLatex(text: string, ids?: KnownIds): string {
   let out = ''
-  let afterRelation = false
+  let relation: string | undefined
   let i = 0
   while (i < text.length) {
     const ch = text[i]
@@ -76,8 +76,8 @@ export function textToLatex(text: string): string {
       i += 1
       continue
     }
-    const wasRelation = afterRelation
-    afterRelation = false
+    const previousRelation = relation
+    relation = undefined
     if (ch === "'" || ch === '"') {
       const close = text.indexOf(ch, i + 1)
       const end = close < 0 ? text.length : close
@@ -95,15 +95,18 @@ export function textToLatex(text: string): string {
     const word = wordAt(text, i)
     if (word !== undefined) {
       i += word.length
-      if (text[i] === '(' && FUNCTIONS.has(word)) out += FUNCTION_LATEX[word]
-      else if (wasRelation && /^[A-Za-z0-9.]+$/.test(word)) out += `\\text{${word}}`
+      if (word === 'P' && text.startsWith('*(', i)) {
+        out += 'P^{*}'
+        i += 1
+      } else if (text[i] === '(' && FUNCTIONS.has(word)) out += FUNCTION_LATEX[word]
+      else if (previousRelation !== undefined && !(previousRelation === '←' && ids?.has(word)) && /^[A-Za-z0-9.]+$/.test(word)) out += `\\text{${word}}`
       else if (word === 'and') out += '\\land '
       else if (word === 'or') out += '\\lor '
       else if (word === 'not') out += '\\lnot '
       else out += renderIdent(word, 'latex')
       continue
     }
-    afterRelation = ch === '=' || ch === '≠' || ch === '←'
+    if (RELATIONS.has(ch)) relation = ch
     const mapped = SYMBOLS[ch]
     if (mapped !== undefined) out += mapped
     else if (/[\x20-\x7e]/.test(ch)) out += ch
@@ -144,6 +147,7 @@ function operand(scan: Scan, at: number, afterRelation: boolean): number {
   const ch = text[i]
   if (ch === undefined) return -1
   if (ch === '(') return group(scan, i, ')')
+  if (ch === '{') return group(scan, i, '}')
   if (ch === '[') {
     const end = group(scan, i, ']')
     // [X←x](Y=y): the bracket qualifies the group that follows it.
@@ -159,7 +163,18 @@ function operand(scan: Scan, at: number, afterRelation: boolean): number {
   const word = wordAt(text, i)
   if (word === undefined) return -1
   const end = i + word.length
-  if (text[end] === '(' && FUNCTIONS.has(word)) return group(scan, end, ')')
+  if (word === 'P' && text.startsWith('*(', end)) return group(scan, end + 1, ')')
+  if (word === 'do' && text.startsWith('()', end)) {
+    scan.found += 1
+    return end + 2
+  }
+  if (text[end] === '(' && (FUNCTIONS.has(word) || scan.ids.has(word))) {
+    const next = group(scan, end, ')')
+    if (next >= 0) {
+      if (scan.ids.has(word)) scan.found += 1
+      return next
+    }
+  }
   if (scan.ids.has(word)) {
     scan.found += 1
     return end
@@ -207,9 +222,11 @@ export function splitProse(text: string, ids: KnownIds, narrative = false): Segm
   while (i < text.length) {
     const ch = text[i]
     const word = /[A-Za-z]/.test(ch) && !isWordChar(text[i - 1]) ? wordAt(text, i) : undefined
-    const startsAtWord = word !== undefined && (ids.has(word) || (FUNCTIONS.has(word) && text[i + word.length] === '('))
+    const startsAtWord = word !== undefined && (
+      ids.has(word) || (FUNCTIONS.has(word) && text[i + word.length] === '(') || (word === 'P' && text.startsWith('*(', i + 1))
+    )
     const startsAtNot = ch === '¬' && /[A-Za-z]/.test(text[i + 1] ?? '')
-    if (!startsAtWord && !startsAtNot) {
+    if (!startsAtWord && !startsAtNot && ch !== '{' && ch !== '[') {
       // A word that is not an id is passed whole, so no id is taken from inside it.
       i += word?.length ?? 1
       continue

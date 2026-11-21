@@ -3,7 +3,8 @@ import type { Assignment, DecisionProblem, Value } from '../../engine/index.ts'
 import { evaluateDecision, formatValue, getVariable, valuesEqual } from '../../engine/index.ts'
 import { useMessages } from '../i18n/messages.ts'
 import { Tip } from '../shared/parts.tsx'
-import { Rich } from '../text/typeset.tsx'
+import { Formula, Rich } from '../text/typeset.tsx'
+import { ExpectedUtility } from '../text/ExpectedUtility.tsx'
 import { fixed } from '../model/wording.ts'
 
 export interface DecisionBarsProps {
@@ -54,7 +55,7 @@ export function DecisionBars({ c, problem, observed, interventions }: DecisionBa
     return { theory, eus, choice: t.ev.choose(t.list(choice.map(actText)), by), lit }
   })
   const utilityLines = problem.utility.rows.map(
-    (r) => `U(${problem.utility.variables.map((id, i) => `${id}=${formatValue(r.when[i])}`).join(', ')}) = ${euText(r.utility).replace(/\.00$/, '')}`,
+    (r) => `U(${problem.utility.variables.map((id, i) => `${id}=${formatValue(r.when[i])}`).join(', ')}) = ${fixed(r.utility, 2).replace(/\.00$/, '')}`,
   )
   return (
     <div className="ca-ev" style={{ ['--ca-ev-acts' as string]: result.acts.length }}>
@@ -64,11 +65,11 @@ export function DecisionBars({ c, problem, observed, interventions }: DecisionBa
           label={t.moreInfo}
           tip={
             <>
-              {t.clauses(utilityLines)}
+              {utilityLines.map((line, i) => <span key={line}>{i > 0 && t.clauses(['', ''])}<Formula text={line} /></span>)}
               <br />
-              EU_EDT(a) = Σ P(o | a) · U(o){t.eu.edt}
+              <ExpectedUtility theory="EDT" />{t.eu.edt}
               <br />
-              EU_CDT(a) = Σ P(o | do(a)) · U(o){t.eu.cdt}
+              <ExpectedUtility theory="CDT" />{t.eu.cdt}
             </>
           }
         />

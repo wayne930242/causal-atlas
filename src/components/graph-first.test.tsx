@@ -48,10 +48,10 @@ describe('CausalPlayground', () => {
     expect(open(container)).toEqual([])
   })
 
-  it('the step buttons, hint and trail stay on view', () => {
+  it('the step buttons and trail stay on view without a redundant under-graph hint', () => {
     const { container } = render(<CausalPlayground doc={lessonModel('m02-collider')} track={['Y']} presets={[{ label: 'X=1', interventions: { X: 1 } }]} />)
     expect(visible(container, '.ca-presets')).toBe(true)
-    expect(visible(container, '.ca-hint')).toBe(true)
+    expect(container.querySelector('.ca-hint')).toBeNull()
     expect(visible(container, '.ca-trail')).toBe(true)
     expect(visible(container, '.ca-reading')).toBe(true)
     expect(visible(container, '.ca-export')).toBe(true)

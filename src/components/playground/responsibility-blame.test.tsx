@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
+import { textWithMath } from '../test-menu.ts'
 
 afterEach(cleanup)
 
@@ -43,8 +44,8 @@ describe('verdicts with responsibility: true', () => {
     )
     for (const theory of ['hp-original', 'hp-updated', 'hp-modified']) expect(resp(container, theory)).toBe('1/2')
     const tip = cell(container, 'hp-modified').querySelector('[role="tooltip"]')
-    expect(tip?.textContent).toContain('k = 2')
-    expect(tip?.textContent).toContain('固定 Z=0')
+    expect(textWithMath(tip)).toContain('k = 2')
+    expect(textWithMath(tip)).toContain('固定 Z=0')
   })
 
   it('without the flag the verdict cells carry no responsibility', () => {

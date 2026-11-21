@@ -2,6 +2,18 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.10.0
+Reader-facing text is typeset with KaTeX: the node menu's state notes (填色高度：P(C=1)…, the double ring,
+red clamp and red outer ring lines), the random-intervention slider label, slider labels (including a named
+value such as (D1=1)), the d-separation and rules readouts (the pair 「S 與 R」 and the known set {…}), edge tips,
+the fixed tips, background headers, the mediation effects lines, the [X←x](Y=y) reading and the HP and EU
+definitions. Buttons (C=1, do(C=1)), tabs, aria labels, titles, editor inputs and the editor's syntax hint
+stay plain. `renderIdent(id, 'latex')` writes a digit suffix as a subscript (D1 → D_1, A10 → A_{10},
+MD1 → \mathit{MD}_1; N_S1 stays N_{\mathit{S1}}), and `do` as `\operatorname{do}`; SVG labels and exported
+images lower the same digit on identifiers only (not the watermark or citations). The two hint lines under
+the graph are gone; the observe-versus-intervene ⓘ moved into the node menu. The zh UI says 變數
+(外生變數、內生變數) as the lessons do, not 變項.
+
 ## 0.9.3
 A marked edge's tip names the d-separation paths through it and says why each is open or blocked, in the
 lessons' words: 「路徑 S → W ← R 在 W 被堵住。W 是對撞點，W 和它的後代 F 都未知。」, 「路徑 S ← C → R
@@ -249,7 +261,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.9.3) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.10.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -365,8 +377,8 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 - `<CausalPlayground doc>`: graph, notation toggle, observation and do() on the nodes (see 0.3.13) and the export menu, server-rendered
   with values, no editor chrome. A click on a node opens its menu (see 0.9.0): observe (probability
   graphs) or do() at each value, release, a random-intervention slider (P*(X=1)), the node's own sliders; no long-press or
-  right-click binding. The hint under the graph is one line;
-  its ⓘ opens the details in a tooltip (hover, keyboard focus or a tap; `aria-describedby`).
+  right-click binding. No hint lines under the graph (see 0.10.0); the menu's ⓘ opens the
+  observe-versus-intervene details in a tooltip (hover, keyboard focus or a tap; `aria-describedby`).
 - `presets` (step buttons) is `true` (a bundled case's own; a document has none), `false`, or a list of
   `{ label: string | { 'zh-TW', en }, interventions?, observed?, hold? }`. One press sets exactly
   those do()s and observations; `observed` needs a probability graph (on a graph with values it
@@ -562,9 +574,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.3 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.10.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.9.3) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.10.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -573,7 +585,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.9.3},
+  version = {0.10.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

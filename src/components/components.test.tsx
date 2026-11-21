@@ -133,7 +133,7 @@ describe('CasePage display fields', () => {
     const a = container.querySelector('[data-node="A"]') as Element
     expect([...a.querySelectorAll('[data-bar]')].map((b) => b.getAttribute('data-bar'))).toEqual(['one', 'two'])
     expect(a.querySelector('[data-level]')).toBeNull()
-    expect(container.textContent).toContain('多值變項每個值一根長條')
+    expect(container.textContent).toContain('多值變數每個值一根長條')
   })
 })
 

@@ -27,7 +27,7 @@ export function PlaygroundBlame({ c, cause, effect, view }: PlaygroundBlameProps
   return (
     <div className="ca-pg-blame" data-blame-block="">
       <p className="ca-pg-question">
-        <Rich text={t.blame.question(causeText, effect)} ids={ids} /> <Tip tip={t.blame.tip(causeText)} label={t.moreInfo} />
+        <Rich text={t.blame.question(causeText, effect)} ids={ids} /> <Tip tip={<Rich text={t.blame.tip(causeText)} ids={ids} />} label={t.moreInfo} />
       </p>
       <div className="ca-scroll-x">
         <table className="ca-cf-table ca-blame-table" data-testid="blame-table">
@@ -73,7 +73,7 @@ export function PlaygroundBlame({ c, cause, effect, view }: PlaygroundBlameProps
             <table className="ca-cf-table">
               <thead>
                 <tr>
-                  <th scope="col">{t.blame.background(c.model.exogenous)}</th>
+                  <th scope="col"><Rich text={t.blame.background(c.model.exogenous)} ids={ids} /></th>
                   <th scope="col">{t.blame.probability}</th>
                   {view.theories.map((theory) => (
                     <th key={theory} scope="col">

@@ -783,12 +783,24 @@
 }
 
 .ca-node-menu-head {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   font-weight: 700;
   font-size: 14px;
+}
+
+.ca-node-menu-head .ca-node-menu-help {
+  position: static;
+  margin-left: auto;
+}
+
+.ca-node-menu-help .ca-tip-body {
+  inset: 100% 0 auto;
+  transform: none;
+  width: auto;
 }
 
 .ca-node-menu-close {

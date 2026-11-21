@@ -51,6 +51,7 @@ export interface GraphBoxProps {
   /** Held variables say 固定（實際 v） beside them instead of the hull's 見證 tag (see SignalGraph). */
   readonly holdNotes?: boolean
   readonly legend?: boolean
+  readonly menuHelp?: string
   readonly title?: string
   /** Link in the exported image's watermark. */
   readonly exportUrl?: string
@@ -135,6 +136,7 @@ export function GraphBox({
   defaults,
   paths,
   menuExtra,
+  menuHelp,
   lit,
   onHover,
 }: GraphBoxProps) {
@@ -367,6 +369,7 @@ export function GraphBox({
             counterfactual={cf}
             pair={paths?.ends}
             extra={menuExtra?.(menu)}
+            help={menuHelp}
             onObserve={(v) => observe(menu, v)}
             onDo={(v) => intervene(menu, v)}
             onDoProbability={(p) => doing(withProbability(state, menu, p), menu)}
@@ -377,7 +380,7 @@ export function GraphBox({
         )}
         {tip !== undefined && (
           <div className="ca-edge-tip" role="tooltip" data-edge-tip={tip.key} style={tipStyle}>
-            {tip.text}
+            <Rich text={tip.text} ids={c.model.byId} />
           </div>
         )}
       </div>

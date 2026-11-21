@@ -2,7 +2,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, CausalTheory } from '../../engine/index.ts'
 import { useMessages } from '../i18n/messages.ts'
 import { Tip } from '../shared/parts.tsx'
-import { Rich } from '../text/typeset.tsx'
+import { MathProse, Rich } from '../text/typeset.tsx'
 import type { ActualGroup, ActualRow, VerdictQuery } from '../model/verdict-rows.ts'
 import { degreeText, witnessNow } from '../model/verdict-rows.ts'
 
@@ -50,12 +50,16 @@ export function PlaygroundVerdicts({ c, groups, queries, theories, active, inter
                 </span>
                 {r.responsibility !== undefined && (
                   <span className="ca-pg-resp" data-responsibility={degreeText(r.responsibility)}>
-                    {t.resp.cell(degreeText(r.responsibility))}{' '}
+                    <MathProse text={t.resp.cell(degreeText(r.responsibility))} math={{ [degreeText(r.responsibility)]: degreeText(r.responsibility) }} />{' '}
                     <Tip
                       tip={
                         r.responsibility.k === undefined
                           ? t.resp.tipZero
-                          : t.resp.tip(r.responsibility.k, r.responsibility.held ?? '', r.responsibility.cause ?? '', r.theory === 'hp-normality')
+                          : <MathProse
+                              text={t.resp.tip(r.responsibility.k, r.responsibility.held ?? '', r.responsibility.cause ?? '', r.theory === 'hp-normality')}
+                              math={{ '1/k': '1/k', [`k = ${r.responsibility.k}`]: `k=${r.responsibility.k}`, k: 'k' }}
+                              ids={ids}
+                            />
                       }
                       label={t.moreInfo}
                     />
@@ -69,7 +73,7 @@ export function PlaygroundVerdicts({ c, groups, queries, theories, active, inter
       {query !== undefined && (
         <p className="ca-pg-now" data-witness-now="">
           <span className="ca-pg-now-kicker">{t.witness.now}</span>{' '}
-          <Rich text={witnessNow(t, c, query, theories[active] ?? [], interventions)} ids={ids} /> <Tip tip={t.witness.tip} label={t.moreInfo} />
+          <Rich text={witnessNow(t, c, query, theories[active] ?? [], interventions)} ids={ids} /> <Tip tip={<Rich text={t.witness.tip} ids={ids} narrative />} label={t.moreInfo} />
         </p>
       )}
     </div>

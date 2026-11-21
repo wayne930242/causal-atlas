@@ -3,7 +3,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import { getVariable } from '../../engine/index.ts'
 import { useMessages } from '../i18n/messages.ts'
 import { focusVisible } from '../shared/focus-visible.ts'
-import { Ident, Rich } from '../text/typeset.tsx'
+import { Formula, Ident, Rich } from '../text/typeset.tsx'
 import { targetText } from '../model/probability-view.ts'
 import { sliderGroups } from '../model/slider-groups.ts'
 import { idWithName, label, probText, shortLabel } from '../model/wording.ts'
@@ -49,7 +49,7 @@ export function SliderList({ c, ids, values, onChange, idPrefix, shown, lit = []
           <Ident id={id} />
         </span>
         <label className="ca-slider-label" htmlFor={inputId}>
-          {t.sliderLabel(label(c.model, id, t.locale), variable.domain.kind === 'boolean' ? undefined : targetText(variable))}
+          <Rich text={t.sliderLabel(label(c.model, id, t.locale), variable.domain.kind === 'boolean' ? undefined : targetText(variable))} ids={c.model.byId} />
         </label>
         <input
           id={inputId}
@@ -63,7 +63,7 @@ export function SliderList({ c, ids, values, onChange, idPrefix, shown, lit = []
           onChange={(e) => onChange(id, Number(e.currentTarget.value))}
         />
         <output className="ca-slider-value ca-mono" htmlFor={inputId}>
-          p = {probText(p)}
+          <Formula text={`p = ${probText(p)}`} />
         </output>
       </li>
     )

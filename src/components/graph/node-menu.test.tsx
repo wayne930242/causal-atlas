@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ModelDoc } from '../../data/schema.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import { CausalPlayground } from '../index.ts'
-import { doNode, doProbability, observeNode, openMenu } from '../test-menu.ts'
+import { doNode, doProbability, observeNode, openMenu, textWithMath } from '../test-menu.ts'
 
 afterEach(cleanup)
 
@@ -84,7 +84,7 @@ describe('a click on a node opens its menu', () => {
 
   it('says what the marks mean now: fill, double ring, red clamp', () => {
     const { container } = render(<CausalPlayground doc={collider} />)
-    const notes = (): string[] => [...container.querySelectorAll('.ca-node-menu-notes li')].map((li) => li.textContent ?? '')
+    const notes = (): string[] => [...container.querySelectorAll('.ca-node-menu-notes li')].map(textWithMath)
     openMenu(container, 'Z')
     expect(notes()).toEqual(['填色高度：P(Z=1) = 0.75'])
     observeNode(container, 'Z', '1')
@@ -286,7 +286,7 @@ describe('exogenous nodes are the context, not do() targets', () => {
     const { container } = render(<CausalPlayground doc={doc} />)
     const menu = openMenu(container, 'U_X')
     expect(menu.querySelector('[data-do]')).toBeNull()
-    expect(menu.textContent).toContain('外生變項是背景條件，只能觀察，不能干預。')
+    expect(menu.textContent).toContain('外生變數是背景條件，只能觀察，不能干預。')
     expect(menu.getAttribute('aria-label')).toMatch(/：觀察$/)
     expect(node(container, 'U_X').getAttribute('aria-label')).toContain('按一下打開選單，可以觀察')
     expect(node(container, 'U_X').getAttribute('aria-label')).not.toContain('干預')
@@ -304,7 +304,7 @@ describe('marked edges explain themselves', () => {
     expect(edge.getAttribute('tabindex')).toBe('0')
     expect(edge.getAttribute('aria-label')).toBe('虛線：路徑 X → Z ← Y 在 Z 被堵住。Z 是對撞點，Z 未知，也沒有後代。')
     fireEvent.pointerEnter(edge, { pointerType: 'mouse' })
-    expect(container.querySelector('[data-edge-tip="X>Z"]')?.textContent).toBe('虛線：路徑 X → Z ← Y 在 Z 被堵住。Z 是對撞點，Z 未知，也沒有後代。')
+    expect(textWithMath(container.querySelector('[data-edge-tip="X>Z"]'))).toBe('虛線：路徑 X → Z ← Y 在 Z 被堵住。Z 是對撞點，Z 未知，也沒有後代。')
     fireEvent.pointerLeave(edge, { pointerType: 'mouse' })
     expect(container.querySelector('[data-edge-tip]')).toBeNull()
     // A tap (no hover on touch) toggles it; a press elsewhere hides it.

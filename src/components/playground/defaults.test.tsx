@@ -3,12 +3,13 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
+import { textWithMath } from '../test-menu.ts'
 
 afterEach(cleanup)
 
 const deviant = (container: HTMLElement, id: string): string | null =>
   container.querySelector(`[data-node="${id}"] [data-deviant]`)?.textContent ?? null
-const normLine = (container: HTMLElement): string => container.querySelector('[data-normality]')?.textContent ?? ''
+const normLine = (container: HTMLElement): string => textWithMath(container.querySelector('[data-normality]'))
 
 describe('defaults: deviations from the model normality', () => {
   it('lesson 01: models B and C differ only in whether O deviates', () => {
@@ -52,7 +53,7 @@ describe('defaults: deviations from the model normality', () => {
   it("the normality cell's reason is the same comparison", () => {
     const { container } = render(<CausalPlayground caseId="gardener-queen" verdicts={[{ cause: 'QW=0', effect: 'D=1' }]} />)
     fireEvent.click(within(container).getByRole('button', { name: '女王澆了花' }))
-    const now = container.querySelector('[data-witness-now]')?.textContent ?? ''
+    const now = textWithMath(container.querySelector('[data-witness-now]'))
     expect(now).toContain('HP 加上常態：不是，這個世界 {GW, QW}；實際世界 {GW, D}，無法比較')
   })
 })

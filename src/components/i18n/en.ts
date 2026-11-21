@@ -429,15 +429,12 @@ export const EN: Messages = {
     again: 'Start again',
   },
 
-  playgroundHint: (probabilistic) =>
-    probabilistic ? 'Click a node for a menu to observe or intervene.' : 'Click a node for a menu to intervene.',
   sliderEmbed: ' The embed code does not keep the sliders: an embedded figure starts from the original probabilities.',
   playgroundHintMore: (probabilistic) =>
     probabilistic
       ? 'Observing takes the node as a known value: every other probability is conditioned on it. Intervening sets the node by do(), cutting the arrows into it; the slider in the menu sets a probability between 0 and 1. With probability sliders, the menu lists the node\'s own; hovering a node or a slider marks the other. Esc closes the menu.'
       : 'Intervening sets the node by do(), cutting the arrows into it, and everything downstream follows; release returns it to its own value. Esc closes the menu.',
   moreInfo: 'Details',
-  cfHint: 'Click a node for a menu: record what actually happened (evidence) or suppose an intervention.',
   cfHintMore: 'The observations update the backgrounds first; the intervention then acts in those same backgrounds. Nodes show the supposed world, "actually v" the actual one; a node can be both observed and intervened on.',
   trail: 'Trail',
   trailStep: (value, setting) => (setting === '' ? value : `${value} (${setting})`),

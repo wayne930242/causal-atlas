@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { subscriptParts } from './subscript.ts'
 import { splitProse, textToLatex } from './typeset-text.ts'
 
-const ids = new Set(['A', 'B', 'D', 'U', 'L', 'S', 'C', 'FF', 'MD', 'BT', 'SH', 'BH', 'GW', 'QW', 'N_S1', 'U_L'])
+const ids = new Set(['A', 'B', 'D', 'U', 'L', 'S', 'C', 'FF', 'MD', 'BT', 'SH', 'BH', 'GW', 'QW', 'N_S1', 'U_L', 'D1'])
 
 const formulas = (text: string, narrative = false): string[] =>
   splitProse(text, ids, narrative)
@@ -19,13 +19,19 @@ describe('subscriptParts', () => {
       '=0',
     ])
     expect(subscriptParts('no ids here')).toEqual(['no ids here'])
+    expect(subscriptParts('D1=0.10, 2026, U2, A10, MD1')).toEqual([
+      { head: 'D', sub: '1' }, '=0.10, 2026, ', { head: 'U', sub: '2' }, ', ', { head: 'A', sub: '10' }, ', ', { head: 'MD', sub: '1' },
+    ])
   })
 })
 
 describe('textToLatex', () => {
   it('subscripts X_Y and spaces the operators', () => {
     expect(textToLatex('N_S1=1')).toBe('N_{\\mathit{S1}}=1')
-    expect(textToLatex('do(A=0)')).toBe('\\mathrm{do}(A=0)')
+    expect(textToLatex('do(A=0)')).toBe('\\operatorname{do}(A=0)')
+    expect(textToLatex('C ← D1', ids)).toBe('C\\leftarrow D_1')
+    expect(textToLatex('P*(D1=1)=0.10')).toBe('P^{*}(D_1=1)=0.10')
+    expect(textToLatex('{U2, A10, MD1}')).toBe('\\{U_2,\\ A_{10},\\ \\mathit{MD}_1\\}')
     expect(textToLatex('P(C=1 | S=1)')).toBe('P(C=1\\mid S=1)')
     expect(textToLatex("A='one'")).toBe('A=\\text{one}')
     expect(textToLatex('A=one')).toBe('A=\\text{one}')
@@ -42,6 +48,7 @@ describe('splitProse', () => {
     expect(formulas('Abduction: D=1 ⇒ U=1 ⇒ B=1.')).toEqual(['D=1 ⇒ U=1 ⇒ B=1'])
     expect(formulas('Fails AC3: L=1 alone suffices.')).toEqual(['L=1'])
     expect(formulas('套上 do(A=0, B=1)')).toEqual(['do(A=0, B=1)'])
+    expect(formulas('Apply do() with P*(D1=1)=0.10; known {A, N_S1}.')).toEqual(['do()', 'P*(D1=1)=0.10', '{A, N_S1}'])
   })
 
   it('finds equations written in prose, not the parentheses around them', () => {

@@ -93,7 +93,7 @@ describe('multi-valued readout', () => {
 
   it('describes both kinds in the legend', () => {
     const { container } = render(<ProbabilityPanel doc={dice} />)
-    expect(container.textContent).toContain('填色的高度＝等於 1 的機率；多值變項每個值一根長條')
+    expect(container.textContent).toContain('填色的高度＝等於 1 的機率；多值變數每個值一根長條')
   })
 
   it('survives export: bars keep their fill and the hover titles are dropped', () => {

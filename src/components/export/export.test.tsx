@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { authorYear, bibtex, watermarkLine } from './cite.ts'
-import { ACADEMIC_PALETTE, inlineSvg } from './export-image.ts'
+import { ACADEMIC_PALETTE, exportImage, inlineSvg } from './export-image.ts'
 import { saveFile } from './download.ts'
 import { CasePage, CausalPlayground, ProbabilityPanel, WorldLanes } from '../index.ts'
 
@@ -199,6 +199,20 @@ describe('academic export', () => {
 
 
 describe('subscripts in exported text', () => {
+  it('lowers digit ids in tags and footnotes but leaves the watermark and source literal', async () => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('viewBox', '0 0 200 100')
+    await exportImage({
+      name: 'dice', title: 'Dice v1', origin: 'Source v1, 2026 (CC BY 4.0)', legend: 'Version v1',
+      panels: [{ svg, tags: [{ text: 'do(D1=1)', tone: 'accent' }], foot: 'P(U2=1) = 0.10' }],
+    }, { theme: 'light', format: 'svg' })
+    const output = new DOMParser().parseFromString(String(saved.mock.calls.at(-1)?.[1]), 'image/svg+xml')
+    expect([...output.querySelectorAll('tspan[dy="0.25em"]')].map((n) => n.textContent)).toEqual(['1', '2'])
+    expect(output.documentElement.textContent).toContain('Source v1, 2026 (CC BY 4.0)')
+    expect(output.documentElement.textContent).toContain('Dice v1')
+    expect(output.documentElement.textContent).toContain('Version v1')
+    expect(output.documentElement.textContent).toContain('= 0.10')
+  })
   it('draws X_Y identifiers as a lowered, smaller tspan instead of an underscore', () => {
     const NS = 'http://www.w3.org/2000/svg'
     const svg = document.createElementNS(NS, 'svg')

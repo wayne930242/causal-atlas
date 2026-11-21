@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
-import { doNode, observeNode } from '../test-menu.ts'
+import { doNode, observeNode, openMenu } from '../test-menu.ts'
 
 afterEach(() => {
   cleanup()
@@ -81,12 +81,13 @@ describe('step buttons (presets with observed and hold)', () => {
   })
 })
 
-describe('the hint under the graph', () => {
-  it('is one short line; the details sit in a tooltip reachable by focus', () => {
+describe('node menu help', () => {
+  it('removes both under-graph hints and puts the details in a focusable menu tooltip', () => {
     const { container } = render(<CausalPlayground doc={nervous} />)
-    const hint = container.querySelector('.ca-hint')
-    expect(hint?.textContent?.startsWith('點節點打開選單，可以觀察或干預。')).toBe(true)
-    const trigger = hint?.querySelector('[aria-describedby]')
+    expect(container.querySelector('.ca-hint, .ca-legend')).toBeNull()
+    expect(container.querySelector('.ca-node-menu-help')).toBeNull()
+    const menu = openMenu(container, 'A')
+    const trigger = menu.querySelector('.ca-node-menu-help [aria-describedby]')
     if (!(trigger instanceof HTMLElement)) throw new Error('no tooltip trigger')
     const tip = container.querySelector(`#${CSS.escape(trigger.getAttribute('aria-describedby') ?? '')}`)
     expect(tip?.getAttribute('role')).toBe('tooltip')
@@ -94,16 +95,20 @@ describe('the hint under the graph', () => {
     expect(tip?.hasAttribute('hidden')).toBe(true)
     fireEvent.focus(trigger)
     expect(tip?.hasAttribute('hidden')).toBe(false)
-    fireEvent.keyDown(trigger, { key: 'Escape' })
+    fireEvent.blur(trigger)
     expect(tip?.hasAttribute('hidden')).toBe(true)
-    // A tap opens it too.
     fireEvent.click(trigger)
     expect(tip?.hasAttribute('hidden')).toBe(false)
+    fireEvent.keyDown(trigger, { key: 'Escape' })
+    expect(tip?.hasAttribute('hidden')).toBe(true)
+    expect(container.querySelector('[data-menu]')).not.toBeNull()
+    fireEvent.keyDown(trigger, { key: 'Escape' })
+    expect(container.querySelector('[data-menu]')).toBeNull()
   })
 
-  it('says a click opens the menu to intervene on a graph with values, in one line', () => {
+  it('explains intervention rather than conditioning for a graph with values', () => {
     const { container } = render(<CausalPlayground caseId="forest-fire-disjunctive" />)
-    expect(container.querySelector('.ca-hint')?.textContent?.startsWith('點節點打開選單，可以干預。')).toBe(true)
+    expect(openMenu(container, 'L').querySelector('.ca-node-menu-help [role="tooltip"]')?.textContent).toMatch(/干預.*下游跟著重算/)
   })
 
   it('a step stays pressed when the reader sets more on top of it', () => {

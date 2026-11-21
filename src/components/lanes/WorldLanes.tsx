@@ -19,7 +19,6 @@ import { notations } from '../model/notation.ts'
 import { TabButton, TabPanel } from '../shared/FigureTabs.tsx'
 import { useTabs } from '../shared/use-tabs.ts'
 import { DocProblems, Arrow, Progress, Segmented } from '../shared/parts.tsx'
-import { Rich } from '../text/typeset.tsx'
 import { columnOrder, edgeLive, edgePolarity, shownEdges } from '../graph/graph-layout.ts'
 import { shownVariables } from '../model/shown-variables.ts'
 import { assignmentText, doText, idWithName, label, shortLabel } from '../model/wording.ts'
@@ -77,7 +76,7 @@ function tagEl(x: number, y: number, text: string, tone: 'fg' | 'slate' | 'accen
     <g transform={`translate(${x} ${y})`}>
       <rect width={w} height={22} className={`ca-lane-tag-${tone}`} />
       <text x={w / 2} y={15} textAnchor="middle" className={`ca-svg-small ca-svg-bold ca-lane-tag-text-${tone}${mono ? ' ca-mono' : ''}`}>
-        {sub(text)}
+        {mono ? sub(text) : text}
       </text>
     </g>
   )
@@ -501,7 +500,7 @@ function WorldLanesFor({
           )}
           {step < total ? (
             <button type="button" className="ca-btn ca-btn-primary" onClick={() => setStep(step + 1)}>
-              <Rich text={nextLabel} ids={c.model.byId} />
+              {nextLabel}
               <Arrow />
             </button>
           ) : (

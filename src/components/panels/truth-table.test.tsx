@@ -55,6 +55,6 @@ describe('causalTable: the causal rows that hold under what is set, with the par
   it('copy LaTeX copies the rows on screen', () => {
     const tex = equationsLatex({ c: bow, shown: shownVariables(bow), notation: 'causal', interventions: { X: true } })
     expect(tex.split('\\\\')).toHaveLength(5)
-    expect(tex).toContain('A10')
+    expect(tex).toContain('A_{10}')
   })
 })

@@ -131,7 +131,7 @@ export function CfStepper({ c, prior, shown, spec, actionLabel, initialStep = 1,
                 <table className="ca-cf-table">
                   <thead>
                     <tr>
-                      <th scope="col">{t.cf.background(c.model.exogenous)}</th>
+                      <th scope="col"><Rich text={t.cf.background(c.model.exogenous)} ids={ids} /></th>
                       <th scope="col">{t.cf.prior}</th>
                       <th scope="col">
                         <Rich text={t.cf.given(evidence)} ids={ids} />

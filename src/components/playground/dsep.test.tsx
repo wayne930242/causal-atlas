@@ -3,18 +3,11 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
-import { doNode, observeNode } from '../test-menu.ts'
+import { doNode, observeNode, textWithMath } from '../test-menu.ts'
 
 afterEach(cleanup)
 
-const line = (container: HTMLElement): string => {
-  const el = container.querySelector('[data-dsep]')
-  if (el === null) return ''
-  // Typeset formulas read by their plain text.
-  const copy = el.cloneNode(true) as Element
-  for (const tex of copy.querySelectorAll('.ca-tex')) tex.replaceWith(tex.getAttribute('data-text') ?? '')
-  return copy.textContent ?? ''
-}
+const line = (container: HTMLElement): string => textWithMath(container.querySelector('[data-dsep]'))
 const edgePath = (container: HTMLElement, key: string): string | null => container.querySelector(`[data-edge="${key}"]`)?.getAttribute('data-path') ?? null
 
 describe('playground dsep: the paths between a pair, lit when open, dashed when blocked', () => {
@@ -22,6 +15,7 @@ describe('playground dsep: the paths between a pair, lit when open, dashed when 
     const { container } = render(<CausalPlayground doc={lessonModel('m04-admission')} dsep={['G', 'M']} />)
     expect(container.querySelector('[data-dsep]')?.getAttribute('data-dsep')).toBe('blocked')
     expect(line(container)).toContain('G 與 M')
+    expect(container.querySelector('[data-dsep] .ca-pg-now-kicker [data-text="G"] .katex')).not.toBeNull()
     expect(line(container)).toContain('堵住')
     expect(line(container)).toContain('相依程度 0.000')
     expect(line(container)).toContain('G→A←M：對撞點 A 和它的後代都未知')
@@ -31,6 +25,7 @@ describe('playground dsep: the paths between a pair, lit when open, dashed when 
     observeNode(container, 'L', '1')
     expect(container.querySelector('[data-dsep]')?.getAttribute('data-dsep')).toBe('open')
     expect(line(container)).toContain('已知 {L}')
+    expect(container.querySelector('[data-dsep] [data-text="{L}"]')?.getAttribute('data-tex')).toBe('\\{L\\}')
     expect(line(container)).toContain('相依程度 0.1736')
     expect(line(container)).toContain('G→A←M：對撞點 A 的後代 L 已知')
     expect(edgePath(container, 'G>A')).toBe('open')
@@ -63,7 +58,9 @@ describe('playground dsep: the paths between a pair, lit when open, dashed when 
       />,
     )
     const sw = within(container).getByRole('group', { name: '路徑的兩端' })
-    fireEvent.click(within(sw).getByRole('button', { name: 'G 與 L' }))
+    const button = within(sw).getByRole('button', { name: 'G 與 L' })
+    expect(button.querySelector('.ca-tex')).toBeNull()
+    fireEvent.click(button)
     expect(line(container)).toContain('G 與 L')
     expect(container.querySelector('[data-dsep]')?.getAttribute('data-dsep')).toBe('open')
   })

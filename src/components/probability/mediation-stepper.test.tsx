@@ -46,7 +46,7 @@ describe('ProbabilityPanel view="mediation": the pill, step by step', () => {
     expect(root(container).getAttribute('data-step')).toBe('2')
     expect(value(container)).toBe('+0.20')
     expect(tag(container, 'Z')).toContain('Z←0')
-    const z = within(container).getByRole('group', { name: '中介變項固定的值' })
+    const z = within(container).getByRole('group', { name: '中介變數固定的值' })
     fireEvent.click(within(z).getByRole('button', { name: 'Z=1' }))
     expect(value(container)).toBe('+0.10')
     expect(tag(container, 'Z')).toContain('Z←1')

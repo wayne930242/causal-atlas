@@ -5,7 +5,9 @@ import { useMessages } from '../i18n/messages.ts'
 import type { KnownIds } from '../text/typeset-text.ts'
 import { Disclosure, NoIcon, OkIcon, PartIcon, Pin, Tag } from '../shared/parts.tsx'
 import type { ActualGroup, ActualRow, Intuition } from '../model/verdict-rows.ts'
-import { Formula, Rich } from '../text/typeset.tsx'
+import { Formula, MathProse, Rich } from '../text/typeset.tsx'
+import { ExpectedUtility } from '../text/ExpectedUtility.tsx'
+import { Tex } from '../text/Tex.tsx'
 import { THEORY_REF, actualGroups, decisionRows, intuition, numberRows } from '../model/verdict-rows.ts'
 import { assignmentText, fixed, probText } from '../model/wording.ts'
 
@@ -122,6 +124,8 @@ function ActualRowView({
   )
 }
 
+const HP_MATH = { M: 'M', u: 'u', X: 'X', 'X=x': 'X=x', W: 'W', 'w*': 'w^{*}', 'x′': "x'", φ: '\\varphi' }
+
 function HpSupplement({ group, ids, href, linkLabel }: { group: ActualGroup; ids: KnownIds; href?: string; linkLabel?: string }) {
   const t = useMessages()
   const row = group.rows.find((r) => r.theory !== 'butfor' && r.formula !== undefined)
@@ -130,18 +134,18 @@ function HpSupplement({ group, ids, href, linkLabel }: { group: ActualGroup; ids
   return (
     <div className="ca-supplement">
       <div className="ca-supplement-def">
-        <p>{t.hp.intro}</p>
+        <p><MathProse text={t.hp.intro} math={HP_MATH} /></p>
         <dl className="ca-defs">
           <dt className="ca-mono">AC1</dt>
-          <dd>{t.hp.ac1}</dd>
+          <dd><MathProse text={t.hp.ac1} math={HP_MATH} /></dd>
           <dt className="ca-mono">AC2</dt>
           <dd>
-            {t.hp.ac2}
+            <MathProse text={t.hp.ac2} math={HP_MATH} />
             <br />
-            <code className="ca-mono">(M,u) ⊨ [X←x′, W←w*]¬φ</code>
+            <Tex tex={"(M,u) \\models [X\\leftarrow x', W\\leftarrow w^{*}]\\lnot\\varphi"} text="(M,u) ⊨ [X←x′, W←w*]¬φ" />
           </dd>
           <dt className="ca-mono">AC3</dt>
-          <dd>{t.hp.ac3}</dd>
+          <dd><MathProse text={t.hp.ac3} math={HP_MATH} /></dd>
         </dl>
         {href !== undefined && (
           <a className="ca-link" href={href}>
@@ -152,18 +156,18 @@ function HpSupplement({ group, ids, href, linkLabel }: { group: ActualGroup; ids
       <div className="ca-supplement-case">
         <p className="ca-muted">{t.hp.applied}</p>
         <p>
-          {t.hp.causeIs}{' '}
+          <MathProse text={t.hp.causeIs} math={HP_MATH} />{' '}
           <code className="ca-mono">
             <Rich text={causeVars} ids={ids} />
           </code>
         </p>
         {witnessRow?.fixed !== undefined && (
           <p>
-            <Rich text={t.hp.witnessIs(Object.keys(witnessRow.fixed).join(', '), Object.values(witnessRow.fixed).map(formatValue).join(', '))} ids={ids} />
+            <MathProse text={t.hp.witnessIs(Object.keys(witnessRow.fixed).join(', '), Object.values(witnessRow.fixed).map(formatValue).join(', '))} math={HP_MATH} ids={ids} />
           </p>
         )}
         <p>
-          {t.hp.effectIs}{' '}
+          <MathProse text={t.hp.effectIs} math={HP_MATH} />{' '}
           <code className="ca-mono">
             <Rich text={group.effect} ids={ids} />
           </code>
@@ -270,11 +274,11 @@ export function Verdicts({ c, onShow, lessonHref, lessonLabel }: VerdictsProps) 
         <Disclosure title={t.twoUtilities}>
           <div className="ca-supplement-def">
             <p>
-              <code className="ca-mono">EU_EDT(a) = Σ P(o | a) · U(o)</code>
+              <ExpectedUtility theory="EDT" />
               {t.eu.edt}
             </p>
             <p>
-              <code className="ca-mono">EU_CDT(a) = Σ P(o | do(a)) · U(o)</code>
+              <ExpectedUtility theory="CDT" />
               {t.eu.cdt}
             </p>
             {lessonHref !== undefined && (

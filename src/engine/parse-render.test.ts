@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Expr } from './expr.ts'
 import { buildModel } from './model.ts'
 import { ParseError, parseExpr, parseFormula } from './parse.ts'
-import { causalFormulas, renderEquation, renderExpr, renderModel } from './render.ts'
+import { causalFormulas, renderEquation, renderExpr, renderIdent, renderModel } from './render.ts'
 import { rockThrowing, variable } from './test-models.ts'
 
 const v = (name: string): Expr => ({ op: 'var', name })
@@ -57,6 +57,13 @@ describe('parser', () => {
 })
 
 describe('renderers', () => {
+  it.each([
+    ['D1', 'D_1'], ['U2', 'U_2'], ['A10', 'A_{10}'], ['MD1', '\\mathit{MD}_1'],
+    ['N_S1', 'N_{\\mathit{S1}}'], ['MD', '\\mathit{MD}'], ['A1B20', '\\mathit{A1B}_{20}'],
+  ])('renders the identifier %s without changing its plain spelling', (id, latex) => {
+    expect(renderIdent(id, 'latex')).toBe(latex)
+    expect(renderIdent(id, 'text')).toBe(id)
+  })
   const rock = rockThrowing()
 
   it('renders a structural equation in text and LaTeX', () => {
