@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ModelDoc } from '../../data/schema.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import { CausalPlayground } from '../index.ts'
@@ -177,7 +177,7 @@ describe('probability graph: the menu observes and intervenes', () => {
     expect(container.querySelector('[role="status"]')?.textContent).toContain('Z=0')
   })
 
-  it('closes when 回到原本的機率 is pressed from the keyboard', () => {
+  it('closes when 回到原本的機率 is pressed', () => {
     const { container } = render(<CausalPlayground doc={collider} />)
     doNode(container, 'X', '1')
     expect(chip(container)).toBe('do(X=1)')
@@ -315,6 +315,47 @@ describe('marked edges explain themselves', () => {
     expect(container.querySelector('[data-edge="X>Z"]')?.getAttribute('aria-label')).toBe('紅色粗線：X 與 Y 之間有一條暢通的路徑經過這段箭頭')
     doNode(container, 'Z', '1')
     expect(container.querySelector('[data-edge="X>Z"]')?.getAttribute('aria-label')).toBe('灰色虛線加斜槓：do() 剪掉了這條箭頭，Z 不再受它影響')
+  })
+
+  it('a real tap (press, focus, click) toggles the tip; a mouse click on a hovered edge keeps it', () => {
+    // A press focuses the edge before its click, and that focus is not :focus-visible.
+    const matches = Element.prototype.matches
+    const spy = vi.spyOn(Element.prototype, 'matches').mockImplementation(function (this: Element, sel: string) {
+      return sel === ':focus-visible' ? false : matches.call(this, sel)
+    })
+    const { container } = render(<CausalPlayground doc={collider} dsep={['X', 'Y']} />)
+    const edge = container.querySelector('[data-edge="X>Z"]') as SVGGElement
+    const tap = (): void => {
+      fireEvent.pointerDown(edge, { pointerType: 'touch' })
+      edge.focus()
+      fireEvent.click(edge)
+    }
+    tap()
+    expect(container.querySelector('[data-edge-tip="X>Z"]')).not.toBeNull()
+    tap()
+    expect(container.querySelector('[data-edge-tip]')).toBeNull()
+    edge.blur()
+    fireEvent.pointerEnter(edge, { pointerType: 'mouse' })
+    fireEvent.pointerDown(edge, { pointerType: 'mouse' })
+    edge.focus()
+    fireEvent.click(edge)
+    expect(container.querySelector('[data-edge-tip="X>Z"]')).not.toBeNull()
+    spy.mockRestore()
+  })
+
+  it("a press on another graph's node closes this graph's menu", () => {
+    const { container } = render(
+      <>
+        <div data-a><CausalPlayground doc={collider} /></div>
+        <div data-b><CausalPlayground doc={collider} /></div>
+      </>,
+    )
+    const a = container.querySelector('[data-a]') as HTMLElement
+    const b = container.querySelector('[data-b]') as HTMLElement
+    fireEvent.click(a.querySelector('[data-node="Z"]') as Element)
+    expect(a.querySelector('[data-menu="Z"]')).not.toBeNull()
+    fireEvent.pointerDown(b.querySelector('[data-node="X"]') as Element)
+    expect(a.querySelector('[data-menu]')).toBeNull()
   })
 
   it('a plain edge has no tip and takes no focus', () => {

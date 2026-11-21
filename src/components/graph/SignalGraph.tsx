@@ -165,6 +165,8 @@ export function SignalGraph(props: SignalGraphProps) {
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
   const [endA, endB] = paths?.ends ?? []
+  /** The pointer that pressed an edge last: a tap toggles its explanation, a mouse click only shows it. */
+  const edgePointer = useRef<string>('mouse')
   /** A marked edge explains itself: on hover (mouse, pen) and keyboard focus, and on a tap, which toggles it. */
   const tipProps = (key: string, text: string | undefined) =>
     text === undefined || onEdgeTip === undefined
@@ -176,9 +178,13 @@ export function SignalGraph(props: SignalGraphProps) {
           'data-tip': edgeTip === key ? 'open' : undefined,
           onPointerEnter: (e: PointerEvent<SVGGElement>) => e.pointerType !== 'touch' && onEdgeTip({ key, text }),
           onPointerLeave: (e: PointerEvent<SVGGElement>) => e.pointerType !== 'touch' && onEdgeTip(undefined),
-          onFocus: () => onEdgeTip({ key, text }),
+          onPointerDown: (e: PointerEvent<SVGGElement>) => {
+            edgePointer.current = e.pointerType
+          },
+          // A press focuses the edge too; only keyboard focus shows the tip, so a tap's click can toggle it.
+          onFocus: (e: FocusEvent<SVGGElement>) => focusVisible(e.currentTarget) && onEdgeTip({ key, text }),
           onBlur: () => onEdgeTip(undefined),
-          onClick: () => onEdgeTip(edgeTip === key ? undefined : { key, text }),
+          onClick: () => onEdgeTip(edgePointer.current === 'touch' && edgeTip === key ? undefined : { key, text }),
         }
   const pathTip = (onPath: 'open' | 'blocked' | undefined): string | undefined =>
     onPath === undefined || endA === undefined || endB === undefined ? undefined : onPath === 'open' ? t.edgeTip.open(endA, endB) : t.edgeTip.blocked(endA, endB)

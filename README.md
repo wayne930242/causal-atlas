@@ -2,6 +2,12 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.9.1
+A tap on a marked edge keeps its explanation open (the press's focus no longer opened it and the click
+closed it again), and a mouse click on a hovered edge keeps it. A press on a node of another graph on the
+page closes this graph's menu; Esc pressed in another control keeps that control's focus; a menu whose
+node is hidden does not come back by itself when the node is drawn again.
+
 ## 0.9.0
 One gesture for every graph: a click (or Enter, Space) on a node opens its menu beside it. The menu says
 what the node's marks mean now (fill height = P(=1), double ring = observed, red clamp = do(), red outer
@@ -226,7 +232,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.9.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.9.1) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -538,9 +544,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.1 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.9.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.9.1) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -549,7 +555,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.9.0},
+  version = {0.9.1},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

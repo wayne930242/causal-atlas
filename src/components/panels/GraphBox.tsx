@@ -151,6 +151,9 @@ export function GraphBox({
   const editable = onDo !== undefined || onObserve !== undefined
   const [menuAt, setMenu] = useState<string | undefined>(undefined)
   const menu = menuAt !== undefined && world.shown.includes(menuAt) ? menuAt : undefined
+  // A menu whose node is no longer drawn is closed, so it does not come back when the node does
+  // (state adjusted while rendering, React's pattern for state derived from props).
+  if (menuAt !== undefined && menu === undefined) setMenu(undefined)
   const [tip, setTip] = useState<EdgeTip | undefined>(undefined)
   const menuRef = useRef<HTMLDivElement>(null)
   const [menuStyle, setMenuStyle] = useState<CSSProperties>({ visibility: 'hidden' })
@@ -197,14 +200,18 @@ export function GraphBox({
     const outside = (e: Event): void => {
       const target = e.target
       if (!(target instanceof Element)) return
-      if (menu !== undefined && menuRef.current?.contains(target) !== true && target.closest('[data-node]') === null) setMenu(undefined)
-      if (tip !== undefined && target.closest('[data-edge]') === null) setTip(undefined)
+      // Only this graph's own nodes and edges count as inside: another graph on the page is outside.
+      const own = wrap.current?.contains(target) === true
+      if (menu !== undefined && menuRef.current?.contains(target) !== true && !(own && target.closest('[data-node]') !== null)) setMenu(undefined)
+      if (tip !== undefined && !(own && target.closest('[data-edge]') !== null)) setTip(undefined)
     }
     const escape = (e: globalThis.KeyboardEvent): void => {
       if (e.key !== 'Escape') return
       setTip(undefined)
       if (menu !== undefined) {
-        focusNode(menu)
+        // Focus goes back to the node only from inside this graph: Esc in another control keeps its focus.
+        const active = document.activeElement
+        if (active === null || active === document.body || wrap.current?.contains(active) === true) focusNode(menu)
         setMenu(undefined)
       }
     }
