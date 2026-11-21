@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { docToCase, getCase } from '../data/index.ts'
 import type { ModelDoc } from '../data/index.ts'
 import type { Prior, ResponsibilityTheory } from '../engine/index.ts'
-import { actualCause, blame, counterfactual, mediation, probability, responsibility } from '../engine/index.ts'
+import { actualCause, blame, counterfactual, dependence, dSeparation, mediation, probability, responsibility } from '../engine/index.ts'
 import { LESSON_MODELS } from './lesson-models.ts'
 
 /**
@@ -45,6 +45,59 @@ describe('every new lesson model document', () => {
       expect(() => docToCase(doc(id))).not.toThrow()
     },
   )
+})
+
+describe('04 m04-sprinkler-cpt and m04-gardener (compatibility: every CPT entry is a slider)', () => {
+  /** Fixed draws, so a failure names the setting; each entry stays inside (0.05, 0.95). */
+  function draws(ids: readonly string[], n: number): Record<string, number>[] {
+    let seed = 20261121
+    const next = () => {
+      seed = (seed * 1103515245 + 12345) % 2 ** 31
+      return 0.05 + 0.9 * (seed / 2 ** 31)
+    }
+    return Array.from({ length: n }, () => Object.fromEntries(ids.map((id) => [id, next()])))
+  }
+  const withPriors = (id: string, p: Record<string, number>) => stated(id, { independent: p })
+  const independent = (id: string): Record<string, number> => {
+    const priors = doc(id).priors
+    if (priors === undefined || !('independent' in priors)) throw new Error(`${id} has no independent priors`)
+    return priors.independent as Record<string, number>
+  }
+  const exogenous = (id: string) => Object.keys(independent(id))
+
+  it('both load, each under the engine context cap, and C d-separates S and R only on the sprinkler graph', () => {
+    for (const id of ['m04-sprinkler-cpt', 'm04-gardener']) expect(() => docToCase(doc(id))).not.toThrow()
+    expect(exogenous('m04-sprinkler-cpt')).toHaveLength(10)
+    expect(exogenous('m04-gardener')).toHaveLength(12)
+    expect(dSeparation(stated('m04-sprinkler-cpt').model, 'S', 'R', ['C']).separated).toBe(true)
+    expect(dSeparation(stated('m04-gardener').model, 'S', 'R', ['C']).separated).toBe(false)
+  })
+
+  it('sprinkler graph: δ(S, R | C=c) is 0 for every CPT, while S and R stay dependent without C', () => {
+    for (const p of draws(exogenous('m04-sprinkler-cpt'), 25)) {
+      const { model, prior } = withPriors('m04-sprinkler-cpt', p)
+      for (const c of [0, 1]) expect(dependence(model, prior, 'S', 'R', { C: c }), JSON.stringify(p)).toBeCloseTo(0, 12)
+    }
+    const { model, prior } = stated('m04-sprinkler-cpt')
+    close(dependence(model, prior, 'S', 'R'), 0.06)
+  })
+
+  it('gardener graph: δ(S, R | C=c) > 0 for generic CPTs, and 0.054 (dry) / 0.0735 (rainy) at the document numbers', () => {
+    for (const p of draws(exogenous('m04-gardener'), 25)) {
+      const { model, prior } = withPriors('m04-gardener', p)
+      const rainyGap = Math.abs(p.N_S11 - p.N_S10)
+      if (rainyGap > 0.01) expect(dependence(model, prior, 'S', 'R', { C: 1 }), JSON.stringify(p)).toBeGreaterThan(1e-4)
+    }
+    const { model, prior } = stated('m04-gardener')
+    close(dependence(model, prior, 'S', 'R', { C: 0 }), 0.054)
+    close(dependence(model, prior, 'S', 'R', { C: 1 }), 0.0735)
+  })
+
+  it('gardener graph: equal S entries with and without rain make δ 0 again (the arrow is there, the dependence is not)', () => {
+    const p = { ...independent('m04-gardener'), N_S10: 0.05, N_S00: 0.1 }
+    const { model, prior } = withPriors('m04-gardener', p)
+    for (const c of [0, 1]) expect(dependence(model, prior, 'S', 'R', { C: c })).toBeCloseTo(0, 12)
+  })
 })
 
 describe('08 m08-pill (Hesslow, Pearl 2009 pp. 126–127)', () => {

@@ -1,0 +1,207 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "園丁圖：下雨時園丁常關掉灑水器",
+  "model": {
+    "variables": [
+      {
+        "id": "C",
+        "label": {
+          "zh-TW": "季節",
+          "en": "Season"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "S",
+        "label": {
+          "zh-TW": "灑水器開著",
+          "en": "Sprinkler on"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "R",
+        "label": {
+          "zh-TW": "下雨",
+          "en": "Rain"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "W",
+        "label": {
+          "zh-TW": "草地濕",
+          "en": "Grass wet"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "F",
+        "label": {
+          "zh-TW": "路滑",
+          "en": "Slippery"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_C",
+        "label": {
+          "zh-TW": "雨季",
+          "en": "Rainy season"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S11",
+        "label": {
+          "zh-TW": "雨季、下雨時開灑水器",
+          "en": "Sprinkler on in the rainy season, raining"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S10",
+        "label": {
+          "zh-TW": "雨季、沒下雨時開灑水器",
+          "en": "Sprinkler on in the rainy season, not raining"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S01",
+        "label": {
+          "zh-TW": "旱季、下雨時開灑水器",
+          "en": "Sprinkler on in the dry season, raining"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_S00",
+        "label": {
+          "zh-TW": "旱季、沒下雨時開灑水器",
+          "en": "Sprinkler on in the dry season, not raining"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_R1",
+        "label": {
+          "zh-TW": "雨季下雨",
+          "en": "Rain in the rainy season"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_R0",
+        "label": {
+          "zh-TW": "旱季下雨",
+          "en": "Rain in the dry season"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_W11",
+        "label": {
+          "zh-TW": "灑水又下雨時草地濕",
+          "en": "Grass wet with sprinkler and rain"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_W10",
+        "label": {
+          "zh-TW": "只灑水時草地濕",
+          "en": "Grass wet with sprinkler only"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_W01",
+        "label": {
+          "zh-TW": "只下雨時草地濕",
+          "en": "Grass wet with rain only"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_F1",
+        "label": {
+          "zh-TW": "草地濕時路滑",
+          "en": "Slippery when the grass is wet"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_F0",
+        "label": {
+          "zh-TW": "草地乾時路滑",
+          "en": "Slippery when the grass is dry"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "C": "U_C",
+      "R": "if C then N_R1 else N_R0",
+      "W": "if S and R then N_W11 else if S then N_W10 else if R then N_W01 else false",
+      "F": "if W then N_F1 else N_F0",
+      "S": "if C then (if R then N_S11 else N_S10) else (if R then N_S01 else N_S00)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U_C": 0.5,
+      "N_S11": 0.05,
+      "N_S10": 0.4,
+      "N_S01": 0.1,
+      "N_S00": 0.7,
+      "N_R1": 0.7,
+      "N_R0": 0.1,
+      "N_W11": 0.99,
+      "N_W10": 0.9,
+      "N_W01": 0.8,
+      "N_F1": 0.7,
+      "N_F0": 0.05
+    }
+  },
+  "layout": {
+    "C": [
+      1,
+      0
+    ],
+    "S": [
+      0,
+      1
+    ],
+    "R": [
+      2,
+      1
+    ],
+    "W": [
+      1,
+      2
+    ],
+    "F": [
+      1,
+      3
+    ]
+  }
+}
