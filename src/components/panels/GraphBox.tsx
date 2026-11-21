@@ -66,6 +66,8 @@ export interface GraphBoxProps {
   readonly initialBlock?: string
   /** Called when the reader asks for the prior or actual world back (「回到原本」 or the chip's ×). */
   readonly onReset?: () => void
+  /** Something `onReset` puts back moved besides what is set on the graph (the playground's sliders): the reset shows. */
+  readonly moved?: boolean
   /** Notes under nodes that replace the 原本 v notes of a probability graph. */
   readonly notes?: Readonly<Record<string, string>>
   /**
@@ -126,6 +128,7 @@ export function GraphBox({
   blocks,
   initialBlock,
   onReset,
+  moved = false,
   notes,
   reading = 'interventional',
   actions,
@@ -341,7 +344,7 @@ export function GraphBox({
         </div>
         <div className="ca-box-actions">
           {actions}
-          {hasSet && editable && (
+          {(hasSet || moved) && editable && (
             <button type="button" className="ca-link" onClick={clearAll}>
               {prob ? t.backToPrior : t.backToActual}
             </button>

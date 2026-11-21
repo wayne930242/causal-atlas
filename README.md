@@ -2,6 +2,13 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.9.2
+The `sliders` list moved off the page into a tab 「機率」 (en "Probabilities") in the row under the graph,
+closed at first, with every slider grouped by node and its own 「回到原本的機率」, which puts only the
+sliders back (the header's one still resets everything, and now also shows when only a slider moved). A node's menu lists its own sliders as before
+and, once one of them moved, 「這個節點回到原本的機率」 for just those. The engine test of the
+`actualCause` work budget checks the budget's error and limit instead of the time it took (#1).
+
 ## 0.9.1
 A tap on a marked edge keeps its explanation open (the press's focus no longer opened it and the click
 closed it again), and a mouse click on a hovered edge keeps it. A press on a node of another graph on the
@@ -232,7 +239,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.9.1) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.9.2) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -415,11 +422,12 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   keeps what is set; back to the first reading, a node that was both keeps only its do(). The embed
   code does not carry the reading (an embed opens in the first one).
 - `sliders={['N_S1']}` on a probability playground: a slider per exogenous variable (boolean or
-  two-valued, independent prior) under the graph, written as in the probability panel; dragging
+  two-valued, independent prior), written as in the probability panel; dragging
   recomputes everything drawn (numbers, trail, dsep, the bars below) with the new prior, and
   「回到原本的機率」 puts the sliders back. `prior={{ E: 0.1 }}` sets start values of exogenous
-  variables, slider or not. The rows sit under a heading per node they move, and a node's menu lists
-  its own; hovering a node lights its rows and a row its node. The embed code does not record slider
+  variables, slider or not. The sliders live in a closed tab 「機率」 under the graph, under a heading per
+  node they move, with a 「回到原本的機率」 for the sliders alone; a node's menu lists its own and a
+  per-node reset once one moved; hovering a node lights its rows and a row its node. The embed code does not record slider
   positions (said in the hint's ⓘ).
   Other variables, a graph with values or a joint prior throw.
   `<CausalPlayground client:visible caseId="smoking-lesion" sliders={["N_S1"]} decision />`
@@ -544,9 +552,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.1 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.2 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.9.1) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.9.2) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -555,7 +563,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.9.1},
+  version = {0.9.2},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

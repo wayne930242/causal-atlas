@@ -87,13 +87,14 @@ describe('CausalPlayground', () => {
     expect(container.querySelector('[data-node="L"]')?.getAttribute('data-value')).toBe('0')
   })
 
-  it('with a decision, the expected-utility bars are open and the sliders stay on view', () => {
+  it('with a decision, the expected-utility bars are open and the sliders wait in their closed tab', () => {
     const { container } = render(<CausalPlayground caseId="smoking-lesion" sliders={['N_S1']} decision />)
-    expect(tabs(container)).toEqual(['ev', 'equations'])
+    expect(tabs(container)).toEqual(['ev', 'probabilities', 'equations'])
     expect(tab(container, 'ev').textContent).toBe('期望值')
     expect(open(container)).toEqual(['ev'])
     expect(inside(container, '.ca-ev', 'ev')).toBe(true)
-    expect(visible(container, '.ca-slider-list')).toBe(true)
+    expect(visible(container, '.ca-slider-list')).toBe(false)
+    expect(inside(container, '.ca-slider-list', 'probabilities')).toBe(true)
   })
 
   it('with a d-separation pair, the paths are open', () => {

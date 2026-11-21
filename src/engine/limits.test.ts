@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { actualCause } from './actual.ts'
+import { MAX_EVALUATIONS, actualCause } from './actual.ts'
 import { MAX_CONTEXTS, contextCount, enumerateContexts, probability } from './probability.ts'
 import type { Prior } from './probability.ts'
 import { buildModel } from './model.ts'
@@ -57,10 +57,12 @@ describe('REV-F001: context enumeration budget', () => {
 
 describe('REV-F002: actualCause work budget', () => {
   it('stops a hp-updated search that would take seconds, with a clear error', () => {
+    // The search ends on the evaluation budget, not on the clock: what is asserted is the budget's own
+    // error and limit, so a loaded runner cannot fail it, and without the budget check it fails.
     const model = chain(6)
-    const started = Date.now()
-    expect(() => actualCause(model, { U: true }, { cause: 'A0=1', effect: 'Y=1' }, 'hp-updated')).toThrow(/evaluations/)
-    expect(Date.now() - started).toBeLessThan(2000)
+    const run = (): unknown => actualCause(model, { U: true }, { cause: 'A0=1', effect: 'Y=1' }, 'hp-updated')
+    expect(run).toThrow(/evaluations/)
+    expect(run).toThrow(expect.objectContaining({ problem: { code: 'search-budget', params: { theory: 'hp-updated', limit: MAX_EVALUATIONS } } }))
   })
 
   it('stops hp-original on a wider model too', () => {

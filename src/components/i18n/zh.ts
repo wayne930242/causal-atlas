@@ -285,6 +285,7 @@ export const ZH = {
     cut: (to: string): string => `灰色虛線加斜槓：do() 剪掉了這條箭頭，${to} 不再受它影響`,
   },
   sliderGroup: (who: string): string => `${who}的機率`,
+  nodeBackToPrior: '這個節點回到原本的機率',
   barMax: (p: string): string => `最高 ${p}`,
   withHint: (aria: string, hint: string): string => (hint === '' ? aria : `${aria}。${hint}`),
   setDirectly: (parents: readonly string[], value: string): string =>

@@ -186,6 +186,7 @@ export const EN: Messages = {
     cut: (to) => `Grey dashes with a slash: do() cut this arrow, so ${to} no longer depends on it`,
   },
   sliderGroup: (who) => `Probabilities of ${who}`,
+  nodeBackToPrior: 'This node back to the prior probabilities',
   barMax: (p) => `max ${p}`,
   withHint: (aria, hint) => (hint === '' ? aria : `${aria}. ${hint.charAt(0).toUpperCase()}${hint.slice(1)}`),
   setDirectly: (parents, value) => `${parents.length === 0 ? '' : `ignores ${enList(parents)}; `}set directly to ${value}`,

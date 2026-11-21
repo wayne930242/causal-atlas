@@ -2931,3 +2931,18 @@
 .ca-editor-task-guess > span {
   flex-basis: 100%;
 }
+
+/* The reset under the probabilities tab's sliders, and a node's own in its menu. */
+.ca-slider-tab {
+  display: grid;
+  gap: 10px;
+}
+
+.ca-slider-tab .ca-slider-reset,
+.ca-node-menu .ca-slider-reset {
+  justify-self: start;
+}
+
+.ca-node-menu .ca-slider-reset {
+  margin-top: 6px;
+}

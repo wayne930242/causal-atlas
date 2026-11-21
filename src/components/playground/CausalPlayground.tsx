@@ -221,6 +221,13 @@ function PlaygroundFor({
     [c.model, world.shown, sliders, hoverNode, hoverSlider],
   )
   const setSlider = (id: string, p: number): void => setSliderValues((now) => ({ ...now, [id]: p }))
+  /** The sliders among `ids` moved from where they started. */
+  const moved = (ids: readonly string[]): boolean => ids.some((id) => sliderValues[id] !== start[id])
+  /** Put the sliders `ids` back where they started. */
+  const resetSliders = (ids: readonly string[]): void => {
+    setSliderValues((now) => ({ ...now, ...Object.fromEntries(ids.map((id) => [id, start[id]])) }))
+    restartTrail()
+  }
   const sliderId = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   // An embed page takes its state from the address once mounted (the server has no address hash).
   useEffect(() => {
@@ -302,12 +309,37 @@ function PlaygroundFor({
   if (blame !== undefined && blamed !== undefined) {
     blocks.push({ id: 'blame', label: t.tab.blame, children: <PlaygroundBlame c={c} cause={blame.cause} effect={blame.effect} view={blamed} /> })
   }
+  if (sliders.length > 0) {
+    // Every slider, grouped by the node it moves (sliders that move no drawn node last), closed at first:
+    // a node's own sliders are also in its menu.
+    blocks.push({
+      id: 'probabilities',
+      label: t.probabilities,
+      children: (
+        <div className="ca-slider-tab">
+          <SliderList
+            c={c}
+            ids={sliders}
+            values={sliderValues}
+            onChange={setSlider}
+            idPrefix={`ca-pg-slider-${sliderId}`}
+            shown={world.shown}
+            lit={litSliders}
+            onHover={setHoverSlider}
+          />
+          <button type="button" className="ca-btn ca-btn-outline ca-slider-reset" disabled={!moved(sliders)} onClick={() => resetSliders(sliders)}>
+            {t.backToPrior}
+          </button>
+        </div>
+      ),
+    })
+  }
   blocks.push({
     id: 'equations',
     label: t.equations,
     children: <EquationPanel c={c} world={world} interventions={interventions} stochastic={stochastic} observed={observed} reading={reading} notation={notation} onNotation={setNotation} defaults={defaults} />,
   })
-  const initialBlock = blocks.find((b) => b.id !== 'equations')?.id
+  const initialBlock = blocks.find((b) => b.id !== 'equations' && b.id !== 'probabilities')?.id
   const embed =
     src === undefined
       ? undefined
@@ -339,6 +371,7 @@ function PlaygroundFor({
           legend
           exportUrl={exportUrl}
           embedCode={embed}
+          moved={moved(sliders)}
           onReset={() => {
             setSliderValues(start)
             restartTrail()
@@ -353,7 +386,14 @@ function PlaygroundFor({
               : (id) => {
                   const own = nodeSliders(c.model, world.shown, sliders, id)
                   return own.length === 0 ? undefined : (
-                    <SliderList c={c} ids={own} values={sliderValues} onChange={setSlider} idPrefix={`ca-pg-menu-slider-${sliderId}`} />
+                    <>
+                      <SliderList c={c} ids={own} values={sliderValues} onChange={setSlider} idPrefix={`ca-pg-menu-slider-${sliderId}`} />
+                      {moved(own) && (
+                        <button type="button" className="ca-btn ca-btn-outline ca-slider-reset" data-node-reset={id} onClick={() => resetSliders(own)}>
+                          {t.nodeBackToPrior}
+                        </button>
+                      )}
+                    </>
                   )
                 }
           }
@@ -393,18 +433,6 @@ function PlaygroundFor({
           }
           foot={
             <div className="ca-playground-foot">
-              {sliders.length > 0 && (
-                <SliderList
-                  c={c}
-                  ids={sliders}
-                  values={sliderValues}
-                  onChange={setSlider}
-                  idPrefix={`ca-pg-slider-${sliderId}`}
-                  shown={world.shown}
-                  lit={litSliders}
-                  onHover={setHoverSlider}
-                />
-              )}
               {defaults !== undefined && world.values !== undefined && world.original !== undefined && (
                 <p className="ca-norm-line" data-normality="">
                   <span className="ca-pg-now-kicker">{t.normality.kicker}</span>{' '}
