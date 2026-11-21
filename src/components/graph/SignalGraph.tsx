@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import type { FocusEvent, PointerEvent } from 'react'
+import { useId, useRef } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
-import type { Assignment, Edge, Value } from '../../engine/index.ts'
+import type { Assignment, Edge } from '../../engine/index.ts'
 import { getVariable } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
 import type { NodeToggle } from '../i18n/messages.ts'
@@ -9,6 +10,7 @@ import type { Stochastic } from '../model/assignments.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import { idWithName, probText, shortLabel } from '../model/wording.ts'
 import { useDigits } from '../shared/digits.ts'
+import { focusVisible } from '../shared/focus-visible.ts'
 import { Tip } from '../shared/parts.tsx'
 import { sub } from '../text/svg-text.tsx'
 import { textWidth } from '../text/text-measure.ts'
@@ -16,7 +18,6 @@ import { BarChart } from './BarChart.tsx'
 import { layoutSignalGraph } from './signal-geometry.ts'
 import { EXO_INSET, arrowHead, clampPath, exoDash, nodeReadout } from './signal-shapes.ts'
 import { useNodeGestures } from './use-node-gestures.ts'
-import { ValuePicker } from './ValuePicker.tsx'
 
 export interface SignalGraphProps {
   readonly c: LoadedCase
@@ -58,26 +59,31 @@ export interface SignalGraphProps {
   readonly clamped?: readonly string[]
   /** A click (or Enter) on a node picks it, e.g. into or out of a known set; no observing or do(). */
   readonly onPick?: (id: string) => void
-  /** Click on a node: toggles a boolean one; a multi-valued one opens the value control when `onSetValue` is given. */
-  readonly onToggle?: (id: string) => void
-  /** The value control of a multi-valued node: the chosen value, or undefined to release the intervention. */
-  readonly onSetValue?: (id: string, value: Value | undefined) => void
-  /**
-   * Probability mode: intervening on a boolean node sets P*(X=1) = 1 at once (the observed value,
-   * when it was observed) and opens a slider for P*(X=1), reported here; 0 and 1 mean do(X=0) and
-   * do(X=1), undefined releases the intervention.
-   */
-  readonly onSetProbability?: (id: string, p: number | undefined) => void
-  /**
-   * Given, a click (or Enter) observes the node, and a long press, Shift+click or Shift+Enter
-   * intervenes on it; without it every click intervenes.
-   */
-  readonly onObserve?: (id: string) => void
+  /** A click (or Enter, Space) on a node opens its menu (observe, intervene), drawn by the caller. */
+  readonly onOpen?: (id: string) => void
+  /** The menu observes: an exogenous node, which do() cannot set, opens one only then. */
+  readonly observable?: boolean
+  /** The node whose menu is open (its `aria-expanded`). */
+  readonly open?: string
+  /** Nodes drawn with a soft halo: the ones a hovered slider feeds. */
+  readonly lit?: readonly string[]
+  /** The pointer (a mouse or pen) is over a node, or the keyboard focus is on it; undefined when it leaves. */
+  readonly onHover?: (id: string | undefined) => void
+  /** The marked edge (on a d-separation path, or cut by do()) whose explanation is shown, by key. */
+  readonly edgeTip?: string
+  /** A marked edge is hovered, focused or tapped: its explanation, or undefined to hide it. */
+  readonly onEdgeTip?: (tip: EdgeTip | undefined) => void
   readonly title: string
   /** Narrower columns, for two graphs side by side. */
   readonly compact?: boolean
   /** Lets nodes be dragged (or moved with arrow keys); reports the move in grid columns and rows. */
   readonly onMove?: (id: string, dCol: number, dRow: number) => void
+}
+
+/** The explanation of a marked edge, shown by the caller beside `[data-edge="key"]`. */
+export interface EdgeTip {
+  readonly key: string
+  readonly text: string
 }
 
 /** Direction 1 「訊號圖」: value nodes, signal edges, do() clamps and cut edges. */
@@ -96,10 +102,6 @@ export function SignalGraph(props: SignalGraphProps) {
     stochastic = {},
     removedEdges,
     witness,
-    onToggle,
-    onSetValue,
-    onSetProbability,
-    onObserve,
     onMove,
     observedValues = {},
     evidence = false,
@@ -108,41 +110,29 @@ export function SignalGraph(props: SignalGraphProps) {
     paths,
     clamped = [],
     onPick,
+    onOpen,
+    observable = false,
+    open,
+    lit = [],
+    onHover,
+    edgeTip,
+    onEdgeTip,
   } = props
   const t = useMessages()
   const digits = useDigits()
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const svgRef = useRef<SVGSVGElement>(null)
-  const { drag, pressing, moveDrag, endDrag, cancelDrag, nodeHandlers } = useNodeGestures(svgRef, onMove)
-  const [picking, setPicking] = useState<string | undefined>(undefined)
-  // The control belongs to a node under do(): once that do() is gone (reset by a button, a preset,
-  // the keyboard), the control closes.
-  if (picking !== undefined && !(picking in interventions) && !(picking in stochastic)) setPicking(undefined)
-  const popRef = useRef<HTMLDivElement>(null)
-  const sliderRef = useRef<HTMLInputElement>(null)
-  const focusNode = (id: string): void => svgRef.current?.querySelector<SVGGElement>(`[data-node="${id}"]`)?.focus()
-  useEffect(() => {
-    if (picking === undefined) return
-    sliderRef.current?.focus()
-    const outside = (e: Event): void => {
-      const target = e.target
-      if (!(target instanceof Element)) return
-      // A press on a node is that node's own click (it closes this control, or opens another).
-      if (popRef.current?.contains(target) === true || target.closest('[data-node]') !== null) return
-      setPicking(undefined)
-    }
-    const escape = (e: globalThis.KeyboardEvent): void => {
-      if (e.key !== 'Escape') return
-      setPicking(undefined)
-      focusNode(picking)
-    }
-    document.addEventListener('pointerdown', outside)
-    document.addEventListener('keydown', escape)
-    return () => {
-      document.removeEventListener('pointerdown', outside)
-      document.removeEventListener('keydown', escape)
-    }
-  }, [picking])
+  const { drag, moveDrag, endDrag, cancelDrag, nodeHandlers } = useNodeGestures(svgRef, onMove)
+  /** Hover from a mouse or pen only: a tap is a click. */
+  const hoverHandlers = (id: string) =>
+    onHover === undefined
+      ? {}
+      : {
+          onPointerEnter: (e: PointerEvent<SVGGElement>) => e.pointerType !== 'touch' && onHover(id),
+          onPointerLeave: (e: PointerEvent<SVGGElement>) => e.pointerType !== 'touch' && onHover(undefined),
+          onFocus: (e: FocusEvent<SVGGElement>) => focusVisible(e.currentTarget) && onHover(id),
+          onBlur: () => onHover(undefined),
+        }
   const layout = layoutSignalGraph(
     {
       c,
@@ -174,11 +164,35 @@ export function SignalGraph(props: SignalGraphProps) {
 
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
+  const [endA, endB] = paths?.ends ?? []
+  /** A marked edge explains itself: on hover (mouse, pen) and keyboard focus, and on a tap, which toggles it. */
+  const tipProps = (key: string, text: string | undefined) =>
+    text === undefined || onEdgeTip === undefined
+      ? {}
+      : {
+          tabIndex: 0,
+          role: 'img',
+          'aria-label': text,
+          'data-tip': edgeTip === key ? 'open' : undefined,
+          onPointerEnter: (e: PointerEvent<SVGGElement>) => e.pointerType !== 'touch' && onEdgeTip({ key, text }),
+          onPointerLeave: (e: PointerEvent<SVGGElement>) => e.pointerType !== 'touch' && onEdgeTip(undefined),
+          onFocus: () => onEdgeTip({ key, text }),
+          onBlur: () => onEdgeTip(undefined),
+          onClick: () => onEdgeTip(edgeTip === key ? undefined : { key, text }),
+        }
+  const pathTip = (onPath: 'open' | 'blocked' | undefined): string | undefined =>
+    onPath === undefined || endA === undefined || endB === undefined ? undefined : onPath === 'open' ? t.edgeTip.open(endA, endB) : t.edgeTip.blocked(endA, endB)
+  /** An invisible wide stroke over a marked edge, so a finger or pointer finds it. */
+  const hit = (key: string, x1: number, y1: number, x2: number, y2: number, text: string | undefined) =>
+    text === undefined || onEdgeTip === undefined ? null : <line key={`${key}-hit`} x1={x1} y1={y1} x2={x2} y2={y2} className="ca-edge-hit" />
+
   const edgeEls = layout.edges.map((edge) => {
     if (edge.kind === 'cut') {
       const { key, x1, y1, x2, y2, mx, my, ux, uy, label: cutLabel } = edge
+      const tip = t.edgeTip.cut(edge.key.split('>')[1] ?? '')
       return (
-        <g key={key} className="ca-edge ca-edge-cut" data-edge={key} data-state="cut">
+        <g key={key} className="ca-edge ca-edge-cut" data-edge={key} data-state="cut" {...tipProps(key, tip)}>
+          {hit(key, x1, y1, x2, y2, tip)}
           <line x1={x1} y1={y1} x2={mx - 10 * ux} y2={my - 10 * uy} className="ca-stroke-cut" />
           <line x1={mx + 10 * ux} y1={my + 10 * uy} x2={x2} y2={y2} className="ca-stroke-cut" />
           <path d={edge.slash} className="ca-stroke-slash" />
@@ -191,8 +205,10 @@ export function SignalGraph(props: SignalGraphProps) {
     const { key, x1, y1, x2, y2, live, onPath, cls } = edge
     if (edge.kind === 'inhibit') {
       const { ux, uy, text, label: inhibitLabel } = edge
+      const tip = pathTip(onPath)
       return (
-        <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath}>
+        <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath} {...tipProps(key, tip)}>
+          {hit(key, x1, y1, x2, y2, tip)}
           <line x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />
           <circle cx={x2 + 5 * ux} cy={y2 + 5 * uy} r={5} className={`ca-inhibit ${live ? 'is-live' : ''}`} />
           <text x={inhibitLabel.x} y={inhibitLabel.y} className={`ca-svg-small ca-svg-bold ca-mono ${live ? '' : 'ca-fill-muted'}`}>
@@ -201,8 +217,10 @@ export function SignalGraph(props: SignalGraphProps) {
         </g>
       )
     }
+    const tip = pathTip(onPath)
     return (
-      <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath}>
+      <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath} {...tipProps(key, tip)}>
+        {hit(key, x1, y1, x2, y2, tip)}
         <line
           x1={x1}
           y1={y1}
@@ -273,55 +291,14 @@ export function SignalGraph(props: SignalGraphProps) {
     const forcedText = forced !== undefined ? (tagText?.[id] ?? formatValue(forced)) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : undefined
     const seen = observedValues[id]
     const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen))
-    // A multi-valued node does not flip: intervening on it sets a value and opens a control to pick
-    // another. In probability mode a boolean one is set to 1 and opens a control for P*(X=1).
     // An exogenous node is the context: it can be observed, never set by do().
-    const settable = variable.kind === 'endogenous'
-    const picksValue = settable && onToggle !== undefined && onSetValue !== undefined && !boolean
-    const picksProb = settable && prob && boolean && onSetProbability !== undefined
-    const picks = picksValue || picksProb
-    const toggles = settable && onToggle !== undefined
-    const observes = onObserve !== undefined
-    const interactive = toggles || onMove !== undefined || picks || observes || onPick !== undefined
-    /** Intervene: set the node at once (to its observed or current value) and open its control. */
-    const intervene = (): void => {
-      if (picksProb) {
-        if (!intervened) onSetProbability?.(id, seen === undefined || seen === true || seen === 1 ? 1 : 0)
-        setPicking(intervened && picking === id ? undefined : id)
-      } else if (picksValue && variable.domain.kind === 'finite') {
-        if (!intervened) onSetValue?.(id, seen ?? v ?? variable.domain.values[0])
-        setPicking(intervened && picking === id ? undefined : id)
-      } else if (toggles) onToggle?.(id)
+    const opens = onPick === undefined && onOpen !== undefined && (variable.kind === 'endogenous' || observable)
+    const interactive = opens || onMove !== undefined || onPick !== undefined
+    const activate = (): void => {
+      if (onPick !== undefined) onPick(id)
+      else onOpen?.(id)
     }
-    const activate = (shift: boolean): void => {
-      if (onPick !== undefined) {
-        onPick(id)
-        return
-      }
-      if (observes && !shift) {
-        setPicking(undefined)
-        onObserve(id)
-      } else intervene()
-    }
-    const toggle: NodeToggle | undefined = onPick !== undefined
-      ? 'pick'
-      : observes
-      ? settable
-        ? 'observe'
-        : 'observeOnly'
-      : picksProb
-      ? intervened
-        ? 'adjustProb'
-        : 'chooseProb'
-      : !toggles
-        ? undefined
-        : picksValue
-          ? intervened
-            ? 'adjust'
-            : 'choose'
-          : intervened
-            ? 'release'
-            : 'set'
+    const toggle: NodeToggle | undefined = onPick !== undefined ? 'pick' : !opens ? undefined : observable ? 'observeOrDo' : 'do'
     const hint = t.nodeHint(toggle, onMove !== undefined)
     // An exogenous node is a dashed ring with its value or fill a little inside it.
     const exo = variable.kind === 'exogenous'
@@ -338,7 +315,6 @@ export function SignalGraph(props: SignalGraphProps) {
         data-value={text}
         data-intervened={intervened ? 'true' : 'false'}
         data-observed={seen === undefined ? undefined : formatValue(seen)}
-        data-pressing={pressing === id ? 'true' : undefined}
         data-do-p={soft === undefined ? undefined : soft.toFixed(2)}
         data-block={block.side}
         transform={`translate(${p.x} ${p.y})`}
@@ -346,16 +322,17 @@ export function SignalGraph(props: SignalGraphProps) {
           ? {
               role: 'button',
               tabIndex: 0,
-              'aria-pressed': toggles && !picks ? intervened : undefined,
-              'aria-haspopup': picks ? 'dialog' : undefined,
-              'aria-expanded': picks ? picking === id : undefined,
+              'aria-haspopup': opens ? 'dialog' : undefined,
+              'aria-expanded': opens ? open === id : undefined,
               'aria-label': t.withHint(aria, hint),
-              ...nodeHandlers(id, { settable, observes, activate, intervene }),
+              ...nodeHandlers(id, activate),
             }
           : { role: 'img', 'aria-label': aria })}
+        {...hoverHandlers(id)}
       >
+        {lit.includes(id) && <circle r={R + 14} className="ca-lit-ring" data-lit={id} />}
         <circle r={R + 12} className="ca-focus-ring" />
-        {pressing === id && <circle r={R + 8} className="ca-press-ring" pathLength={100} />}
+        {open === id && <circle r={R + 12} className="ca-open-ring" />}
         {observed.includes(id) && <circle r={R + 5} className="ca-ring" />}
         {paths?.ends.includes(id) === true && <circle r={R + 9} className="ca-dsep-ring" data-dsep-end={id} />}
         {prob ? (
@@ -512,26 +489,6 @@ export function SignalGraph(props: SignalGraphProps) {
       {edgeEls}
       {arcEls}
       {nodeEls}
-      {picking !== undefined && (
-        <ValuePicker
-          c={c}
-          id={picking}
-          shown={shown}
-          layout={layout}
-          values={values}
-          probs={probs}
-          interventions={interventions}
-          stochastic={stochastic}
-          onSetValue={onSetValue}
-          onSetProbability={onSetProbability}
-          popRef={popRef}
-          sliderRef={sliderRef}
-          onClose={() => {
-            setPicking(undefined)
-            focusNode(picking)
-          }}
-        />
-      )}
     </svg>
   )
 }

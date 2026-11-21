@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
+import { doNode, observeNode } from '../test-menu.ts'
 
 afterEach(cleanup)
 
@@ -27,7 +28,7 @@ describe('playground reading: 干預｜反事實', () => {
     expect(box?.querySelector('.ca-reading-label')?.textContent).toBe('視角')
     // No intervention yet: the interventional hint stays hidden.
     expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('')
-    fireEvent.click(node(container, 'A'), { shiftKey: true })
+    doNode(container, 'A', '1')
     expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('點選的是干預之後看到的結果')
     fireEvent.click(mode(container, '反事實'))
     expect(box?.querySelector('.ca-reading-hint')?.textContent).toBe('點選的是實際發生過的事，再問：假如當初……會怎樣')
@@ -60,15 +61,15 @@ describe('playground reading: 干預｜反事實', () => {
   it('a node may be evidence and action at once; going back drops the evidence half', () => {
     const { container } = render(<CausalPlayground doc={nervous} />)
     fireEvent.click(mode(container, '反事實'))
-    fireEvent.click(node(container, 'A'))
+    observeNode(container, 'A', '1')
     expect(node(container, 'A').getAttribute('data-observed')).toBe('1')
-    // Shift+click: the hypothetical action, at the observed value first.
-    fireEvent.click(node(container, 'A'), { shiftKey: true })
+    // The menu's supposition: the hypothetical action, beside the evidence.
+    doNode(container, 'A', '1')
     expect(node(container, 'A').getAttribute('data-intervened')).toBe('true')
     expect(node(container, 'A').getAttribute('data-observed')).toBe('1')
     expect(note(container, 'A')).toBe('實際 1')
-    // A click on it now changes the evidence, not the action.
-    fireEvent.click(node(container, 'A'))
+    // Changing the evidence leaves the action.
+    observeNode(container, 'A', '0')
     expect(node(container, 'A').getAttribute('data-observed')).toBe('0')
     expect(node(container, 'A').getAttribute('data-intervened')).toBe('true')
     fireEvent.click(mode(container, '干預'))
@@ -78,7 +79,7 @@ describe('playground reading: 干預｜反事實', () => {
 
   it('switching keeps what is set: an observation becomes evidence', () => {
     const { container } = render(<CausalPlayground doc={nervous} />)
-    fireEvent.click(node(container, 'D'))
+    observeNode(container, 'D', '1')
     expect(chip(container)).toBe('D=1')
     fireEvent.click(mode(container, '反事實'))
     expect(node(container, 'D').getAttribute('data-observed')).toBe('1')

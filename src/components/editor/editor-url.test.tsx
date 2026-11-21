@@ -6,6 +6,7 @@ import { encodeShare } from '../../data/model-doc.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import { formatDo, formatPdo, hashFragment, hashWith, parseDo, parsePdo, readHashState } from '../export/url-state.ts'
 import { ModelEditor } from '../index.ts'
+import { doNode } from '../test-menu.ts'
 
 const setUrl = (url: string): void => window.history.replaceState(null, '', url)
 
@@ -120,8 +121,7 @@ describe('ModelEditor address sync', () => {
     const { container } = render(<ModelEditor initial="rock-throwing" />)
     const node = container.querySelector('.ca-graph [data-node="ST"]')
     if (node === null) throw new Error('no node ST')
-    fireEvent.click(node)
-    // The first click pins ST at its current value, 1.
+    doNode(container, 'ST', '1')
     expect(window.location.hash).toBe('#case=rock-throwing&do=ST:1')
   })
 

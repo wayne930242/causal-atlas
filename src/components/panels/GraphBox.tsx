@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
-import { useMemo, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
-import type { Assignment } from '../../engine/index.ts'
+import type { Assignment, Value } from '../../engine/index.ts'
 import { formatValue, getVariable } from '../../engine/index.ts'
 import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource, ExportTag } from '../export/export-image.ts'
@@ -11,12 +11,16 @@ import { useMessages } from '../i18n/messages.ts'
 import { useDigits } from '../shared/digits.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import type { DoState, ModelWorld, Reading } from '../model/model-state.ts'
-import { observedNext, solve, toggled, withProbability, withValue } from '../model/model-state.ts'
+import { solve, withProbability, withValue } from '../model/model-state.ts'
 import type { FigureBlock } from '../shared/FigureTabs.tsx'
 import { FigureTabs } from '../shared/FigureTabs.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { Tag } from '../shared/parts.tsx'
+import type { EdgeTip } from '../graph/SignalGraph.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
+import type { Rect } from './menu-place.ts'
+import { placeMenu, placeTip } from './menu-place.ts'
+import { NodeMenu } from './NodeMenu.tsx'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { originCitations } from '../model/verdict-rows.ts'
 import type { Stochastic } from '../model/assignments.ts'
@@ -33,10 +37,16 @@ export interface GraphBoxProps {
   /** Observations the probabilities are conditioned on (probability mode only). */
   readonly observed?: Assignment
   /**
-   * The new observations after a click. Given in probability mode, a click observes and a long
-   * press or Shift+click intervenes; without it every click intervenes.
+   * The new observations, chosen in a node's menu. Given in probability mode, the menu observes
+   * as well as intervenes.
    */
   readonly onObserve?: (next: Assignment) => void
+  /** Under the actions of a node's menu: the node's own probability sliders, if any. */
+  readonly menuExtra?: (id: string) => ReactNode
+  /** Nodes drawn with a soft halo (the ones a hovered slider moves). */
+  readonly lit?: readonly string[]
+  /** A node is hovered or keyboard-focused, or left (undefined). */
+  readonly onHover?: (id: string | undefined) => void
   readonly witness?: Assignment
   /** Held variables say 固定（實際 v） beside them instead of the hull's 見證 tag (see SignalGraph). */
   readonly holdNotes?: boolean
@@ -59,9 +69,9 @@ export interface GraphBoxProps {
   /** Notes under nodes that replace the 原本 v notes of a probability graph. */
   readonly notes?: Readonly<Record<string, string>>
   /**
-   * How a probability graph reads what is set (see `Reading`). `counterfactual`: a click sets
-   * evidence about the actual world and a long press, right-click or Shift+click the hypothetical
-   * action; a node may be both; evidence nodes read 實際 v instead of a tag.
+   * How a probability graph reads what is set (see `Reading`). `counterfactual`: the menu's
+   * observations are evidence about the actual world and its do() the hypothetical action; a node
+   * may be both; evidence nodes read 實際 v instead of a tag.
    */
   readonly reading?: Reading
   /** Controls in the head, before 「回到原本」 (the playground's reading switch). */
@@ -92,10 +102,10 @@ function withoutKey(a: Assignment, id: string): Assignment {
 }
 
 /**
- * The graph with its world tags. With values, a click intervenes on a node. With probabilities and
- * `onObserve`, a click observes it and a long press or Shift+click intervenes (a boolean node is set
- * to 1 at once, with a slider for P*(X=1) beside it); an observation that cannot happen under what is
- * set is refused with a note.
+ * The graph with its world tags. A click on a node opens its menu beside it: do() at each value or
+ * release (with a slider for P*(X=1) on a probability graph), and with `onObserve` observing at each
+ * value; an observation that cannot happen under what is set is refused with a note. Marked edges
+ * (on a d-separation path, cut by do()) explain themselves on hover, focus or a tap.
  */
 export function GraphBox({
   c,
@@ -121,6 +131,9 @@ export function GraphBox({
   actions,
   defaults,
   paths,
+  menuExtra,
+  lit,
+  onHover,
 }: GraphBoxProps) {
   const t = useMessages()
   const digits = useDigits()
@@ -135,6 +148,73 @@ export function GraphBox({
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
   const observes = prob && onObserve !== undefined
+  const editable = onDo !== undefined || onObserve !== undefined
+  const [menuAt, setMenu] = useState<string | undefined>(undefined)
+  const menu = menuAt !== undefined && world.shown.includes(menuAt) ? menuAt : undefined
+  const [tip, setTip] = useState<EdgeTip | undefined>(undefined)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({ visibility: 'hidden' })
+  const [tipStyle, setTipStyle] = useState<CSSProperties>({ visibility: 'hidden' })
+  const focusNode = (id: string): void => wrap.current?.querySelector<SVGGElement>(`[data-node="${id}"]`)?.focus()
+  const closeMenu = (): void => {
+    if (menu !== undefined) focusNode(menu)
+    setMenu(undefined)
+  }
+  /** `el`'s box relative to the wrapper. */
+  const relative = (el: Element | null | undefined): Rect | undefined => {
+    const box = wrap.current?.getBoundingClientRect()
+    const r = el?.getBoundingClientRect()
+    if (box === undefined || r === undefined) return undefined
+    return { left: r.left - box.left, top: r.top - box.top, right: r.right - box.left, bottom: r.bottom - box.top }
+  }
+  // The menu and the tip sit beside what they belong to, measured once drawn (and again on resize).
+  useLayoutEffect(() => {
+    const place = (): void => {
+      const width = wrap.current?.clientWidth ?? 0
+      if (menu !== undefined) {
+        const at = relative(wrap.current?.querySelector(`[data-node="${menu}"] .ca-focus-ring`))
+        setMenuStyle(at === undefined ? {} : (() => {
+          const p = placeMenu(at, width)
+          return { left: p.left, top: p.top, width: p.width }
+        })())
+      }
+      if (tip !== undefined) {
+        const at = relative(wrap.current?.querySelector(`[data-edge="${tip.key}"]`))
+        setTipStyle(at === undefined ? {} : (() => {
+          const p = placeTip(at, width)
+          return { left: p.left, top: p.top, width: p.width }
+        })())
+      }
+    }
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [menu, tip, world, narrow])
+  // A press outside the menu closes it (a press on a node is that node's own click); one outside
+  // the edges hides a tapped edge's explanation; Esc closes either.
+  useEffect(() => {
+    if (menu === undefined && tip === undefined) return
+    const outside = (e: Event): void => {
+      const target = e.target
+      if (!(target instanceof Element)) return
+      if (menu !== undefined && menuRef.current?.contains(target) !== true && target.closest('[data-node]') === null) setMenu(undefined)
+      if (tip !== undefined && target.closest('[data-edge]') === null) setTip(undefined)
+    }
+    const escape = (e: globalThis.KeyboardEvent): void => {
+      if (e.key !== 'Escape') return
+      setTip(undefined)
+      if (menu !== undefined) {
+        focusNode(menu)
+        setMenu(undefined)
+      }
+    }
+    document.addEventListener('pointerdown', outside)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('pointerdown', outside)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [menu, tip])
   const legendFor = (m: Messages): string => (world.probs !== undefined ? probLegend(m, c.model, world.shown) : m.valueLegend)
   const headTag = (m: Messages): string => (cf && hasDo ? m.cf.kicker : hasDo && hasObs ? m.afterDoObserve : hasObs ? m.afterObserve : m.afterDo)
   const chipText = (m: Messages): string => readingText(m, cf, interventions, stochastic, observed)
@@ -195,20 +275,13 @@ export function GraphBox({
       holdNotes={holdNotes}
       defaults={defaults}
       paths={paths}
-      onToggle={!interactive || onDo === undefined ? undefined : (id) => doing({ stochastic, interventions: toggled(c, interventions, world, id) }, id)}
-      onSetValue={!interactive || onDo === undefined ? undefined : (id, value) => doing({ stochastic, interventions: withValue(interventions, id, value) }, id)}
-      onSetProbability={!interactive || onDo === undefined || !prob ? undefined : (id, p) => doing(withProbability(state, id, p), id)}
-      onObserve={
-        !interactive || !observes
-          ? undefined
-          : (id) => {
-              const forced = interventions[id]
-              if (!cf && (forced !== undefined || id in stochastic)) {
-                // Observing an intervened node: the same value, now observed (1 for a stochastic one).
-                commit(withoutDo(state, id), { ...observed, [id]: forced ?? true })
-              } else commit(state, observedNext(c, observed, id))
-            }
-      }
+      onOpen={!interactive || !editable ? undefined : (id) => setMenu(menu === id ? undefined : id)}
+      observable={observes}
+      open={interactive ? menu : undefined}
+      lit={interactive ? lit : undefined}
+      onHover={interactive ? onHover : undefined}
+      edgeTip={interactive ? tip?.key : undefined}
+      onEdgeTip={interactive ? setTip : undefined}
       title={title ?? m.graphTitle(c.data.title[m.locale])}
       onMove={interactive ? onMove : undefined}
     />
@@ -227,7 +300,18 @@ export function GraphBox({
         legend: legendFor(m),
       }
     })
-  const editable = onDo !== undefined || onObserve !== undefined
+  /** The menu's observation of `id` at `value` (undefined: no longer observed). */
+  const observe = (id: string, value: Value | undefined): void => {
+    if (value === undefined) commit(state, withoutKey(observed, id))
+    // Observing an intervened node: the value is now observed instead of set.
+    else if (!cf && (id in interventions || id in stochastic)) commit(withoutDo(state, id), { ...observed, [id]: value })
+    else commit(state, { ...observed, [id]: value })
+  }
+  /** The menu's do() of `id` at `value` (undefined: released). */
+  const intervene = (id: string, value: Value | undefined): void => {
+    if (prob && getVariable(c.model, id).domain.kind === 'boolean') doing(withProbability(state, id, value === undefined ? undefined : value === true || value === 1 ? 1 : 0), id)
+    else doing({ stochastic, interventions: withValue(interventions, id, value) }, id)
+  }
   return (
     <div className={`ca-box ca-graph-box${hasSet ? ' is-cf' : ''}`} data-world={cf && hasDo ? 'counterfactual' : hasDo ? 'do' : hasObs ? 'observed' : 'actual'}>
       <div className="ca-box-head">
@@ -260,6 +344,32 @@ export function GraphBox({
       </div>
       <div className="ca-graph-wrap" ref={wrap}>
         {graph(t, true)}
+        {menu !== undefined && (
+          <NodeMenu
+            c={c}
+            id={menu}
+            world={world}
+            interventions={interventions}
+            stochastic={stochastic}
+            observed={observed}
+            observes={observes}
+            intervenes={onDo !== undefined}
+            counterfactual={cf}
+            pair={paths?.ends}
+            extra={menuExtra?.(menu)}
+            onObserve={(v) => observe(menu, v)}
+            onDo={(v) => intervene(menu, v)}
+            onDoProbability={(p) => doing(withProbability(state, menu, p), menu)}
+            onClose={closeMenu}
+            style={menuStyle}
+            menuRef={menuRef}
+          />
+        )}
+        {tip !== undefined && (
+          <div className="ca-edge-tip" role="tooltip" data-edge-tip={tip.key} style={tipStyle}>
+            {tip.text}
+          </div>
+        )}
       </div>
       {notice !== undefined && (
         <p className="ca-notice" role="status">

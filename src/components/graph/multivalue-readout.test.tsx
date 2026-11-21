@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ModelDoc } from '../../data/schema.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import { PALETTES, inlineSvg } from '../export/export-image.ts'
-import { intersects, placePop } from './graph-labels.ts'
+import { MENU_W, placeMenu, placeTip } from '../panels/menu-place.ts'
 import { CausalPlayground, ProbabilityPanel } from '../index.ts'
 import { barLayout } from '../text/text-measure.ts'
 
@@ -113,38 +113,20 @@ describe('multi-valued readout', () => {
   })
 })
 
-describe('do-value popover placement', () => {
-  const size = { w: 184, h: 72 }
-  const bounds = { w: 600, h: 300 }
-
-  it('prefers the right of the node, vertically centred on it', () => {
-    expect(placePop({ x: 100, y: 150 }, 30, size, bounds, 16)).toEqual({ x: 146, y: 114, side: 'right' })
+describe('node menu placement', () => {
+  const node = { left: 100, top: 120, right: 160, bottom: 180 }
+  it('goes right of the node when the wrapper has room, else left, else under it', () => {
+    expect(placeMenu(node, 700)).toEqual({ left: 168, top: 120, width: MENU_W })
+    expect(placeMenu({ left: 500, top: 120, right: 560, bottom: 180 }, 700)).toEqual({ left: 500 - 8 - MENU_W, top: 120, width: MENU_W })
+    expect(placeMenu({ left: 250, top: 120, right: 310, bottom: 180 }, 560)).toEqual({ left: 140, top: 184, width: MENU_W })
   })
 
-  it('falls back to the left near the right edge, then below, then above', () => {
-    expect(placePop({ x: 560, y: 150 }, 30, size, bounds, 16)).toEqual({ x: 330, y: 114, side: 'left' })
-    expect(placePop({ x: 150, y: 100 }, 30, size, { w: 300, h: 300 }, 16).side).toBe('below')
-    expect(placePop({ x: 100, y: 200 }, 30, size, { w: 300, h: 260 }, 16)).toEqual({ x: 8, y: 82, side: 'above' })
+  it('spans a narrow wrapper under the node', () => {
+    expect(placeMenu(node, 390)).toEqual({ left: 0, top: 184, width: 390 })
   })
 
-  it('goes to a side that covers no other node (the sprinkler at 390 px: not over W)', () => {
-    const w = { x0: 260, y0: 110, x1: 340, y1: 190 }
-    const at = placePop({ x: 100, y: 150 }, 30, size, { w: 360, h: 300 }, 16, [w])
-    expect(at.side).toBe('below')
-    expect(intersects({ x0: at.x, y0: at.y, x1: at.x + size.w, y1: at.y + size.h }, w, 0)).toBe(false)
-  })
-
-  it('stays inside the box when the node is near the top or bottom', () => {
-    expect(placePop({ x: 100, y: 10 }, 30, size, bounds, 16).y).toBe(0)
-    expect(placePop({ x: 100, y: 295 }, 30, size, bounds, 16).y).toBe(228)
-  })
-
-  it('opens beside the node in the graph', () => {
-    const { container } = render(<CausalPlayground doc={dice} />)
-    // In probability mode a click observes; Shift+click intervenes and opens the value control.
-    fireEvent.click(screen.getByRole('button', { name: /^D1 骰一/ }), { shiftKey: true })
-    const box = container.querySelector('.ca-do-pop-box') as Element
-    const [tx] = (node(container, 'D1').getAttribute('transform') ?? '').match(/-?[\d.]+/g)?.map(Number) ?? []
-    expect(Number(box.getAttribute('x'))).toBeGreaterThan(tx)
+  it('keeps an edge tip inside the wrapper, over the edge', () => {
+    expect(placeTip({ left: 0, top: 100, right: 40, bottom: 140 }, 600)).toEqual({ left: 0, top: 110, width: 240 })
+    expect(placeTip({ left: 580, top: 100, right: 600, bottom: 140 }, 600).left).toBe(360)
   })
 })

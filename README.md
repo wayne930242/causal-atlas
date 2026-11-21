@@ -2,6 +2,21 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.9.0
+One gesture for every graph: a click (or Enter, Space) on a node opens its menu beside it. The menu says
+what the node's marks mean now (fill height = P(=1), double ring = observed, red clamp = do(), red outer
+ring = an end of the d-separation pair, dashed ring = exogenous), observes it at each value or no longer
+(probability graphs; 實際（證據） under 反事實), sets do() at each value or releases it (假設干預 under
+反事實), with the P*(X=1) slider for a stochastic do() on a boolean node, and lists the node's own
+probability sliders. A graph with one set of values gets the same menu with do() only and the line
+「所有值都已知，觀察不會改變任何值」. Long press, right-click and Shift+click no longer do anything: the
+browser keeps its menu, and a long press on the graph selects no text and opens no callout. Esc, the ×,
+a second click on the node or a press outside closes the menu.
+
+`sliders` sit under one heading per node they move (`S 灑水器開著` over `N_S1`, `N_S0`); hovering or
+focusing a node lights its rows, and a row lights its node. Edges on a d-separation path or cut by
+do() explain themselves on hover, keyboard focus or a tap (紅色粗線 open, 虛線 blocked, 灰色虛線加斜槓 cut).
+
 ## 0.8.3
 A step button stays pressed while everything it set still holds: after `第 2 步：已知 Z`, observing or
 setting another node keeps step 2 lit (before, any extra click unpressed it, which read as if Z were no longer
@@ -211,7 +226,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.8.3) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.9.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -325,9 +340,9 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 ```
 
 - `<CausalPlayground doc>`: graph, notation toggle, observation and do() on the nodes (see 0.3.13) and the export menu, server-rendered
-  with values, no editor chrome. On a probability graph a click observes, and a long press, a mouse
-  right-click or Shift+click intervenes (a touch long press intervenes once, though Android also sends
-  `contextmenu`); a graph with values keeps the browser's menu. The hint under the graph is one line;
+  with values, no editor chrome. A click on a node opens its menu (see 0.9.0): observe (probability
+  graphs) or do() at each value, release, a P*(X=1) slider, the node's own sliders; no long-press or
+  right-click binding. The hint under the graph is one line;
   its ⓘ opens the details in a tooltip (hover, keyboard focus or a tap; `aria-describedby`).
 - `presets` (step buttons) is `true` (a bundled case's own; a document has none), `false`, or a list of
   `{ label: string | { 'zh-TW', en }, interventions?, observed?, hold? }`. One press sets exactly
@@ -387,8 +402,8 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   `dependence(model, prior, x, y, given, do, stochastic)`.
 - A probability playground has a reading switch in its head, 「干預｜反事實」. The first
   (default) reads what is set as P(· | do(…), observed), and a node is either observed or set. Under
-  反事實 the same gestures mean evidence about the actual world (click) and the supposed action (long
-  press, right-click, Shift+click); a node may be both (actual A=1, set A=0); the nodes show
+  反事實 the menu's rows read 實際（證據）, evidence about the actual world, and 假設干預, the supposed
+  action; a node may be both (actual A=1, set A=0); the nodes show
   P(V_{do(…)} | evidence) by abduction, action and prediction, evidence nodes read 實際 v, other nodes
   實際 v where they moved from the actual world, and the chip reads `D=1 ⇒ 若 do(A=0)`. Switching
   keeps what is set; back to the first reading, a node that was both keeps only its do(). The embed
@@ -397,7 +412,9 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   two-valued, independent prior) under the graph, written as in the probability panel; dragging
   recomputes everything drawn (numbers, trail, dsep, the bars below) with the new prior, and
   「回到原本的機率」 puts the sliders back. `prior={{ E: 0.1 }}` sets start values of exogenous
-  variables, slider or not. The embed code does not record slider positions (said in the hint's ⓘ).
+  variables, slider or not. The rows sit under a heading per node they move, and a node's menu lists
+  its own; hovering a node lights its rows and a row its node. The embed code does not record slider
+  positions (said in the hint's ⓘ).
   Other variables, a graph with values or a joint prior throw.
   `<CausalPlayground client:visible caseId="smoking-lesion" sliders={["N_S1"]} decision />`
 - `decision` on a probability playground: expected-utility bars under the graph, a row for the
@@ -521,9 +538,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.8.3 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.8.3) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.9.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -532,7 +549,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.8.3},
+  version = {0.9.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

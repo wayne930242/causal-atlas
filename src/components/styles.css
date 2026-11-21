@@ -309,6 +309,7 @@
 }
 
 .ca-graph-wrap {
+  position: relative;
   display: flex;
   justify-content: center;
   padding-top: 4px;
@@ -472,6 +473,13 @@
   overflow: visible;
 }
 
+/* A long press on a node or an edge does nothing: no text selection, no callout on touch screens. */
+.ca-graph {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .ca-graph text,
 .ca-lanes-svg text {
   fill: var(--foreground);
@@ -604,31 +612,6 @@
   fill: var(--background);
   stroke: var(--foreground);
   stroke-width: 1.5;
-}
-
-/* A long press fills this ring before it intervenes. */
-.ca-press-ring {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 3;
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  transform: rotate(-90deg);
-  animation: ca-press 500ms linear forwards;
-}
-
-@keyframes ca-press {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ca-press-ring {
-    animation: none;
-    stroke-dashoffset: 0;
-    stroke-dasharray: none;
-  }
 }
 
 .ca-export-embed {
@@ -765,7 +748,7 @@
 .ca-node.is-interactive {
   cursor: pointer;
   outline: none;
-  /* A long press intervenes: no text selection or callout menu on touch screens. */
+  /* No text selection or callout menu on touch screens. */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -781,43 +764,82 @@
   stroke: var(--border);
 }
 
-/* The value control a multi-valued node opens: the chosen value, Release, and a slider over the domain. */
-.ca-do-pop-box {
-  overflow: visible;
-}
-
-.ca-do-pop {
+/* The menu a click on a node opens (NodeMenu): what its marks mean, observe, do(), its sliders. */
+.ca-node-menu {
+  position: absolute;
+  z-index: 30;
   box-sizing: border-box;
   display: grid;
   gap: 8px;
-  width: 100%;
   padding: 8px 10px 10px;
   background: var(--background);
   border: 1px solid var(--foreground);
   color: var(--foreground);
   font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+  outline: none;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 
-.ca-do-pop-head {
+.ca-node-menu-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-
-.ca-do-pop-value {
   font-weight: 700;
   font-size: 14px;
 }
 
-.ca-do-pop-value.is-idle {
+.ca-node-menu-close {
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.ca-node-menu-notes {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
   color: var(--muted-foreground);
 }
 
-.ca-do-pop-release {
+.ca-node-menu-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.ca-node-menu-row,
+.ca-node-menu-probs {
+  display: grid;
+  gap: 4px;
+}
+
+.ca-node-menu-kicker {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ca-node-menu-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ca-node-menu-btn {
   font: inherit;
   font-size: 12px;
-  height: 24px;
+  min-height: 30px;
   padding: 0 10px;
   border: 1px solid var(--foreground);
   background: transparent;
@@ -825,14 +847,91 @@
   cursor: pointer;
 }
 
-.ca-do-pop-release:disabled {
+.ca-node-menu-btn[aria-pressed="true"] {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.ca-node-menu-btn:disabled {
   border-color: var(--border);
   color: var(--muted-foreground);
   cursor: default;
 }
 
-.ca-do-pop-slider {
+.ca-node-menu-soft {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 40px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.ca-node-menu-soft .ca-slider {
   margin: 0;
+}
+
+.ca-node-menu .ca-slider-list {
+  margin-top: 0;
+}
+
+.ca-node-menu .ca-slider-row {
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: 2px 8px;
+}
+
+.ca-node-menu .ca-slider-value {
+  white-space: nowrap;
+}
+
+.ca-node-menu .ca-slider-row .ca-slider {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+/* A marked edge's explanation (on a d-separation path, cut by do()), above the edge's midpoint. */
+.ca-edge-tip {
+  position: absolute;
+  z-index: 25;
+  box-sizing: border-box;
+  transform: translateY(-100%);
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  pointer-events: none;
+}
+
+.ca-edge-hit {
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+}
+
+.ca-edge[data-tip],
+.ca-edge[role="img"] {
+  cursor: help;
+  outline: none;
+}
+
+.ca-edge[role="img"]:focus-visible .ca-edge-hit {
+  stroke: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/* A node a hovered slider moves; the node whose menu is open. */
+.ca-lit-ring {
+  fill: color-mix(in srgb, var(--accent) 16%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.ca-open-ring {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
 }
 
 /* ---- case page ---- */
@@ -1113,6 +1212,31 @@
   display: grid;
   gap: 8px;
   margin-top: 14px;
+}
+
+.ca-slider-group {
+  display: grid;
+  gap: 6px;
+}
+
+.ca-slider-group-head {
+  font-size: 13px;
+  padding: 2px 6px;
+  margin: 0 -6px;
+}
+
+.ca-slider-sublist {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 0 12px;
+  list-style: none;
+  border-left: 2px solid var(--border);
+}
+
+.ca-slider-row[data-lit],
+.ca-slider-group-head[data-lit] {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .ca-slider-row {

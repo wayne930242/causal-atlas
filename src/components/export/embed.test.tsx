@@ -6,6 +6,7 @@ import type { ModelDoc } from '../../data/schema.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import { embedFragment, embedHome, fitEmbedState, readEmbedState } from './embed.ts'
 import { CausalPlayground } from '../index.ts'
+import { doNode } from '../test-menu.ts'
 import { resolveDoc } from '../model/doc-case.ts'
 
 const boolVar = (id: string, kind: 'exogenous' | 'endogenous') => ({ id, label: { 'zh-TW': id, en: id }, kind, domain: 'boolean' })
@@ -75,7 +76,7 @@ describe('embed code in the export menu', () => {
   it('copies an iframe of the bundled case with the state on screen and the citation', async () => {
     window.history.replaceState(null, '', '/posts/causal/lessons/00/')
     const { container } = render(<CausalPlayground caseId="rock-throwing" />)
-    fireEvent.click(node(container, 'SH'))
+    doNode(container, 'SH', '1')
     fireEvent.click(screen.getByRole('button', { name: '下載圖片' }))
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: '複製嵌入碼' }))

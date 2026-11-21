@@ -43,7 +43,7 @@ function renders(id: string, locale: Locale): Record<string, string> {
 
 describe('smoking-lesion probability panel', () => {
   const html = renderToString(createElement(ProbabilityPanel, { caseId: 'smoking-lesion' }))
-  const rows = [...html.matchAll(/<li class="ca-slider-row">(.*?)<\/li>/g)].map((m) => m[1])
+  const rows = [...html.matchAll(/<li class="ca-slider-row"[^>]*>(.*?)<\/li>/g)].map((m) => m[1])
 
   it('typesets every prior slider label with a subscript', () => {
     expect(rows).toHaveLength(5)

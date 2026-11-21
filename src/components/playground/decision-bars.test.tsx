@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import type { CaseDecision } from '../../data/index.ts'
 import { CausalPlayground } from '../index.ts'
+import { closeMenu, doNode, observeNode } from '../test-menu.ts'
 
 afterEach(cleanup)
 
@@ -41,12 +42,13 @@ describe('CausalPlayground decision: expected-utility bars under the graph', () 
       edt: { values: ['-31.58', '-14.84'], choice: '選 S=0（多 16.74）', lit: [] },
       cdt: { values: ['-15.00', '-25.00'], choice: '選 S=1（多 10.00）', lit: [] },
     })
-    fireEvent.click(container.querySelector('[data-node="S"]') as Element)
+    observeNode(container, 'S', '1')
     expect(rows(container).edt.lit).toEqual(['1'])
     expect(rows(container).cdt.lit).toEqual([])
-    fireEvent.click(container.querySelector('[data-node="S"]') as Element, { shiftKey: true })
+    doNode(container, 'S', '1')
     expect(rows(container).cdt.lit).toEqual(['1'])
     expect(rows(container).edt.lit).toEqual([])
+    closeMenu(container)
     // The slider moves the evidential row only; below about 0.38 it picks smoking too.
     const slider = getByLabelText('有病灶時想吸菸的機率')
     fireEvent.change(slider, { target: { value: '0.37' } })

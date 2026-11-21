@@ -108,7 +108,7 @@ describe('ModelEditor', () => {
     expect(node(container, 'M').getAttribute('transform')).not.toBe(before)
   })
 
-  it('drags a node to a new place, then a plain click still sets do()', () => {
+  it('drags a node to a new place, then a plain click still opens its menu', () => {
     const { container } = render(<ModelEditor initial="rock-throwing" />)
     const svg = container.querySelector('.ca-graph') as SVGSVGElement
     const before = node(container, 'BS').getAttribute('transform')
@@ -119,12 +119,12 @@ describe('ModelEditor', () => {
     expect(node(container, 'BS').getAttribute('data-intervened')).toBe('false')
     // A click that trails the drag is ignored; a press-release without movement is a click.
     fireEvent.click(node(container, 'BS'))
-    expect(node(container, 'BS').getAttribute('data-intervened')).toBe('false')
+    expect(container.querySelector('[data-menu]')).toBeNull()
     const later = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000)
     fireEvent.pointerDown(node(container, 'SH'), { pointerId: 2, button: 0, clientX: 10, clientY: 10 })
     fireEvent.pointerUp(node(container, 'SH'), { pointerId: 2, clientX: 10, clientY: 10 })
     fireEvent.click(node(container, 'SH'))
-    expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')
+    expect(container.querySelector('[data-menu="SH"]')).not.toBeNull()
     later.mockRestore()
   })
 

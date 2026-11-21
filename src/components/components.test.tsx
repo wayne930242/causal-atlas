@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { CasePage, CausalPlayground, ProbabilityPanel, WorldLanes } from './index.ts'
+import { doNode } from './test-menu.ts'
 
 afterEach(cleanup)
 
@@ -18,22 +19,21 @@ function edge(container: HTMLElement, key: string): Element {
 }
 
 describe('CausalPlayground', () => {
-  it('toggles do() on a node: pins it, cuts its incoming edge, flips it and recomputes downstream', () => {
+  it('sets do() on a node from its menu: cuts its incoming edge, recomputes downstream, releases', () => {
     const { container } = render(<CausalPlayground caseId="rock-throwing" />)
     expect(node(container, 'SH').getAttribute('data-value')).toBe('1')
     expect(node(container, 'BH').getAttribute('data-value')).toBe('0')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('live')
 
-    // The first click pins SH at its current value: the edge is cut, nothing downstream changes.
-    fireEvent.click(screen.getByRole('button', { name: /^SH 小蘇擊中/ }))
+    // do(SH=1) at its current value: the edge is cut, nothing downstream changes.
+    doNode(container, 'SH', '1')
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')
     expect(node(container, 'SH').getAttribute('data-value')).toBe('1')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('cut')
     expect(node(container, 'BH').getAttribute('data-value')).toBe('0')
     expect(container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text')).toBe('do(SH=1)')
 
-    // The second sets the other value.
-    fireEvent.click(screen.getByRole('button', { name: /^SH 小蘇擊中/ }))
+    doNode(container, 'SH', '0')
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')
     expect(node(container, 'SH').getAttribute('data-value')).toBe('0')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('cut')
@@ -41,8 +41,10 @@ describe('CausalPlayground', () => {
     expect(node(container, 'BS').getAttribute('data-value')).toBe('1')
     expect(container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text')).toBe('do(SH=0)')
 
-    // Keyboard: Enter on the same node, a third press, releases it.
+    // Keyboard: Esc closes the menu, Enter on the node opens it again, and 放開 releases it.
+    fireEvent.keyDown(document, { key: 'Escape' })
     fireEvent.keyDown(screen.getByRole('button', { name: /^SH 小蘇擊中/ }), { key: 'Enter' })
+    fireEvent.click(within(container.querySelector('[data-menu="SH"]') as HTMLElement).getByRole('button', { name: '放開' }))
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('false')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('live')
     expect(node(container, 'BH').getAttribute('data-value')).toBe('0')

@@ -17,6 +17,7 @@ import { useModel } from '../model/model-state.ts'
 import { normalityLine } from '../model/normality-view.ts'
 import type { UiNotation } from '../model/notation.ts'
 import { priorWithSliders } from '../model/probability-view.ts'
+import { nodeSliders, sliderTargets } from '../model/slider-groups.ts'
 import type { VerdictQuery } from '../model/verdict-rows.ts'
 import { actualGroups, defaultTheories, originCitations, originSources } from '../model/verdict-rows.ts'
 import { readingText } from '../model/wording.ts'
@@ -211,6 +212,15 @@ function PlaygroundFor({
     setReading(next)
   }
   const root = useRef<HTMLDivElement>(null)
+  // A hovered node lights its sliders; a hovered slider lights the nodes it moves.
+  const [hoverNode, setHoverNode] = useState<string | undefined>(undefined)
+  const [hoverSlider, setHoverSlider] = useState<string | undefined>(undefined)
+  const litNodes = useMemo(() => (hoverSlider === undefined ? NO_TRACK : sliderTargets(c.model, world.shown, hoverSlider)), [c.model, world.shown, hoverSlider])
+  const litSliders = useMemo(
+    () => (hoverNode !== undefined ? nodeSliders(c.model, world.shown, sliders, hoverNode) : hoverSlider !== undefined ? [hoverSlider] : NO_TRACK),
+    [c.model, world.shown, sliders, hoverNode, hoverSlider],
+  )
+  const setSlider = (id: string, p: number): void => setSliderValues((now) => ({ ...now, [id]: p }))
   const sliderId = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   // An embed page takes its state from the address once mounted (the server has no address hash).
   useEffect(() => {
@@ -335,6 +345,18 @@ function PlaygroundFor({
           }}
           reading={reading}
           paths={dsepNow?.marks}
+          lit={litNodes}
+          onHover={sliders.length > 0 ? setHoverNode : undefined}
+          menuExtra={
+            sliders.length === 0
+              ? undefined
+              : (id) => {
+                  const own = nodeSliders(c.model, world.shown, sliders, id)
+                  return own.length === 0 ? undefined : (
+                    <SliderList c={c} ids={own} values={sliderValues} onChange={setSlider} idPrefix={`ca-pg-menu-slider-${sliderId}`} />
+                  )
+                }
+          }
           actions={
             prob ? (
               <>
@@ -376,8 +398,11 @@ function PlaygroundFor({
                   c={c}
                   ids={sliders}
                   values={sliderValues}
-                  onChange={(id, p) => setSliderValues({ ...sliderValues, [id]: p })}
+                  onChange={setSlider}
                   idPrefix={`ca-pg-slider-${sliderId}`}
+                  shown={world.shown}
+                  lit={litSliders}
+                  onHover={setHoverSlider}
                 />
               )}
               {defaults !== undefined && world.values !== undefined && world.original !== undefined && (

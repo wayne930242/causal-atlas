@@ -6,6 +6,7 @@ import { modelDocSchema } from '../../data/schema.ts'
 import type { LoadedCase } from '../../data/load.ts'
 import { resolveDoc } from '../model/doc-case.ts'
 import { CausalPlayground, ModelEditor } from '../index.ts'
+import { doNode, openMenu } from '../test-menu.ts'
 import { withProbability } from '../model/model-state.ts'
 import { marginals, mixedMarginals, priorWithSliders } from '../model/probability-view.ts'
 import { nameAfterId } from '../model/wording.ts'
@@ -180,14 +181,12 @@ describe('do() as a probability on a boolean node', () => {
   const prior = priorWithSliders(c, {})
   const at = (z: boolean) => marginals(c.model, prior, { do: { Z: z } }).p
 
-  it('opens a P(Z=1) slider: 0 is do(Z=0), 0.3 the mixture, Release clears', () => {
+  it("the menu's P*(Z=1) slider: 0 is do(Z=0), 0.3 the mixture, Release clears", () => {
     const { container } = render(<CausalPlayground doc={fork} />)
     const z = screen.getByRole('button', { name: /^Z 共同原因/ })
-    expect(z.getAttribute('aria-label')).toContain('長按、右鍵或 Shift 加按一下是干預')
+    expect(z.getAttribute('aria-label')).toContain('按一下打開選單，可以觀察或干預')
     expect(z.getAttribute('aria-haspopup')).toBe('dialog')
-    // Shift+click intervenes at once, do(Z=1), and opens the slider.
-    fireEvent.click(z, { shiftKey: true })
-    expect(container.querySelector('.ca-do-pop')).not.toBeNull()
+    doNode(container, 'Z', '1')
     expect(node(container, 'Z').getAttribute('data-intervened')).toBe('true')
     expect(chip(container)).toBe('do(Z=1)')
     const slider = screen.getByRole('slider', { name: /Z 共同原因：干預後等於 1 的機率/ }) as HTMLInputElement
@@ -210,8 +209,7 @@ describe('do() as a probability on a boolean node', () => {
     expect(x).toBeCloseTo(0.24, 10)
     expect(level(container, 'X')).toBeCloseTo(x, 4)
     expect(level(container, 'Y')).toBeCloseTo(yP, 4)
-    expect(container.querySelector('.ca-do-pop-value')?.textContent).toBe('P(Z=1)=0.30')
-    expect(slider.getAttribute('aria-valuetext')).toBe('P(Z=1)=0.30')
+    expect(slider.getAttribute('aria-valuetext')).toBe('P*(Z=1)=0.30')
     expect(node(container, 'Z').textContent).toContain('P(Z=1)=0.30')
     expect(node(container, 'Z').getAttribute('aria-label')).toContain('已干預成 P(Z=1)=0.30')
     // The equation gives way to a coin.
@@ -223,8 +221,7 @@ describe('do() as a probability on a boolean node', () => {
     expect(chip(container)).toBe('do(Z=1)')
     expect(level(container, 'X')).toBeCloseTo(at(true).X, 4)
 
-    fireEvent.click(screen.getByRole('button', { name: '放開' }))
-    expect(container.querySelector('.ca-do-pop')).toBeNull()
+    doNode(container, 'Z')
     expect(chip(container)).toBeNull()
     expect(node(container, 'Z').getAttribute('data-intervened')).toBe('false')
     expect(level(container, 'Z')).toBeCloseTo(0.5, 4)
@@ -240,18 +237,18 @@ describe('do() as a probability on a boolean node', () => {
     expect(withProbability({ interventions: {}, stochastic: { Z: 0.25 } }, 'Z', 0)).toEqual({ interventions: { Z: false }, stochastic: {} })
   })
 
-  it('keeps the plain toggle in a world with values', () => {
+  it('has no P* slider in a world with values', () => {
     const { container } = render(<CausalPlayground doc={forkWorld} />)
     const z = screen.getByRole('button', { name: /^Z 共同原因/ })
-    expect(z.getAttribute('aria-label')).toContain('按一下套上干預')
-    fireEvent.click(z)
-    expect(container.querySelector('.ca-do-pop')).toBeNull()
+    expect(z.getAttribute('aria-label')).toContain('按一下打開選單，可以干預')
+    expect(openMenu(container, 'Z').querySelector('[data-do-slider]')).toBeNull()
+    doNode(container, 'Z', '1')
     expect(chip(container)).toBe('do(Z=1)')
     expect(node(container, 'X').getAttribute('data-value')).toBe('1')
-    fireEvent.click(z)
+    doNode(container, 'Z', '0')
     expect(chip(container)).toBe('do(Z=0)')
     expect(node(container, 'X').getAttribute('data-value')).toBe('0')
-    fireEvent.click(z)
+    doNode(container, 'Z')
     expect(chip(container)).toBeNull()
   })
 

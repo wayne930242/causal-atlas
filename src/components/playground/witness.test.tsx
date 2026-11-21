@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
+import { doNode } from '../test-menu.ts'
 
 afterEach(cleanup)
 
@@ -47,16 +48,14 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
 
   it("the reader's own do() on a variable other than the cause is drawn held", () => {
     const { container } = render(<CausalPlayground caseId="forest-fire-disjunctive" verdicts={query} />)
-    // L: first click pins its current value 1, the second sets 0.
-    fireEvent.click(node(container, 'L'))
-    fireEvent.click(node(container, 'L'))
+    doNode(container, 'L', '0')
     expect(node(container, 'L').getAttribute('data-value')).toBe('0')
     expect(hull(container)).toBeNull()
     expect(live(container)).toContain('FF=1 還成立')
-    fireEvent.click(node(container, 'MD'))
+    doNode(container, 'MD', '1')
     expect(hull(container)).toBe('MD')
     expect(heldNote(container, 'MD')).toBe('固定（實際值）')
-    fireEvent.click(node(container, 'MD'))
+    doNode(container, 'MD', '0')
     expect(heldNote(container, 'MD')).toBe('固定（實際 1）')
     expect(live(container)).toContain('HP 原始定義、HP 更新定義：是 L 的見證')
   })

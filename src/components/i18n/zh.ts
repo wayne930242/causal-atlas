@@ -248,25 +248,7 @@ export const ZH = {
     `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${seen === undefined ? '' : `，已觀察到 ${seen}`}${before === undefined ? '' : `，原本 ${before}`}`,
   nodeHint: (toggle: NodeToggle | undefined, movable: boolean): string =>
     [
-      toggle === undefined
-        ? ''
-        : toggle === 'release'
-          ? '按一下取消干預'
-          : toggle === 'choose'
-            ? '按一下選擇要設成的值'
-            : toggle === 'adjust'
-              ? '按一下改選干預的值或放開'
-              : toggle === 'chooseProb'
-                ? '按一下設定干預後等於 1 的機率'
-                : toggle === 'adjustProb'
-                  ? '按一下改設干預後等於 1 的機率或放開'
-                  : toggle === 'observe'
-                    ? '按一下觀察（再按換值，第三下取消）；長按、右鍵或 Shift 加按一下是干預'
-                    : toggle === 'observeOnly'
-                      ? '按一下觀察（再按換值，第三下取消）'
-                      : toggle === 'pick'
-                        ? '按一下加進或移出已知集合'
-                        : '按一下套上干預',
+      toggle === undefined ? '' : toggle === 'pick' ? '按一下加進或移出已知集合' : toggle === 'do' ? '按一下打開選單，可以干預' : '按一下打開選單，可以觀察或干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
@@ -274,6 +256,35 @@ export const ZH = {
   doRelease: '放開',
   doPickLabel: (who: string): string => `${who}：選擇干預的值`,
   doProbLabel: (who: string): string => `${who}：干預後等於 1 的機率`,
+  menu: {
+    label: (who: string): string => `${who}：觀察或干預`,
+    close: '關閉選單',
+    observe: '觀察',
+    evidence: '實際（證據）',
+    intervene: '干預',
+    suppose: '假設干預',
+    unobserve: '不觀察',
+    release: '放開',
+    doProb: (id: string): string => `P*(${id}=1)`,
+    probs: '這個節點的機率',
+    allKnown: '所有值都已知，觀察不會改變任何值。',
+    exoOnly: '外生變項是背景條件，只能觀察，不能干預。',
+    fill: (id: string, p: string): string => `填色高度：P(${id}=1) = ${p}`,
+    bars: '長條高度：取各個值的機率',
+    value: (id: string, v: string): string => `實心＝1、空心＝0；現在 ${id}=${v}`,
+    valueFinite: (id: string, v: string): string => `現在 ${id}=${v}`,
+    ring: (event: string): string => `雙圈：已觀察到 ${event}，圖上其他機率都以它為條件`,
+    ringEvidence: (event: string): string => `雙圈：實際世界中 ${event}（證據）`,
+    clamp: (doText: string): string => `紅色夾子：${doText}，剪掉進入它的箭頭`,
+    dsepEnd: (x: string, y: string): string => `紅色外圈：要判斷 d 分隔的兩端是 ${x} 與 ${y}`,
+    exo: '虛線圈：外生變項（背景條件）',
+  },
+  edgeTip: {
+    open: (x: string, y: string): string => `紅色粗線：${x} 與 ${y} 之間有一條暢通的路徑經過這段箭頭`,
+    blocked: (x: string, y: string): string => `虛線：這段箭頭只在 ${x} 與 ${y} 之間被堵住的路徑上`,
+    cut: (to: string): string => `灰色虛線加斜槓：do() 剪掉了這條箭頭，${to} 不再受它影響`,
+  },
+  sliderGroup: (who: string): string => `${who}的機率`,
   barMax: (p: string): string => `最高 ${p}`,
   withHint: (aria: string, hint: string): string => (hint === '' ? aria : `${aria}。${hint}`),
   setDirectly: (parents: readonly string[], value: string): string =>
@@ -501,14 +512,14 @@ export const ZH = {
 
   // playground
   playgroundHint: (probabilistic: boolean): string =>
-    probabilistic ? '點一下節點是觀察；長按、右鍵或 Shift＋點是干預。' : '點一下節點是干預。',
+    probabilistic ? '點節點打開選單，可以觀察或干預。' : '點節點打開選單，可以干預。',
   sliderEmbed: '滑桿的位置不會記進嵌入碼，嵌入的圖從原本的機率開始。',
   playgroundHintMore: (probabilistic: boolean): string =>
     probabilistic
-      ? '觀察：先觀察到 1，再點換成 0，第三下取消。干預：設成 1，旁邊的滑桿可以改成 0 或其他機率；Esc 關掉滑桿。'
-      : '先固定在目前的值，再點換成另一個值，第三下取消；多值的節點用滑桿選值。',
+      ? '觀察：把節點當成已知的值，圖上其他機率都以它為條件。干預：用 do() 直接設定節點，剪掉進入它的箭頭；選單裡的滑桿可改成介於 0 和 1 之間的機率。有機率滑桿時，選單也列出這個節點的滑桿；滑鼠移到節點或滑桿上，會標出兩者的對應。Esc 關掉選單。'
+      : '干預：用 do() 直接設定節點，剪掉進入它的箭頭，下游跟著重算；放開就回到原本的值。Esc 關掉選單。',
   moreInfo: '說明',
-  cfHint: '點一下是實際世界的觀察；長按、右鍵或 Shift＋點是假設的干預。',
+  cfHint: '點節點打開選單：記下實際世界的觀察（證據），或套上假設的干預。',
   cfHintMore: '先依觀察回推背景，再在同樣的背景下套上干預。節點顯示假設世界的機率，「實際 v」是實際世界的值；同一個節點可以既是觀察又是干預。',
   trail: '軌跡',
   trailStep: (value: string, setting: string): string => (setting === '' ? value : `${value}（${setting}）`),
@@ -585,7 +596,7 @@ export const ZH = {
     lastGood: '模型有問題，圖上是上一次能算的版本：',
     addFirst: '先在「變項」裡加一個變項',
     fillEquations: '補上式子，圖就會出現',
-    hint: '機率圖上，點一下節點是觀察，長按（或按住 Shift 再點）是干預；只有一組值的圖，點一下就是干預。拖曳節點（或選取後按方向鍵）可以調整位置。',
+    hint: '點節點打開選單：機率圖上可以觀察或干預，只有一組值的圖可以干預。拖曳節點（或選取後按方向鍵）可以調整位置。',
     variables: '變項',
     varId: (n: number): string => `第 ${n} 個變項：代號`,
     varZh: (n: number): string => `第 ${n} 個變項：中文名稱`,

@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
+import { doNode, observeNode } from '../test-menu.ts'
 
 afterEach(() => {
   cleanup()
@@ -47,7 +48,7 @@ describe('step buttons (presets with observed and hold)', () => {
     expect(first.getAttribute('aria-pressed')).toBe('false')
 
     // The reader's own click after a step adds to it: the step still holds, so it stays pressed.
-    fireEvent.click(node(container, 'C'))
+    observeNode(container, 'C', '1')
     expect(second.getAttribute('aria-pressed')).toBe('true')
   })
 
@@ -69,8 +70,7 @@ describe('step buttons (presets with observed and hold)', () => {
     expect(node(container, 'FF').getAttribute('data-value')).toBe('0')
     expect(button(container, 'witness').getAttribute('aria-pressed')).toBe('true')
     // Releasing the held variable drops it from the hull.
-    fireEvent.click(node(container, 'MD'))
-    fireEvent.click(node(container, 'MD'))
+    doNode(container, 'MD')
     expect(container.querySelector('.ca-witness')).toBeNull()
   })
 
@@ -81,49 +81,11 @@ describe('step buttons (presets with observed and hold)', () => {
   })
 })
 
-describe('right-click intervenes on a probability graph', () => {
-  it('a mouse right-click intervenes like a long press, and opens the slider', () => {
-    const { container } = render(<CausalPlayground doc={nervous} />)
-    const a = node(container, 'A')
-    fireEvent.pointerDown(a, { button: 2, pointerType: 'mouse', pointerId: 1 })
-    const allowed = fireEvent.contextMenu(a, { button: 2 })
-    expect(allowed).toBe(false)
-    expect(node(container, 'A').getAttribute('data-intervened')).toBe('true')
-    expect(container.querySelector('.ca-do-pop')).not.toBeNull()
-    expect(chip(container)).toBe('do(A=1)')
-  })
-
-  it('a touch long press intervenes once, though Android also sends contextmenu', () => {
-    vi.useFakeTimers()
-    const { container } = render(<CausalPlayground doc={nervous} />)
-    const a = node(container, 'A')
-    fireEvent.pointerDown(a, { button: 0, pointerType: 'touch', pointerId: 1 })
-    act(() => {
-      vi.advanceTimersByTime(600)
-    })
-    fireEvent.contextMenu(a, { pointerType: 'touch' })
-    fireEvent.pointerUp(a, { button: 0, pointerType: 'touch', pointerId: 1 })
-    fireEvent.click(a)
-    expect(node(container, 'A').getAttribute('data-intervened')).toBe('true')
-    // A second intervention would have closed the slider again.
-    expect(container.querySelector('.ca-do-pop')).not.toBeNull()
-    expect(chip(container)).toBe('do(A=1)')
-  })
-
-  it('a graph with values keeps the browser menu', () => {
-    const { container } = render(<CausalPlayground caseId="forest-fire-disjunctive" />)
-    const l = node(container, 'L')
-    fireEvent.pointerDown(l, { button: 2, pointerType: 'mouse', pointerId: 1 })
-    expect(fireEvent.contextMenu(l, { button: 2 })).toBe(true)
-    expect(node(container, 'L').getAttribute('data-intervened')).toBe('false')
-  })
-})
-
 describe('the hint under the graph', () => {
   it('is one short line; the details sit in a tooltip reachable by focus', () => {
     const { container } = render(<CausalPlayground doc={nervous} />)
     const hint = container.querySelector('.ca-hint')
-    expect(hint?.textContent?.startsWith('點一下節點是觀察；長按、右鍵或 Shift＋點是干預。')).toBe(true)
+    expect(hint?.textContent?.startsWith('點節點打開選單，可以觀察或干預。')).toBe(true)
     const trigger = hint?.querySelector('[aria-describedby]')
     if (!(trigger instanceof HTMLElement)) throw new Error('no tooltip trigger')
     const tip = container.querySelector(`#${CSS.escape(trigger.getAttribute('aria-describedby') ?? '')}`)
@@ -139,9 +101,9 @@ describe('the hint under the graph', () => {
     expect(tip?.hasAttribute('hidden')).toBe(false)
   })
 
-  it('says a click intervenes on a graph with values, in one line', () => {
+  it('says a click opens the menu to intervene on a graph with values, in one line', () => {
     const { container } = render(<CausalPlayground caseId="forest-fire-disjunctive" />)
-    expect(container.querySelector('.ca-hint')?.textContent?.startsWith('點一下節點是干預。')).toBe(true)
+    expect(container.querySelector('.ca-hint')?.textContent?.startsWith('點節點打開選單，可以干預。')).toBe(true)
   })
 
   it('a step stays pressed when the reader sets more on top of it', () => {
@@ -157,11 +119,11 @@ describe('the hint under the graph', () => {
     fireEvent.click(second)
     expect(second.getAttribute('aria-pressed')).toBe('true')
     expect(first.getAttribute('aria-pressed')).toBe('false')
-    fireEvent.click(node(container, 'X'))
+    observeNode(container, 'X', '1')
     expect(chip(container)).toContain('Z=1')
     expect(second.getAttribute('aria-pressed')).toBe('true')
     expect(first.getAttribute('aria-pressed')).toBe('false')
-    fireEvent.click(node(container, 'Z'))
+    observeNode(container, 'Z', '0')
     expect(second.getAttribute('aria-pressed')).toBe('false')
   })
 })

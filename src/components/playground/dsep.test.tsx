@@ -3,14 +3,10 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import { CausalPlayground } from '../index.ts'
+import { doNode, observeNode } from '../test-menu.ts'
 
 afterEach(cleanup)
 
-const node = (container: HTMLElement, id: string): Element => {
-  const el = container.querySelector(`[data-node="${id}"]`)
-  if (el === null) throw new Error(`no node ${id}`)
-  return el
-}
 const line = (container: HTMLElement): string => {
   const el = container.querySelector('[data-dsep]')
   if (el === null) return ''
@@ -32,7 +28,7 @@ describe('playground dsep: the paths between a pair, lit when open, dashed when 
     expect(edgePath(container, 'G>A')).toBe('blocked')
     expect(edgePath(container, 'A>L')).toBeNull()
 
-    fireEvent.click(node(container, 'L'))
+    observeNode(container, 'L', '1')
     expect(container.querySelector('[data-dsep]')?.getAttribute('data-dsep')).toBe('open')
     expect(line(container)).toContain('已知 {L}')
     expect(line(container)).toContain('相依程度 0.1736')
@@ -50,8 +46,8 @@ describe('playground dsep: the paths between a pair, lit when open, dashed when 
 
   it('with do(), the graph after the cut: no path is left between G and M', () => {
     const { container } = render(<CausalPlayground doc={lessonModel('m04-admission')} dsep={['G', 'M']} />)
-    fireEvent.click(node(container, 'L'))
-    fireEvent.click(node(container, 'A'), { shiftKey: true })
+    observeNode(container, 'L', '1')
+    doNode(container, 'A', '1')
     expect(container.querySelector('[data-dsep]')?.getAttribute('data-dsep')).toBe('blocked')
     expect(line(container)).toContain('沒有路徑')
   })

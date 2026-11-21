@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { lessonModel } from '../../demo/lesson-models.ts'
+import { doNode, observeNode } from '../test-menu.ts'
 import { CausalPlayground, ProbabilityPanel } from '../index.ts'
 
 afterEach(cleanup)
@@ -20,20 +21,20 @@ describe('trail (a): a probability graph keeps 原本 v under each changed numbe
   it('notes only the nodes whose number moved, against the prior', () => {
     const { container } = render(<CausalPlayground doc={collider} />)
     expect(note(container, 'Y')).toBeNull()
-    fireEvent.click(node(container, 'Z'))
+    observeNode(container, 'Z', '1')
     expect(note(container, 'Y')).toBe('原本 0.50')
     expect(note(container, 'X')).toBe('原本 0.50')
     // Z is observed: it reads 已知 = 1 and carries no 原本 line.
     expect(note(container, 'Z')).toBeNull()
     expect(container.querySelector('[data-node="Z"] [data-readout]')?.textContent).toBe('已知 = 1')
-    fireEvent.click(node(container, 'X'))
+    observeNode(container, 'X', '1')
     // Y is back at 0.50: no note.
     expect(note(container, 'Y')).toBeNull()
   })
 
   it('a graph with values keeps its own 原本 mark and gets no number notes', () => {
     const { container } = render(<CausalPlayground caseId="forest-fire-disjunctive" />)
-    fireEvent.click(node(container, 'L'))
+    doNode(container, 'L', '0')
     expect(container.querySelector('[data-note]')).toBeNull()
   })
 })
@@ -42,9 +43,9 @@ describe('trail (b): track lists what each setting did to the tracked nodes', ()
   it('Y: 0.50 → 0.67 (Z=1) → 0.50 (Z=1, X=1), and back to the prior clears it', () => {
     const { container } = render(<CausalPlayground doc={collider} track={['Y']} />)
     expect(trail(container, 'Y')).toBe('Y：0.50')
-    fireEvent.click(node(container, 'Z'))
+    observeNode(container, 'Z', '1')
     expect(trail(container, 'Y')).toBe('Y：0.50 → 0.67（Z=1）')
-    fireEvent.click(node(container, 'X'))
+    observeNode(container, 'X', '1')
     expect(trail(container, 'Y')).toBe('Y：0.50 → 0.67（Z=1）→ 0.50（Z=1, X=1）')
     fireEvent.click(within(container).getByRole('button', { name: '回到原本的機率' }))
     expect(trail(container, 'Y')).toBe('Y：0.50')
@@ -52,7 +53,7 @@ describe('trail (b): track lists what each setting did to the tracked nodes', ()
 
   it('keeps the last five entries', () => {
     const { container } = render(<CausalPlayground doc={collider} track={['Y']} />)
-    for (let i = 0; i < 6; i++) fireEvent.click(node(container, 'X'))
+    for (const v of ['1', '0', undefined, '1', '0', undefined]) observeNode(container, 'X', v)
     const text = trail(container, 'Y') ?? ''
     expect(text.startsWith('Y：…')).toBe(true)
     expect(text.split('→').length).toBe(5)
@@ -60,7 +61,7 @@ describe('trail (b): track lists what each setting did to the tracked nodes', ()
 
   it('a step button starts the trail again', () => {
     const { container } = render(<CausalPlayground doc={collider} track={['Y']} presets={[{ label: 'see Z', observed: { Z: 1 } }]} />)
-    fireEvent.click(node(container, 'X'))
+    observeNode(container, 'X', '1')
     fireEvent.click(within(container).getByRole('button', { name: 'see Z' }))
     expect(trail(container, 'Y')).toBe('Y：0.50 → 0.67（Z=1）')
   })

@@ -30,13 +30,13 @@ function variantsFor(c: LoadedCase): Record<string, () => ReactNode> {
     world: graph(base),
     compact: graph({ ...base, compact: true }),
     clamped: graph({ ...base, clamped: [first] }),
-    interactive: graph({ ...base, onToggle: noop, onObserve: noop, onSetValue: noop, onSetProbability: noop, onMove: noop }),
+    interactive: graph({ ...base, onOpen: noop, onMove: noop }),
     pick: graph({ ...base, onPick: noop }),
   }
   const showcase = c.data.showcase[0]
   if (showcase !== undefined) {
     const after = solve(c, showcase.interventions)
-    out.showcase = graph({ values: after.values, original: after.original, probs: after.probs, dists: after.dists, removedEdges: after.removedEdges, interventions: showcase.interventions, onToggle: noop })
+    out.showcase = graph({ values: after.values, original: after.original, probs: after.probs, dists: after.dists, removedEdges: after.removedEdges, interventions: showcase.interventions, onOpen: noop })
   }
   const held: Assignment = { [first]: world.values?.[first] ?? targetValue(firstVar) }
   out['witness-hull'] = graph({ ...base, witness: held })
@@ -50,12 +50,12 @@ function variantsFor(c: LoadedCase): Record<string, () => ReactNode> {
   if (c.prior !== undefined && c.context === undefined) {
     const observedValues: Assignment = { [first]: targetValue(firstVar) }
     const seen = solve(c, {}, {}, observedValues)
-    out.observed = graph({ probs: seen.probs, dists: seen.dists, removedEdges: seen.removedEdges, observed: [first], observedValues, onObserve: noop })
+    out.observed = graph({ probs: seen.probs, dists: seen.dists, removedEdges: seen.removedEdges, observed: [first], observedValues, onOpen: noop })
     out.evidence = graph({ probs: seen.probs, dists: seen.dists, removedEdges: seen.removedEdges, observed: [first], observedValues, evidence: true })
     out['prob-notes'] = graph({ ...base, probNotes: Object.fromEntries(shown.map((id, i) => [id, i % 2 === 0 ? '不變' : '0.50 → 0.75'])) })
     if (firstVar.domain.kind === 'boolean') {
       const mixed = solve(c, {}, { [first]: 0.3 })
-      out.stochastic = graph({ probs: mixed.probs, dists: mixed.dists, removedEdges: mixed.removedEdges, stochastic: { [first]: 0.3 }, onSetProbability: noop })
+      out.stochastic = graph({ probs: mixed.probs, dists: mixed.dists, removedEdges: mixed.removedEdges, stochastic: { [first]: 0.3 }, onOpen: noop })
     }
     if (endogenous.length >= 2) {
       const pair = [endogenous[0], endogenous[endogenous.length - 1]] as const

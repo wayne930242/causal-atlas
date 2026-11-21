@@ -24,8 +24,5 @@ export type DraftIssue =
 
 export type DraftWording = { readonly [K in DraftIssue['code']]: (issue: Extract<DraftIssue, { code: K }>) => string }
 
-/**
- * What a click on a node does: set or release a boolean one; choose or adjust the value of a
- * multi-valued one; choose or adjust P*(X=1) of a boolean one in probability mode.
- */
-export type NodeToggle = 'set' | 'release' | 'choose' | 'adjust' | 'chooseProb' | 'adjustProb' | 'observe' | 'observeOnly' | 'pick'
+/** What a click on a node does: open its menu to observe or intervene, or to intervene only, or pick it into or out of a known set. */
+export type NodeToggle = 'observeOrDo' | 'do' | 'pick'

@@ -1,12 +1,12 @@
-import type { KeyboardEvent, MouseEvent, PointerEvent, RefObject } from 'react'
-import { useEffect, useRef, useState } from 'react'
+import type { KeyboardEvent, PointerEvent, RefObject } from 'react'
+import { useRef, useState } from 'react'
 import type { Point } from './signal-shapes.ts'
 import { snap } from './signal-shapes.ts'
 
 /**
- * The pointer and keyboard gestures on a signal graph's nodes: dragging a node (reported in grid
- * steps), a long press or right-click that intervenes where a click observes, the click a drag or
- * long press leaves behind (ignored), and the arrow keys that move a node.
+ * The pointer and keyboard gestures on a signal graph's nodes: a click (or Enter, Space) that
+ * activates a node, dragging a node (reported in grid steps), the click a drag leaves behind
+ * (ignored), and the arrow keys that move a node.
  */
 
 /** A node being dragged: the pointer, where it went down (in svg px) and how far it has moved. */
@@ -20,19 +20,6 @@ export interface Drag {
   readonly moved: boolean
 }
 
-/** What a node does when activated: `activate` observes (or intervenes with Shift), `intervene` sets it by do(). */
-export interface NodeActions {
-  /** A node that do() can set: the long press and right-click apply to it. */
-  readonly settable: boolean
-  /** Clicks observe (so a long press, Shift or a right-click intervenes). */
-  readonly observes: boolean
-  readonly activate: (shift: boolean) => void
-  readonly intervene: () => void
-}
-
-/** How long a press must last to intervene instead of observe, in ms. */
-const LONG_PRESS = 500
-
 /** Arrow keys move a node by half a grid step. */
 const ARROWS: Readonly<Record<string, readonly [number, number]>> = { ArrowLeft: [-0.5, 0], ArrowRight: [0.5, 0], ArrowUp: [0, -0.5], ArrowDown: [0, 0.5] }
 
@@ -40,22 +27,6 @@ export function useNodeGestures(svgRef: RefObject<SVGSVGElement | null>, onMove:
   const [drag, setDrag] = useState<Drag | undefined>(undefined)
   // After a drag, the browser may still send a click to the node: ignore clicks until this time.
   const suppressUntil = useRef(0)
-  // A long press in progress, and whether the last one fired (so the click after it is ignored).
-  const [pressing, setPressing] = useState<string | undefined>(undefined)
-  const pressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const pressFired = useRef(false)
-  // The kind of pointer that last pressed a node: a contextmenu from a mouse intervenes, one from
-  // a touch (Android sends it on a long press) does not, since the long-press timer already did.
-  const lastPointer = useRef('')
-  const cancelPress = (): void => {
-    if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
-    pressTimer.current = undefined
-    setPressing(undefined)
-  }
-  useEffect(() => () => {
-    if (pressTimer.current !== undefined) clearTimeout(pressTimer.current)
-  }, [])
-
   const toSvg = (e: PointerEvent): Point => {
     const ctm = svgRef.current?.getScreenCTM?.()
     if (ctm === null || ctm === undefined) return { x: e.clientX, y: e.clientY }
@@ -74,10 +45,7 @@ export function useNodeGestures(svgRef: RefObject<SVGSVGElement | null>, onMove:
     const dy = at.y - drag.y0
     const moved = drag.moved || Math.hypot(dx, dy) > 4
     // Capture only once it is a drag, so a plain press-release stays a click on the node.
-    if (moved && !drag.moved) {
-      svgRef.current?.setPointerCapture?.(e.pointerId)
-      cancelPress()
-    }
+    if (moved && !drag.moved) svgRef.current?.setPointerCapture?.(e.pointerId)
     setDrag({ ...drag, dx, dy, moved })
   }
   /** Ends a drag and reports the move in grid steps of `col` × `row` px. */
@@ -92,12 +60,12 @@ export function useNodeGestures(svgRef: RefObject<SVGSVGElement | null>, onMove:
   }
   const cancelDrag = (): void => setDrag(undefined)
 
-  /** The handlers of node `id`. */
-  const nodeHandlers = (id: string, { settable, observes, activate, intervene }: NodeActions) => {
+  /** The handlers of node `id`; `activate` runs on a click, Enter or Space. */
+  const nodeHandlers = (id: string, activate: () => void) => {
     const onKey = (event: KeyboardEvent<SVGGElement>): void => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault()
-        activate(event.shiftKey)
+        activate()
         return
       }
       const step = ARROWS[event.key]
@@ -106,47 +74,12 @@ export function useNodeGestures(svgRef: RefObject<SVGSVGElement | null>, onMove:
         onMove(id, step[0], step[1])
       }
     }
-    const onClick = (event: MouseEvent<SVGGElement>): void => {
-      if (pressFired.current) {
-        pressFired.current = false
-        return
-      }
+    const onClick = (): void => {
       if (Date.now() < suppressUntil.current) return
-      activate(event.shiftKey)
+      activate()
     }
-    const onPointerDown = (e: PointerEvent<SVGGElement>): void => {
-      lastPointer.current = e.pointerType
-      startDrag(id, e)
-      if (!observes || !settable || e.button !== 0 || e.shiftKey) return
-      pressFired.current = false
-      cancelPress()
-      setPressing(id)
-      pressTimer.current = setTimeout(() => {
-        pressTimer.current = undefined
-        pressFired.current = true
-        setPressing(undefined)
-        intervene()
-      }, LONG_PRESS)
-    }
-    /** A right-click intervenes, as a long press does; only from a mouse (see `lastPointer`). */
-    const onContextMenu = (e: MouseEvent<SVGGElement>): void => {
-      e.preventDefault()
-      const own = (e.nativeEvent as { pointerType?: string }).pointerType
-      const kind = own === undefined ? lastPointer.current : own
-      if (kind !== 'mouse' || !settable) return
-      cancelPress()
-      intervene()
-    }
-    return {
-      onClick,
-      onKeyDown: onKey,
-      onPointerDown,
-      onPointerUp: cancelPress,
-      onPointerLeave: cancelPress,
-      onPointerCancel: cancelPress,
-      onContextMenu: observes ? onContextMenu : undefined,
-    }
+    return { onClick, onKeyDown: onKey, onPointerDown: (e: PointerEvent<SVGGElement>) => startDrag(id, e) }
   }
 
-  return { drag, pressing, moveDrag, endDrag, cancelDrag, nodeHandlers }
+  return { drag, moveDrag, endDrag, cancelDrag, nodeHandlers }
 }

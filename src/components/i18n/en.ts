@@ -149,25 +149,7 @@ export const EN: Messages = {
     `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${seen === undefined ? '' : `, observed as ${seen}`}${before === undefined ? '' : `, was ${before}`}`,
   nodeHint: (toggle, movable) =>
     [
-      toggle === undefined
-        ? ''
-        : toggle === 'release'
-          ? 'click to release the intervention'
-          : toggle === 'choose'
-            ? 'click to choose the value to set it to'
-            : toggle === 'adjust'
-              ? 'click to change the value or release it'
-              : toggle === 'chooseProb'
-                ? 'click to set the probability of 1 by intervention'
-                : toggle === 'adjustProb'
-                  ? 'click to change the probability of 1 set by intervention, or release it'
-                  : toggle === 'observe'
-                    ? 'click to observe (again for the other value, a third time to release); long-press, right-click or Shift+click to intervene'
-                    : toggle === 'observeOnly'
-                      ? 'click to observe (again for the other value, a third time to release)'
-                      : toggle === 'pick'
-                        ? 'click to add it to the known set or take it out'
-                        : 'click to intervene',
+      toggle === undefined ? '' : toggle === 'pick' ? 'click to add it to the known set or take it out' : toggle === 'do' ? 'click to open a menu to intervene' : 'click to open a menu to observe or intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
@@ -175,6 +157,35 @@ export const EN: Messages = {
   doRelease: 'Release',
   doPickLabel: (who) => `${who}: value to set it to`,
   doProbLabel: (who) => `${who}: probability of 1 set by intervention`,
+  menu: {
+    label: (who) => `${who}: observe or intervene`,
+    close: 'Close menu',
+    observe: 'Observe',
+    evidence: 'Actually (evidence)',
+    intervene: 'Intervene',
+    suppose: 'Suppose',
+    unobserve: 'Unobserve',
+    release: 'Release',
+    doProb: (id) => `P*(${id}=1)`,
+    probs: 'Probabilities of this node',
+    allKnown: 'Every value is known: observing changes nothing.',
+    exoOnly: 'An exogenous variable is a background condition: it can be observed, not intervened on.',
+    fill: (id, p) => `Fill height: P(${id}=1) = ${p}`,
+    bars: 'Bar heights: the probability of each value',
+    value: (id, v) => `Filled = 1, empty = 0; now ${id}=${v}`,
+    valueFinite: (id, v) => `Now ${id}=${v}`,
+    ring: (event) => `Double ring: ${event} is observed; every other probability is conditioned on it`,
+    ringEvidence: (event) => `Double ring: actually ${event} (evidence)`,
+    clamp: (doText) => `Red clamp: ${doText}, cutting the arrows into it`,
+    dsepEnd: (x, y) => `Red outer ring: ${x} and ${y} are the pair whose d-separation is read`,
+    exo: 'Dashed ring: an exogenous variable (a background condition)',
+  },
+  edgeTip: {
+    open: (x, y) => `Thick red line: an open path between ${x} and ${y} runs through this arrow`,
+    blocked: (x, y) => `Dashed line: this arrow lies only on blocked paths between ${x} and ${y}`,
+    cut: (to) => `Grey dashes with a slash: do() cut this arrow, so ${to} no longer depends on it`,
+  },
+  sliderGroup: (who) => `Probabilities of ${who}`,
   barMax: (p) => `max ${p}`,
   withHint: (aria, hint) => (hint === '' ? aria : `${aria}. ${hint.charAt(0).toUpperCase()}${hint.slice(1)}`),
   setDirectly: (parents, value) => `${parents.length === 0 ? '' : `ignores ${enList(parents)}; `}set directly to ${value}`,
@@ -404,14 +415,14 @@ export const EN: Messages = {
   },
 
   playgroundHint: (probabilistic) =>
-    probabilistic ? 'Click a node to observe it; long-press, right-click or Shift+click to intervene.' : 'Click a node to intervene on it.',
+    probabilistic ? 'Click a node for a menu to observe or intervene.' : 'Click a node for a menu to intervene.',
   sliderEmbed: ' The embed code does not keep the sliders: an embedded figure starts from the original probabilities.',
   playgroundHintMore: (probabilistic) =>
     probabilistic
-      ? 'Observing: first as 1, again as 0, a third time to release. Intervening sets it to 1, and the slider beside it sets 0 or a probability in between; Esc closes the slider.'
-      : 'First at its current value, again at the other value, a third time to release; on a node with more than two values, pick the value with the slider.',
+      ? 'Observing takes the node as a known value: every other probability is conditioned on it. Intervening sets the node by do(), cutting the arrows into it; the slider in the menu sets a probability between 0 and 1. With probability sliders, the menu lists the node\'s own; hovering a node or a slider marks the other. Esc closes the menu.'
+      : 'Intervening sets the node by do(), cutting the arrows into it, and everything downstream follows; release returns it to its own value. Esc closes the menu.',
   moreInfo: 'Details',
-  cfHint: 'Click to observe the actual world; long-press, right-click or Shift+click for the supposed intervention.',
+  cfHint: 'Click a node for a menu: record what actually happened (evidence) or suppose an intervention.',
   cfHintMore: 'The observations update the backgrounds first; the intervention then acts in those same backgrounds. Nodes show the supposed world, "actually v" the actual one; a node can be both observed and intervened on.',
   trail: 'Trail',
   trailStep: (value, setting) => (setting === '' ? value : `${value} (${setting})`),
@@ -483,7 +494,7 @@ export const EN: Messages = {
     lastGood: 'The model has problems; the graph shows the last version that worked:',
     addFirst: 'Add a variable under “Variables” first',
     fillEquations: 'Fill in the equations and the graph will appear',
-    hint: 'With probabilities, click a node to observe it and long-press (or Shift+click) it to intervene; with one set of values, a click intervenes. Drag a node (or select it and press the arrow keys) to move it.',
+    hint: 'Click a node for its menu: observe or intervene on a probability graph, intervene on a graph with one set of values. Drag a node (or select it and press the arrow keys) to move it.',
     variables: 'Variables',
     varId: (n) => `Variable ${n}: id`,
     varZh: (n) => `Variable ${n}: Chinese name`,
