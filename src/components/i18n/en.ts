@@ -149,7 +149,7 @@ export const EN: Messages = {
     `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${seen === undefined ? '' : `, observed as ${seen}`}${before === undefined ? '' : `, was ${before}`}`,
   nodeHint: (toggle, movable) =>
     [
-      toggle === undefined ? '' : toggle === 'pick' ? 'click to add it to the known set or take it out' : toggle === 'do' ? 'click to open a menu to intervene' : 'click to open a menu to observe or intervene',
+      toggle === undefined ? '' : toggle === 'pick' ? 'click to add it to the known set or take it out' : toggle === 'do' ? 'click to open a menu to intervene' : toggle === 'observe' ? 'click to open a menu to observe it' : 'click to open a menu to observe or intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
@@ -158,7 +158,8 @@ export const EN: Messages = {
   doPickLabel: (who) => `${who}: value to set it to`,
   doProbLabel: (who) => `${who}: probability of 1 set by intervention`,
   menu: {
-    label: (who) => `${who}: observe or intervene`,
+    label: (who, observe, intervene) =>
+      `${who}: ${observe && intervene ? 'observe or intervene' : observe ? 'observe' : intervene ? 'intervene' : 'menu'}`,
     close: 'Close menu',
     observe: 'Observe',
     evidence: 'Actually (evidence)',
@@ -166,7 +167,7 @@ export const EN: Messages = {
     suppose: 'Suppose',
     unobserve: 'Unobserve',
     release: 'Release',
-    doProb: (id) => `P*(${id}=1)`,
+    doProb: (id) => `Random intervention: probability of setting ${id} to 1`,
     probs: 'Probabilities of this node',
     allKnown: 'Every value is known: observing changes nothing.',
     exoOnly: 'An exogenous variable is a background condition: it can be observed, not intervened on.',
@@ -177,13 +178,26 @@ export const EN: Messages = {
     ring: (event) => `Double ring: ${event} is observed; every other probability is conditioned on it`,
     ringEvidence: (event) => `Double ring: actually ${event} (evidence)`,
     clamp: (doText) => `Red clamp: ${doText}, cutting the arrows into it`,
-    dsepEnd: (x, y) => `Red outer ring: ${x} and ${y} are the pair whose d-separation is read`,
+    dsepEnd: (x, y) => `Red outer rings mark ${x} and ${y}: check whether any path between them is still open`,
     exo: 'Dashed ring: an exogenous variable (a background condition)',
   },
   edgeTip: {
-    open: (x, y) => `Thick red line: an open path between ${x} and ${y} runs through this arrow`,
-    blocked: (x, y) => `Dashed line: this arrow lies only on blocked paths between ${x} and ${y}`,
-    cut: (to) => `Grey dashes with a slash: do() cut this arrow, so ${to} no longer depends on it`,
+    open: (paths) => `Thick red line: ${paths.join(' ')}`,
+    blocked: (paths) => `Dashed line: ${paths.join(' ')}`,
+    pathOpen: (path, why) => `The path ${path} is open: ${why}.`,
+    pathBlocked: (path, at, why) => `The path ${path} is blocked at ${at}: ${why}.`,
+    more: (n) => `${n} paths in all.`,
+    adjacent: 'its two ends are directly joined',
+    middlesUnknown: (ids) => `the middle ${ids.length === 1 ? 'node' : 'nodes'} ${and(ids)} ${ids.length === 1 ? 'is' : 'are'} unknown`,
+    colliderKnown: (id) => `the collider ${id} is known`,
+    descendantKnown: (id, by) => `${by}, a descendant of the collider ${id}, is known`,
+    colliderUnknown: (id, below) =>
+      below.length === 0
+        ? `${id} is a collider, unknown and with no descendants`
+        : `${id} is a collider, and ${id} and its ${below.length === 1 ? 'descendant' : 'descendants'} ${and(below)} are unknown`,
+    chainKnown: (id) => `${id} is the middle of a chain, and it is known`,
+    forkKnown: (id) => `${id} is the middle of a fork, and it is known`,
+    cut: (from, to) => `Grey dashes with a slash: do() cut ${from} → ${to}, so ${from} no longer helps determine ${to}`,
   },
   sliderGroup: (who) => `Probabilities of ${who}`,
   nodeBackToPrior: 'This node back to the prior probabilities',
@@ -211,7 +225,7 @@ export const EN: Messages = {
   tabsLabel: 'Under the figure',
   tab: { verdicts: 'Verdicts', dsep: 'd-separation', strata: 'Strata', background: 'Backgrounds', effects: 'Effects', blame: 'Blame' },
   jointOnly: "This case's probabilities form one joint distribution and cannot be set one by one.",
-  sliderLabel: (label) => `Probability: ${label}`,
+  sliderLabel: (label, target) => `Probability: ${label}${target === undefined ? "" : ` (${target})`}`,
   nodesShow: 'Nodes show',
   zeroOne: '0/1',
   probGraphTitle: (title) => `${title}: the probability that each variable equals 1`,

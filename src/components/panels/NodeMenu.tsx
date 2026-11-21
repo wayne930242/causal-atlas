@@ -84,7 +84,7 @@ export function NodeMenu(props: NodeMenuProps) {
       ref={menuRef}
       className="ca-node-menu"
       role="dialog"
-      aria-label={t.menu.label(who)}
+      aria-label={t.menu.label(who, observes, !exo && intervenes)}
       data-menu={id}
       tabIndex={-1}
       style={style}

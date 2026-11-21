@@ -120,7 +120,7 @@ describe('latent_as_arcs: what is drawn', () => {
 
   it('lights the arc when both of its edges are on an open path', () => {
     const open = new Set(['U>X', 'U>Y'])
-    const root = render1(withArcs(), { paths: { open, blocked: new Set(), ends: ['X', 'Y'] } })
+    const root = render1(withArcs(), { paths: { open, blocked: new Set(), ends: ['X', 'Y'], paths: [] } })
     expect(root.querySelector('[data-arc]')?.getAttribute('data-path')).toBe('open')
   })
 

@@ -248,7 +248,7 @@ export const ZH = {
     `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${seen === undefined ? '' : `，已觀察到 ${seen}`}${before === undefined ? '' : `，原本 ${before}`}`,
   nodeHint: (toggle: NodeToggle | undefined, movable: boolean): string =>
     [
-      toggle === undefined ? '' : toggle === 'pick' ? '按一下加進或移出已知集合' : toggle === 'do' ? '按一下打開選單，可以干預' : '按一下打開選單，可以觀察或干預',
+      toggle === undefined ? '' : toggle === 'pick' ? '按一下加進或移出已知集合' : toggle === 'do' ? '按一下打開選單，可以干預' : toggle === 'observe' ? '按一下打開選單，可以觀察' : '按一下打開選單，可以觀察或干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
@@ -257,7 +257,8 @@ export const ZH = {
   doPickLabel: (who: string): string => `${who}：選擇干預的值`,
   doProbLabel: (who: string): string => `${who}：干預後等於 1 的機率`,
   menu: {
-    label: (who: string): string => `${who}：觀察或干預`,
+    label: (who: string, observe: boolean, intervene: boolean): string =>
+      `${who}：${observe && intervene ? '觀察或干預' : observe ? '觀察' : intervene ? '干預' : '選單'}`,
     close: '關閉選單',
     observe: '觀察',
     evidence: '實際（證據）',
@@ -265,7 +266,7 @@ export const ZH = {
     suppose: '假設干預',
     unobserve: '不觀察',
     release: '放開',
-    doProb: (id: string): string => `P*(${id}=1)`,
+    doProb: (id: string): string => `隨機干預：把 ${id} 設成 1 的機率`,
     probs: '這個節點的機率',
     allKnown: '所有值都已知，觀察不會改變任何值。',
     exoOnly: '外生變項是背景條件，只能觀察，不能干預。',
@@ -276,13 +277,24 @@ export const ZH = {
     ring: (event: string): string => `雙圈：已觀察到 ${event}，圖上其他機率都以它為條件`,
     ringEvidence: (event: string): string => `雙圈：實際世界中 ${event}（證據）`,
     clamp: (doText: string): string => `紅色夾子：${doText}，剪掉進入它的箭頭`,
-    dsepEnd: (x: string, y: string): string => `紅色外圈：要判斷 d 分隔的兩端是 ${x} 與 ${y}`,
+    dsepEnd: (x: string, y: string): string => `紅色外圈標出 ${x} 和 ${y}：看兩者之間是否還有暢通的路徑`,
     exo: '虛線圈：外生變項（背景條件）',
   },
   edgeTip: {
-    open: (x: string, y: string): string => `紅色粗線：${x} 與 ${y} 之間有一條暢通的路徑經過這段箭頭`,
-    blocked: (x: string, y: string): string => `虛線：這段箭頭只在 ${x} 與 ${y} 之間被堵住的路徑上`,
-    cut: (to: string): string => `灰色虛線加斜槓：do() 剪掉了這條箭頭，${to} 不再受它影響`,
+    open: (paths: readonly string[]): string => `紅色粗線：${paths.join('')}`,
+    blocked: (paths: readonly string[]): string => `虛線：${paths.join('')}`,
+    pathOpen: (path: string, why: string): string => `路徑 ${path} 暢通。${why}。`,
+    pathBlocked: (path: string, at: string, why: string): string => `路徑 ${path} 在 ${at} 被堵住。${why}。`,
+    more: (n: number): string => `等 ${n} 條。`,
+    adjacent: '兩端直接相連',
+    middlesUnknown: (ids: readonly string[]): string => `中間點 ${ids.join('、')} ${ids.length === 1 ? '' : '都'}未知`,
+    colliderKnown: (id: string): string => `對撞點 ${id} 已知`,
+    descendantKnown: (id: string, by: string): string => `對撞點 ${id} 的後代 ${by} 已知`,
+    colliderUnknown: (id: string, below: readonly string[]): string =>
+      below.length === 0 ? `${id} 是對撞點，${id} 未知，也沒有後代` : `${id} 是對撞點，${id} 和它的後代 ${below.join('、')} 都未知`,
+    chainKnown: (id: string): string => `${id} 是鏈的中間點，已知`,
+    forkKnown: (id: string): string => `${id} 是叉的中間點，已知`,
+    cut: (from: string, to: string): string => `灰色虛線加斜槓：do() 剪掉了 ${from} → ${to}，${to} 的值不再由 ${from} 決定`,
   },
   sliderGroup: (who: string): string => `${who}的機率`,
   nodeBackToPrior: '這個節點回到原本的機率',
@@ -312,7 +324,7 @@ export const ZH = {
   tabsLabel: '圖下方的內容',
   tab: { verdicts: '判定', dsep: 'd 分隔', strata: '分組表', background: '背景表', effects: '效應', blame: '責備' },
   jointOnly: '這個案例的機率是整張聯合分布，不能逐一調整。',
-  sliderLabel: (label: string): string => `${label}的機率`,
+  sliderLabel: (label: string, target?: string): string => `${label}的機率${target === undefined ? '' : `（${target}）`}`,
   nodesShow: '節點顯示',
   zeroOne: '0／1',
   probGraphTitle: (title: string): string => `${title}：各變項等於 1 的機率`,

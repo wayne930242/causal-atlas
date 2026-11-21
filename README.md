@@ -2,6 +2,16 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.9.3
+A marked edge's tip names the d-separation paths through it and says why each is open or blocked, in the
+lessons' words: 「路徑 S → W ← R 在 W 被堵住。W 是對撞點，W 和它的後代 F 都未知。」, 「路徑 S ← C → R
+在 C 被堵住。C 是叉的中間點，已知。」, or 「路徑 S → W ← R 暢通。對撞點 W 的後代 F 已知。」 (en twins). It names
+at most two paths, then 「等 n 條」. A cut edge's tip names the arrow (「do() 剪掉了 S → W」). An exogenous
+node that can only be observed says so in its hint and menu name (no "or intervene"); a menu names only the
+actions it offers. A slider on a variable with named values says which value it moves (「選擇傾向的機率（D=one）」),
+and the menu's random-intervention slider reads 「隨機干預：把 W 設成 1 的機率」 instead of `P*(W=1)`.
+`DPath` gains `descendants` on a path blocked by a collider.
+
 ## 0.9.2
 The `sliders` list moved off the page into a tab 「機率」 (en "Probabilities") in the row under the graph,
 closed at first, with every slider grouped by node and its own 「回到原本的機率」, which puts only the
@@ -239,7 +249,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.9.2) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.9.3) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -354,7 +364,7 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 
 - `<CausalPlayground doc>`: graph, notation toggle, observation and do() on the nodes (see 0.3.13) and the export menu, server-rendered
   with values, no editor chrome. A click on a node opens its menu (see 0.9.0): observe (probability
-  graphs) or do() at each value, release, a P*(X=1) slider, the node's own sliders; no long-press or
+  graphs) or do() at each value, release, a random-intervention slider (P*(X=1)), the node's own sliders; no long-press or
   right-click binding. The hint under the graph is one line;
   its ⓘ opens the details in a tooltip (hover, keyboard focus or a tap; `aria-describedby`).
 - `presets` (step buttons) is `true` (a bundled case's own; a document has none), `false`, or a list of
@@ -552,9 +562,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.2 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.9.3 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.9.2) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.9.3) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -563,7 +573,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.9.2},
+  version = {0.9.3},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

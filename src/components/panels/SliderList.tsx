@@ -49,7 +49,7 @@ export function SliderList({ c, ids, values, onChange, idPrefix, shown, lit = []
           <Ident id={id} />
         </span>
         <label className="ca-slider-label" htmlFor={inputId}>
-          {t.sliderLabel(label(c.model, id, t.locale))}
+          {t.sliderLabel(label(c.model, id, t.locale), variable.domain.kind === 'boolean' ? undefined : targetText(variable))}
         </label>
         <input
           id={inputId}

@@ -115,7 +115,7 @@ export function adjustView(c: LoadedCase, prior: Prior, x: string, y: string, se
     descendants: desc,
     opened,
     openBackdoors,
-    marks: { open, blocked, ends: [x, y] },
+    marks: { open, blocked, ends: [x, y], paths: nonCausal },
   }
 }
 

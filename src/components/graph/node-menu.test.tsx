@@ -287,6 +287,9 @@ describe('exogenous nodes are the context, not do() targets', () => {
     const menu = openMenu(container, 'U_X')
     expect(menu.querySelector('[data-do]')).toBeNull()
     expect(menu.textContent).toContain('外生變項是背景條件，只能觀察，不能干預。')
+    expect(menu.getAttribute('aria-label')).toMatch(/：觀察$/)
+    expect(node(container, 'U_X').getAttribute('aria-label')).toContain('按一下打開選單，可以觀察')
+    expect(node(container, 'U_X').getAttribute('aria-label')).not.toContain('干預')
     observeNode(container, 'U_X', '1')
     expect(observedAs(container, 'U_X')).toBe('1')
     expect(node(container, 'U_X').getAttribute('aria-label')).toContain('按一下打開選單')
@@ -299,9 +302,9 @@ describe('marked edges explain themselves', () => {
     const { container } = render(<CausalPlayground doc={doc} dsep={['X', 'Y']} />)
     const edge = container.querySelector('[data-edge="X>Z"]') as Element
     expect(edge.getAttribute('tabindex')).toBe('0')
-    expect(edge.getAttribute('aria-label')).toBe('虛線：這段箭頭只在 X 與 Y 之間被堵住的路徑上')
+    expect(edge.getAttribute('aria-label')).toBe('虛線：路徑 X → Z ← Y 在 Z 被堵住。Z 是對撞點，Z 未知，也沒有後代。')
     fireEvent.pointerEnter(edge, { pointerType: 'mouse' })
-    expect(container.querySelector('[data-edge-tip="X>Z"]')?.textContent).toBe('虛線：這段箭頭只在 X 與 Y 之間被堵住的路徑上')
+    expect(container.querySelector('[data-edge-tip="X>Z"]')?.textContent).toBe('虛線：路徑 X → Z ← Y 在 Z 被堵住。Z 是對撞點，Z 未知，也沒有後代。')
     fireEvent.pointerLeave(edge, { pointerType: 'mouse' })
     expect(container.querySelector('[data-edge-tip]')).toBeNull()
     // A tap (no hover on touch) toggles it; a press elsewhere hides it.
@@ -312,9 +315,9 @@ describe('marked edges explain themselves', () => {
     fireEvent.pointerDown(document.body)
     expect(container.querySelector('[data-edge-tip]')).toBeNull()
     observeNode(container, 'Z', '1')
-    expect(container.querySelector('[data-edge="X>Z"]')?.getAttribute('aria-label')).toBe('紅色粗線：X 與 Y 之間有一條暢通的路徑經過這段箭頭')
+    expect(container.querySelector('[data-edge="X>Z"]')?.getAttribute('aria-label')).toBe('紅色粗線：路徑 X → Z ← Y 暢通。對撞點 Z 已知。')
     doNode(container, 'Z', '1')
-    expect(container.querySelector('[data-edge="X>Z"]')?.getAttribute('aria-label')).toBe('灰色虛線加斜槓：do() 剪掉了這條箭頭，Z 不再受它影響')
+    expect(container.querySelector('[data-edge="X>Z"]')?.getAttribute('aria-label')).toBe('灰色虛線加斜槓：do() 剪掉了 X → Z，Z 的值不再由 X 決定')
   })
 
   it('a real tap (press, focus, click) toggles the tip; a mouse click on a hovered edge keeps it', () => {

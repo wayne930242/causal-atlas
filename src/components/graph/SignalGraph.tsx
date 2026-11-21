@@ -8,6 +8,7 @@ import type { NodeToggle } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
 import type { Stochastic } from '../model/assignments.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
+import { edgeTipText } from '../model/dsep-view.ts'
 import { idWithName, probText, shortLabel } from '../model/wording.ts'
 import { useDigits } from '../shared/digits.ts'
 import { focusVisible } from '../shared/focus-visible.ts'
@@ -164,7 +165,6 @@ export function SignalGraph(props: SignalGraphProps) {
 
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
-  const [endA, endB] = paths?.ends ?? []
   /** The pointer that pressed an edge last: a tap toggles its explanation, a mouse click only shows it. */
   const edgePointer = useRef<string>('mouse')
   /** A marked edge explains itself: on hover (mouse, pen) and keyboard focus, and on a tap, which toggles it. */
@@ -186,8 +186,8 @@ export function SignalGraph(props: SignalGraphProps) {
           onBlur: () => onEdgeTip(undefined),
           onClick: () => onEdgeTip(edgePointer.current === 'touch' && edgeTip === key ? undefined : { key, text }),
         }
-  const pathTip = (onPath: 'open' | 'blocked' | undefined): string | undefined =>
-    onPath === undefined || endA === undefined || endB === undefined ? undefined : onPath === 'open' ? t.edgeTip.open(endA, endB) : t.edgeTip.blocked(endA, endB)
+  const pathTip = (key: string, onPath: 'open' | 'blocked' | undefined): string | undefined =>
+    onPath === undefined || paths === undefined ? undefined : edgeTipText(t, paths, key, onPath)
   /** An invisible wide stroke over a marked edge, so a finger or pointer finds it. */
   const hit = (key: string, x1: number, y1: number, x2: number, y2: number, text: string | undefined) =>
     text === undefined || onEdgeTip === undefined ? null : <line key={`${key}-hit`} x1={x1} y1={y1} x2={x2} y2={y2} className="ca-edge-hit" />
@@ -195,7 +195,8 @@ export function SignalGraph(props: SignalGraphProps) {
   const edgeEls = layout.edges.map((edge) => {
     if (edge.kind === 'cut') {
       const { key, x1, y1, x2, y2, mx, my, ux, uy, label: cutLabel } = edge
-      const tip = t.edgeTip.cut(edge.key.split('>')[1] ?? '')
+      const [cutFrom = '', cutTo = ''] = edge.key.split('>')
+      const tip = t.edgeTip.cut(cutFrom, cutTo)
       return (
         <g key={key} className="ca-edge ca-edge-cut" data-edge={key} data-state="cut" {...tipProps(key, tip)}>
           {hit(key, x1, y1, x2, y2, tip)}
@@ -211,7 +212,7 @@ export function SignalGraph(props: SignalGraphProps) {
     const { key, x1, y1, x2, y2, live, onPath, cls } = edge
     if (edge.kind === 'inhibit') {
       const { ux, uy, text, label: inhibitLabel } = edge
-      const tip = pathTip(onPath)
+      const tip = pathTip(key, onPath)
       return (
         <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath} {...tipProps(key, tip)}>
           {hit(key, x1, y1, x2, y2, tip)}
@@ -223,7 +224,7 @@ export function SignalGraph(props: SignalGraphProps) {
         </g>
       )
     }
-    const tip = pathTip(onPath)
+    const tip = pathTip(key, onPath)
     return (
       <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath} {...tipProps(key, tip)}>
         {hit(key, x1, y1, x2, y2, tip)}
@@ -304,7 +305,7 @@ export function SignalGraph(props: SignalGraphProps) {
       if (onPick !== undefined) onPick(id)
       else onOpen?.(id)
     }
-    const toggle: NodeToggle | undefined = onPick !== undefined ? 'pick' : !opens ? undefined : observable ? 'observeOrDo' : 'do'
+    const toggle: NodeToggle | undefined = onPick !== undefined ? 'pick' : !opens ? undefined : observable ? (variable.kind === 'exogenous' ? 'observe' : 'observeOrDo') : 'do'
     const hint = t.nodeHint(toggle, onMove !== undefined)
     // An exogenous node is a dashed ring with its value or fill a little inside it.
     const exo = variable.kind === 'exogenous'

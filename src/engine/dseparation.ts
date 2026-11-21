@@ -24,6 +24,8 @@ export interface DPath {
   readonly blockedBy?: string
   /** `known`: a chain or fork middle that is known; `collider`: a collider with neither it nor a descendant known. */
   readonly kind?: 'known' | 'collider'
+  /** A path blocked by a collider: that collider's descendants in the graph after do(), all unknown. */
+  readonly descendants?: readonly string[]
   /** An open path: each collider on it, with what opens it. */
   readonly opened?: readonly OpenedCollider[]
 }
@@ -118,8 +120,9 @@ export function dSeparation(
         opened.push({ collider: m, by: m })
         continue
       }
-      const by = [...descendantsOf(edges, m)].find((d) => known.has(d))
-      if (by === undefined) return { nodes, edges: along, open: false, blockedBy: m, kind: 'collider' }
+      const below = [...descendantsOf(edges, m)]
+      const by = below.find((d) => known.has(d))
+      if (by === undefined) return { nodes, edges: along, open: false, blockedBy: m, kind: 'collider', descendants: below }
       opened.push({ collider: m, by })
     }
     return { nodes, edges: along, open: true, opened }

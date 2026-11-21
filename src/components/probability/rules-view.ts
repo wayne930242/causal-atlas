@@ -56,7 +56,7 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: rea
   const blocked = new Set(result.paths.filter((p) => !p.open).flatMap((p) => p.edges.map(key)).filter((k) => !open.has(k)))
   const value = (s: RuleSide): number => probability(c.model, prior, s).value
   const sides = step.equal === undefined ? undefined : ([value(step.equal[0]), value(step.equal[1])] as const)
-  return { result, removed, marks: { open, blocked, ends: [x, y] }, sides }
+  return { result, removed, marks: { open, blocked, ends: [x, y], paths: result.paths }, sides }
 }
 
 /** `P(Y=1 | Z=1, do(X=1))`: the observation first, then the do(). */
