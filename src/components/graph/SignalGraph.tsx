@@ -17,7 +17,7 @@ import { sub } from '../text/svg-text.tsx'
 import { textWidth } from '../text/text-measure.ts'
 import { Rich } from '../text/typeset.tsx'
 import { BarChart } from './BarChart.tsx'
-import { layoutSignalGraph } from './signal-geometry.ts'
+import { SWITCH_HALF, layoutSignalGraph } from './signal-geometry.ts'
 import { EXO_INSET, arrowHead, clampPath, exoDash, nodeReadout } from './signal-shapes.ts'
 import { useNodeGestures } from './use-node-gestures.ts'
 
@@ -59,6 +59,13 @@ export interface SignalGraphProps {
   readonly paths?: PathMarks
   /** Nodes drawn with the do() clamp but no value tag: the arrows into them are cut in a graph without numbers (do-calculus). */
   readonly clamped?: readonly string[]
+  /** Nodes drawn with a dashed clamp: the arrows into them are cut for a test only, not by a do() of the expression (do-calculus rule 3). */
+  readonly testClamped?: readonly string[]
+  /**
+   * Intervention switch nodes (`F_Z`, Pearl's regime indicator): each a small square labelled by its
+   * id, beside the variable its one arrow points into. They must be in `c` and `shown`.
+   */
+  readonly switches?: readonly string[]
   /** Words read after a node's state in its label, e.g. its roles in a do-calculus step; not drawn. */
   readonly nodeNotes?: Readonly<Record<string, string>>
   /** A click (or Enter) on a node picks it, e.g. into or out of a known set; no observing or do(). */
@@ -113,6 +120,8 @@ export function SignalGraph(props: SignalGraphProps) {
     defaults,
     paths,
     clamped = [],
+    testClamped = [],
+    switches = [],
     nodeNotes = {},
     onPick,
     onOpen,
@@ -157,7 +166,8 @@ export function SignalGraph(props: SignalGraphProps) {
       holdNotes,
       defaults,
       paths,
-      clamped,
+      clamped: [...clamped, ...testClamped],
+      switches,
       compact: props.compact === true,
       drag,
       digits,
@@ -275,6 +285,32 @@ export function SignalGraph(props: SignalGraphProps) {
     const p = pos.get(id)
     const block = blocks.get(id)
     if (p === undefined || block === undefined) return null
+    if (switches.includes(id)) {
+      const aria = t.withHint(idWithName(id, nameOf(id)), nodeNotes[id] ?? '')
+      const S = SWITCH_HALF
+      return (
+        <g
+          key={id}
+          className={`ca-node ca-switch${onPick !== undefined ? ' is-interactive' : ''}`}
+          data-node={id}
+          data-switch="true"
+          data-block={block.side}
+          transform={`translate(${p.x} ${p.y})`}
+          {...(onPick !== undefined
+            ? { role: 'button', tabIndex: 0, 'aria-label': t.withHint(aria, t.nodeHint('pick', false)), ...nodeHandlers(id, () => onPick(id)) }
+            : { role: 'img', 'aria-label': aria })}
+          {...hoverHandlers(id)}
+        >
+          <circle r={S + 12} className="ca-focus-ring" />
+          {observed.includes(id) && <rect x={-S - 4} y={-S - 4} width={2 * S + 8} height={2 * S + 8} className="ca-ring" />}
+          {paths?.ends.includes(id) === true && <circle r={S + 8 + (observed.includes(id) ? 4 : 0)} className="ca-dsep-ring" data-dsep-end={id} />}
+          <rect x={-S} y={-S} width={2 * S} height={2 * S} className="ca-switch-box" />
+          <text y={block.labelY} textAnchor="middle" className="ca-svg-label">
+            <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
+          </text>
+        </g>
+      )
+    }
     const variable = getVariable(c.model, id)
     const v = values?.[id]
     const forced = interventions[id]
@@ -388,6 +424,7 @@ export function SignalGraph(props: SignalGraphProps) {
             </text>
           </>
         )}
+        {!intervened && testClamped.includes(id) && <path d={clampPath(R)} className="ca-stroke-clamp ca-clamp-test" data-clamp="test" />}
         {((intervened && !held) || (!intervened && clamped.includes(id))) && (
           <>
             <path d={clampPath(R)} className="ca-stroke-clamp" />

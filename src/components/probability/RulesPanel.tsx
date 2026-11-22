@@ -10,7 +10,7 @@ import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
 import type { RuleMark, RuleStep } from './rules-view.ts'
-import { SIDE_TOLERANCE, nodeRoles, presentMarks, ruleView, sideText } from './rules-view.ts'
+import { SIDE_TOLERANCE, clampSplit, nodeRoles, presentMarks, ruleView, sideText } from './rules-view.ts'
 import { placeTip } from '../panels/menu-place.ts'
 import { useDigits } from '../shared/digits.ts'
 import { Segmented, Tag, Tip } from '../shared/parts.tsx'
@@ -19,7 +19,7 @@ import { Formula, Rich } from '../text/typeset.tsx'
 import { useNarrow } from '../shared/use-narrow.ts'
 import { originCitations } from '../model/verdict-rows.ts'
 
-const RULE_SYMBOLS = new Set(['Z', 'W'])
+const RULE_SYMBOLS = new Set(['Z', 'W', 'Y', 'F_Z'])
 
 /** A legend swatch drawn like its mark on the graph, in a 22 by 16 box. */
 function Swatch({ mark }: { readonly mark: RuleMark }) {
@@ -31,7 +31,9 @@ function Swatch({ mark }: { readonly mark: RuleMark }) {
         <circle cx={11} cy={8} r={4} className="ca-node-outline" />
       </>
     ),
+    switch: <rect x={6} y={3} width={10} height={10} className="ca-switch-box" />,
     clamp: <path d="M4 7V2h5M13 2h5v5M18 9v5h-5M9 14H4V9" className="ca-stroke-clamp" />,
+    testClamp: <path d="M4 7V2h5M13 2h5v5M18 9v5h-5M9 14H4V9" className="ca-stroke-clamp ca-clamp-test" />,
     cut: (
       <>
         <line x1={1} y1={8} x2={21} y2={8} className="ca-stroke-cut" />
@@ -49,11 +51,13 @@ function Swatch({ mark }: { readonly mark: RuleMark }) {
 }
 
 /**
- * The do-calculus rules on their cut graphs (lesson 06): a step button per step of the
- * derivation, the step's cut graph with no numbers (cut arrows struck, the variables whose
- * incoming arrows are cut clamped, the known set ringed, the pair's paths lit or dashed), a line
- * saying whether the pair is separated and the rule applies, and the step's equation on the full
- * model. A click on a node adds it to the known set or takes it out; the step button restores it.
+ * The do-calculus rules on their graphs (lesson 06): a step button per step of the derivation,
+ * the step's graph with no numbers (cut arrows struck; the variables the expression sets by do()
+ * clamped, those cut only for the test with a dashed clamp; intervention switches `F_Z` as small
+ * squares; the known set ringed; the pair's paths lit or dashed), a line with the d-separation
+ * verdict (a switch test: 可換 or 不可換; a cut graph: the rule applies or not, never while the
+ * equation's sides differ), and the step's equation on the full model. A click on a node adds it
+ * to the known set or takes it out; the step button restores it.
  */
 export function RulesPanel({
   c,
@@ -84,15 +88,27 @@ export function RulesPanel({
   const pick = (id: string): void => setKnown((now) => (now.includes(id) ? now.filter((k) => k !== id) : [...now, id]))
   const ruleName = t.rules.rule(step.rule)
   const r = t.rules
+  /** The head's tags after the rule: the switches added, then what is cut (none said for a switch test that cuts nothing). */
+  const headTags = (m: Messages): string[] => {
+    const cutIn = step.cutIn ?? []
+    const cutOut = step.cutOut ?? []
+    const out: string[] = []
+    if (view.switchNodes.length > 0) out.push(m.rules.switchTag(view.switchNodes, step.switches ?? []))
+    if (view.switchNodes.length === 0 || cutIn.length > 0 || cutOut.length > 0) out.push(m.rules.cut(cutIn, cutOut))
+    return out
+  }
   const rolesText = (m: Messages, id: string): string => {
     const roles = nodeRoles(step, known, id).map((role) => m.rules.role[role])
     return roles.length === 0 ? m.rules.role.none : m.rules.roles(roles)
   }
-  const notes = Object.fromEntries(shown.map((id) => [id, rolesText(t, id)]))
-  const marks = presentMarks(c, step, view, known, shown)
+  // The step's switches are drawn first, beside the variables they point into.
+  const drawn = [...view.switchNodes, ...shown]
+  const notes = Object.fromEntries(drawn.map((id) => [id, rolesText(t, id)]))
+  const marks = presentMarks(step, view, known, drawn)
+  const clamps = clampSplit(step)
   // A node under the pointer (or keyboard focus) says what it is in this step, above the node.
   const [hover, setHover] = useState<string | undefined>(undefined)
-  const hovered = hover !== undefined && shown.includes(hover) ? hover : undefined
+  const hovered = hover !== undefined && drawn.includes(hover) ? hover : undefined
   const [tipStyle, setTipStyle] = useState<CSSProperties>({ visibility: 'hidden' })
   useLayoutEffect(() => {
     if (hovered === undefined) return
@@ -106,47 +122,55 @@ export function RulesPanel({
   const graph = (m: Messages, interactive: boolean) => (
     <SignalGraph
       compact={narrow}
-      c={c}
-      shown={shown}
+      c={view.graph}
+      shown={drawn}
       interventions={{}}
       removedEdges={view.removed}
-      clamped={step.cutIn ?? []}
+      clamped={clamps.set}
+      testClamped={clamps.test}
+      switches={view.switchNodes}
       observed={known}
       paths={view.marks}
       onPick={interactive ? pick : undefined}
       onHover={interactive ? setHover : undefined}
       nodeNotes={interactive ? notes : undefined}
-      title={m.rules.graphTitle(c.data.title[m.locale], m.rules.rule(step.rule))}
+      title={(view.switchTest ? m.rules.switchTitle : m.rules.graphTitle)(c.data.title[m.locale], m.rules.rule(step.rule))}
     />
   )
   const exportSource = (locale: Locale): ExportSource | undefined =>
-    singleGraphSource(c, locale, t, wrap, digits, (m) => graph(m, false), (svg, m) => ({
+    singleGraphSource(view.graph, locale, t, wrap, digits, (m) => graph(m, false), (svg, m) => ({
       name: `${c.data.id}-rule-${step.label}`,
       panels: [
         {
           svg,
-          tags: [
-            { text: m.rules.rule(step.rule), tone: 'fg' },
-            { text: m.rules.cut(step.cutIn ?? [], step.cutOut ?? []), tone: 'outline' },
-          ],
+          tags: [{ text: m.rules.rule(step.rule), tone: 'fg' }, ...headTags(m).map((text) => ({ text, tone: 'outline' as const }))],
         },
       ],
       legend: '',
     }))
   const d = t.dsep
-  const ids = c.model.byId
+  const ids = view.graph.model.byId
   const { result } = view
   const sides = view.sides
   const equal = sides !== undefined && Math.abs(sides[0] - sides[1]) < SIDE_TOLERANCE
+  const verdictText = {
+    swap: r.swap,
+    noSwap: r.noSwap,
+    applies: r.applies(ruleName),
+    notApplies: r.notApplies(ruleName),
+    mismatch: r.mismatch,
+  }[view.verdict]
   return (
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="rules" lang={t.locale}>
       <div className="ca-box ca-graph-box">
         <div className="ca-box-head">
           <div className="ca-tags">
             <Tag tone="fg">{ruleName}</Tag>
-            <Tag tone="outline">
-              <Rich text={t.rules.cut(step.cutIn ?? [], step.cutOut ?? [])} ids={ids} />
-            </Tag>
+            {headTags(t).map((text) => (
+              <Tag key={text} tone="outline">
+                <Rich text={text} ids={ids} />
+              </Tag>
+            ))}
           </div>
           <div className="ca-box-actions">
             <Segmented className="ca-rules-steps" label={t.rules.steps} options={steps.map((s, i) => ({ value: String(i), label: s.label }))} value={String(Math.min(at, steps.length - 1))} onChange={(v) => go(Number(v))} />
@@ -174,7 +198,7 @@ export function RulesPanel({
           <p className="ca-dsep-head">
             <span className="ca-pg-now-kicker"><Rich text={d.pair(step.pair[0], step.pair[1])} ids={ids} /></span> <Rich text={d.known([...known])} ids={ids} /> →{' '}
             <strong>{result.separated ? t.rules.separated : d.open}</strong>
-            {result.separated ? t.rules.applies(ruleName) : t.rules.notApplies(ruleName)} <Tip tip={<Rich text={t.rules.tip} ids={RULE_SYMBOLS} />} label={t.moreInfo} />
+            <span data-verdict={view.verdict}>{verdictText}</span> <Tip tip={<Rich text={view.switchTest ? t.rules.switchTip : t.rules.tip} ids={RULE_SYMBOLS} />} label={t.moreInfo} />
           </p>
           <ul className="ca-dsep-paths">
             {result.paths.length === 0 && <li>{d.noPath}</li>}
@@ -188,7 +212,12 @@ export function RulesPanel({
             {result.paths.length > MAX_PATHS && <li>{d.more(result.paths.length - MAX_PATHS)}</li>}
           </ul>
         </div>
-        {step.equal !== undefined && sides !== undefined && (
+        {step.equal !== undefined && sides !== undefined && !view.equationShown && (
+          <p className="ca-rules-equal" data-equal="moved">
+            <Rich text={r.equationMoved(step.given)} ids={ids} />
+          </p>
+        )}
+        {step.equal !== undefined && sides !== undefined && view.equationShown && (
           <p className="ca-rules-equal" data-equal={equal ? 'true' : 'false'}>
             <code className="ca-mono">
               <Formula

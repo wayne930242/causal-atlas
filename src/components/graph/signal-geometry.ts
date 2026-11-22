@@ -52,6 +52,8 @@ export interface SignalGraphInput {
   readonly defaults?: Assignment
   readonly paths?: PathMarks
   readonly clamped: readonly string[]
+  /** Intervention switch nodes (`F_Z`), drawn as small squares beside the variable they point into. */
+  readonly switches?: readonly string[]
   readonly compact: boolean
   /** The node being dragged and how far it has moved, in px. */
   readonly drag?: { readonly id: string; readonly dx: number; readonly dy: number }
@@ -152,6 +154,66 @@ export interface SignalLayout {
   readonly height: number
 }
 
+/** Half the side of a switch node's square, in px. */
+export const SWITCH_HALF = 9
+
+/** Where a switch may sit, in grid cells from the variable it points into: up-left first, then round it. */
+const SWITCH_SPOTS: readonly (readonly [number, number])[] = [
+  [-0.55, -0.55],
+  [-0.55, 0.55],
+  [0, -0.7],
+  [-0.7, 0],
+  [0.55, -0.55],
+  [0.55, 0.55],
+  [0, 0.7],
+  [0.7, 0],
+]
+
+/**
+ * The grid with each switch (`F_Z`, its one arrow into `Z`) placed beside its variable, at the
+ * first spot clear of the other nodes and of the edges, whose own arrow passes no other node. The
+ * other nodes keep their cells.
+ */
+function placeSwitches(
+  c: LoadedCase,
+  shown: readonly string[],
+  switches: readonly string[],
+  grid: Map<string, { col: number; row: number }>,
+  col: number,
+  row: number,
+  r: number,
+): Map<string, { col: number; row: number }> {
+  const drawn = switches.filter((id) => shown.includes(id))
+  if (drawn.length === 0) return grid
+  const px = (g: { col: number; row: number }): Point => ({ x: g.col * col, y: g.row * row })
+  const edges = shownEdges(c.model.edges, shown).filter((e) => !switches.includes(e.from))
+  const near = (p: Point, q: Point, d: number): boolean => Math.hypot(p.x - q.x, p.y - q.y) < d
+  const box = (p: Point, d: number): Box => ({ x0: p.x - d, y0: p.y - d, x1: p.x + d, y1: p.y + d })
+  for (const id of drawn) {
+    const target = c.model.edges.find((e) => e.from === id)?.to
+    const at = target === undefined ? undefined : grid.get(target)
+    if (target === undefined || at === undefined) throw new Error(`causal-atlas: ${c.data.id}: switch ${id} points into no drawn variable`)
+    const tp = px(at)
+    const clear = (spot: { col: number; row: number }): boolean => {
+      const p = px(spot)
+      for (const [other, g] of grid) {
+        if (other === target) continue
+        const q = px(g)
+        if (near(p, q, 2 * r + 8)) return false
+        if (segmentHitsBox(p, tp, box(q, r + 4))) return false
+      }
+      return edges.every((e) => {
+        const a = grid.get(e.from)
+        const b = grid.get(e.to)
+        return a === undefined || b === undefined || !segmentHitsBox(px(a), px(b), box(p, SWITCH_HALF + 10))
+      })
+    }
+    const spots = SWITCH_SPOTS.map(([dc, dr]) => ({ col: at.col + dc, row: at.row + dr }))
+    grid.set(id, spots.find(clear) ?? spots[0])
+  }
+  return grid
+}
+
 export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalLayout {
   const {
     c,
@@ -172,6 +234,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     defaults,
     paths,
     clamped,
+    switches = [],
     compact,
     drag,
     digits = 2,
@@ -180,7 +243,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
   const { r: R, col: COL, row: ROW } = graphSpacing(prob, compact)
   const PAD_X = compact ? 60 : 96
   const PAD_Y = 72
-  const grid = gridLayout(c, shown)
+  const grid = placeSwitches(c, shown, switches, gridLayout(c, shown.filter((id) => !switches.includes(id))), COL, ROW, R)
   const cells = [...grid.values()]
   const minCol = Math.min(...cells.map((p) => p.col))
   const maxCol = Math.max(...cells.map((p) => p.col))
@@ -241,7 +304,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
   for (const id of shown) {
     const p = pos.get(id)
     if (p === undefined) continue
-    fixed.push(around(p.x, p.y, R + 3))
+    fixed.push(around(p.x, p.y, (switches.includes(id) ? SWITCH_HALF : R) + 3))
     const tag = doTag(id)
     if (tag !== undefined) {
       fixed.push(shifted(tag.box, p.x, p.y))
@@ -273,7 +336,9 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known), digits)), 11)
       readout = { kind: 'bars', width: barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width, maxW, noteW }
     } else if (prob) readout = { kind: 'number', noteW, numberW: readoutWidth(settledRead ?? nodeReadout(t, digits, undefined, undefined, undefined), digits) }
-    const labelW = textWidth(idWithName(id, nameOf(id)), 14)
+    // A switch is labelled by its id alone (F_Z), right by its square.
+    const isSwitch = switches.includes(id)
+    const labelW = textWidth(isSwitch ? id : idWithName(id, nameOf(id)), 14)
     const touches = (b: Block): number => {
       let n = 0
       for (const local of b.boxes) {
@@ -292,7 +357,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       }
       return n
     }
-    const [below, above] = blockOptions(R, labelW, readout)
+    const [below, above] = blockOptions(isSwitch ? SWITCH_HALF : R, labelW, readout)
     const hitsBelow = touches(below)
     const block = hitsBelow > 0 && touches(above) < hitsBelow ? above : below
     blocks.set(id, block)
@@ -305,7 +370,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
   for (const id of shown) {
     const p = pos.get(id)
     if (p === undefined) continue
-    const local: Box[] = [around(0, 0, R + 6)]
+    const local: Box[] = [around(0, 0, (switches.includes(id) ? SWITCH_HALF : R) + 6)]
     const tag = doTag(id)
     if (tag !== undefined) local.push(tag.box)
     const before = original?.[id]
@@ -394,8 +459,10 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     const b = pos.get(e.to)
     if (a === undefined || b === undefined) continue
     const { ux, uy } = unit(a, b)
-    const x1 = a.x + R * ux
-    const y1 = a.y + R * uy
+    // A switch's square: the arrow leaves its side, not a circle's rim.
+    const from = switches.includes(e.from) ? SWITCH_HALF / Math.max(Math.abs(ux), Math.abs(uy)) : R
+    const x1 = a.x + from * ux
+    const y1 = a.y + from * uy
     const polarity = edgePolarity(c.model, e.from, e.to)
     const key = `${e.from}>${e.to}`
     if (cut.has(key)) {

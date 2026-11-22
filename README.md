@@ -2,6 +2,25 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.13.0
+The do-calculus view (`view="rules"`) draws Pearl's intervention switch. A step's `switches: ["Z"]` adds a
+node `F_Z` with one arrow `F_Z → Z`, drawn as a small square labelled `F_Z`; no arrow into `Z` is cut by it.
+A step whose `pair` names a switch (`pair: ["F_Z", "Y"]`) tests it on the expression's graph: only the arrows
+into the variables both sides already set by do() are cut (`cutIn`), nothing for the test, and the known set
+is the one both sides observe (rule 2 adds `Z`, rule 3 does not). The line then says 可換 or 不可換 (en "the
+two sides can be swapped" or "cannot be swapped") from that d-separation alone, and lists the paths, e.g.
+`F_Z → Z ← U → Y` opened by the observed descendant `W`. A switch step fails fast when `cutIn` names a switched
+variable or one the two sides do not both set, or when it has `cutOut`. The engine exports
+`withSwitches(model, ids)` and `switchId(id)`.
+
+A cut graph never says a rule applies while the equation's two sides differ: separated with the step's own
+known set but unequal sides reads 「分隔，但等式兩邊的數字不等：這張圖不能用來換」 (the wrong cut of rule 3's
+exception). Once a click moves the known set off the step's own, the equation is replaced by a note that it is
+written for the step's known set. The legend and node roles name each mark by its part in the test: the
+switch, given (雙圈：給定的變數), set by do in the expression (夾角), and cut for the test only (a dashed clamp,
+「虛線夾角：只為檢驗剪掉指向它的箭頭，式子沒有設定它」; arrows out cut likewise say 「只為檢驗」), so a cut
+the expression does not make no longer says 「由 do 設定」.
+
 ## 0.12.0
 The do-calculus view (`view="rules"`) gains a legend under the cut graph that names only the marks the step
 draws, each beside a small swatch drawn like it: the outer ring (the pair checked for separation), the double
@@ -286,7 +305,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.12.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.13.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -499,7 +518,7 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   value of x (— where there is no data), the weighted sum and the do() value.
   `<CausalModel id="m05-backdoor" as="probability" view="adjust" adjust={{ x: "X", y: "Y" }} />`
 - `<ProbabilityPanel view="rules" rules={[...]}>`: a step button per `RuleStep`
-  `{ label, rule: 1|2|3, pair: [a, b], given, cutIn?, cutOut?, equal?: [side, side] }`, each side
+  `{ label, rule: 1|2|3, pair: [a, b], given, cutIn?, cutOut?, switches?, equal?: [side, side] }`, each side
   `{ event, given?, do? }`. The graph draws no numbers: arrows into `cutIn` and out of `cutOut` are
   struck (切斷), `cutIn` nodes carry the do() clamp without a value, the known set is ringed, the pair's
   paths are lit or dashed; a latent arc loses the end whose arrow is cut. A line says
@@ -508,7 +527,11 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   on a node adds it to the known set or takes it out (no value); a step button restores its own. The
   cut is the lesson's to give: the view does not derive it from the rule. Lesson 06's front-door
   derivation is `src/demo/front-door-steps.ts` (steps 2, 3, 4, 5a, 5b equal; 7 is open, 0.37 ≠ 0.4695);
-  the model should carry `latent_as_arcs: ["U"]` so X←U→Y shows.
+  the model should carry `latent_as_arcs: ["U"]` so X←U→Y shows. With `switches: ["Z"]` the graph adds
+  the intervention switch `F_Z → Z` (a small square), and `pair: ["F_Z", "Y"]` tests it with nothing cut
+  but the arrows into what both sides set (`cutIn`): rule 2 `given` includes `Z`, rule 3 does not; the
+  line says `F_Z 與 Y 已知 {W} → 暢通，不可換` (或 `分隔，可換`). A cut graph separated while the sides
+  differ says so instead of 「適用」.
 - `<ModelEditor tasks={[{ id, title, prompt, start, goal: { equations: { FF: 'L or MD' } }, predict?: { cause, effect } }]}>`:
   a card per task above the inputs: the question, 從它開始 (loads `start`), guess chips for the four
   definitions, and 檢查, which compares each goal equation with the edited one at every value of
@@ -602,9 +625,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.12.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.13.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.12.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.13.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -613,7 +636,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.12.0},
+  version = {0.13.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

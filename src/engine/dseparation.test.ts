@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { docToCase } from '../data/index.ts'
 import { lessonModel } from '../demo/lesson-models.ts'
-import { dSeparation, dependence, descendants } from './index.ts'
+import { dSeparation, dependence, descendants, switchId, withSwitches } from './index.ts'
 
 const load = (id: string) => {
   const c = docToCase(lessonModel(id))
@@ -92,5 +92,18 @@ describe('dSeparation cutOut: the arrows out of these variables removed (G_X und
   it('descendants lists every variable reachable along the arrows', () => {
     const { model } = load('m05-backdoor')
     expect(descendants(model, 'X').sort()).toEqual(['C', 'Y'])
+  })
+})
+
+describe('withSwitches: the intervention switch F_v → v', () => {
+  it('adds an exogenous F_Z with one arrow into Z, cuts nothing, and keeps the equations', () => {
+    const { model } = load('m02-collider')
+    const m = withSwitches(model, ['Z'])
+    expect(switchId('Z')).toBe('F_Z')
+    expect(m.byId.get('F_Z')?.kind).toBe('exogenous')
+    expect(m.edges.filter((e) => e.from === 'F_Z')).toEqual([{ from: 'F_Z', to: 'Z' }])
+    expect(m.edges.length).toBe(model.edges.length + 1)
+    expect(m.equations).toBe(model.equations)
+    expect(() => withSwitches(m, ['Z'])).toThrow(/duplicate variable F_Z/)
   })
 })

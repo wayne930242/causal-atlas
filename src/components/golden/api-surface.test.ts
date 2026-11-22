@@ -99,9 +99,11 @@ describe('public entries', () => {
           "renderValue",
           "responsibility",
           "satisfies",
+          "switchId",
           "toArith",
           "toFormula",
           "valuesEqual",
+          "withSwitches",
           "witnessStatus",
         ],
       }

@@ -2989,3 +2989,14 @@
 .ca-node-menu .ca-slider-reset {
   margin-top: 6px;
 }
+
+/* do-calculus: an intervention switch F_Z, a small square; a clamp cut for the test only is dashed. */
+.ca-switch-box {
+  fill: var(--background);
+  stroke: var(--foreground);
+  stroke-width: 2;
+}
+
+.ca-stroke-clamp.ca-clamp-test {
+  stroke-dasharray: 3 3;
+}
