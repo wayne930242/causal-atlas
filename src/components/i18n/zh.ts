@@ -220,7 +220,7 @@ export const ZH = {
   },
 
   // graphs, equations and legends
-  notation: { propositional: '邏輯式', arithmetic: '數學式', causal: '干預式' },
+  notation: { propositional: '邏輯式', cases: '分段式', arithmetic: '數學式', causal: '干預式' },
   notationLabel: '式子的寫法',
   equations: '式子',
   copyLatex: '複製 LaTeX',
@@ -539,6 +539,8 @@ export const ZH = {
   afterDoObserve: '干預並觀察後',
   clearSettings: (text: string): string => `取消 ${text}`,
   backToPrior: '回到原本的機率',
+  moreSliders: (n: number): string => `顯示其他 ${n} 個機率`,
+  fewerSliders: '收起其他機率',
   observeImpossible: (event: string): string => `在目前的設定下，${event} 不可能發生，無法以它為條件。`,
   presets: '預設的干預',
   docInvalid: '這份模型文件無法顯示：',

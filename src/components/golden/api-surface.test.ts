@@ -59,6 +59,7 @@ describe('public entries', () => {
           "atLeastAsNormal",
           "blame",
           "buildModel",
+          "casePieces",
           "causalFormulas",
           "causalRows",
           "checkContextBudget",

@@ -150,7 +150,22 @@ export interface CausalPlaygroundOptions {
    * lights its evidential bar, do() on it the causal one; the sliders move both rows.
    */
   readonly decision?: true | CaseDecision
+  /**
+   * The block under the graph that is open at load: 'probabilities' (機率, the sliders), 'equations'
+   * (式子), or a figure block ('verdicts', 'ev', 'dsep', 'blame'). Default: the figure's own block
+   * (verdicts, expected utility, paths, blame), else none. A block the figure does not offer counts as
+   * the default. The embed code keeps the default.
+   */
+  readonly openPanel?: PlaygroundPanel
+  /**
+   * The sliders the 機率 tab shows at first, of those in `sliders`; the others wait behind a button
+   * that shows them (and hides them again). Default, or when none of them is a slider: every slider.
+   */
+  readonly focusSliders?: readonly string[]
 }
+
+/** The blocks under a playground's graph, by the id `openPanel` names them with. */
+export type PlaygroundPanel = 'verdicts' | 'ev' | 'dsep' | 'blame' | 'probabilities' | 'equations'
 
 /** One case's graph and equations; click a node to observe it (probabilities) or set do() on it (values). */
 export function CausalPlayground({ locale, digits, ...props }: CausalPlaygroundProps) {
@@ -185,10 +200,16 @@ function PlaygroundFor({
   sliders = NO_TRACK,
   prior: startPrior,
   decision,
+  openPanel,
+  focusSliders,
 }: Omit<CausalPlaygroundOptions, 'locale' | 'digits'> & { readonly c: LoadedCase; readonly caseId?: string }) {
   const t = useMessages()
   const start = useMemo(() => sliderStart(base, sliders, startPrior), [base, sliders, startPrior])
   const [sliderValues, setSliderValues] = useState(start)
+  // `focusSliders`: the rows shown at first; the rest behind 顯示其他 n 個機率.
+  const focused = useMemo(() => sliders.filter((id) => focusSliders?.includes(id) === true), [sliders, focusSliders])
+  const hidden = focused.length > 0 ? sliders.filter((id) => !focused.includes(id)) : NO_TRACK
+  const [allSliders, setAllSliders] = useState(false)
   const problem = useMemo(() => decisionFor(base, decision), [base, decision])
   // Everything below reads the case with the slider prior; an embed page reads its state from `base`.
   const c = useMemo(
@@ -319,7 +340,7 @@ function PlaygroundFor({
         <div className="ca-slider-tab">
           <SliderList
             c={c}
-            ids={sliders}
+            ids={hidden.length > 0 && !allSliders ? focused : sliders}
             values={sliderValues}
             onChange={setSlider}
             idPrefix={`ca-pg-slider-${sliderId}`}
@@ -327,9 +348,16 @@ function PlaygroundFor({
             lit={litSliders}
             onHover={setHoverSlider}
           />
-          <button type="button" className="ca-btn ca-btn-outline ca-slider-reset" disabled={!moved(sliders)} onClick={() => resetSliders(sliders)}>
-            {t.backToPrior}
-          </button>
+          {hidden.length > 0 && (
+            <button type="button" className="ca-link ca-slider-more" aria-expanded={allSliders} onClick={() => setAllSliders((x) => !x)}>
+              {allSliders ? t.fewerSliders : t.moreSliders(hidden.length)}
+            </button>
+          )}
+          {moved(sliders) && (
+            <button type="button" className="ca-btn ca-btn-outline ca-slider-reset" onClick={() => resetSliders(sliders)}>
+              {t.backToPrior}
+            </button>
+          )}
         </div>
       ),
     })
@@ -467,7 +495,7 @@ function PlaygroundFor({
             </div>
           }
           blocks={blocks}
-          initialBlock={initialBlock}
+          initialBlock={openPanel !== undefined && blocks.some((b) => b.id === openPanel) ? openPanel : initialBlock}
         />
       </div>
       {embedded && <EmbedCredit c={c} url={exportUrl ?? DEFAULT_URL} />}

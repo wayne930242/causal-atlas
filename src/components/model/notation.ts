@@ -1,9 +1,9 @@
 import type { Notation } from '../../engine/index.ts'
 import type { Messages } from '../i18n/messages.ts'
 
-export type UiNotation = Extract<Notation, 'propositional' | 'arithmetic' | 'causal'>
+export type UiNotation = Extract<Notation, 'propositional' | 'cases' | 'arithmetic' | 'causal'>
 
-const ORDER: readonly UiNotation[] = ['propositional', 'arithmetic', 'causal']
+const ORDER: readonly UiNotation[] = ['propositional', 'cases', 'arithmetic', 'causal']
 
 /** The notation switch's options, labelled in the table's language. */
 export function notations(t: Messages): readonly { readonly value: UiNotation; readonly label: string }[] {

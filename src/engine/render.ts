@@ -10,8 +10,11 @@ import { coerceToDomain, domainValues, enumerateAssignments, formatValue, values
 
 export type RenderFormat = 'text' | 'latex'
 
-/** (a) `BS := ST ∨ BT`, (b) `BS ↔ (ST ∨ BT)`, (c) `[ST←1, BT←0](BS=1) ∧ …`. */
-export type Notation = 'structural' | 'propositional' | 'causal' | 'arithmetic'
+/**
+ * (a) `BS := ST ∨ BT`, (b) `BS ↔ (ST ∨ BT)`, (c) `[ST←1, BT←0](BS=1) ∧ …`, (d) `BS = ST + BT − ST·BT`,
+ * (e) piecewise `Y = { A11 if X=1, U=1; A10 if X=1, U=0; A0 if X=0 }`.
+ */
+export type Notation = 'structural' | 'propositional' | 'causal' | 'arithmetic' | 'cases'
 
 interface Symbols {
   readonly not: string
@@ -308,6 +311,8 @@ export function renderEquation(model: CausalModel, id: string, notation: Notatio
     }
     case 'arithmetic':
       return renderArithEquation(model, id, format)
+    case 'cases':
+      return renderCasesEquation(model, id, format)
     case 'causal': {
       const formulas = causalFormulas(model, id)
       return formulas.length === 1
@@ -366,4 +371,117 @@ export function renderArith(a: Arith, format: RenderFormat): string {
 
 function renderArithEquation(model: CausalModel, id: string, format: RenderFormat): string {
   return `${renderIdent(id, format)} = ${renderArith(toArith(model, equationOf(model, id)), format)}`
+}
+
+/** One row of the piecewise notation: the conditions that pick it (all must hold) and the value it gives. */
+export interface CasePiece {
+  readonly when: readonly Expr[]
+  readonly value: Expr
+}
+
+const isBoolVar = (model: CausalModel, e: Expr): e is { op: 'var'; name: string } =>
+  e.op === 'var' && getVariable(model, e.name).domain.kind === 'boolean'
+
+/** A condition with its two-valued variables written as events: `X` → `X=1`, `¬X` → `X=0`. */
+function literalize(model: CausalModel, e: Expr): Expr {
+  if (isBoolVar(model, e)) return eventExpr(e.name, true)
+  switch (e.op) {
+    case 'not':
+      return isBoolVar(model, e.arg) ? eventExpr(e.arg.name, false) : negate(model, e.arg)
+    case 'and':
+    case 'or':
+      return { op: e.op, args: e.args.map((a) => literalize(model, a)) }
+    default:
+      return e
+  }
+}
+
+/** The negation of a condition, pushed down to its events (De Morgan), so no `¬(…)` is left to read. */
+function negate(model: CausalModel, e: Expr): Expr {
+  if (isBoolVar(model, e)) return eventExpr(e.name, false)
+  switch (e.op) {
+    case 'not':
+      return literalize(model, e.arg)
+    case 'and':
+      return { op: 'or', args: e.args.map((a) => negate(model, a)) }
+    case 'or':
+      return { op: 'and', args: e.args.map((a) => negate(model, a)) }
+    case 'eq': {
+      // A two-valued variable's other value reads better than `≠`: ¬(X=1) is X=0.
+      const flip = (v: Expr, c: Expr): Expr | undefined =>
+        isBoolVar(model, v) && c.op === 'const' && (typeof c.value === 'boolean' || c.value === 0 || c.value === 1)
+          ? eventExpr(v.name, e.negated === (c.value === true || c.value === 1))
+          : undefined
+      return flip(e.left, e.right) ?? flip(e.right, e.left) ?? { ...e, negated: !e.negated }
+    }
+    case 'const':
+      return { op: 'const', value: typeof e.value === 'boolean' ? !e.value : e.value }
+    default:
+      return { op: 'not', arg: e }
+  }
+}
+
+/** A conjunction becomes separate conditions, read as the comma in `X=1, U=1`. */
+const conjuncts = (e: Expr): Expr[] => (e.op === 'and' ? e.args.flatMap(conjuncts) : [e])
+
+/**
+ * The equation of `id` as condition rows. Nested `if`s are flattened: each branch's row carries every
+ * condition on the way to it (`if X then (if U then A11 else A10) else A0` gives three rows). A table
+ * gives one row per entry. Any other two-valued equation gives a row for 1 and one for 0
+ * (`BS = ST ∨ BT`: 1 when ST=1 ∨ BT=1, 0 when ST=0, BT=0); a bare variable or constant, or a
+ * many-valued equation without `if`, gives no rows (`renderEquation` then falls back).
+ */
+export function casePieces(model: CausalModel, id: string): CasePiece[] {
+  const expr = equationOf(model, id)
+  const target = getVariable(model, id)
+  const walk = (e: Expr, when: readonly Expr[]): CasePiece[] =>
+    e.op === 'if'
+      ? [
+          ...walk(e.then, [...when, ...conjuncts(literalize(model, e.cond))]),
+          ...walk(e.else, [...when, ...conjuncts(negate(model, e.cond))]),
+        ]
+      : [{ when, value: e }]
+  if (expr.op === 'if') return walk(expr, [])
+  if (expr.op === 'lookup') {
+    return expr.rows.map((row) => ({
+      when: conjuncts(rowCondition(expr, row.when)),
+      value: { op: 'const', value: coerceToDomain(target, row.value) },
+    }))
+  }
+  if (target.domain.kind === 'boolean' && expr.op !== 'var' && expr.op !== 'const') {
+    return [
+      { when: conjuncts(literalize(model, expr)), value: { op: 'const', value: true } },
+      { when: conjuncts(negate(model, expr)), value: { op: 'const', value: false } },
+    ]
+  }
+  return []
+}
+
+/**
+ * The piecewise notation: `Y = { A11 if X=1, U=1; A10 if X=1, U=0; A0 if X=0 }`, in LaTeX a `cases`
+ * block with the conditions in the right column. A table's fallback is the row `otherwise`. With no
+ * rows (`C = U`, a many-valued sum) the equation is written as in the arithmetic notation.
+ */
+function renderCasesEquation(model: CausalModel, id: string, format: RenderFormat): string {
+  const pieces = casePieces(model, id)
+  const lhs = renderIdent(id, format)
+  if (pieces.length === 0) {
+    const expr = equationOf(model, id)
+    if (expr.op === 'var' || expr.op === 'const') return `${lhs} = ${renderExpr(expr, format)}`
+    return renderArithEquation(model, id, format)
+  }
+  const expr = equationOf(model, id)
+  const target = getVariable(model, id)
+  const fallback = expr.op === 'lookup' && expr.fallback !== undefined ? coerceToDomain(target, expr.fallback) : undefined
+  const latex = format === 'latex'
+  const rows = pieces.map((p) => ({
+    value: renderExpr(p.value, format),
+    cond: p.when.map((w) => renderExpr(w, format)).join(latex ? ',\\ ' : ', '),
+  }))
+  if (fallback !== undefined) rows.push({ value: renderValue(fallback, format), cond: '' })
+  if (!latex) {
+    return `${lhs} = { ${rows.map((r) => (r.cond === '' ? `${r.value} otherwise` : `${r.value} if ${r.cond}`)).join('; ')} }`
+  }
+  const parts = rows.map((r) => `${r.value} & ${r.cond === '' ? '\\text{otherwise}' : r.cond}`)
+  return `${lhs} = \\begin{cases} ${parts.join(' \\\\ ')} \\end{cases}`
 }

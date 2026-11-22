@@ -2,6 +2,22 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.11.0
+A fourth notation in the 式子 tab, 分段式 (en "Cases", `defaultNotation="cases"`), reads each equation as
+if-then rows, the way the model language writes it: `if X then (if U then A11 else A10) else A0` becomes
+`Y = \begin{cases} A_{11} & X=1,\ U=1 \\ A_{10} & X=1,\ U=0 \\ A_0 & X=0 \end{cases}` (nested ifs flattened, each
+row carrying every condition on the way to it, a negated condition pushed down to its events: ¬(ST ∨ BT)
+reads ST=0, BT=0). A table gives one row per entry (its fallback `otherwise`); another two-valued equation
+gives a row for 1 and one for 0 (`BS`: 1 when ST=1 ∨ BT=1, 0 when ST=0, BT=0); a bare variable stays
+`C = U`, and a many-valued equation without `if` is written as in 數學式. With values, the worked column
+names the row that holds (`= A_{10} = 1`). The switch reads 邏輯式／分段式／數學式／干預式. The engine's
+`Notation` gains `'cases'` and exports `casePieces(model, id)`.
+`CausalPlayground` gains `openPanel` (`'probabilities'`, `'equations'`, or a figure block: `'verdicts'`,
+`'ev'`, `'dsep'`, `'blame'`), the block under the graph open at load, and `focusSliders`, the sliders the
+機率 tab shows at first; the others wait behind 「顯示其他 n 個機率」, which shows them and then reads
+「收起其他機率」. The tab's 「回到原本的機率」 shows only once a slider moved, as the header's and the node
+menu's already did.
+
 ## 0.10.0
 Reader-facing text is typeset with KaTeX: the node menu's state notes (填色高度：P(C=1)…, the double ring,
 red clamp and red outer ring lines), the random-intervention slider label, slider labels (including a named
@@ -261,7 +277,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.10.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.11.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -374,7 +390,7 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 <ModelEditor client:visible initialDoc={doc} />
 ```
 
-- `<CausalPlayground doc>`: graph, notation toggle, observation and do() on the nodes (see 0.3.13) and the export menu, server-rendered
+- `<CausalPlayground doc>`: graph, notation toggle (`defaultNotation`: `propositional` 邏輯式, `cases` 分段式, `arithmetic` 數學式, `causal` 干預式), observation and do() on the nodes (see 0.3.13) and the export menu, server-rendered
   with values, no editor chrome. A click on a node opens its menu (see 0.9.0): observe (probability
   graphs) or do() at each value, release, a random-intervention slider (P*(X=1)), the node's own sliders; no long-press or
   right-click binding. No hint lines under the graph (see 0.10.0); the menu's ⓘ opens the
@@ -449,7 +465,10 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   「回到原本的機率」 puts the sliders back. `prior={{ E: 0.1 }}` sets start values of exogenous
   variables, slider or not. The sliders live in a closed tab 「機率」 under the graph, under a heading per
   node they move, with a 「回到原本的機率」 for the sliders alone; a node's menu lists its own and a
-  per-node reset once one moved; hovering a node lights its rows and a row its node. The embed code does not record slider
+  per-node reset once one moved; hovering a node lights its rows and a row its node. Every reset shows
+  only once a slider it covers moved. `focusSliders={['A11', 'A10']}` shows only those rows at first, the
+  rest behind 「顯示其他 n 個機率」 (and 「收起其他機率」); `openPanel="probabilities"` opens the tab at
+  load (`"equations"` the 式子 tab; see 0.11.0). The embed code does not record slider
   positions (said in the hint's ⓘ).
   Other variables, a graph with values or a joint prior throw.
   `<CausalPlayground client:visible caseId="smoking-lesion" sliders={["N_S1"]} decision />`
@@ -574,9 +593,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.10.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.11.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.10.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.11.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -585,7 +604,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.10.0},
+  version = {0.11.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

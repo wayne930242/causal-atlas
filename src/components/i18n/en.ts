@@ -121,7 +121,7 @@ export const EN: Messages = {
     lesson: 'Formal series: causal decision theory',
   },
 
-  notation: { propositional: 'Logic', arithmetic: 'Arithmetic', causal: 'Intervention' },
+  notation: { propositional: 'Logic', cases: 'Cases', arithmetic: 'Arithmetic', causal: 'Intervention' },
   notationLabel: 'Notation',
   equations: 'Equations',
   copyLatex: 'Copy LaTeX',
@@ -443,6 +443,8 @@ export const EN: Messages = {
   afterDoObserve: 'After intervening and observing',
   clearSettings: (text) => `Remove ${text}`,
   backToPrior: 'Back to the prior probabilities',
+  moreSliders: (n) => `Show ${n} more ${n === 1 ? 'probability' : 'probabilities'}`,
+  fewerSliders: 'Hide the other probabilities',
   observeImpossible: (event) => `With what is set now, ${event} cannot happen, so it cannot be observed.`,
   presets: 'Preset interventions',
   docInvalid: 'This model document cannot be shown:',

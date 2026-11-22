@@ -49,6 +49,8 @@ export const COMPONENTS: readonly ComponentDef[] = [
       { name: 'sliders', kind: 'json' },
       { name: 'prior', kind: 'json' },
       { name: 'decision', kind: 'json' },
+      { name: 'openPanel', kind: 'string' },
+      { name: 'focusSliders', kind: 'json' },
     ],
   },
   {
@@ -127,5 +129,5 @@ export const RESERVED: readonly string[] = ['c', 's', 'src', 'patch', 'unset', '
 export const EDITOR_PARAMS: readonly string[] = ['case', 'model', 'do', 'pdo']
 
 export const PROBABILITY_VIEWS = ['sliders', 'compare', 'counterfactual', 'adjust', 'rules', 'mediation'] as const
-export const NOTATIONS = ['propositional', 'arithmetic', 'causal'] as const
+export const NOTATIONS = ['propositional', 'cases', 'arithmetic', 'causal'] as const
 export const THEORIES = ['butfor', 'hp-original', 'hp-updated', 'hp-modified', 'hp-normality'] as const

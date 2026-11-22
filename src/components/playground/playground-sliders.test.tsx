@@ -61,7 +61,7 @@ describe('CausalPlayground sliders and prior', () => {
     expect(lit()).toEqual([])
   })
 
-  it('the 機率 tab is closed at first, holds every slider and its own reset', () => {
+  it('the 機率 tab is closed at first, holds every slider and its own reset, shown once a slider moved', () => {
     const { container } = render(<CausalPlayground doc={lessonModel('m04-sprinkler-cpt')} sliders={['U_C', 'N_S1', 'N_S0', 'N_R1', 'N_R0']} />)
     const tab = container.querySelector('[data-tab="probabilities"]') as HTMLButtonElement
     const panel = container.querySelector('[data-tab-panel="probabilities"]') as HTMLElement
@@ -72,19 +72,19 @@ describe('CausalPlayground sliders and prior', () => {
     fireEvent.click(tab)
     expect(panel.hidden).toBe(false)
     expect(panel.querySelectorAll('[data-slider]')).toHaveLength(5)
-    const reset = panel.querySelector('.ca-slider-reset') as HTMLButtonElement
-    expect(reset.textContent).toBe('回到原本的機率')
-    expect(reset.disabled).toBe(true)
+    // The reset shows only once a slider moved.
+    expect(panel.querySelector('.ca-slider-reset')).toBeNull()
     const input = (id: string): HTMLInputElement => panel.querySelector(`[data-slider="${id}"] input`) as HTMLInputElement
     const [s1, r1] = [input('N_S1').value, input('N_R1').value]
     fireEvent.change(input('N_S1'), { target: { value: '0.9' } })
     fireEvent.change(input('N_R1'), { target: { value: '0.1' } })
-    expect(reset.disabled).toBe(false)
+    const reset = panel.querySelector('.ca-slider-reset') as HTMLButtonElement
+    expect(reset.textContent).toBe('回到原本的機率')
     // The header's reset shows too once a slider moved, with nothing set on the graph.
     expect([...container.querySelectorAll('.ca-box-actions button')].some((b) => b.textContent === '回到原本的機率')).toBe(true)
     fireEvent.click(reset)
     expect([input('N_S1').value, input('N_R1').value]).toEqual([s1, r1])
-    expect(reset.disabled).toBe(true)
+    expect(panel.querySelector('.ca-slider-reset')).toBeNull()
     expect([...container.querySelectorAll('.ca-box-actions button')].some((b) => b.textContent === '回到原本的機率')).toBe(false)
   })
 
@@ -123,5 +123,43 @@ describe('CausalPlayground sliders and prior', () => {
     expect(() => renderToString(<CausalPlayground caseId="smoking-lesion" sliders={['S']} />)).toThrow(/slider/)
     expect(() => renderToString(<CausalPlayground caseId="rock-throwing" sliders={['ST_U']} />)).toThrow(/probability graph/)
     expect(() => renderToString(<CausalPlayground caseId="smoking-lesion" prior={{ L: 2 }} />)).toThrow(/prior/)
+  })
+  it('focusSliders: the 機率 tab shows those rows first, the others behind a button that also hides them again', () => {
+    const { container } = render(
+      <CausalPlayground doc={lessonModel('m04-sprinkler-cpt')} sliders={['U_C', 'N_S1', 'N_S0', 'N_R1', 'N_R0']} focusSliders={['N_S1', 'N_S0', 'nope']} />,
+    )
+    const panel = container.querySelector('[data-tab-panel="probabilities"]') as HTMLElement
+    const rows = (): (string | null)[] => [...panel.querySelectorAll('[data-slider]')].map((r) => r.getAttribute('data-slider'))
+    expect(rows()).toEqual(['N_S1', 'N_S0'])
+    const more = panel.querySelector('.ca-slider-more') as HTMLButtonElement
+    expect(more.textContent).toBe('顯示其他 3 個機率')
+    expect(more.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(more)
+    expect(rows()).toEqual(['U_C', 'N_S1', 'N_S0', 'N_R1', 'N_R0'])
+    expect(more.textContent).toBe('收起其他機率')
+    fireEvent.click(more)
+    expect(rows()).toEqual(['N_S1', 'N_S0'])
+  })
+
+  it('without focusSliders, or with none that is a slider, every row shows and no button', () => {
+    const { container } = render(<CausalPlayground doc={lessonModel('m04-sprinkler-cpt')} sliders={['U_C', 'N_S1']} focusSliders={['nope']} />)
+    const panel = container.querySelector('[data-tab-panel="probabilities"]') as HTMLElement
+    expect(panel.querySelectorAll('[data-slider]')).toHaveLength(2)
+    expect(panel.querySelector('.ca-slider-more')).toBeNull()
+  })
+
+  it('openPanel opens the named block at load; one the figure does not offer counts as none', () => {
+    const { container } = render(<CausalPlayground doc={lessonModel('m04-sprinkler-cpt')} sliders={['U_C']} openPanel="probabilities" />)
+    expect((container.querySelector('[data-tab-panel="probabilities"]') as HTMLElement).hidden).toBe(false)
+    expect((container.querySelector('[data-tab-panel="equations"]') as HTMLElement).hidden).toBe(true)
+    cleanup()
+    const other = render(<CausalPlayground doc={lessonModel('m04-sprinkler-cpt')} openPanel="verdicts" />)
+    expect([...other.container.querySelectorAll<HTMLElement>('[data-tab-panel]')].every((p) => p.hidden)).toBe(true)
+    cleanup()
+    const eq = render(<CausalPlayground doc={lessonModel('m06-bow-a')} openPanel="equations" defaultNotation="cases" />)
+    const panel = eq.container.querySelector('[data-tab-panel="equations"]') as HTMLElement
+    expect(panel.hidden).toBe(false)
+    expect(panel.querySelector('[data-notation="cases"]')).not.toBeNull()
+    expect(eq.getByRole('button', { name: '分段式' }).getAttribute('aria-pressed')).toBe('true')
   })
 })

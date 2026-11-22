@@ -8,7 +8,7 @@ import type { Notation } from '../../engine/index.ts'
 import { Equations } from '../panels/Equations.tsx'
 import { texHtml } from './tex-html.ts'
 
-const NOTATIONS = ['structural', 'propositional', 'causal', 'arithmetic'] as const satisfies readonly Notation[]
+const NOTATIONS = ['structural', 'propositional', 'causal', 'arithmetic', 'cases'] as const satisfies readonly Notation[]
 
 describe('equation typesetting', () => {
   it('typesets N_S1 with a subscript in the propositional notation', () => {

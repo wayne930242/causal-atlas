@@ -154,6 +154,17 @@ export function controlsFor(id: ComponentId, info: ModelInfo | undefined, args: 
             { id: 'own', label: t.modes.own, value: true, disabled: info !== undefined && !info.hasDecision },
           ],
         },
+        { key: 'focusSliders', label: label('focusSliders'), kind: 'variables', options: opts(info?.sliderable ?? [], info), disabled: notOn(isVals, reason('probability')) },
+        {
+          key: 'openPanel',
+          label: label('openPanel'),
+          kind: 'modes',
+          modes: [
+            { id: 'default', label: t.modes.case, value: undefined },
+            { id: 'probabilities', label: 'probabilities', value: 'probabilities' },
+            { id: 'equations', label: 'equations', value: 'equations' },
+          ],
+        },
       ]
     case 'probability': {
       const view = typeof args.view === 'string' ? args.view : 'sliders'

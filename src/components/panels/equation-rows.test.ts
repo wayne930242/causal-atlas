@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { getCase } from '../../data/index.ts'
 import { caseToDoc, docToCase } from '../../data/model-doc.ts'
 import { modelDocSchema } from '../../data/schema.ts'
+import { lessonModel } from '../../demo/lesson-models.ts'
 import { messagesFor } from '../i18n/messages.ts'
 import { shownVariables } from '../model/shown-variables.ts'
 import { equationIds, equationRows } from './equation-rows.ts'
@@ -17,6 +18,17 @@ describe('equationRows worked values (arithmetic)', () => {
 
   it('keeps the substituted step when it differs from the result', () => {
     expect(rows[1].worked).toBe('= max(1, 1) = 1')
+  })
+})
+
+describe('equationRows worked values (cases)', () => {
+  it('bow A: names the row that holds and its value', () => {
+    const c = docToCase(lessonModel('m06-bow-a'))
+    const values = { U: 0, N_X1: 1, N_X0: 1, A11: 0, A10: 1, A0: 0, X: 1, Y: 1 }
+    const [y] = equationRows(messagesFor('zh-TW'), c, ['Y'], 'cases', values, {}, [])
+    expect(y.text).toBe('Y = { A11 if X=1, U=1; A10 if X=1, U=0; A0 if X=0 }')
+    expect(y.worked).toBe('= A10 = 1')
+    expect(y.workedLatex).toBe('= A_{10} = 1')
   })
 })
 

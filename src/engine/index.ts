@@ -11,8 +11,8 @@ export type { Evaluation, Interventions } from './evaluate.ts'
 export { evaluate, normalizeAssignment } from './evaluate.ts'
 export { evalFormula, holdsIn, satisfies, toFormula } from './formula.ts'
 export type { Notation, RenderFormat } from './render.ts'
-export type { CausalRow } from './render.ts'
-export { causalFormulas, causalRows, renderEquation, renderExpr, renderIdent, renderModel, renderValue, renderArith } from './render.ts'
+export type { CasePiece, CausalRow } from './render.ts'
+export { casePieces, causalFormulas, causalRows, renderEquation, renderExpr, renderIdent, renderModel, renderValue, renderArith } from './render.ts'
 export type {
   IndependentPrior,
   JointPrior,

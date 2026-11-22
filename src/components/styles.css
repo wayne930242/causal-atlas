@@ -1558,7 +1558,7 @@
   .ca-eq-box .ca-seg,
   .ca-eq-panel .ca-seg {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .ca-eq-box .ca-seg-item,
@@ -2951,6 +2951,7 @@
 }
 
 .ca-slider-tab .ca-slider-reset,
+.ca-slider-tab .ca-slider-more,
 .ca-node-menu .ca-slider-reset {
   justify-self: start;
 }

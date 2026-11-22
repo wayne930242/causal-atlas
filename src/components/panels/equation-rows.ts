@@ -2,8 +2,9 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Arith } from '../../engine/arithmetic.ts'
 import { evalArith, toArith } from '../../engine/arithmetic.ts'
 import type { Assignment, CausalModel, Notation } from '../../engine/index.ts'
-import { renderArith, renderEquation, renderIdent, renderValue } from '../../engine/index.ts'
-import { freeVariables } from '../../engine/expr.ts'
+import { casePieces, getVariable, renderArith, renderEquation, renderExpr, renderIdent, renderValue } from '../../engine/index.ts'
+import { asBool, coerceToDomain } from '../../engine/values.ts'
+import { evalExpr, freeVariables } from '../../engine/expr.ts'
 import { formatValue } from '../../engine/values.ts'
 import type { Messages } from '../i18n/messages.ts'
 import type { Stochastic } from '../model/assignments.ts'
@@ -62,7 +63,7 @@ export interface EquationRow {
   readonly text: string
   /** Under do(): the replaced equation, shown struck through. */
   readonly struck?: string
-  /** Arithmetic notation: the equation with the current values filled in. */
+  /** Arithmetic notation: the equation with the current values filled in; piecewise: the row that holds, and its value. */
   readonly worked?: string
   /** LaTeX forms of `text`, `struck` and `worked`, for typesetting. */
   readonly latex: string
@@ -116,7 +117,16 @@ export function equationRows(
     }
     let worked: string | undefined
     let workedLatex: string | undefined
-    if (notation === 'arithmetic' && values !== undefined) {
+    const equation = model.equations.get(id)
+    const pieces = notation === 'cases' && values !== undefined ? casePieces(model, id) : []
+    if (pieces.length > 0 && values !== undefined && equation !== undefined) {
+      // The row whose conditions hold now: `= A10 = 1`; a constant row, or a table's fallback, just `= 1`.
+      const result = coerceToDomain(getVariable(model, id), evalExpr(equation, { values }))
+      const piece = pieces.find((p) => p.when.every((w) => asBool(evalExpr(w, { values }), { kind: 'operator', op: 'if' })))
+      const leaf = piece !== undefined && piece.value.op !== 'const' ? piece.value : undefined
+      worked = leaf === undefined ? `= ${formatValue(result)}` : `= ${renderExpr(leaf, 'text')} = ${formatValue(result)}`
+      workedLatex = leaf === undefined ? `= ${renderValue(result, 'latex')}` : `= ${renderExpr(leaf, 'latex')} = ${renderValue(result, 'latex')}`
+    } else if ((notation === 'arithmetic' || notation === 'cases') && values !== undefined) {
       const expr = model.equations.get(id)
       if (expr !== undefined) {
         const arith = toArith(model, expr)
