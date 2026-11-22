@@ -2,6 +2,13 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.17.0
+The engine identifies causal effects: `identify(g, y, x, w?)` runs ID (Shpitser & Pearl 2006) or, with `w`, IDC on an ADMG and returns either a formula over observed variables (`formula`, `text`, `latex`) or the hedge `{ f, fPrime }` that rules identification out.
+Backdoor gives `Σ_z P(y|x,z) P(z)`, front door `Σ_z P(z|x) Σ_x' P(y|x',z) P(x')`, napkin a ratio with `Z` listed in `arbitrary` (any setting of it gives the same value), and the bow the hedge `F = {X, Y}`, `F′ = {Y}`.
+`admgOf(model)` reads a model's ADMG (an exogenous variable feeding two or more endogenous ones becomes bidirected arcs, as `latent_as_arcs` draws them); `admgForPrior(model, prior)` also merges exogenous variables a joint prior makes dependent.
+`evaluateProbExpr(formula, joint, at, domains)` evaluates a formula on an observational joint (`observedJoint`), and `checkIdentification(model, prior, { y, x, w })` puts the formula's value beside the do() value for every assignment.
+The tests compare every verdict and formula with dosearch, causaleffect and y0 on 52 graphs (run as external test oracles under `oracle/`, not shipped), and every identifiable effect in the lesson models with do() to 1e-9.
+
 ## 0.16.0
 On a switch graph of the do-calculus view (`view="rules"`, a step whose `pair` names a switch `F_Z`), the pair's other end (`Y` in rule 2, `X` in rule 3) shows its current `P(=1)` under its node, so setting the switch to 0 or 1 moves the number on the graph.
 The line under the graph compares only the current setting: setting `Z=v` against not setting it, with `Z` seen at the same `v` when it is known (rule 2) and unknown otherwise (rule 3), e.g. 「設定 Z=0：P(Y=1)=0.29 ／ 看到 Z=0：0.29 → 相同」; with the switch off it gives the current prediction alone.
@@ -342,7 +349,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.16.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.17.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -661,9 +668,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.16.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.17.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.16.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.17.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -672,7 +679,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.16.0},
+  version = {0.17.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
