@@ -1,0 +1,792 @@
+{
+  "backdoor": {
+    "dot": "strict digraph InferenceTree {\nn1[shape=polygon,sides=4,label=\"p(Y,Z|do(X))\"]\nn2[shape=polygon,sides=4,label=\"p(Y|do(X))\"]\nn1 -> n2[label=\"M\"]\nn3[shape=polygon,sides=4,label=\"p(Z|do(X))\"]\nn3 -> n1[label=\"P\"]\nn4[shape=polygon,sides=4,label=\"p(Z)\"]\nn4 -> n3[label=\"R3\"]\nn5[shape=polygon,sides=4,label=\"p(X,Y,Z)\"]\nn5 -> n4[label=\"M\"]\nn6[shape=polygon,sides=4,label=\"p(Y|do(X),Z)\"]\nn6 -> n1[label=\"P\"]\nn7[shape=polygon,sides=4,label=\"p(Y|X,Z)\"]\nn7 -> n6[label=\"R2\"]\nn5 -> n7[label=\"C\"]\n}\n",
+    "steps": [
+      {
+        "from": "p(Y,Z|do(X))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y",
+            "Z"
+          ]
+        },
+        "rule": "M",
+        "to": "p(Y|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Z|do(X))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Z"
+          ]
+        },
+        "rule": "P",
+        "to": "p(Y,Z|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y",
+            "Z"
+          ]
+        }
+      },
+      {
+        "from": "p(Z)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z"
+          ]
+        },
+        "rule": "R3",
+        "to": "p(Z|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Z"
+          ]
+        }
+      },
+      {
+        "from": "p(X,Y,Z)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "rule": "M",
+        "to": "p(Z)",
+        "toSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|do(X),Z)",
+        "fromSets": {
+          "w": [
+            "Z"
+          ],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "P",
+        "to": "p(Y,Z|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y",
+            "Z"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|X,Z)",
+        "fromSets": {
+          "w": [
+            "X",
+            "Z"
+          ],
+          "x": [],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "R2",
+        "to": "p(Y|do(X),Z)",
+        "toSets": {
+          "w": [
+            "Z"
+          ],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(X,Y,Z)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "X",
+            "Y",
+            "Z"
+          ]
+        },
+        "rule": "C",
+        "to": "p(Y|X,Z)",
+        "toSets": {
+          "w": [
+            "X",
+            "Z"
+          ],
+          "x": [],
+          "y": [
+            "Y"
+          ]
+        }
+      }
+    ]
+  },
+  "frontdoor": {
+    "dot": "strict digraph InferenceTree {\nn1[shape=polygon,sides=4,label=\"p(Z,Y|do(X))\"]\nn2[shape=polygon,sides=4,label=\"p(Y|do(X))\"]\nn1 -> n2[label=\"M\"]\nn3[shape=polygon,sides=4,label=\"p(Y|do(X),Z)\"]\nn3 -> n1[label=\"P\"]\nn4[shape=polygon,sides=4,label=\"p(Y|do(Z,X))\"]\nn4 -> n3[label=\"R2\"]\nn5[shape=polygon,sides=4,label=\"p(Y|do(Z))\"]\nn5 -> n4[label=\"R3\"]\nn6[shape=polygon,sides=4,label=\"p(Y,X|do(Z))\"]\nn6 -> n5[label=\"M\"]\nn7[shape=polygon,sides=4,label=\"p(X|do(Z))\"]\nn7 -> n6[label=\"P\"]\nn8[shape=polygon,sides=4,label=\"p(X)\"]\nn8 -> n7[label=\"R3\"]\nn9[shape=polygon,sides=4,label=\"p(Z,Y,X)\"]\nn9 -> n8[label=\"M\"]\nn10[shape=polygon,sides=4,label=\"p(Y|do(Z),X)\"]\nn10 -> n6[label=\"P\"]\nn11[shape=polygon,sides=4,label=\"p(Y|Z,X)\"]\nn11 -> n10[label=\"R2\"]\nn9 -> n11[label=\"C\"]\nn12[shape=polygon,sides=4,label=\"p(Z|do(X))\"]\nn12 -> n1[label=\"P\"]\nn13[shape=polygon,sides=4,label=\"p(Z|X)\"]\nn13 -> n12[label=\"R2\"]\nn14[shape=polygon,sides=4,label=\"p(Z,X)\"]\nn14 -> n13[label=\"C\"]\nn9 -> n14[label=\"M\"]\n}\n",
+    "steps": [
+      {
+        "from": "p(Z,Y|do(X))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Z",
+            "Y"
+          ]
+        },
+        "rule": "M",
+        "to": "p(Y|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|do(X),Z)",
+        "fromSets": {
+          "w": [
+            "Z"
+          ],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "P",
+        "to": "p(Z,Y|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Z",
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|do(Z,X))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z",
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "R2",
+        "to": "p(Y|do(X),Z)",
+        "toSets": {
+          "w": [
+            "Z"
+          ],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|do(Z))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "R3",
+        "to": "p(Y|do(Z,X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z",
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Y,X|do(Z))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y",
+            "X"
+          ]
+        },
+        "rule": "M",
+        "to": "p(Y|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(X|do(Z))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X"
+          ]
+        },
+        "rule": "P",
+        "to": "p(Y,X|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y",
+            "X"
+          ]
+        }
+      },
+      {
+        "from": "p(X)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "X"
+          ]
+        },
+        "rule": "R3",
+        "to": "p(X|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X"
+          ]
+        }
+      },
+      {
+        "from": "p(Z,Y,X)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z",
+            "Y",
+            "X"
+          ]
+        },
+        "rule": "M",
+        "to": "p(X)",
+        "toSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "X"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|do(Z),X)",
+        "fromSets": {
+          "w": [
+            "X"
+          ],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "P",
+        "to": "p(Y,X|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y",
+            "X"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|Z,X)",
+        "fromSets": {
+          "w": [
+            "Z",
+            "X"
+          ],
+          "x": [],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "R2",
+        "to": "p(Y|do(Z),X)",
+        "toSets": {
+          "w": [
+            "X"
+          ],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Z,Y,X)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z",
+            "Y",
+            "X"
+          ]
+        },
+        "rule": "C",
+        "to": "p(Y|Z,X)",
+        "toSets": {
+          "w": [
+            "Z",
+            "X"
+          ],
+          "x": [],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Z|do(X))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Z"
+          ]
+        },
+        "rule": "P",
+        "to": "p(Z,Y|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Z",
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Z|X)",
+        "fromSets": {
+          "w": [
+            "X"
+          ],
+          "x": [],
+          "y": [
+            "Z"
+          ]
+        },
+        "rule": "R2",
+        "to": "p(Z|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Z"
+          ]
+        }
+      },
+      {
+        "from": "p(Z,X)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z",
+            "X"
+          ]
+        },
+        "rule": "C",
+        "to": "p(Z|X)",
+        "toSets": {
+          "w": [
+            "X"
+          ],
+          "x": [],
+          "y": [
+            "Z"
+          ]
+        }
+      },
+      {
+        "from": "p(Z,Y,X)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z",
+            "Y",
+            "X"
+          ]
+        },
+        "rule": "M",
+        "to": "p(Z,X)",
+        "toSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z",
+            "X"
+          ]
+        }
+      }
+    ]
+  },
+  "napkin": {
+    "dot": "strict digraph InferenceTree {\nn1[shape=polygon,sides=4,label=\"p(Y|do(Z,X))\"]\nn2[shape=polygon,sides=4,label=\"p(Y|do(X))\"]\nn1 -> n2[label=\"R3\"]\nn3[shape=polygon,sides=4,label=\"p(Y|do(Z),X)\"]\nn3 -> n1[label=\"R2\"]\nn4[shape=polygon,sides=4,label=\"p(X,Y|do(Z))\"]\nn4 -> n3[label=\"C\"]\nn5[shape=polygon,sides=4,label=\"p(X,Y,W|do(Z))\"]\nn5 -> n4[label=\"M\"]\nn6[shape=polygon,sides=4,label=\"p(W|do(Z))\"]\nn6 -> n5[label=\"P\"]\nn7[shape=polygon,sides=4,label=\"p(W)\"]\nn7 -> n6[label=\"R3\"]\nn8[shape=polygon,sides=4,label=\"p(Z,X,Y,W)\"]\nn8 -> n7[label=\"M\"]\nn9[shape=polygon,sides=4,label=\"p(X,Y|do(Z),W)\"]\nn9 -> n5[label=\"P\"]\nn10[shape=polygon,sides=4,label=\"p(X,Y|Z,W)\"]\nn10 -> n9[label=\"R2\"]\nn8 -> n10[label=\"C\"]\n}\n",
+    "steps": [
+      {
+        "from": "p(Y|do(Z,X))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z",
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "R3",
+        "to": "p(Y|do(X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Y|do(Z),X)",
+        "fromSets": {
+          "w": [
+            "X"
+          ],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y"
+          ]
+        },
+        "rule": "R2",
+        "to": "p(Y|do(Z,X))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z",
+            "X"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(X,Y|do(Z))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X",
+            "Y"
+          ]
+        },
+        "rule": "C",
+        "to": "p(Y|do(Z),X)",
+        "toSets": {
+          "w": [
+            "X"
+          ],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(X,Y,W|do(Z))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X",
+            "Y",
+            "W"
+          ]
+        },
+        "rule": "M",
+        "to": "p(X,Y|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X",
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(W|do(Z))",
+        "fromSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "W"
+          ]
+        },
+        "rule": "P",
+        "to": "p(X,Y,W|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X",
+            "Y",
+            "W"
+          ]
+        }
+      },
+      {
+        "from": "p(W)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "W"
+          ]
+        },
+        "rule": "R3",
+        "to": "p(W|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "W"
+          ]
+        }
+      },
+      {
+        "from": "p(Z,X,Y,W)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z",
+            "X",
+            "Y",
+            "W"
+          ]
+        },
+        "rule": "M",
+        "to": "p(W)",
+        "toSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "W"
+          ]
+        }
+      },
+      {
+        "from": "p(X,Y|do(Z),W)",
+        "fromSets": {
+          "w": [
+            "W"
+          ],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X",
+            "Y"
+          ]
+        },
+        "rule": "P",
+        "to": "p(X,Y,W|do(Z))",
+        "toSets": {
+          "w": [],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X",
+            "Y",
+            "W"
+          ]
+        }
+      },
+      {
+        "from": "p(X,Y|Z,W)",
+        "fromSets": {
+          "w": [
+            "Z",
+            "W"
+          ],
+          "x": [],
+          "y": [
+            "X",
+            "Y"
+          ]
+        },
+        "rule": "R2",
+        "to": "p(X,Y|do(Z),W)",
+        "toSets": {
+          "w": [
+            "W"
+          ],
+          "x": [
+            "Z"
+          ],
+          "y": [
+            "X",
+            "Y"
+          ]
+        }
+      },
+      {
+        "from": "p(Z,X,Y,W)",
+        "fromSets": {
+          "w": [],
+          "x": [],
+          "y": [
+            "Z",
+            "X",
+            "Y",
+            "W"
+          ]
+        },
+        "rule": "C",
+        "to": "p(X,Y|Z,W)",
+        "toSets": {
+          "w": [
+            "Z",
+            "W"
+          ],
+          "x": [],
+          "y": [
+            "X",
+            "Y"
+          ]
+        }
+      }
+    ]
+  }
+}
