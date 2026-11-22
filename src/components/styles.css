@@ -2958,17 +2958,32 @@
   font-size: 13px;
 }
 
-/* The switch row: the prediction with the switch off and at every setting, the current one highlighted. */
-.ca-rules-switch {
+/* The switch line: the current state only, setting the switch against not setting it. */
+.ca-root .ca-rules-line > p {
   margin: 0;
-  padding: 6px 0 2px;
+}
+
+.ca-rules-line > .ca-rules-switch,
+.ca-rules-line > .ca-rules-equal {
+  padding: 4px 0 0;
   font-size: 13px;
 }
 
-.ca-rules-switch .ca-rules-now {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  border-radius: 3px;
-  padding: 0 3px;
+/* The paths, folded: the graph already lights them. */
+.ca-dsep-more {
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.ca-dsep-more summary {
+  cursor: pointer;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+.ca-dsep-more summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .ca-rules-steps .ca-seg-item {

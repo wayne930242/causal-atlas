@@ -30,6 +30,8 @@ export interface SignalGraphProps {
   readonly original?: Assignment
   /** Probability mode: P(V = 1) per variable. */
   readonly probs?: Readonly<Record<string, number>>
+  /** Value mode: P(V = 1) under these nodes only (the do-calculus view's prediction); NaN when it is undefined. */
+  readonly probe?: Readonly<Record<string, number>>
   /** Probability mode: P(V = value) in domain order for each non-boolean variable; drawn as one bar per value. */
   readonly dists?: Readonly<Record<string, readonly number[]>>
   /** Probability mode: a short note under each number. */
@@ -105,6 +107,7 @@ export function SignalGraph(props: SignalGraphProps) {
     values,
     original,
     probs,
+    probe = {},
     dists,
     probNotes,
     observed = [],
@@ -154,6 +157,7 @@ export function SignalGraph(props: SignalGraphProps) {
       values,
       original,
       probs,
+      probe,
       dists,
       probNotes,
       observedValues,
@@ -334,8 +338,10 @@ export function SignalGraph(props: SignalGraphProps) {
       ? bars !== undefined
         ? bars.map((_, i) => barText(i)).join(', ')
         : `P(${id}=1) ${probText(pv ?? Number.NaN, digits)}`
-      : t.nodeValue(text)
-    const readout = nodeReadout(t, digits, pv, forced, evidence ? undefined : observedValues[id])
+      : id in probe
+        ? `P(${id}=1) ${probText(probe[id], digits)}`
+        : t.nodeValue(text)
+    const readout = id in probe && !prob ? nodeReadout(t, digits, probe[id], undefined, undefined) : nodeReadout(t, digits, pv, forced, evidence ? undefined : observedValues[id])
     const forcedText = forced !== undefined ? (tagText?.[id] ?? formatValue(forced)) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : undefined
     const seen = observedValues[id]
     const aria = t.withHint(
@@ -483,7 +489,7 @@ export function SignalGraph(props: SignalGraphProps) {
         </text>
         {bars !== undefined
           ? <BarChart id={id} labels={bars.map(formatValue)} dist={dist} block={block} barText={barText} />
-          : prob && (
+          : (prob || id in probe) && (
               <text y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num">
                 {readout.prefix !== '' && <tspan className="ca-svg-small ca-fill-muted">{readout.prefix}</tspan>}
                 <tspan data-readout={id} fontSize={readout.settled ? 14 : undefined}>

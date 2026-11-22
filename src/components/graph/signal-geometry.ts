@@ -38,6 +38,8 @@ export interface SignalGraphInput {
   readonly values?: Assignment
   readonly original?: Assignment
   readonly probs?: Readonly<Record<string, number>>
+  /** Value mode: a P(V = 1) number under these nodes only. */
+  readonly probe?: Readonly<Record<string, number>>
   readonly dists?: Readonly<Record<string, readonly number[]>>
   readonly probNotes?: Readonly<Record<string, string>>
   readonly observedValues: Assignment
@@ -221,6 +223,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     values,
     original,
     probs,
+    probe = {},
     dists,
     probNotes,
     interventions,
@@ -336,6 +339,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       const maxW = known.length === 0 ? 0 : textWidth(t.barMax(probText(Math.max(...known), digits)), 11)
       readout = { kind: 'bars', width: barLayout(variable.domain.values.map(formatValue), BAR_LABEL).width, maxW, noteW }
     } else if (prob) readout = { kind: 'number', noteW, numberW: readoutWidth(settledRead ?? nodeReadout(t, digits, undefined, undefined, undefined), digits) }
+    else if (id in probe) readout = { kind: 'number', noteW, numberW: readoutWidth(nodeReadout(t, digits, probe[id], undefined, undefined), digits) }
     // A switch is labelled by its id alone (F_Z), right by its square.
     const isSwitch = switches.includes(id)
     const labelW = textWidth(isSwitch ? id : idWithName(id, nameOf(id)), 14)

@@ -68,6 +68,8 @@ export interface RuleView {
   /** The observed or intervened variables; a switch setting is neither. */
   readonly known: readonly string[]
   readonly verdict: RuleVerdict
+  /** A switch test's reading in the current state (undefined for a cut-graph step). */
+  readonly reading?: SwitchReading
 }
 
 export const SIDE_TOLERANCE = 1e-9
@@ -122,9 +124,13 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, state: Rul
   const sides = equationUnder(step, state)
   const equation = sides === undefined ? undefined : ([readQuery(c, prior, sides[0]), readQuery(c, prior, sides[1])] as const)
   const [left, right] = equation ?? []
-  const differ = left?.value !== undefined && right?.value !== undefined && Math.abs(left.value - right.value) >= SIDE_TOLERANCE
+  const reading = switchReading(c, prior, step, state)
+  // A switch test compares setting with not setting at every value; a cut graph compares its two sides.
+  const differ = reading !== undefined
+    ? reading.differs
+    : left?.value !== undefined && right?.value !== undefined && Math.abs(left.value - right.value) >= SIDE_TOLERANCE
   const verdict: RuleVerdict = result.separated ? (differ ? 'mismatch' : switchTest ? 'swap' : 'applies') : switchTest ? 'noSwap' : 'notApplies'
-  return { graph, switchNodes, switchTest, result, removed, marks: { open, blocked, ends: [x, y], paths: result.paths }, equation, known, verdict }
+  return { graph, switchNodes, switchTest, result, removed, marks: { open, blocked, ends: [x, y], paths: result.paths }, equation, known, verdict, reading }
 }
 
 /** A mark the step's graph can draw, in the legend's order. */
@@ -214,27 +220,26 @@ function readQuery(c: LoadedCase, prior: Prior, side: RuleSide): SwitchQuery {
 }
 
 /**
- * What the switch does to the prediction of the pair's other end, on the full model: off (the
- * current observations and interventions, with an observed switch variable read at the switch
- * value when set) and on (the switch variables intervened on instead of observed). `same` says
- * whether the two agree; the d-separation verdict says whether they must.
+ * What the switch does to the prediction of the pair's other end (`target`), on the full model, in
+ * the current state only. `off`: the switch not set, the switched variable seen at the switch's
+ * value when it is observed (rule 2: P(Y | X, Z=v)), else unknown (rule 3: P(X)). `on`: the same
+ * with the switched variables set by do() instead (P(Y | X, do(Z=v))). `now` is what the target's
+ * node shows. `differs` says whether some setting moves the prediction away from its unswitched
+ * counterpart at the same value; the d-separation verdict says whether it may.
  */
 export interface SwitchReading {
+  /** The switch nodes, by id (`F_Z`). */
   readonly switches: readonly string[]
+  /** The pair's other end, whose prediction the switch may move. */
+  readonly target: string
   readonly off: SwitchQuery
+  /** The switched variables observed in `off`, at the value they are compared at. */
+  readonly seen: Assignment
   readonly on?: SwitchQuery
   readonly same?: boolean
-  /** The prediction at every setting of the switches, the current one marked, so a reader sees whether 0 → 1 moves it. */
-  readonly settings: readonly SwitchSetting[]
-  /** Whether every setting gives the same prediction (undefined with fewer than two, or one without data). */
-  readonly settingsSame?: boolean
-}
-
-/** One setting of the switches and the prediction under it. */
-export interface SwitchSetting {
-  readonly setting: Assignment
-  readonly query: SwitchQuery
-  readonly current: boolean
+  /** The current prediction: `on` when a switch is set, else `off`. */
+  readonly now: SwitchQuery
+  readonly differs: boolean
 }
 
 /** Split a written conjunction without touching parentheses or quoted finite values. */
@@ -356,7 +361,7 @@ function allSettings(c: LoadedCase, switches: readonly string[]): readonly Assig
   return out
 }
 
-/** The switch test's reading under `setting`, or undefined when the step tests no switch. */
+/** The switch test's reading under the current state, or undefined when the step tests no switch. */
 export function switchReading(c: LoadedCase, prior: Prior, step: RuleStep, { observed, interventions, setting }: RuleState): SwitchReading | undefined {
   const switches = step.switches ?? []
   const nodes = switches.map(switchId)
@@ -364,20 +369,18 @@ export function switchReading(c: LoadedCase, prior: Prior, step: RuleStep, { obs
   if (target === undefined || !step.pair.some((id) => nodes.includes(id))) return undefined
   const first = step.equal?.[0].event
   const event = first !== undefined && first.split('=')[0]?.trim() === target ? first : `${target}=1`
-  const read = (a: Assignment): SwitchQuery => {
-    const acts = { ...interventions, ...a }
-    const given = observationFormula(Object.fromEntries(Object.entries(observed).filter(([id]) => !(id in acts)).map(([id, v]) => [id, setting[id] ?? v])))
-    return readQuery(c, prior, { event, given, ...(Object.keys(acts).length === 0 ? {} : { do: acts }) })
+  /** The prediction with `acts` set by do() on top of the expression's, observed switched variables read at `at`. */
+  const read = (acts: Assignment, at: Assignment): SwitchQuery => {
+    const doAll = { ...interventions, ...acts }
+    const given = observationFormula(Object.fromEntries(Object.entries(observed).filter(([id]) => !(id in doAll)).map(([id, v]) => [id, at[id] ?? v])))
+    return readQuery(c, prior, { event, given, ...(Object.keys(doAll).length === 0 ? {} : { do: doAll }) })
   }
-  const off = read({})
-  const key = (a: Assignment): string => switches.map((id) => (id in a ? formatValue(a[id]) : '-')).join('|')
-  const settings = allSettings(c, switches).map((a) => ({ setting: a, query: read(a), current: key(a) === key(setting) }))
-  const values = settings.map((s) => s.query.value)
-  const settingsSame =
-    values.length < 2 || values.some((v) => v === undefined) ? undefined : values.every((v) => Math.abs((v ?? 0) - (values[0] ?? 0)) < SIDE_TOLERANCE)
-  const set = Object.keys(setting)
-  if (set.length === 0) return { switches: nodes, off, settings, settingsSame }
-  const on = read(setting)
-  const same = off.value !== undefined && on.value !== undefined ? Math.abs(off.value - on.value) < SIDE_TOLERANCE : undefined
-  return { switches: nodes, off, on, same, settings, settingsSame }
+  const close = (a: SwitchQuery, b: SwitchQuery): boolean | undefined =>
+    a.value === undefined || b.value === undefined ? undefined : Math.abs(a.value - b.value) < SIDE_TOLERANCE
+  const off = read({}, setting)
+  const seen = Object.fromEntries(switches.filter((id) => id in observed && !(id in interventions)).map((id) => [id, setting[id] ?? observed[id]]))
+  const differs = allSettings(c, switches).some((a) => close(read(a, a), read({}, a)) === false)
+  if (Object.keys(setting).length === 0) return { switches: nodes, target, off, seen, now: off, differs }
+  const on = read(setting, setting)
+  return { switches: nodes, target, off, seen, on, same: close(off, on), now: on, differs }
 }

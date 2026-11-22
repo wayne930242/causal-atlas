@@ -256,11 +256,20 @@ describe('ruleView: the intervention switch F_Z (Pearl 2009, §3.2.2)', () => {
     ])
     expect(equationUnder(two, empty)).toEqual(two.equal)
     expect(ruleView(ex, exPrior, EXCEPTION_STEPS[0], { ...seenW, setting: { Z: false } }).equation?.[0].side.do).toEqual({ Z: false })
-    expect(exOn?.settings.map((s) => [s.setting.Z, s.query.value?.toFixed(3), s.current])).toEqual([
-      [false, '0.500', false],
-      [true, '0.500', true],
-    ])
-    expect(exOn?.settingsSame).toBe(true)
+    // Rule 3 compares with Z unknown; the reading's current prediction is the one set.
+    expect(exOn?.seen).toEqual({})
+    expect(exOn?.now.value?.toFixed(3)).toBe('0.500')
+    expect(exOff?.now.value?.toFixed(3)).toBe('0.692')
+    expect(exOn?.differs).toBe(true)
+    // Rule 2 compares setting Z=v with seeing Z=v at the same v, never at the written value.
+    const fd = docToCase(lessonModel('m05-frontdoor'))
+    const ruleTwo: RuleStep = { label: '2z', rule: 2, pair: ['F_Z', 'Y'], given: ['X', 'Z'], switches: ['Z'], equal: [{ event: 'Y=1', given: 'X=1', do: { Z: 1 } }, { event: 'Y=1', given: 'X=1 and Z=1' }] }
+    const at0 = switchReading(fd, prior, ruleTwo, { ...initialRuleState(fd, ruleTwo), setting: { Z: false } })
+    expect(at0?.off.side).toEqual({ event: 'Y=1', given: 'X=1 and Z=0' })
+    expect(at0?.on?.side).toEqual({ event: 'Y=1', given: 'X=1', do: { Z: false } })
+    expect(at0?.seen).toEqual({ Z: false })
+    expect(at0?.same).toBe(true)
+    expect(at0?.differs).toBe(false)
     expect(nodeValues({ ...seenW, setting: { Z: false } })).toEqual({ W: true, Z: false })
     // A cut-graph step tests no switch: no reading.
     expect(switchReading(ex, exPrior, EXCEPTION_STEPS[1], seenW)).toBeUndefined()
@@ -284,14 +293,16 @@ describe('ProbabilityPanel view="rules"', () => {
     expect(container.querySelector('.ca-stroke-cut')).toBeNull()
     expect(line()).toContain('暢通，不可換')
     expect(container.querySelector('[data-path-open="true"]')?.textContent).toContain('對撞點 Z 的後代 W 已知')
-    expect(marks()).toEqual(['pair', 'switch', 'known', 'open', 'menu', 'switchMenu'])
+    expect(marks()).toEqual(['pair', 'switch', 'known', 'open', 'menu', 'probe', 'switchMenu'])
     expect(container.querySelector('.ca-tags')?.textContent).toContain('加開關')
     expect(container.querySelector('[data-node="F_Z"]')?.getAttribute('aria-label')).toContain('要檢查的變數・干預開關')
     // Observing nothing closes the collider: 可換.
     fireEvent.click(container.querySelector('[data-node="W"]') as Element)
     fireEvent.click(getByRole('button', { name: '不觀察' }))
     expect(line()).toContain('分隔，可換')
-    expect(container.querySelector('.ca-rules-equal')?.getAttribute('data-equal')).toBe('true')
+    // A switch test writes one line for the current state, no equation row.
+    expect(container.querySelector('.ca-rules-equal')).toBeNull()
+    expect(container.querySelector('.ca-rules-switch')?.textContent).toContain('不動，Z 未知：P(Y=1)=0.50')
     fireEvent.click(getByRole('button', { name: 'wrong cut' }))
     expect(line()).toContain('分隔')
     expect(line()).not.toContain('適用')
@@ -311,17 +322,18 @@ describe('ProbabilityPanel view="rules"', () => {
     const marks = (): (string | null)[] => [...container.querySelectorAll('.ca-rules-legend li')].map((li) => li.getAttribute('data-mark'))
     const fz = (): Element => container.querySelector('[data-node="F_Z"]') as Element
     const value = (id: string): string | null => container.querySelector(`[data-node="${id}"]`)?.getAttribute('data-value') ?? null
-    const equation = (): string => container.querySelector('.ca-rules-equal')?.textContent ?? ''
-    const current = (): (string | null)[] => [...container.querySelectorAll('.ca-rules-switch [data-current="true"]')].map((e) => e.getAttribute('data-setting'))
+    const text = (): string => (row()?.textContent ?? '').replace(/\u200b/g, '').replace('FZ', 'F_Z')
+    const probe = (): string | null => container.querySelector('[data-readout="Y"]')?.textContent ?? null
     expect(row()?.getAttribute('data-switch-state')).toBe('off')
-    expect(row()?.textContent).toContain('0.692')
-    // Every setting is listed with the switch off, so 0 → 1 not moving Y is visible.
-    expect([...container.querySelectorAll('.ca-rules-switch [data-setting]')].map((e) => e.getAttribute('data-setting'))).toEqual(['off', 'Z=0', 'Z=1'])
-    expect(current()).toEqual(['off'])
-    expect(container.querySelector('[data-settings-same="true"]')).not.toBeNull()
-    // The known W shows its value in the equation; Z and Y show none.
+    // Switch off: one part, the current prediction with W seen and Z unknown; Y's node shows it.
+    expect(text()).toBe('F_Z 不動，Z 未知：P(Y=1)=0.69')
+    expect(probe()).toBe('0.69')
+    expect(container.querySelector('.ca-rules-legend')?.textContent).toContain('在干預列設定開關，看 Y 的機率變不變')
+    expect(marks()).toEqual(['pair', 'switch', 'known', 'open', 'menu', 'probe', 'switchMenu'])
+    // Paths sit in a closed fold.
+    expect(container.querySelector('details.ca-dsep-more')?.hasAttribute('open')).toBe(false)
+    // The known W shows its value; Z and Y show none.
     expect([value('W'), value('Z'), value('Y')]).toEqual(['1', '', ''])
-    expect(equation()).toContain('do(Z=1)')
     expect(fz().getAttribute('aria-label')).toContain('打開它所控制的變數的選單')
     fireEvent.click(fz())
     expect(row()?.getAttribute('data-switch-state')).toBe('off')
@@ -329,32 +341,29 @@ describe('ProbabilityPanel view="rules"', () => {
     expect(getByRole('group', { name: '干預（開關 F_Z）' })).not.toBeNull()
     fireEvent.click(getByRole('button', { name: 'do(Z=0)' }))
     expect(value('Z')).toBe('0')
-    expect(current()).toEqual(['Z=0'])
-    // The equation follows the switch: never two settings at once.
-    expect(equation()).toContain('do(Z=0)')
-    expect(equation()).not.toContain('do(Z=1)')
+    // Switch on: setting Z=0 against not setting it (rule 3: Z unknown), the probability at Y follows.
     expect(row()?.getAttribute('data-switch-state')).toBe('on')
-    expect(row()?.textContent).toContain('設定 Z=0')
+    expect(text()).toBe('設定 Z=0：P(Y=1)=0.50 ／ 不設定，Z 未知：0.69 → 不同')
     expect(row()?.getAttribute('data-switch-same')).toBe('false')
-    expect(row()?.textContent).toContain('開關改變了預測')
+    expect(probe()).toBe('0.50')
     expect(container.querySelector('[data-node="Z"][data-intervened="true"] .ca-stroke-clamp')).not.toBeNull()
     expect(container.querySelector('[data-edge="F_Z>Z"]')?.getAttribute('data-state')).not.toBe('cut')
     expect(container.querySelector('[data-edge="U>Z"]')?.getAttribute('data-state')).toBe('cut')
-    expect(marks()).toEqual(['pair', 'switch', 'known', 'switchSet', 'cut', 'open', 'menu', 'switchMenu'])
+    expect(marks()).toEqual(['pair', 'switch', 'known', 'switchSet', 'cut', 'open', 'menu', 'probe', 'switchMenu'])
     expect(head()).toContain('已知 {W}')
     expect(head()).toContain('不可換')
     fireEvent.click(getByRole('button', { name: 'do(Z=1)' }))
     expect(value('Z')).toBe('1')
-    expect(current()).toEqual(['Z=1'])
-    expect(equation()).toContain('do(Z=1)')
     expect(row()?.textContent).toContain('設定 Z=1')
     expect(row()?.textContent).toContain('0.5')
-    // Observation works independently of the switch and survives releasing it.
+    // Observation works independently of the switch and survives releasing it; a seen Z is compared at the switch's value.
     fireEvent.click(getByRole('button', { name: 'Z=0' }))
     expect(head().replace(/\s/g, ' ')).toContain('已知 {W, Z}')
     expect(value('Z')).toBe('1')
+    expect(row()?.textContent).toContain('看到 Z=1：')
     fireEvent.click(getByRole('button', { name: '放開' }))
     expect(row()?.getAttribute('data-switch-state')).toBe('off')
+    expect(text()).toContain('F_Z 不動，看到 Z=0：')
     expect(value('Z')).toBe('0')
     fireEvent.click(getByRole('button', { name: 'do(Z=0)' }))
     fireEvent.click(getByRole('button', { name: 'switch' }))

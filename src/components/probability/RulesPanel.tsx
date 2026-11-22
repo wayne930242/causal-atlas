@@ -4,6 +4,7 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Prior, Value } from '../../engine/index.ts'
 import { formatValue, switchId } from '../../engine/index.ts'
 import { tableNumber } from './adjust-view.ts'
+import { probText } from '../model/wording.ts'
 import { MAX_PATHS, pathReason, pathText } from '../model/dsep-view.ts'
 import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource } from '../export/export-image.ts'
@@ -11,7 +12,7 @@ import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
 import type { RuleMark, RuleStep, SwitchQuery } from './rules-view.ts'
-import { SIDE_TOLERANCE, clampSplit, initialRuleState, nodeRoles, nodeValues, presentMarks, ruleView, sideText, switchReading } from './rules-view.ts'
+import { SIDE_TOLERANCE, clampSplit, initialRuleState, nodeRoles, nodeValues, presentMarks, ruleView, sideText } from './rules-view.ts'
 import { NodeMenu } from '../panels/NodeMenu.tsx'
 import { useNodeMenu } from '../panels/use-node-menu.ts'
 import { withValue } from '../model/model-state.ts'
@@ -71,6 +72,16 @@ function Query({ q, noData }: { readonly q: SwitchQuery; readonly noData: string
   )
 }
 
+/** The event alone, `P(Y=1) = 0.29` at the graph's digits, its full query in the hover title; a query without data says so. */
+function Short({ q, noData, bare, digits }: { readonly q: SwitchQuery; readonly noData: string; readonly bare?: boolean; readonly digits: number }) {
+  const text = q.value === undefined ? noData : digits > 0 ? probText(q.value, digits) : tableNumber(q.value)
+  return (
+    <span title={sideText(q.side)} data-query={sideText(q.side)}>
+      {bare === true ? text : <Formula text={`P(${q.side.event}) = ${text}`} />}
+    </span>
+  )
+}
+
 /**
  * The do-calculus rules on their graphs (lesson 06): a step button per step of the derivation,
  * the step's graph with no probabilities (known and switch-set variables show their values inside; cut arrows struck; the variables the expression sets by do()
@@ -103,9 +114,11 @@ export function RulesPanel({
   const [state, setState] = useState(() => initialRuleState(c, step))
   const { observed, interventions, setting } = state
   const view = useMemo(() => ruleView(c, prior, step, state), [c, prior, step, state])
-  const reading = useMemo(() => switchReading(c, prior, step, state), [c, prior, step, state])
   const values = nodeValues(state)
-  const { known } = view
+  const { known, reading } = view
+  // A switch test writes the current prediction of the pair's other end under its node, when the event is its value 1.
+  const probeEvent = reading === undefined ? undefined : new RegExp(`^${reading.target}\\s*==?\\s*(1|true)$`).test(reading.now.side.event.trim()) ? reading.target : undefined
+  const probe = probeEvent === undefined || reading === undefined ? undefined : { [probeEvent]: reading.now.value ?? Number.NaN }
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
   // The step's switches are drawn first, beside the variables they point into.
@@ -166,6 +179,7 @@ export function RulesPanel({
       c={view.graph}
       shown={drawn}
       values={values}
+      probe={probe}
       interventions={forced}
       removedEdges={view.removed}
       testClamped={testClamps}
@@ -203,6 +217,11 @@ export function RulesPanel({
     Object.entries(a)
       .map(([k, v]) => `${k}=${formatValue(v)}`)
       .join(', ')
+  // The line's numbers use the graph's digits, unless rounding would hide a difference.
+  const lineDigits = reading?.on !== undefined && reading.same === false && reading.on.value !== undefined && reading.off.value !== undefined && probText(reading.on.value, digits) === probText(reading.off.value, digits) ? 0 : digits
+  const seenText = reading === undefined ? '' : assignmentOf(reading.seen)
+  const unseen = (step.switches ?? []).filter((id) => reading !== undefined && !(id in reading.seen))
+  const baseState = [seenText === '' ? '' : r.switchSeen(seenText), unseen.length === 0 ? '' : r.switchUnknown(unseen)].filter((x) => x !== '').join(r.switchStates)
   const verdictText = {
     swap: r.swap,
     noSwap: r.noSwap,
@@ -267,8 +286,9 @@ export function RulesPanel({
                 </li>
               ))}
               <li data-mark="menu">{r.legend.menu}</li>
+              {probeEvent !== undefined && <li data-mark="probe"><Rich text={r.legend.probe(probeEvent)} ids={ids} /></li>}
               {(step.switches ?? []).map((id) => (
-                <li key={id} data-mark="switchMenu"><Rich text={r.legend.switchMenu(switchId(id), id)} ids={ids} /></li>
+                <li key={id} data-mark="switchMenu"><Rich text={r.legend.switchMenu(switchId(id), id, reading?.target ?? '')} ids={ids} /></li>
               ))}
             </ul>
           </aside>
@@ -279,62 +299,63 @@ export function RulesPanel({
             <strong>{result.separated ? t.rules.separated : d.open}</strong>
             <span data-verdict={view.verdict}>{verdictText}</span> <Tip tip={<Rich text={view.switchTest ? t.rules.switchTip : t.rules.tip} ids={RULE_SYMBOLS} />} label={t.moreInfo} />
           </p>
-          <ul className="ca-dsep-paths">
-            {result.paths.length === 0 && <li>{d.noPath}</li>}
-            {result.paths.slice(0, MAX_PATHS).map((p) => (
-              <li key={p.nodes.join('-')} data-path-open={p.open ? 'true' : 'false'}>
-                <Formula text={pathText(p)} ids={ids} />
-                {d.pathSep}
-                <Rich text={pathReason(t, p)} ids={ids} />
-              </li>
-            ))}
-            {result.paths.length > MAX_PATHS && <li>{d.more(result.paths.length - MAX_PATHS)}</li>}
-          </ul>
-        </div>
-        {reading !== undefined && (
-          <p className="ca-rules-switch" data-switch-state={reading.on === undefined ? 'off' : 'on'} data-switch-same={reading.same === undefined ? undefined : String(reading.same)}>
-            <span data-setting="off" data-current={reading.on === undefined ? 'true' : undefined} className={reading.on === undefined ? 'ca-rules-now' : undefined}>
-              <Rich text={r.switchOff(reading.switches)} ids={ids} />
-              <Query q={reading.off} noData={r.noData} />
-            </span>
-            {reading.settings.map((s) => (
-              <span key={assignmentOf(s.setting)}>
-                {r.switchJoin}
-                <span data-setting={assignmentOf(s.setting)} data-current={s.current ? 'true' : undefined} className={s.current ? 'ca-rules-now' : undefined}>
-                  <Rich text={r.switchOn(assignmentOf(s.setting))} ids={ids} />
-                  <Query q={s.query} noData={r.noData} />
+          {reading !== undefined && (
+            <p className="ca-rules-switch" data-switch-state={reading.on === undefined ? 'off' : 'on'} data-switch-same={reading.same === undefined ? undefined : String(reading.same)}>
+              {reading.on === undefined ? (
+                <span data-setting="off">
+                  <Rich text={r.switchOff(reading.switches, baseState)} ids={ids} />
+                  <Short q={reading.off} noData={r.noData} digits={lineDigits} />
                 </span>
-              </span>
-            ))}
-            {reading.on !== undefined && reading.same !== undefined && (
-              <>
-                {' → '}
-                <strong>{reading.same ? r.switchSame : r.switchDiffer}</strong>
-              </>
-            )}
-            {reading.settingsSame === true && <span data-settings-same="true">{r.switchSettingsSame(step.switches ?? [])}</span>}
-            {reading.on === undefined && (
-              <span className="ca-muted">
-                {r.switchJoin}
-                <Rich text={r.switchHint(reading.switches)} ids={ids} />
-              </span>
-            )}
-          </p>
-        )}
-        {left !== undefined && right !== undefined && (
-          <p className="ca-rules-equal" data-equal={numeric ? String(equal) : 'unavailable'}>
-            {numeric ? (
-              <>
-                <code className="ca-mono">
-                  <Formula text={`${sideText(left.side)} = ${tableNumber(leftValue)} ${equal ? '=' : '≠'} ${sideText(right.side)} = ${tableNumber(rightValue)}`} />
-                </code>{' '}
-                <span className={equal ? 'ca-adj-ok' : 'ca-adj-no'}>{equal ? '✓' : '✗'}</span>
-              </>
-            ) : (
-              <><Query q={left} noData={r.noData} />{r.switchJoin}<Query q={right} noData={r.noData} /></>
-            )}
-          </p>
-        )}
+              ) : (
+                <>
+                  <span data-setting={assignmentOf(setting)}>
+                    <Rich text={r.switchSet(assignmentOf(setting))} ids={ids} />
+                    <Short q={reading.on} noData={r.noData} digits={lineDigits} />
+                  </span>
+                  {r.switchSep}
+                  <span data-setting="off">
+                    <Rich text={r.switchBase(baseState, Object.keys(reading.seen).length > 0)} ids={ids} />
+                    <Short q={reading.off} noData={r.noData} digits={lineDigits} bare />
+                  </span>
+                  {reading.same !== undefined && (
+                    <>
+                      {' → '}
+                      <strong className={reading.same ? 'ca-adj-ok' : 'ca-adj-no'}>{reading.same ? r.switchSame : r.switchDiffer}</strong>
+                    </>
+                  )}
+                </>
+              )}
+            </p>
+          )}
+          {reading === undefined && left !== undefined && right !== undefined && (
+            <p className="ca-rules-equal" data-equal={numeric ? String(equal) : 'unavailable'}>
+              {numeric ? (
+                <>
+                  <code className="ca-mono">
+                    <Formula text={`${sideText(left.side)} = ${tableNumber(leftValue)} ${equal ? '=' : '≠'} ${sideText(right.side)} = ${tableNumber(rightValue)}`} />
+                  </code>{' '}
+                  <span className={equal ? 'ca-adj-ok' : 'ca-adj-no'}>{equal ? '✓' : '✗'}</span>
+                </>
+              ) : (
+                <><Query q={left} noData={r.noData} />{r.switchSep}<Query q={right} noData={r.noData} /></>
+              )}
+            </p>
+          )}
+          <details className="ca-dsep-more">
+            <summary>{r.paths(result.paths.length)}</summary>
+            <ul className="ca-dsep-paths">
+              {result.paths.length === 0 && <li>{d.noPath}</li>}
+              {result.paths.slice(0, MAX_PATHS).map((p) => (
+                <li key={p.nodes.join('-')} data-path-open={p.open ? 'true' : 'false'}>
+                  <Formula text={pathText(p)} ids={ids} />
+                  {d.pathSep}
+                  <Rich text={pathReason(t, p)} ids={ids} />
+                </li>
+              ))}
+              {result.paths.length > MAX_PATHS && <li>{d.more(result.paths.length - MAX_PATHS)}</li>}
+            </ul>
+          </details>
+        </div>
       </div>
     </div>
   )
