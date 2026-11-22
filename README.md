@@ -2,6 +2,12 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.19.0
+`IdentifyPanel` (`<IdentifyPanel c={loadedCase} query={{ x: 'X', y: 'Y', w? }} />`, also `doc` or `caseId`) is an identification experiment a lesson embeds: the case's graph, a verdict for `P(y | do(x), w)`, the formula over observed variables, and the formula's value beside the do() value on the case's model.
+The derivation lists each step in words (「規則二 以觀察 X 代替干預 X（對 Z）」) with its equation below; a step opens in the do-calculus view, where a generated step's observe and do menus are read-only, and a check that compared no assignment reads unavailable rather than equal.
+A non-identifiable query marks the hedge on the graph: `F` with a solid ring and amber edges, `F′` with a dashed ring, and one line on why.
+「編輯圖形」 adds or removes a directed edge or a bidirected arc and picks X, Y and W; the verdict and formula follow the drawn graph, numbers show only while the graph is the model's, and 「還原圖形」 brings them back.
+
 ## 0.18.0
 The engine writes do-calculus derivations: `derive(g, y, x, w?)` follows ID or IDC from `P(y | do(x), w)` to `identify`'s formula, step by step, or returns the hedge.
 Each rule step names its rule (1, 2 or 3), the whole expression before and after, the term it rewrites, and its test `{ moved, head, given, cutIn, cutOut }`, computed from the rule (rule 3 cuts the arrows into `Z(W)`) and checked by m-separation before the step is kept; probability-calculus steps (`expand`, `chain`, `conditional`, `substitute`, `simplify`) carry the identity they use. `matches` says the last expression is structurally `identify`'s formula (it is always equal in value).
@@ -356,7 +362,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.18.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.19.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -696,9 +702,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.18.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.19.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.18.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.19.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -707,7 +713,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.18.0},
+  version = {0.19.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
