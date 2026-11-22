@@ -84,6 +84,10 @@ export interface ProblemParams {
   readonly 'mediation-mediator-repeats': { readonly id: string }
   readonly 'mediation-treatment-is-mediator': { readonly id: string }
   readonly 'mediation-same-values': { readonly value: string }
+  // identification
+  readonly 'identify-overlap': { readonly id: string; readonly first: 'y' | 'x' | 'w'; readonly second: 'y' | 'x' | 'w' }
+  readonly 'identify-empty': { readonly set: 'y' }
+  readonly 'identify-budget': { readonly limit: number }
   // decisions and arithmetic
   readonly 'utility-row-length': Record<string, never>
   readonly 'utility-no-row': { readonly values: string }
@@ -191,6 +195,9 @@ export const PROBLEMS_EN: ProblemWording = {
     'mediation-mediator-repeats': (p) => `mediator ${p.id} is listed twice`,
     'mediation-treatment-is-mediator': (p) => `the treatment ${p.id} cannot also be a mediator`,
     'mediation-same-values': (p) => `the transition needs two different treatment values, got ${p.value} twice`,
+    'identify-overlap': (p) => `${p.id} is in both ${p.first} and ${p.second}; the outcome, intervention and condition sets must be disjoint`,
+    'identify-empty': () => 'name at least one outcome variable',
+    'identify-budget': (p) => `identification needs more than ${p.limit.toLocaleString('en-US')} steps; the graph or the formula is too large`,
     'utility-row-length': () => 'utility row has the wrong number of values',
     'utility-no-row': (p) => `utility table has no row for ${p.values}`,
     'prior-no-mass': () => 'prior has no mass',
