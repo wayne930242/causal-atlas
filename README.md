@@ -2,6 +2,13 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.18.0
+The engine writes do-calculus derivations: `derive(g, y, x, w?)` follows ID or IDC from `P(y | do(x), w)` to `identify`'s formula, step by step, or returns the hedge.
+Each rule step names its rule (1, 2 or 3), the whole expression before and after, the term it rewrites, and its test `{ moved, head, given, cutIn, cutOut }`, computed from the rule (rule 3 cuts the arrows into `Z(W)`) and checked by m-separation before the step is kept; probability-calculus steps (`expand`, `chain`, `conditional`, `substitute`, `simplify`) carry the identity they use. `matches` says the last expression is structurally `identify`'s formula (it is always equal in value).
+Expressions take `do()` terms (`DoExpr`, `P(y | do(x), z)`), and `compareDoExprs(model, prior, a, b, tol)` compares two sides on a model at every assignment of their free variables.
+In the do-calculus view, a `RuleStep` may give its sides as expressions (`symbolic`) and test sets (`sets`), checked at every assignment; `RulesPanel` also shows calculus steps, with their identity and the same check and no graph.
+On lesson 06's front door the generated rule steps are the lesson's 2, 3, 4, 5a and 5b (same rule, pair, known set and cuts), with four calculus steps between them.
+
 ## 0.17.0
 The engine identifies causal effects: `identify(g, y, x, w?)` runs ID (Shpitser & Pearl 2006) or, with `w`, IDC on an ADMG and returns either a formula over observed variables (`formula`, `text`, `latex`) or the hedge `{ f, fPrime }` that rules identification out.
 Backdoor gives `Σ_z P(y|x,z) P(z)`, front door `Σ_z P(z|x) Σ_x' P(y|x',z) P(x')`, napkin a ratio with `Z` listed in `arbitrary` (any setting of it gives the same value), and the bow the hedge `F = {X, Y}`, `F′ = {Y}`.
@@ -349,7 +356,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.17.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.18.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -668,9 +675,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.17.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.18.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.17.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.18.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -679,7 +686,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.17.0},
+  version = {0.18.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
