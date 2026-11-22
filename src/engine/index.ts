@@ -60,3 +60,31 @@ export { evalArith, toArith } from './arithmetic.ts'
 export type { DPath, DSeparationResult, OpenedCollider } from './dseparation.ts'
 export { dSeparation, dependence, descendants } from './dseparation.ts'
 export { switchId, withSwitches } from './switches.ts'
+export type {
+  Admg,
+  Hedge,
+  IdentificationCheck,
+  IdentificationQuery,
+  IdentificationRow,
+  IdentifyResult,
+  ObservedRow,
+  ProbAtom,
+  ProbExpr,
+  ProbProduct,
+  ProbRatio,
+  ProbSum,
+  RenderOptions,
+  SkippedRow,
+} from './identify/index.ts'
+export {
+  MAX_EXPR_EVALUATIONS,
+  MAX_IDENTIFY_STEPS,
+  admgForPrior,
+  admgOf,
+  checkIdentification,
+  evaluateProbExpr,
+  identify,
+  observedJoint,
+  probExprLatex,
+  probExprText,
+} from './identify/index.ts'
