@@ -55,7 +55,8 @@ export function observedJoint(model: CausalModel, prior: Prior): ObservedRow[] {
   return jointOf(model, enumerateContexts(model, prior), {})
 }
 
-function jointOf(model: CausalModel, contexts: readonly WeightedContext[], interventions: Assignment): ObservedRow[] {
+/** The distribution of the endogenous variables over `contexts` with `interventions` set by do(). */
+export function jointOf(model: CausalModel, contexts: readonly WeightedContext[], interventions: Assignment): ObservedRow[] {
   const rows = new Map<string, { assignment: Record<string, Value>; p: number }>()
   for (const { context, p } of contexts) {
     const { values } = evaluate(model, context, interventions)

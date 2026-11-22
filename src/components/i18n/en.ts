@@ -328,6 +328,18 @@ export const EN: Messages = {
     switchDiffer: 'different',
     paths: (n) => `Paths (${n})`,
     noData: '— (the evidence has probability 0)',
+    calculusTag: 'Probability calculus',
+    calculus: {
+      expand: 'Σ-expansion: P(a | c) = Σ_b P(a, b | c)',
+      chain: 'Chain rule: P(a, b | c) = P(a | b, c) P(b | c)',
+      conditional: 'Definition of a conditional: P(a | b, c) = P(a, b | c) / P(b | c)',
+      substitute: 'Substitution of what earlier steps derived',
+      simplify: 'Simplification: sums out, joined factors, cancellation; true in every distribution',
+    },
+    symbolicChecked: (rows) => `compared on the full model at ${rows} assignments`,
+    symbolicSkipped: (n) => ` (${n} assignments skipped: their evidence has probability 0)`,
+    calculusHolds: 'the two sides are equal at every assignment',
+    calculusDiffers: 'the two sides differ: this step is wrong',
     tip: 'Click a node to open its menu. Observing or intervening makes the variable known and shows its value inside the node. Intervening also cuts the arrows into it. Releasing it restores those arrows but keeps any cuts the lesson specifies for the test. The step button resets your changes. The graph shows no probabilities; both sides of the equation are computed on the full model. Rule 3 cuts the arrows into Z(W), which the lesson specifies.',
     switchTip:
       'The switch graph adds the arrow F_Z → Z. If F_Z and Y are d-separated the sides can be swapped; if a path is open they cannot. Rule 2 starts with Z observed; rule 3 does not. Click F_Z or Z to open the menu for Z. The intervention row sets the switch, updating the value inside Z and the do() in the equation. The switch setting changes neither the known set nor the separation test. To make Z known, use the observation row. The number under Y (X in rule 3) is the current probability; the line under the graph compares setting the switch with not setting it: in rule 2 not setting means seeing Z at the same value, in rule 3 it means Z unknown. Probabilities are computed on the full model.',

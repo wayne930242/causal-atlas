@@ -31,6 +31,43 @@ export interface ProbRatio {
 
 export type ProbExpr = ProbAtom | ProbSum | ProbProduct | ProbRatio
 
+/**
+ * P(vars | do(acts), given): an interventional term, the observational atom when `do` is absent or
+ * empty. Every ProbExpr is a DoExpr.
+ */
+export interface DoAtom {
+  readonly kind: 'p'
+  readonly vars: readonly string[]
+  readonly given: readonly string[]
+  /** The variables set by do(), sorted by name, disjoint from `vars` and `given`. */
+  readonly do?: readonly string[]
+}
+
+export interface DoSum {
+  readonly kind: 'sum'
+  readonly over: readonly string[]
+  readonly body: DoExpr
+}
+
+export interface DoProduct {
+  readonly kind: 'product'
+  readonly factors: readonly DoExpr[]
+}
+
+export interface DoRatio {
+  readonly kind: 'ratio'
+  readonly num: DoExpr
+  readonly den: DoExpr
+}
+
+/** A probability expression whose atoms may carry do(): the sides of a derivation step. */
+export type DoExpr = DoAtom | DoSum | DoProduct | DoRatio
+
+/** The variables an atom's do() sets (none for an observational atom). */
+export function actsOf(e: DoAtom): readonly string[] {
+  return e.do ?? []
+}
+
 export const ONE: ProbExpr = { kind: 'product', factors: [] }
 
 /** Whether A ⊥ B | C holds in the observational distribution. */
@@ -39,16 +76,16 @@ export type Independence = (a: readonly string[], b: readonly string[], given: r
 const byName = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0)
 const sorted = (ids: Iterable<string>): string[] => [...new Set(ids)].sort(byName)
 
-const freeMemo = new WeakMap<ProbExpr, ReadonlySet<string>>()
+const freeMemo = new WeakMap<DoExpr, ReadonlySet<string>>()
 
-/** The variables `e` leaves free (its value depends on them). */
-export function freeOf(e: ProbExpr): ReadonlySet<string> {
+/** The variables `e` leaves free (its value depends on them), the values set by do() included. */
+export function freeOf(e: DoExpr): ReadonlySet<string> {
   const hit = freeMemo.get(e)
   if (hit !== undefined) return hit
   let out: Set<string>
   switch (e.kind) {
     case 'p':
-      out = new Set([...e.vars, ...e.given])
+      out = new Set([...e.vars, ...e.given, ...actsOf(e)])
       break
     case 'sum': {
       out = new Set(freeOf(e.body))
@@ -66,17 +103,19 @@ export function freeOf(e: ProbExpr): ReadonlySet<string> {
   return out
 }
 
-const keyMemo = new WeakMap<ProbExpr, string>()
+const keyMemo = new WeakMap<DoExpr, string>()
 
 /** A canonical text of `e`'s structure: equal keys mean the same expression. */
-export function keyOf(e: ProbExpr): string {
+export function keyOf(e: DoExpr): string {
   const hit = keyMemo.get(e)
   if (hit !== undefined) return hit
   let out: string
   switch (e.kind) {
-    case 'p':
-      out = `P(${e.vars.join(',')}|${e.given.join(',')})`
+    case 'p': {
+      const acts = actsOf(e)
+      out = `P(${e.vars.join(',')}|${e.given.join(',')}${acts.length > 0 ? `|do:${acts.join(',')}` : ''})`
       break
+    }
     case 'sum':
       out = `S[${e.over.join(',')}]{${keyOf(e.body)}}`
       break

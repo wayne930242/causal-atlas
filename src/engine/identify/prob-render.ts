@@ -1,10 +1,11 @@
-import type { ProbExpr } from './prob-expr.ts'
-import { freeOf } from './prob-expr.ts'
+import type { DoExpr } from './prob-expr.ts'
+import { actsOf, freeOf } from './prob-expr.ts'
 
 /**
  * Text and LaTeX for probability expressions, in Pearl's lower-case convention: the value of X is
  * written x. A summed variable whose name is already in use (free in the expression, part of the
- * query, or bound outside) is primed: Σ_x' P(y|x',z) P(x').
+ * query, or bound outside) is primed: Σ_x' P(y|x',z) P(x'). A term with do() writes it first among
+ * the conditions: P(y|do(x),z).
  */
 
 export interface RenderOptions {
@@ -32,7 +33,7 @@ function latexSymbol(symbol: string): string {
   return `${headTex}${tail === '' ? '' : `_{${tail}}`}${primes}`
 }
 
-function render(e: ProbExpr, format: Format, options: RenderOptions): string {
+function render(e: DoExpr, format: Format, options: RenderOptions): string {
   const base = baseSymbols(options.names)
   const top = new Map<string, string>()
   for (const v of [...(options.inScope ?? []), ...freeOf(e)]) top.set(v, base(v))
@@ -40,13 +41,14 @@ function render(e: ProbExpr, format: Format, options: RenderOptions): string {
     const s = scope.get(v) ?? base(v)
     return format === 'latex' ? latexSymbol(s) : s
   }
-  const go = (x: ProbExpr, scope: ReadonlyMap<string, string>): string => {
+  const go = (x: DoExpr, scope: ReadonlyMap<string, string>): string => {
     switch (x.kind) {
       case 'p': {
         const vars = x.vars.map((v) => sym(scope, v))
-        const given = x.given.map((v) => sym(scope, v))
-        if (format === 'text') return `P(${vars.join(',')}${given.length > 0 ? `|${given.join(',')}` : ''})`
-        return `P(${vars.join(', ')}${given.length > 0 ? ` \\mid ${given.join(', ')}` : ''})`
+        const acts = actsOf(x).map((v) => sym(scope, v))
+        const conditions = [...(acts.length > 0 ? [format === 'text' ? `do(${acts.join(',')})` : `\\operatorname{do}(${acts.join(', ')})`] : []), ...x.given.map((v) => sym(scope, v))]
+        if (format === 'text') return `P(${vars.join(',')}${conditions.length > 0 ? `|${conditions.join(',')}` : ''})`
+        return `P(${vars.join(', ')}${conditions.length > 0 ? ` \\mid ${conditions.join(', ')}` : ''})`
       }
       case 'sum': {
         const inner = new Map(scope)
@@ -76,7 +78,7 @@ function render(e: ProbExpr, format: Format, options: RenderOptions): string {
         const num = go(x.num, scope)
         const den = go(x.den, scope)
         if (format === 'latex') return `\\frac{${num}}{${den}}`
-        const side = (part: ProbExpr, s: string): string => (part.kind === 'p' ? s : `[${s}]`)
+        const side = (part: DoExpr, s: string): string => (part.kind === 'p' ? s : `[${s}]`)
         return `${side(x.num, num)} / ${side(x.den, den)}`
       }
     }
@@ -85,11 +87,11 @@ function render(e: ProbExpr, format: Format, options: RenderOptions): string {
 }
 
 /** Plain text: `Σ_z P(y|x,z) P(z)`. */
-export function probExprText(e: ProbExpr, options: RenderOptions): string {
+export function probExprText(e: DoExpr, options: RenderOptions): string {
   return render(e, 'text', options)
 }
 
 /** LaTeX: `\sum_{z} P(y \mid x, z)\, P(z)`. */
-export function probExprLatex(e: ProbExpr, options: RenderOptions): string {
+export function probExprLatex(e: DoExpr, options: RenderOptions): string {
   return render(e, 'latex', options)
 }

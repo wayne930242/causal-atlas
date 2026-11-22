@@ -431,6 +431,18 @@ export const ZH = {
     switchDiffer: '不同',
     paths: (n: number): string => `路徑（${n} 條）`,
     noData: '—（證據的機率是 0）',
+    calculusTag: '機率演算',
+    calculus: {
+      expand: 'Σ 展開：P(a | c) = Σ_b P(a, b | c)',
+      chain: '連鎖律：P(a, b | c) = P(a | b, c) P(b | c)',
+      conditional: '條件機率的定義：P(a | b, c) = P(a, b | c) / P(b | c)',
+      substitute: '代入前面步驟已推得的式子',
+      simplify: '化簡：消去 Σ、合併因子、約分，對任何分布都成立',
+    },
+    symbolicChecked: (rows: number): string => `在 ${rows} 組取值上用完整模型比對`,
+    symbolicSkipped: (n: number): string => `（${n} 組取值的證據機率是 0，略過）`,
+    calculusHolds: '兩邊在每組取值都相等',
+    calculusDiffers: '兩邊的數字不等：這一步寫錯了',
     tip: '點節點打開選單。觀察和干預都會讓變數已知，圈內寫它的值；干預還會剪掉指向它的箭頭。放開干預會恢復這些箭頭，但課文為了檢驗剪掉的箭頭不受影響。按步驟鈕回到原本的設定。圖上不寫機率，等式的兩邊用完整模型算。規則三剪掉指向 Z(W) 的箭頭，Z(W) 由課文寫明。',
     switchTip:
       '開關圖加上一支 F_Z → Z 的箭頭。F_Z 和 Y 被 d 分隔時，兩邊可換；有路暢通就不可換。規則二起初給定 Z，規則三不給定。點 F_Z 或 Z 打開 Z 的選單：干預列設定開關，Z 圈內的值和等式的 do() 跟著改。開關設定不改變已知集合，也不影響分隔檢驗；要讓 Z 已知，請用觀察列。Y（規則三是 X）圈下寫現在的機率；圖下一行比較設定開關和不設定的預測：規則二不設定時看到 Z 取同一個值，規則三不設定時 Z 未知。機率都用完整模型算。',

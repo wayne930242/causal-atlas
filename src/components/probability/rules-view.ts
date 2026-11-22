@@ -1,6 +1,6 @@
 import type { LoadedCase } from '../../data/load.ts'
-import type { Assignment, DSeparationResult, Edge, Interventions, Prior, Value } from '../../engine/index.ts'
-import { ModelError, coerceToDomain, dSeparation, domainValues, formatValue, getVariable, probability, switchId, valuesEqual, withSwitches } from '../../engine/index.ts'
+import type { Assignment, CalculusKind, CausalModel, DSeparationResult, DerivationStep, DoExpr, Edge, ExprComparison, Interventions, Prior, Value } from '../../engine/index.ts'
+import { ModelError, coerceToDomain, compareDoExprs, dSeparation, domainValues, formatValue, getVariable, probability, switchId, valuesEqual, withSwitches } from '../../engine/index.ts'
 import { observationFormula } from '../model/assignments.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import { doText } from '../model/wording.ts'
@@ -42,6 +42,102 @@ export interface RuleStep {
   readonly switches?: readonly string[]
   /** The two sides the rule makes equal. */
   readonly equal?: readonly [RuleSide, RuleSide]
+  /**
+   * The two sets whose d-separation the step tests, [Z, Y] in the order of `pair`, when either has
+   * more than one variable; `pair` then names their first members.
+   */
+  readonly sets?: readonly [readonly string[], readonly string[]]
+  /**
+   * The two sides as expressions with free variables, such as P(y | do(x), z) = P(y | do(x, z)),
+   * in place of `equal`: they are compared on the full model at every assignment of their free
+   * variables. The variables both sides set by do() are the expression's own interventions.
+   */
+  readonly symbolic?: readonly [DoExpr, DoExpr]
+}
+
+/**
+ * A probability-calculus step of a derivation (chain rule, Σ-expansion, a conditional's
+ * definition, substitution, simplification): no graph test; its two sides are compared on the full
+ * model at every assignment of their free variables.
+ */
+export interface CalculusStep {
+  readonly label: string
+  readonly calculus: CalculusKind
+  readonly symbolic: readonly [DoExpr, DoExpr]
+}
+
+/** A step of a derivation as the rules view shows it. */
+export type DerivationViewStep = RuleStep | CalculusStep
+
+export function isCalculus(step: DerivationViewStep): step is CalculusStep {
+  return 'calculus' in step
+}
+
+/**
+ * The engine's derivation (see `derive`) as view steps labelled 1, 2, …: a rule step tests its
+ * moved variables Z against the term's Y given its do() and observed variables, on the graph with
+ * the cuts the rule computes; its sides are the term before and after.
+ */
+export function derivationSteps(steps: readonly DerivationStep[]): readonly DerivationViewStep[] {
+  return steps.map((s, i): DerivationViewStep => {
+    const label = String(i + 1)
+    if (s.kind !== 'rule') return { label, calculus: s.kind, symbolic: [s.left, s.right] }
+    const { moved, head, given, cutIn, cutOut } = s.test
+    const single = moved.length === 1 && head.length === 1
+    return {
+      label,
+      rule: s.rule,
+      pair: [moved[0], head[0]],
+      ...(single ? {} : { sets: [moved, head] as const }),
+      given,
+      ...(cutIn.length > 0 ? { cutIn } : {}),
+      ...(cutOut.length > 0 ? { cutOut } : {}),
+      symbolic: [s.left, s.right],
+    }
+  })
+}
+
+/** The sets the step tests, [Z, Y]: `sets`, else the pair's two variables. */
+export function pairSets(step: RuleStep): readonly [readonly string[], readonly string[]] {
+  return step.sets ?? [[step.pair[0]], [step.pair[1]]]
+}
+
+/** A symbolic step's two sides compared on the full model. */
+export interface SymbolicCheck {
+  readonly left: DoExpr
+  readonly right: DoExpr
+  readonly comparison: ExprComparison
+}
+
+const symbolicChecks = new WeakMap<readonly [DoExpr, DoExpr], WeakMap<CausalModel, Map<Prior, ExprComparison>>>()
+
+/** `sides` compared on `model` at every assignment of their free variables (remembered per step, model and prior). */
+export function symbolicCheck(model: CausalModel, prior: Prior, sides: readonly [DoExpr, DoExpr]): SymbolicCheck {
+  let byModel = symbolicChecks.get(sides)
+  if (byModel === undefined) symbolicChecks.set(sides, (byModel = new WeakMap()))
+  let byPrior = byModel.get(model)
+  if (byPrior === undefined) byModel.set(model, (byPrior = new Map()))
+  let comparison = byPrior.get(prior)
+  if (comparison === undefined) byPrior.set(prior, (comparison = compareDoExprs(model, prior, sides[0], sides[1], SIDE_TOLERANCE)))
+  return { left: sides[0], right: sides[1], comparison }
+}
+
+/** A calculus step's check: `holds` when the sides agree at every assignment where both are defined. */
+export interface CalculusView {
+  readonly check: SymbolicCheck
+  readonly verdict: 'holds' | 'mismatch'
+}
+
+export function calculusView(c: LoadedCase, prior: Prior, step: CalculusStep): CalculusView {
+  const check = symbolicCheck(c.model, prior, step.symbolic)
+  return { check, verdict: check.comparison.differsAt === undefined ? 'holds' : 'mismatch' }
+}
+
+/** d-separation of two sets: separated when every pair is, with every pair's paths. */
+function setSeparation(model: CausalModel, a: readonly string[], b: readonly string[], known: readonly string[], cutIn: readonly string[], cutOut: readonly string[]): DSeparationResult {
+  if (a.length === 1 && b.length === 1) return dSeparation(model, a[0], b[0], known, cutIn, cutOut)
+  const results = a.flatMap((x) => b.map((y) => dSeparation(model, x, y, known, cutIn, cutOut)))
+  return { separated: results.every((r) => r.separated), paths: results.flatMap((r) => r.paths) }
 }
 
 /**
@@ -65,6 +161,8 @@ export interface RuleView {
   readonly marks: PathMarks
   /** Both queries on the full model, when the step has an equation. */
   readonly equation?: readonly [SwitchQuery, SwitchQuery]
+  /** The symbolic sides compared on the full model, when the step has them. */
+  readonly symbolic?: SymbolicCheck
   /** The observed or intervened variables; a switch setting is neither. */
   readonly known: readonly string[]
   readonly verdict: RuleVerdict
@@ -76,6 +174,11 @@ export const SIDE_TOLERANCE = 1e-9
 
 /** The variables set by do() on both sides of the step's equation: the expression's own interventions. */
 export function setInExpression(step: RuleStep): readonly string[] | undefined {
+  if (step.symbolic !== undefined) {
+    const [a, b] = step.symbolic
+    if (a.kind !== 'p' || b.kind !== 'p') return []
+    return (a.do ?? []).filter((id) => (b.do ?? []).includes(id))
+  }
   if (step.equal === undefined) return undefined
   const [a, b] = step.equal
   return Object.entries(a.do ?? {}).filter(([id, v]) => b.do?.[id] !== undefined && valuesEqual(v, b.do[id])).map(([id]) => id)
@@ -88,6 +191,7 @@ export function setInExpression(step: RuleStep): readonly string[] | undefined {
 export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, state: RuleState): RuleView {
   const { observed, interventions, setting } = state
   const [x, y] = step.pair
+  const [xs, ys] = pairSets(step)
   const writtenCut = step.cutIn ?? []
   const cutIn = [...new Set([...Object.keys(interventions), ...clampSplit(step).test])]
   const known = [...new Set([...step.given, ...Object.keys(interventions), ...Object.keys(observed)])].filter((id) => id in interventions || id in observed)
@@ -97,7 +201,9 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, state: Rul
   const model = withSwitches(c.model, switches)
   const switchNodes = switches.map(switchId)
   const switchTest = step.pair.some((id) => switchNodes.includes(id))
-  for (const id of [x, y, ...known, ...writtenCut, ...cutIn, ...cutOut]) getVariable(model, id)
+  for (const id of [x, y, ...xs, ...ys, ...known, ...writtenCut, ...cutIn, ...cutOut]) getVariable(model, id)
+  if (step.sets !== undefined && (xs[0] !== x || ys[0] !== y)) throw new Error(`${where}: pair names the first members of sets`)
+  if (step.symbolic !== undefined && step.equal !== undefined) throw new Error(`${where}: a step has symbolic sides or an equation, not both`)
   for (const id of known) {
     if (switchNodes.includes(id)) throw new Error(`${where}: switch ${id} cannot be in the known set`)
   }
@@ -114,7 +220,7 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, state: Rul
     if (extra.length > 0) throw new Error(`${where}: a switch test cuts only the arrows into the variables both sides set by do(); ${extra.join(', ')} is not`)
   }
   const graph: LoadedCase = switches.length === 0 ? c : { ...c, model }
-  const result = dSeparation(model, x, y, known, cutIn, cutOut)
+  const result = setSeparation(model, xs, ys, known, cutIn, cutOut)
   const removed = model.edges.filter(
     (e) => cutIn.includes(e.to) || cutOut.includes(e.from) || (e.to in setting && e.from !== switchId(e.to)),
   )
@@ -125,12 +231,15 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, state: Rul
   const equation = sides === undefined ? undefined : ([readQuery(c, prior, sides[0]), readQuery(c, prior, sides[1])] as const)
   const [left, right] = equation ?? []
   const reading = switchReading(c, prior, step, state)
-  // A switch test compares setting with not setting at every value; a cut graph compares its two sides.
+  const symbolic = step.symbolic === undefined ? undefined : symbolicCheck(c.model, prior, step.symbolic)
+  // A switch test compares setting with not setting at every value; a cut graph compares its two sides, a symbolic step at every assignment.
   const differ = reading !== undefined
     ? reading.differs
-    : left?.value !== undefined && right?.value !== undefined && Math.abs(left.value - right.value) >= SIDE_TOLERANCE
+    : symbolic !== undefined
+      ? symbolic.comparison.differsAt !== undefined
+      : left?.value !== undefined && right?.value !== undefined && Math.abs(left.value - right.value) >= SIDE_TOLERANCE
   const verdict: RuleVerdict = result.separated ? (differ ? 'mismatch' : switchTest ? 'swap' : 'applies') : switchTest ? 'noSwap' : 'notApplies'
-  return { graph, switchNodes, switchTest, result, removed, marks: { open, blocked, ends: [x, y], paths: result.paths }, equation, known, verdict, reading }
+  return { graph, switchNodes, switchTest, result, removed, marks: { open, blocked, ends: [...new Set([...xs, ...ys])], paths: result.paths }, equation, ...(symbolic === undefined ? {} : { symbolic }), known, verdict, reading }
 }
 
 /** A mark the step's graph can draw, in the legend's order. */
@@ -158,7 +267,7 @@ export function clampSplit(step: RuleStep): { readonly set: readonly string[]; r
 export function nodeRoles(step: RuleStep, known: readonly string[], id: string, { interventions, setting }: RuleState): readonly RuleRole[] {
   const roles: RuleRole[] = []
   const { test } = clampSplit(step)
-  if (step.pair.includes(id)) roles.push('pair')
+  if (pairSets(step).some((set) => set.includes(id))) roles.push('pair')
   if ((step.switches ?? []).map(switchId).includes(id)) roles.push('switch')
   if (known.includes(id)) roles.push('known')
   if (id in interventions) roles.push('set')
@@ -186,7 +295,7 @@ export function presentMarks(step: RuleStep, view: RuleView, shown: readonly str
       return drawn(from) && drawn(to)
     })
   const marks: RuleMark[] = []
-  if (step.pair.some(drawn)) marks.push('pair')
+  if (pairSets(step).some((set) => set.some(drawn))) marks.push('pair')
   if (view.switchNodes.some(drawn)) marks.push('switch')
   if (view.known.some(drawn)) marks.push('known')
   if (Object.keys(interventions).some(drawn)) marks.push('clamp')
@@ -293,7 +402,12 @@ export interface RuleState {
 
 export function initialRuleState(c: LoadedCase, step: RuleStep): RuleState {
   const set = clampSplit(step).set
-  const initialValue = (id: string): Value => valueOfText(c, id, equationValue(step, id) ?? '1')
+  // A symbolic step holds at every value: a known variable starts at 1, or at its first value when 1 is not one.
+  const symbolicValue = (id: string): Value => {
+    const values = domainValues(getVariable(c.model, id).domain)
+    return values.find((v) => formatValue(v) === '1' || String(v) === '1') ?? values[0]
+  }
+  const initialValue = (id: string): Value => (step.symbolic !== undefined ? symbolicValue(id) : valueOfText(c, id, equationValue(step, id) ?? '1'))
   const doValue = (id: string): Value => {
     const v = step.equal?.[0].do?.[id]
     if (v === undefined) return initialValue(id)

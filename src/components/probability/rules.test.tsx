@@ -7,7 +7,9 @@ import { lessonModel } from '../../demo/lesson-models.ts'
 import type { RuleStep } from './rules-view.ts'
 import { FRONT_DOOR_STEPS } from '../../demo/front-door-steps.ts'
 import { RULE_ONE_STEPS } from '../../demo/rule-one-steps.ts'
-import { equationUnder, initialRuleState, nodeValues, ruleView, switchReading } from './rules-view.ts'
+import { derivationSteps, equationUnder, initialRuleState, isCalculus, nodeValues, ruleView, switchReading } from './rules-view.ts'
+import { RulesPanel } from './RulesPanel.tsx'
+import { admgForPrior, derive } from '../../engine/index.ts'
 import { ProbabilityPanel } from '../index.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 
@@ -490,5 +492,29 @@ describe('ProbabilityPanel view="rules"', () => {
 
   it('fails fast without rules', () => {
     expect(() => renderToString(<ProbabilityPanel doc={doc} view="rules" />)).toThrow(/rules/)
+  })
+})
+
+describe('RulesPanel: a generated derivation', () => {
+  const g = admgForPrior(fd.model, prior)
+  const derived = derive(g, ['Y'], ['X'])
+  if (!derived.identifiable) throw new Error('identifiable')
+  const steps = derivationSteps(derived.steps)
+
+  it('shows a symbolic rule step with its sides typeset, its cut graph and the check at every assignment', () => {
+    const { container, getByRole } = render(<RulesPanel c={fd} prior={prior} steps={steps} shown={fd.model.endogenous} />)
+    expect([...container.querySelectorAll('.ca-rules-steps button')].map((b) => b.textContent)).toEqual(steps.map((s) => s.label))
+    expect(container.querySelector('[data-calculus="expand"]')).not.toBeNull()
+    expect(container.querySelector('.ca-rules-line')?.textContent).toContain('Σ 展開')
+    expect(container.querySelector('.ca-rules-equal')?.getAttribute('data-verdict')).toBe('holds')
+    const third = steps.findIndex((s) => !isCalculus(s))
+    fireEvent.click(getByRole('button', { name: steps[third].label }))
+    expect(container.querySelector('[data-calculus]')).toBeNull()
+    expect(container.querySelector('[data-verdict]')?.getAttribute('data-verdict')).toBe('applies')
+    const equal = container.querySelector('.ca-rules-equal')
+    expect(equal?.getAttribute('data-equal')).toBe('true')
+    expect(equal?.querySelector('[data-text]')?.getAttribute('data-text')).toBe('P(z|do(x)) = P(z|x)')
+    expect(equal?.textContent).toContain('組取值上用完整模型比對')
+    expect(container.querySelector('.ca-stroke-cut')).not.toBeNull()
   })
 })
