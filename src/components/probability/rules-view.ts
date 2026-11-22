@@ -66,6 +66,8 @@ export interface RuleView {
   readonly marks: PathMarks
   /** Both sides' values on the full model, when the step has an equation. */
   readonly sides?: readonly [number, number]
+  /** The equation shown: the step's, with each switched variable a click set taking its set value (see {@link equationUnder}). */
+  readonly equation?: readonly [RuleSide, RuleSide]
   /** The known set is the step's own, so its equation is the one tested (shown); a click moved it off, so not. */
   readonly equationShown: boolean
   readonly verdict: RuleVerdict
@@ -121,11 +123,12 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: rea
   const open = new Set(result.paths.filter((p) => p.open).flatMap((p) => p.edges.map(key)))
   const blocked = new Set(result.paths.filter((p) => !p.open).flatMap((p) => p.edges.map(key)).filter((k) => !open.has(k)))
   const value = (s: RuleSide): number => probability(c.model, prior, s).value
-  const sides = step.equal === undefined ? undefined : ([value(step.equal[0]), value(step.equal[1])] as const)
+  const equation = equationUnder(step, setting)
+  const sides = equation === undefined ? undefined : ([value(equation[0]), value(equation[1])] as const)
   const own = known.length === step.given.length && step.given.every((id) => known.includes(id))
   const differ = own && sides !== undefined && Math.abs(sides[0] - sides[1]) >= SIDE_TOLERANCE
   const verdict: RuleVerdict = result.separated ? (differ ? 'mismatch' : switchTest ? 'swap' : 'applies') : switchTest ? 'noSwap' : 'notApplies'
-  return { graph, switchNodes, switchTest, result, removed, marks: { open, blocked, ends: [x, y], paths: result.paths }, sides, equationShown: own, verdict }
+  return { graph, switchNodes, switchTest, result, removed, marks: { open, blocked, ends: [x, y], paths: result.paths }, sides, equation, equationShown: own, verdict }
 }
 
 /** A mark the step's graph can draw, in the legend's order. */
@@ -225,6 +228,17 @@ export interface SwitchReading {
   readonly off: SwitchQuery
   readonly on?: SwitchQuery
   readonly same?: boolean
+  /** The prediction at every setting of the switches, the current one marked, so a reader sees whether 0 → 1 moves it. */
+  readonly settings: readonly SwitchSetting[]
+  /** Whether every setting gives the same prediction (undefined with fewer than two, or one without data). */
+  readonly settingsSame?: boolean
+}
+
+/** One setting of the switches and the prediction under it. */
+export interface SwitchSetting {
+  readonly setting: Assignment
+  readonly query: SwitchQuery
+  readonly current: boolean
 }
 
 /** A variable's value in the step's equation (`W=1` in a side's `given`), else undefined. */
@@ -238,6 +252,66 @@ function equationValue(step: RuleStep, id: string): string | undefined {
   return undefined
 }
 
+/** `text` (`1`, `0`, a finite value) as a value of `id`; fails fast when it is not one. */
+function valueOfText(c: LoadedCase, id: string, text: string): Value {
+  const values = domainValues(getVariable(c.model, id).domain)
+  const found = values.find((v) => formatValue(v) === text || String(v) === text)
+  if (found === undefined) throw new Error(`case ${c.data.id}: ${id}=${text} is not a value of ${id}`)
+  return found
+}
+
+/** The value a known variable is read at: its value in the step's equation, else 1. */
+function knownText(step: RuleStep, id: string): string {
+  return equationValue(step, id) ?? '1'
+}
+
+/**
+ * The values written inside the step's nodes: each known variable at the value it is read at
+ * (its value in the equation, else 1), and each variable a switch sets at its set value. No other
+ * node gets one: the graph draws no probabilities.
+ */
+export function nodeValues(c: LoadedCase, step: RuleStep, known: readonly string[], setting: Assignment = {}): Assignment {
+  const out: Record<string, Value> = {}
+  for (const id of known) out[id] = valueOfText(c, id, knownText(step, id))
+  return { ...out, ...setting }
+}
+
+/**
+ * The step's equation with each switched variable a click set taking its set value, in do() and in
+ * the observation alike: rule 3's `P(Y=1 | W=1, do(Z=1))` reads `do(Z=0)` while the switch sets
+ * Z=0, so the page never shows two settings at once. With the switch off, the equation as written.
+ */
+export function equationUnder(step: RuleStep, setting: Assignment): readonly [RuleSide, RuleSide] | undefined {
+  if (step.equal === undefined) return undefined
+  const set = Object.keys(setting)
+  if (set.length === 0) return step.equal
+  const side = (s: RuleSide): RuleSide => {
+    const given =
+      s.given === undefined
+        ? undefined
+        : s.given
+            .split(/\s+and\s+/)
+            .map((part) => {
+              const k = part.split('=')[0]?.trim() ?? ''
+              return k in setting ? `${k}=${formatValue(setting[k])}` : part
+            })
+            .join(' and ')
+    const doPart = s.do === undefined ? undefined : Object.fromEntries(Object.entries(s.do).map(([k, v]) => [k, k in setting ? setting[k] : v]))
+    return { event: s.event, ...(given === undefined ? {} : { given }), ...(doPart === undefined ? {} : { do: doPart }) }
+  }
+  return [side(step.equal[0]), side(step.equal[1])]
+}
+
+/** Every setting of the step's switches, each switch at each value of its variable, in domain order. */
+function allSettings(c: LoadedCase, switches: readonly string[]): readonly Assignment[] {
+  let out: Assignment[] = [{}]
+  for (const id of switches) {
+    const values = domainValues(getVariable(c.model, id).domain)
+    out = out.flatMap((a) => values.map((v) => ({ ...a, [id]: v })))
+  }
+  return out
+}
+
 /** The switch test's reading under `setting`, or undefined when the step tests no switch. */
 export function switchReading(c: LoadedCase, prior: Prior, step: RuleStep, known: readonly string[], setting: Assignment): SwitchReading | undefined {
   const switches = step.switches ?? []
@@ -246,7 +320,7 @@ export function switchReading(c: LoadedCase, prior: Prior, step: RuleStep, known
   if (target === undefined || !step.pair.some((id) => nodes.includes(id))) return undefined
   const first = step.equal?.[0].event
   const event = first !== undefined && first.split('=')[0]?.trim() === target ? first : `${target}=1`
-  const valueOf = (id: string): string => (id in setting ? formatValue(setting[id]) : (equationValue(step, id) ?? '1'))
+  const valueOf = (id: string): string => (id in setting ? formatValue(setting[id]) : knownText(step, id))
   const given = (ids: readonly string[]): string | undefined => (ids.length === 0 ? undefined : ids.map((id) => `${id}=${valueOf(id)}`).join(' and '))
   const read = (side: RuleSide): SwitchQuery => {
     try {
@@ -257,9 +331,18 @@ export function switchReading(c: LoadedCase, prior: Prior, step: RuleStep, known
     }
   }
   const off = read({ event, given: given(known) })
+  const under = (a: Assignment): SwitchQuery => {
+    const ids = Object.keys(a)
+    return read({ event, given: given(known.filter((id) => !ids.includes(id))), do: a })
+  }
+  const key = (a: Assignment): string => switches.map((id) => (id in a ? formatValue(a[id]) : '-')).join('|')
+  const settings = allSettings(c, switches).map((a) => ({ setting: a, query: under(a), current: key(a) === key(setting) }))
+  const values = settings.map((s) => s.query.value)
+  const settingsSame =
+    values.length < 2 || values.some((v) => v === undefined) ? undefined : values.every((v) => Math.abs((v ?? 0) - (values[0] ?? 0)) < SIDE_TOLERANCE)
   const set = Object.keys(setting)
-  if (set.length === 0) return { switches: nodes, off }
-  const on = read({ event, given: given(known.filter((id) => !set.includes(id))), do: setting })
+  if (set.length === 0) return { switches: nodes, off, settings, settingsSame }
+  const on = under(setting)
   const same = off.value !== undefined && on.value !== undefined ? Math.abs(off.value - on.value) < SIDE_TOLERANCE : undefined
-  return { switches: nodes, off, on, same }
+  return { switches: nodes, off, on, same, settings, settingsSame }
 }

@@ -2,6 +2,17 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.14.1
+The do-calculus view writes values inside its nodes: a variable a switch sets shows the set value (`Z` reads 0
+under 「設定 Z=0」), and each known variable shows the value it is read at, its value in the step's equation, else
+1 (rule 3's exception draws `W` as 1); the graph still draws no probabilities. The equation under the graph
+follows the switch: while it sets `Z=0`, rule 3's `P(Y=1 | W=1, do(Z=1))` reads `do(Z=0)` (in do() and in an
+observation alike, so rule 2's `P(Z=1 | X=1)` reads `X=0`), and the switch off restores the equation as
+written, so the page never shows two settings at once. The switch row lists the prediction with the switch
+off and at every setting, the current one highlighted: 「F_Z 不動：P(Y=1 | W=1) = 0.692；設定 Z=0：… = 0.5；設定
+Z=1：… = 0.5」, with 「（Z 設成哪個值，預測都一樣）」 when every setting agrees, so tutoring 0 → 1 not moving income is
+visible beside the switch moving the prediction.
+
 ## 0.14.0
 The do-calculus view's legend is a side panel beside the graph when both fit at the graph's own width (a
 lesson figure in a 1040px column keeps its full width with a 200px panel), and a list under the graph
@@ -317,7 +328,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.14.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.14.1) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -637,9 +648,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.14.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.14.1 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.14.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.14.1) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -648,7 +659,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.14.0},
+  version = {0.14.1},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

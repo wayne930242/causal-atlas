@@ -6,7 +6,7 @@ import { docToCase } from '../../data/index.ts'
 import { lessonModel } from '../../demo/lesson-models.ts'
 import type { RuleStep } from './rules-view.ts'
 import { FRONT_DOOR_STEPS } from '../../demo/front-door-steps.ts'
-import { nextSwitchValue, ruleView, switchReading } from './rules-view.ts'
+import { equationUnder, nextSwitchValue, nodeValues, ruleView, switchReading } from './rules-view.ts'
 import { ProbabilityPanel } from '../index.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 
@@ -236,6 +236,19 @@ describe('ruleView: the intervention switch F_Z (Pearl 2009, §3.2.2)', () => {
       expect(r?.on?.side).toEqual({ event: 'Z=1', given: undefined, do: { X: x } })
       expect(r?.same).toBe(true)
     }
+    // The equation follows the switch, in do() and in the observation; the switch off leaves it as written.
+    expect(equationUnder(two, { X: false })).toEqual([
+      { event: 'Z=1', do: { X: false } },
+      { event: 'Z=1', given: 'X=0' },
+    ])
+    expect(equationUnder(two, {})).toBe(two.equal)
+    expect(ruleView(ex, exPrior, EXCEPTION_STEPS[0], ['W'], { Z: false }).equation?.[0].do).toEqual({ Z: false })
+    expect(exOn?.settings.map((s) => [s.setting.Z, s.query.value?.toFixed(3), s.current])).toEqual([
+      [false, '0.500', false],
+      [true, '0.500', true],
+    ])
+    expect(exOn?.settingsSame).toBe(true)
+    expect(nodeValues(ex, EXCEPTION_STEPS[0], ['W'], { Z: false })).toEqual({ W: true, Z: false })
     // A cut-graph step tests no switch: no reading.
     expect(switchReading(ex, exPrior, EXCEPTION_STEPS[1], ['W'], {})).toBeUndefined()
   })
@@ -284,10 +297,25 @@ describe('ProbabilityPanel view="rules"', () => {
     const head = (): string => container.querySelector('.ca-dsep-head')?.textContent ?? ''
     const marks = (): (string | null)[] => [...container.querySelectorAll('.ca-rules-legend li')].map((li) => li.getAttribute('data-mark'))
     const fz = (): Element => container.querySelector('[data-node="F_Z"]') as Element
+    const value = (id: string): string | null => container.querySelector(`[data-node="${id}"]`)?.getAttribute('data-value') ?? null
+    const equation = (): string => container.querySelector('.ca-rules-equal')?.textContent ?? ''
+    const current = (): (string | null)[] => [...container.querySelectorAll('.ca-rules-switch [data-current="true"]')].map((e) => e.getAttribute('data-setting'))
     expect(row()?.getAttribute('data-switch-state')).toBe('off')
     expect(row()?.textContent).toContain('0.692')
+    // Every setting is listed with the switch off, so 0 → 1 not moving Y is visible.
+    expect([...container.querySelectorAll('.ca-rules-switch [data-setting]')].map((e) => e.getAttribute('data-setting'))).toEqual(['off', 'Z=0', 'Z=1'])
+    expect(current()).toEqual(['off'])
+    expect(container.querySelector('[data-settings-same="true"]')).not.toBeNull()
+    // The known W shows its value in the equation; Z and Y show none.
+    expect([value('W'), value('Z'), value('Y')]).toEqual(['1', '', ''])
+    expect(equation()).toContain('do(Z=1)')
     expect(fz().getAttribute('aria-label')).toContain('按一下切換開關')
     fireEvent.click(fz())
+    expect(value('Z')).toBe('0')
+    expect(current()).toEqual(['Z=0'])
+    // The equation follows the switch: never two settings at once.
+    expect(equation()).toContain('do(Z=0)')
+    expect(equation()).not.toContain('do(Z=1)')
     expect(row()?.getAttribute('data-switch-state')).toBe('on')
     expect(row()?.textContent).toContain('設定 Z=0')
     expect(row()?.getAttribute('data-switch-same')).toBe('false')
@@ -297,12 +325,16 @@ describe('ProbabilityPanel view="rules"', () => {
     expect(marks()).toEqual(['pair', 'switch', 'known', 'switchSet', 'cut', 'open', 'pick', 'pickSwitch'])
     expect(head()).toContain('已知 {W}')
     fireEvent.click(fz())
+    expect(value('Z')).toBe('1')
+    expect(current()).toEqual(['Z=1'])
+    expect(equation()).toContain('do(Z=1)')
     expect(row()?.textContent).toContain('設定 Z=1')
     expect(row()?.textContent).toContain('0.5')
     fireEvent.pointerEnter(fz(), { pointerType: 'mouse' })
     expect(container.querySelector('[data-node-tip="F_Z"]')?.textContent).toBe('要檢查的變數・干預開關。點一下回到不動')
     fireEvent.click(fz())
     expect(row()?.getAttribute('data-switch-state')).toBe('off')
+    expect(value('Z')).toBe('')
     expect(head()).toContain('已知 {W}')
     // The step button turns the switch off.
     fireEvent.click(fz())

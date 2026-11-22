@@ -11,7 +11,7 @@ import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
 import type { RuleMark, RuleStep, SwitchQuery } from './rules-view.ts'
-import { SIDE_TOLERANCE, clampSplit, nextSwitchValue, nodeRoles, presentMarks, ruleView, sideText, switchReading } from './rules-view.ts'
+import { SIDE_TOLERANCE, clampSplit, nextSwitchValue, nodeRoles, nodeValues, presentMarks, ruleView, sideText, switchReading } from './rules-view.ts'
 import { placeTip } from '../panels/menu-place.ts'
 import { useDigits } from '../shared/digits.ts'
 import { Segmented, Tag, Tip } from '../shared/parts.tsx'
@@ -70,14 +70,15 @@ function Query({ q, noData }: { readonly q: SwitchQuery; readonly noData: string
 
 /**
  * The do-calculus rules on their graphs (lesson 06): a step button per step of the derivation,
- * the step's graph with no numbers (cut arrows struck; the variables the expression sets by do()
+ * the step's graph with no probabilities (known and switch-set variables show their values inside; cut arrows struck; the variables the expression sets by do()
  * clamped, those cut only for the test with a dashed clamp; intervention switches `F_Z` as small
  * squares; the known set ringed; the pair's paths lit or dashed), a line with the d-separation
  * verdict (a switch test: 可換 or 不可換; a cut graph: the rule applies or not, never while the
  * equation's sides differ), and the step's equation on the full model. A click on a node adds it
  * to the known set or takes it out; a click on a switch `F_v` sets `v` to each value in turn and
  * then turns it off (a switch never joins the known set): the arrows into `v` are drawn cut, and a
- * row gives the prediction of the pair's other end with the switch off and on. The step button
+ * row gives the prediction of the pair's other end with the switch off and at every setting, and the
+ * equation's do() takes the set value. The step button
  * restores the step's known set and turns every switch off.
  */
 export function RulesPanel({
@@ -102,6 +103,7 @@ export function RulesPanel({
   const [setting, setSetting] = useState<Assignment>({})
   const view = useMemo(() => ruleView(c, prior, step, known, setting), [c, prior, step, known, setting])
   const reading = useMemo(() => switchReading(c, prior, step, known, setting), [c, prior, step, known, setting])
+  const values = useMemo(() => nodeValues(c, step, known, setting), [c, step, known, setting])
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
   const go = (i: number): void => {
@@ -165,6 +167,7 @@ export function RulesPanel({
       compact={narrow}
       c={view.graph}
       shown={drawn}
+      values={values}
       interventions={setting}
       removedEdges={view.removed}
       clamped={clamps.set}
@@ -268,27 +271,31 @@ export function RulesPanel({
         </div>
         {reading !== undefined && (
           <p className="ca-rules-switch" data-switch-state={reading.on === undefined ? 'off' : 'on'} data-switch-same={reading.same === undefined ? undefined : String(reading.same)}>
-            {reading.on !== undefined && (
-              <>
-                <Rich text={r.switchOn(assignmentOf(setting))} ids={ids} />
-                <Query q={reading.on} noData={r.noData} />
+            <span data-setting="off" data-current={reading.on === undefined ? 'true' : undefined} className={reading.on === undefined ? 'ca-rules-now' : undefined}>
+              <Rich text={r.switchOff(reading.switches)} ids={ids} />
+              <Query q={reading.off} noData={r.noData} />
+            </span>
+            {reading.settings.map((s) => (
+              <span key={assignmentOf(s.setting)}>
                 {r.switchJoin}
+                <span data-setting={assignmentOf(s.setting)} data-current={s.current ? 'true' : undefined} className={s.current ? 'ca-rules-now' : undefined}>
+                  <Rich text={r.switchOn(assignmentOf(s.setting))} ids={ids} />
+                  <Query q={s.query} noData={r.noData} />
+                </span>
+              </span>
+            ))}
+            {reading.on !== undefined && reading.same !== undefined && (
+              <>
+                {' → '}
+                <strong>{reading.same ? r.switchSame : r.switchDiffer}</strong>
               </>
             )}
-            <Rich text={r.switchOff(reading.switches)} ids={ids} />
-            <Query q={reading.off} noData={r.noData} />
-            {reading.on === undefined ? (
+            {reading.settingsSame === true && <span data-settings-same="true">{r.switchSettingsSame(step.switches ?? [])}</span>}
+            {reading.on === undefined && (
               <span className="ca-muted">
                 {r.switchJoin}
                 <Rich text={r.switchHint(reading.switches)} ids={ids} />
               </span>
-            ) : (
-              reading.same !== undefined && (
-                <>
-                  {' → '}
-                  <strong>{reading.same ? r.switchSame : r.switchDiffer}</strong>
-                </>
-              )
             )}
           </p>
         )}
@@ -297,11 +304,11 @@ export function RulesPanel({
             <Rich text={r.equationMoved(step.given)} ids={ids} />
           </p>
         )}
-        {step.equal !== undefined && sides !== undefined && view.equationShown && (
+        {view.equation !== undefined && sides !== undefined && view.equationShown && (
           <p className="ca-rules-equal" data-equal={equal ? 'true' : 'false'}>
             <code className="ca-mono">
               <Formula
-                text={`${sideText(step.equal[0])} = ${tableNumber(sides[0])} ${equal ? '=' : '≠'} ${sideText(step.equal[1])} = ${tableNumber(sides[1])}`}
+                text={`${sideText(view.equation[0])} = ${tableNumber(sides[0])} ${equal ? '=' : '≠'} ${sideText(view.equation[1])} = ${tableNumber(sides[1])}`}
               />
             </code>{' '}
             <span className={equal ? 'ca-adj-ok' : 'ca-adj-no'}>{equal ? '✓' : '✗'}</span>

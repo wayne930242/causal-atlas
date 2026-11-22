@@ -23,6 +23,6 @@ const fingerprint = (value: unknown): string => createHash('sha256').update(JSON
 
 describe('message tables', () => {
   it('keep their fingerprint per locale', () => {
-    expect({ zh: fingerprint(MESSAGES['zh-TW']), en: fingerprint(MESSAGES.en) }).toEqual({ zh: '1cec0ccf88f948d7', en: 'f8da2f216a5385c9' })
+    expect({ zh: fingerprint(MESSAGES['zh-TW']), en: fingerprint(MESSAGES.en) }).toEqual({ zh: 'f789a8b60213437a', en: 'bc8d8de2a9ae8196' })
   })
 })

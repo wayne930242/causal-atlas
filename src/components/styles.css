@@ -2949,11 +2949,17 @@
   font-size: 13px;
 }
 
-/* The switch row: the prediction with the switch off and, once a click set it, on. */
+/* The switch row: the prediction with the switch off and at every setting, the current one highlighted. */
 .ca-rules-switch {
   margin: 0;
   padding: 6px 0 2px;
   font-size: 13px;
+}
+
+.ca-rules-switch .ca-rules-now {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: 3px;
+  padding: 0 3px;
 }
 
 .ca-rules-steps .ca-seg-item {
