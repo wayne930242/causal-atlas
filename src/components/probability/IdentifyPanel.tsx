@@ -1,9 +1,9 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
-import type { Admg, DeriveResult, DoAtom, Hedge } from '../../engine/index.ts'
+import type { Admg, DerivationStep, DeriveResult, DoAtom, Hedge } from '../../engine/index.ts'
 import { DerivationError, admgForPrior, admgOf, derive, formatValue, identify, probExprLatex, probExprText, problemOf } from '../../engine/index.ts'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
-import type { Locale } from '../i18n/messages.ts'
+import type { Locale, Messages } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
 import { useCaseOrDoc } from '../model/doc-case.ts'
 import { idWithName, shortLabel } from '../model/wording.ts'
@@ -34,6 +34,10 @@ function IdentifyFromSource({ caseId, doc, query }: ProbabilitySource & { readon
 
 function IdentifyFor({ c, query }: { readonly c: LoadedCase; readonly query?: IdentifyQuery }) {
   const base = useMemo(() => c.prior?.kind === 'joint' ? admgForPrior(c.model, c.prior) : admgOf(c.model), [c])
+  const t = useMessages()
+  if (query === undefined && base.nodes.length < 2) {
+    return <p className="ca-root not-prose ca-panel ca-id-limit" lang={t.locale} role="status">{t.identify.needsVariables}</p>
+  }
   const initial = query ?? { x: base.nodes[0], y: base.nodes[1] }
   return <Experiment key={JSON.stringify([c.data.id, base.nodes, initial.x, initial.y, initial.w])} c={c} base={base} initial={initial} />
 }
@@ -192,6 +196,39 @@ function HedgeResult({ hedge }: { readonly hedge: Hedge }) {
   </>
 }
 
+function stepDescription(steps: readonly DerivationStep[], i: number, m: Messages['identify']['steps']): string {
+  const step = steps[i]
+  if (step.kind === 'expand') return step.right.kind === 'sum' ? m.sum(step.right.over.join(', ')) : m.expand
+  if (step.kind === 'substitute') {
+    const source = steps.slice(0, i).findLastIndex((earlier) => earlier.right === step.right)
+    return source < 0 ? m.substitute : m.substituteStep(source + 1)
+  }
+  if (step.kind !== 'rule') return m[step.kind]
+
+  // Use the same graph IDs as the graph and the mockup, and distinguish fixed do() context
+  // from observations using the actual two sides, not the graph's combined known set.
+  const { left, right, test } = step
+  const moved = test.moved.join(', ')
+  const head = test.head.join(', ')
+  const leftDo = left.do ?? []
+  const rightDo = right.do ?? []
+  const fixed = leftDo.filter((id) => rightDo.includes(id)).join(', ')
+  const given = left.given.filter((id) => right.given.includes(id)).join(', ')
+  const context = [fixed && `do(${fixed})`, given].filter(Boolean).join(', ')
+  const removesAction = test.moved.some((id) => leftDo.includes(id))
+  if (step.rule === 1) {
+    return m.context(left.given.some((id) => test.moved.includes(id)) ? m.removeObservation(moved) : m.addObservation(moved), head, context)
+  }
+  if (step.rule === 2) {
+    const action = removesAction ? m.toObservation(moved) : m.toIntervention(moved)
+    return fixed === '' && given !== '' ? m.given(given, action) : m.context(action, head, context)
+  }
+  if (!removesAction) return m.context(m.addIntervention(moved), head, context)
+  if (fixed !== '' && given === '') return m.keepIntervention(fixed, moved)
+  if (context === '') return m.removeIrrelevantIntervention(moved, head)
+  return m.context(m.removeIntervention(moved), head, context)
+}
+
 function Derivation({ c, graph, g, query: { x, y, w }, edited }: { readonly c: LoadedCase; readonly graph: LoadedCase; readonly g: Admg; readonly query: IdentifyQuery; readonly edited: boolean }) {
   const t = useMessages()
   const [selected, select] = useState<number>()
@@ -204,8 +241,8 @@ function Derivation({ c, graph, g, query: { x, y, w }, edited }: { readonly c: L
       if (error instanceof DerivationError || problemOf(error)?.code === 'identify-budget') return undefined
       throw error
     }
-    return d.identifiable ? { steps: derivationSteps(d.steps), matches: d.matches } : undefined
-  }, [g, x, y, w])
+    return d.identifiable ? { steps: derivationSteps(d.steps), descriptions: d.steps.map((_, i) => stepDescription(d.steps, i, t.identify.steps)), matches: d.matches } : undefined
+  }, [g, x, y, w, t.identify.steps])
   const options = { names: g.nodes }
   return <section className="ca-id-derivation" aria-labelledby={`${uid}-heading`}>
     <h4 id={`${uid}-heading`}>{t.identify.derivation}</h4>
@@ -216,8 +253,9 @@ function Derivation({ c, graph, g, query: { x, y, w }, edited }: { readonly c: L
           <button type="button" aria-expanded={selected === i} className="ca-id-step" onClick={() => select(selected === i ? undefined : i)}>
             <span className="ca-id-muted">{step.label}</span>
             <span className="ca-id-step-kind">{isCalculus(step) ? t.rules.calculusTag : t.rules.rule(step.rule)}</span>
-            <code>{step.symbolic?.map((term) => probExprText(term, options)).join(' = ')}</code>
+            <span className="ca-id-step-summary">{origin.descriptions[i]}</span>
             <span aria-hidden="true" className="ca-id-step-open">{selected === i ? '↑' : '↗'}</span>
+            <code className="ca-id-muted">{step.symbolic?.map((term) => probExprText(term, options)).join(' = ')}</code>
           </button>
         </li>)}
       </ol>}

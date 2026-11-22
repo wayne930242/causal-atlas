@@ -28,6 +28,39 @@ describe('identification experiment', () => {
     expect(rules?.querySelector('[data-node] [role="button"], [data-node][role="button"]')).toBeNull()
   })
 
+  it('describes front-door transformations above their equations', () => {
+    const { container } = render(<IdentifyPanel c={front} query={query} locale="zh-TW" />)
+    const rows = [...container.querySelectorAll('.ca-id-step')]
+    for (const [i, sentence] of [
+      [0, '對 Z 加總展開'],
+      [2, '以觀察 X 代替干預 X（對 Z）'],
+      [3, '以干預 Z 代替觀察 Z（給定 do(X)）'],
+      [4, '保留干預 Z，移除干預 X'],
+      [7, '移除不影響 X 的干預 Z'],
+      [8, '給定 X，以觀察 Z 代替干預 Z'],
+    ] as const) {
+      const row = rows[i]
+      expect(row.textContent).toContain(sentence)
+      expect(row.querySelector('code')?.textContent).toContain(' = ')
+    }
+  })
+
+  it('requires two endogenous variables when there is no explicit query', () => {
+    const doc = modelDocSchema.parse({
+      format: 'causal-atlas/model', version: 1, title: 'One outcome',
+      model: {
+        variables: [
+          { id: 'U', label: { 'zh-TW': 'U' }, domain: 'boolean', kind: 'exogenous' },
+          { id: 'X', label: { 'zh-TW': 'X' }, domain: 'boolean', kind: 'endogenous' },
+        ],
+        equations: { X: 'U' },
+      },
+      context: { U: true },
+    })
+    render(<IdentifyPanel doc={doc} locale="en" />)
+    expect(screen.getByRole('status').textContent).toBe('Identification needs at least two endogenous variables.')
+  })
+
   it('highlights precisely the bow hedge nodes and edges', () => {
     const { container } = render(<IdentifyPanel c={bow} query={query} locale="en" />)
     expect(container.querySelector('[data-identification="hedge"]')).not.toBeNull()
