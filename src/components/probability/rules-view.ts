@@ -3,6 +3,7 @@ import type { DSeparationResult, Edge, Interventions, Prior } from '../../engine
 import { dSeparation, getVariable, probability } from '../../engine/index.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import { doText } from '../model/wording.ts'
+import { latentArcs } from '../graph/graph-layout.ts'
 
 /** Pure helpers for the probability panel's do-calculus view (lesson 06). */
 
@@ -57,6 +58,48 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: rea
   const value = (s: RuleSide): number => probability(c.model, prior, s).value
   const sides = step.equal === undefined ? undefined : ([value(step.equal[0]), value(step.equal[1])] as const)
   return { result, removed, marks: { open, blocked, ends: [x, y], paths: result.paths }, sides }
+}
+
+/** A mark the cut graph can draw, in the legend's order. */
+export type RuleMark = 'pair' | 'known' | 'clamp' | 'cut' | 'open' | 'blocked'
+
+/** What a node is in a step: one of the pair, known, set by do() (arrows into it cut), its arrows out cut. */
+export type RuleRole = 'pair' | 'known' | 'set' | 'cutOut'
+
+/** The roles of `id` at `step` with `known` as the known set, in a fixed order; empty when it has none. */
+export function nodeRoles(step: RuleStep, known: readonly string[], id: string): readonly RuleRole[] {
+  const roles: RuleRole[] = []
+  if (step.pair.includes(id)) roles.push('pair')
+  if (known.includes(id)) roles.push('known')
+  if ((step.cutIn ?? []).includes(id)) roles.push('set')
+  if ((step.cutOut ?? []).includes(id)) roles.push('cutOut')
+  return roles
+}
+
+/** The marks drawn on the graph of `shown` nodes: only those present, so the legend names nothing that is not there. */
+export function presentMarks(c: LoadedCase, step: RuleStep, view: RuleView, known: readonly string[], shown: readonly string[]): readonly RuleMark[] {
+  const drawn = (id: string): boolean => shown.includes(id)
+  const { open, blocked } = view.marks
+  const onPath = (k: string): boolean => open.has(k) || blocked.has(k)
+  const cut = new Set(view.removed.map((e) => `${e.from}>${e.to}`))
+  const cutIn = step.cutIn ?? []
+  // A latent cause's arc is drawn unless an end is cut, and is marked when both its arrows are on a path.
+  const arcs = latentArcs(c, shown)
+    .filter((a) => [a.a, a.b].every((id) => !cut.has(`${a.via}>${id}`) && !cutIn.includes(id)))
+    .map((a) => [`${a.via}>${a.a}`, `${a.via}>${a.b}`])
+  const edgeKeys = (set: ReadonlySet<string>): boolean =>
+    [...set].some((k) => {
+      const [from = '', to = ''] = k.split('>')
+      return drawn(from) && drawn(to)
+    })
+  const marks: RuleMark[] = []
+  if (step.pair.some(drawn)) marks.push('pair')
+  if (known.some(drawn)) marks.push('known')
+  if (cutIn.some(drawn)) marks.push('clamp')
+  if (view.removed.some((e) => drawn(e.from) && drawn(e.to))) marks.push('cut')
+  if (edgeKeys(open) || arcs.some((ks) => ks.every((k) => open.has(k)))) marks.push('open')
+  if (edgeKeys(blocked) || arcs.some((ks) => ks.every(onPath) && !ks.every((k) => open.has(k)))) marks.push('blocked')
+  return marks
 }
 
 /** `P(Y=1 | Z=1, do(X=1))`: the observation first, then the do(). */

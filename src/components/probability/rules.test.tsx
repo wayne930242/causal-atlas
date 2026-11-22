@@ -65,6 +65,27 @@ describe('ProbabilityPanel view="rules"', () => {
     expect(sides()).toContain('✗')
   })
 
+  it('the legend names only the marks the step draws; a hovered node says its roles', () => {
+    const { container, getByRole } = render(<ProbabilityPanel doc={doc} view="rules" rules={FRONT_DOOR_STEPS} />)
+    const marks = (): (string | null)[] => [...container.querySelectorAll('.ca-rules-legend li')].map((li) => li.getAttribute('data-mark'))
+    // Step 2: nothing known, arrows out of X cut, no clamp.
+    expect(marks()).toEqual(['pair', 'cut', 'blocked', 'pick'])
+    expect(container.querySelector('[data-path="blocked"]')).not.toBeNull()
+    expect(container.querySelector('.ca-rules-legend')?.textContent).toContain('點節點把它加進或移出已知集合')
+    fireEvent.click(getByRole('button', { name: '3' }))
+    expect(marks()).toEqual(['pair', 'known', 'clamp', 'cut', 'pick'])
+    expect(container.querySelector('[data-path]')).toBeNull()
+    const x = container.querySelector('[data-node="X"]') as Element
+    expect(x.getAttribute('aria-label')).toContain('已知・已設定')
+    fireEvent.pointerEnter(x, { pointerType: 'mouse' })
+    expect(container.querySelector('[data-node-tip="X"]')?.textContent).toBe('已知・已設定。點一下移出已知集合')
+    const z = container.querySelector('[data-node="Z"]') as Element
+    fireEvent.pointerEnter(z, { pointerType: 'mouse' })
+    expect(container.querySelector('[data-node-tip="Z"]')?.textContent).toBe('要檢查的變數・出去的箭頭剪掉。點一下加進已知集合')
+    fireEvent.pointerLeave(z, { pointerType: 'mouse' })
+    expect(container.querySelector('.ca-node-tip')).toBeNull()
+  })
+
   it('fails fast without rules', () => {
     expect(() => renderToString(<ProbabilityPanel doc={doc} view="rules" />)).toThrow(/rules/)
   })

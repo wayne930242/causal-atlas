@@ -2,6 +2,15 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.12.0
+The do-calculus view (`view="rules"`) gains a legend under the cut graph that names only the marks the step
+draws, each beside a small swatch drawn like it: the outer ring (the pair checked for separation), the double
+ring (known), the corner clamp (arrows into it cut, set by do), the dashed arrow with 「切斷」 (a cut arrow), and,
+when a path is marked, lit arrows (an open path) and faint dashes (a blocked path); it ends by saying a click on
+a node adds it to the known set or takes it out. Hovering or focusing a node shows its roles in the step and what
+a click does (「要檢查的變數・已設定。點一下加進已知集合」, en "Checked pair · set by do. Click to add it to the
+known set."); the node's aria label reads the same roles. The exported image is unchanged (no legend).
+
 ## 0.11.0
 A fourth notation in the 式子 tab, 分段式 (en "Cases", `defaultNotation="cases"`), reads each equation as
 if-then rows, the way the model language writes it: `if X then (if U then A11 else A10) else A0` becomes
@@ -277,7 +286,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.11.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.12.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -593,9 +602,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.11.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.12.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.11.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.12.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -604,7 +613,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.11.0},
+  version = {0.12.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

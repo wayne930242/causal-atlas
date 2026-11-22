@@ -59,6 +59,8 @@ export interface SignalGraphProps {
   readonly paths?: PathMarks
   /** Nodes drawn with the do() clamp but no value tag: the arrows into them are cut in a graph without numbers (do-calculus). */
   readonly clamped?: readonly string[]
+  /** Words read after a node's state in its label, e.g. its roles in a do-calculus step; not drawn. */
+  readonly nodeNotes?: Readonly<Record<string, string>>
   /** A click (or Enter) on a node picks it, e.g. into or out of a known set; no observing or do(). */
   readonly onPick?: (id: string) => void
   /** A click (or Enter, Space) on a node opens its menu (observe, intervene), drawn by the caller. */
@@ -111,6 +113,7 @@ export function SignalGraph(props: SignalGraphProps) {
     defaults,
     paths,
     clamped = [],
+    nodeNotes = {},
     onPick,
     onOpen,
     observable = false,
@@ -298,7 +301,10 @@ export function SignalGraph(props: SignalGraphProps) {
     const readout = nodeReadout(t, digits, pv, forced, evidence ? undefined : observedValues[id])
     const forcedText = forced !== undefined ? (tagText?.[id] ?? formatValue(forced)) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : undefined
     const seen = observedValues[id]
-    const aria = t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen))
+    const aria = t.withHint(
+      t.nodeAria(who, state, forcedText, changed ? formatValue(before) : undefined, seen === undefined ? undefined : formatValue(seen)),
+      nodeNotes[id] ?? '',
+    )
     // An exogenous node is the context: it can be observed, never set by do().
     const opens = onPick === undefined && onOpen !== undefined && (variable.kind === 'endogenous' || observable)
     const interactive = opens || onMove !== undefined || onPick !== undefined
