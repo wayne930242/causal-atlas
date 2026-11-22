@@ -3,10 +3,32 @@ import type { Admg, Expr, IdentificationRow, Value, Variable } from '../../engin
 import { buildModel, checkIdentification, getVariable, problemOf, valuesEqual } from '../../engine/index.ts'
 import { targetValue } from '../model/probability-view.ts'
 
+/** A treatment and condition may each be one variable ID or a set of them: `{ x: ['X', 'Z'], y: 'Y' }`. */
 export interface IdentifyQuery {
-  readonly x: string
+  readonly x: string | readonly string[]
   readonly y: string
-  readonly w?: string
+  readonly w?: string | readonly string[]
+}
+
+/** The panel's working query: treatment and condition as ID lists (x non-empty, w possibly empty). */
+export interface QuerySets {
+  readonly x: readonly string[]
+  readonly y: string
+  readonly w: readonly string[]
+}
+
+function asList(ids: string | readonly string[] | undefined): readonly string[] {
+  return ids === undefined ? [] : typeof ids === 'string' ? [ids] : [...new Set(ids)]
+}
+
+export function querySets({ x, y, w }: IdentifyQuery): QuerySets {
+  return { x: asList(x), y, w: asList(w) }
+}
+
+/** Toggle one ID in a set, keeping the graph's node order so formulas read the same however they were picked. */
+export function toggleMember(ids: readonly string[], id: string, order: readonly string[]): readonly string[] {
+  const next = ids.includes(id) ? ids.filter((v) => v !== id) : [...ids, id]
+  return [...next].sort((a, b) => order.indexOf(a) - order.indexOf(b))
 }
 
 type EdgeKind = 'directed' | 'bidirected'
@@ -73,13 +95,13 @@ export function graphCase(c: LoadedCase, g: Admg, edited: boolean): LoadedCase {
 }
 
 /** Use the same readout convention as the other panels: 1 for Booleans, first value for finite domains. */
-export function modelComparison(c: LoadedCase, edited: boolean, { x, y, w }: IdentifyQuery): IdentificationRow | 'editedNoModel' | 'noModel' | 'noValues' | 'checkBudget' {
+export function modelComparison(c: LoadedCase, edited: boolean, { x, y, w }: QuerySets): IdentificationRow | 'editedNoModel' | 'noModel' | 'noValues' | 'checkBudget' {
   if (edited) return 'editedNoModel'
   if (c.prior === undefined) return 'noModel'
-  const ids = [x, y, ...(w === undefined ? [] : [w])]
+  const ids = [...x, y, ...w]
   const at = ids.map((id) => [id, targetValue(getVariable(c.model, id))] as const)
   try {
-    const check = checkIdentification(c.model, c.prior, { x: [x], y: [y], w: w === undefined ? [] : [w] })
+    const check = checkIdentification(c.model, c.prior, { x, y: [y], w })
     return check.rows.find((row) => at.every(([id, v]) => valuesEqual(row.at[id] as Value, v))) ?? 'noValues'
   } catch (error) {
     if (problemOf(error)?.code === 'identify-budget') return 'checkBudget'

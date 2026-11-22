@@ -2,6 +2,10 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.20.0
+`IdentifyPanel`'s `query.x` and `query.w` take one ID or a set: `<IdentifyPanel c={loadedCase} query={{ x: ['X', 'Z'], y: 'Y' }} />` asks for the controlled direct effect `P(y | do(x, z))`.
+The verdict, formula, formula-beside-do() check (at value 1 or the first domain value of every treatment) and derivation all read the set; 「干預 X」 and 「條件 W」 are checkbox sets (X never empty, X, Y and W kept disjoint), and choosing as Y a variable in X swaps the old Y into X.
+
 ## 0.19.0
 `IdentifyPanel` (`<IdentifyPanel c={loadedCase} query={{ x: 'X', y: 'Y', w? }} />`, also `doc` or `caseId`) is an identification experiment a lesson embeds: the case's graph, a verdict for `P(y | do(x), w)`, the formula over observed variables, and the formula's value beside the do() value on the case's model.
 The derivation lists each step in words (「規則二 以觀察 X 代替干預 X（對 Z）」) with its equation below; a step opens in the do-calculus view, where a generated step's observe and do menus are read-only, and a check that compared no assignment reads unavailable rather than equal.
@@ -362,7 +366,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.19.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.20.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -577,8 +581,8 @@ import 'causal-atlas/style.css'
 ```
 
 Pass a `LoadedCase` as `c`, a model document as `doc`, or a bundled `caseId`.
-`query` chooses the initial intervention `x`, outcome `y`, and optional observed condition `w` by variable ID.
-The three IDs must be distinct endogenous variables; without `query`, the first two endogenous variables are used as `x` and `y`.
+`query` chooses the initial intervention `x`, outcome `y`, and optional observed condition `w` by variable ID; `x` and `w` take one ID or an array (`{ x: ['X', 'Z'], y: 'Y' }` for `P(y | do(x, z))`).
+The IDs must be distinct endogenous variables; without `query`, the first two endogenous variables are used as `x` and `y`.
 `locale` defaults to the surrounding `LocaleProvider`, or `zh-TW`.
 
 The panel shows an observational formula and its derivation, or the hedge that prevents identification.
@@ -702,9 +706,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.19.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.20.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.19.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.20.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -713,7 +717,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.19.0},
+  version = {0.20.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

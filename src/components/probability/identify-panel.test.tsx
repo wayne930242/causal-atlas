@@ -7,6 +7,8 @@ import { IdentifyPanel } from '../index.ts'
 
 const front = docToCase(lessonModel('m05-frontdoor'))
 const bow = docToCase(lessonModel('m06-bow-a'))
+const department = docToCase(lessonModel('m08-sex-department'))
+const departmentClean = docToCase(lessonModel('m08-sex-department-clean'))
 const query = { x: 'X', y: 'Y' }
 afterEach(cleanup)
 
@@ -107,14 +109,48 @@ describe('identification experiment', () => {
 
   it('changes the query with disjoint selectors and prevents cyclic directed additions', () => {
     const { container } = render(<IdentifyPanel c={front} query={query} locale="en" />)
-    const condition = screen.getByLabelText('Condition W (optional)')
-    expect(within(condition).getAllByRole('option').map((o) => o.getAttribute('value'))).toEqual(['', 'Z'])
-    fireEvent.change(condition, { target: { value: 'Z' } })
+    const condition = screen.getByRole('group', { name: 'Condition W (optional)' })
+    expect(within(condition).getAllByRole('checkbox').map((o) => o.getAttribute('value'))).toEqual(['Z'])
+    fireEvent.click(within(condition).getByRole('checkbox'))
     expect(container.querySelector('[data-query]')?.getAttribute('data-query')).toBe('P(y|do(x),z)')
     editGraph()
     fireEvent.change(screen.getByLabelText('From'), { target: { value: 'Y' } })
     fireEvent.change(screen.getByLabelText('To'), { target: { value: 'X' } })
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Add Y → X' }).disabled).toBe(true)
     expect(screen.getByText(/directed cycle/)).toBeDefined()
+  })
+
+  it('takes a set of treatments: the controlled direct effect P(y | do(x, z)) fails with ability confounding Z and Y', () => {
+    const { container } = render(<IdentifyPanel c={department} query={{ x: ['X', 'Z'], y: 'Y' }} locale="en" />)
+    expect(container.querySelector('[data-query]')?.getAttribute('data-query')).toBe('P(y|do(x,z))')
+    expect(container.querySelector('[data-identification="hedge"]')).not.toBeNull()
+    expect(container.querySelector('[data-hedge="f"][data-member="Y"]')).not.toBeNull()
+  })
+
+  it('identifies the controlled direct effect without the confounding arc and checks it against do()', () => {
+    const { container } = render(<IdentifyPanel c={departmentClean} query={{ x: ['X', 'Z'], y: 'Y' }} locale="en" />)
+    expect(container.querySelector('[data-identification="identified"]')).not.toBeNull()
+    expect(container.querySelector('[data-observational-formula]')?.textContent).toMatch(/=\s*P\(y∣x,z\)/)
+    expect(screen.getByText(/X=1, Z=1, Y=1/)).toBeDefined()
+    expect(container.querySelector('.ca-id-check .ca-adj-ok')).not.toBeNull()
+    expect(container.querySelector('.ca-id-derivation .ca-id-steps')).not.toBeNull()
+  })
+
+  it('edits a treatment set with checkboxes, never leaves it empty, and keeps the condition disjoint', () => {
+    const { container } = render(<IdentifyPanel c={departmentClean} query={{ x: 'X', y: 'Y', w: ['Z'] }} locale="en" />)
+    expect(container.querySelector('[data-query]')?.getAttribute('data-query')).toBe('P(y|do(x),z)')
+    const treatment = screen.getByRole('group', { name: 'Intervention X' })
+    const condition = screen.getByRole('group', { name: 'Condition W (optional)' })
+    expect(within(treatment).getAllByRole('checkbox').map((o) => o.getAttribute('value'))).toEqual(['X'])
+    expect(within(treatment).getByRole<HTMLInputElement>('checkbox').disabled).toBe(true)
+    fireEvent.click(within(condition).getByRole('checkbox', { checked: true }))
+    fireEvent.click(within(treatment).getByRole('checkbox', { name: /^Z/ }))
+    expect(container.querySelector('[data-query]')?.getAttribute('data-query')).toBe('P(y|do(x,z))')
+    expect(within(condition).queryAllByRole('checkbox')).toHaveLength(0)
+    fireEvent.change(screen.getByLabelText('Outcome Y'), { target: { value: 'Z' } })
+    expect(container.querySelector('[data-query]')?.getAttribute('data-query')).toBe('P(z|do(x,y))')
+    fireEvent.click(within(treatment).getByRole('checkbox', { name: /^X/ }))
+    expect(container.querySelector('[data-query]')?.getAttribute('data-query')).toBe('P(z|do(y))')
+    expect(within(treatment).getByRole<HTMLInputElement>('checkbox', { checked: true }).disabled).toBe(true)
   })
 })
