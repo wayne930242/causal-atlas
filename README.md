@@ -2,6 +2,12 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.16.0
+On a switch graph of the do-calculus view (`view="rules"`, a step whose `pair` names a switch `F_Z`), the pair's other end (`Y` in rule 2, `X` in rule 3) shows its current `P(=1)` under its node, so setting the switch to 0 or 1 moves the number on the graph.
+The line under the graph compares only the current setting: setting `Z=v` against not setting it, with `Z` seen at the same `v` when it is known (rule 2) and unknown otherwise (rule 3), e.g. 「設定 Z=0：P(Y=1)=0.29 ／ 看到 Z=0：0.29 → 相同」; with the switch off it gives the current prediction alone.
+That line replaces the switch row and the equation row on a switch graph, and the verdict 「可換」 is checked against it at every value of `Z`.
+The paths under the verdict fold into 「路徑（n 條）」, closed by default, and the instructions for the switch move to the legend.
+
 ## 0.15.0
 The do-calculus view (`view="rules"`) uses the probability view's node menu, with observation and intervention buttons but no probability controls.
 An intervened variable is known at its set value; releasing it restores the incoming arrows unless the lesson cut them for the test, and makes the variable unknown again.
@@ -336,7 +342,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.15.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.16.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -655,9 +661,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.15.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.16.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.15.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.16.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -666,7 +672,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.15.0},
+  version = {0.16.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
