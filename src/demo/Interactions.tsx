@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { CausalPlayground, ModelEditor, ProbabilityPanel } from '../components/index.ts'
 import { FRONT_DOOR_STEPS } from './front-door-steps.ts'
+import { RULE_ONE_STEPS } from './rule-one-steps.ts'
 import { lessonModel } from './lesson-models.ts'
 import { SWITCH_RULE_THREE_EXCEPTION, SWITCH_RULE_TWO } from './switch-steps.ts'
 
@@ -34,6 +35,7 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
     />
   ),
   'cut-graphs': () => <ProbabilityPanel doc={{ ...lessonModel('m05-frontdoor'), latent_as_arcs: ['U'] }} view="rules" rules={FRONT_DOOR_STEPS} />,
+  'rule-one': () => <ProbabilityPanel doc={lessonModel('m06-rule1')} view="rules" rules={RULE_ONE_STEPS} />,
   'switch-graphs': () => (
     <>
       <ProbabilityPanel doc={{ ...lessonModel('m05-frontdoor'), latent_as_arcs: ['U'] }} view="rules" rules={SWITCH_RULE_TWO} />

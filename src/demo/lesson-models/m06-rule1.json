@@ -1,0 +1,135 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "規則一：已知病情又設定服藥後，醫師建議不再透露康復",
+  "model": {
+    "variables": [
+      {
+        "id": "W",
+        "label": {
+          "zh-TW": "病情嚴重",
+          "en": "Severe illness"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z1",
+        "label": {
+          "zh-TW": "病重時建議服藥",
+          "en": "Recommended when severe"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z0",
+        "label": {
+          "zh-TW": "病輕時建議服藥",
+          "en": "Recommended when mild"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X1",
+        "label": {
+          "zh-TW": "有建議時服藥",
+          "en": "Takes the drug when recommended"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_X0",
+        "label": {
+          "zh-TW": "沒建議時服藥",
+          "en": "Takes the drug when not recommended"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y11",
+        "label": {
+          "zh-TW": "服藥且病重時康復",
+          "en": "Recovers on the drug when severe"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y10",
+        "label": {
+          "zh-TW": "服藥且病輕時康復",
+          "en": "Recovers on the drug when mild"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y01",
+        "label": {
+          "zh-TW": "沒服藥且病重時康復",
+          "en": "Recovers without the drug when severe"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y00",
+        "label": {
+          "zh-TW": "沒服藥且病輕時康復",
+          "en": "Recovers without the drug when mild"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": {
+          "zh-TW": "醫師建議",
+          "en": "Recommended"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "X",
+        "label": {
+          "zh-TW": "服藥",
+          "en": "Takes the drug"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": {
+          "zh-TW": "康復",
+          "en": "Recovers"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "Z": "if W then N_Z1 else N_Z0",
+      "X": "if Z then N_X1 else N_X0",
+      "Y": "if X then (if W then N_Y11 else N_Y10) else (if W then N_Y01 else N_Y00)"
+    }
+  },
+  "priors": {
+    "independent": {
+      "W": 0.4,
+      "N_Z1": 0.8,
+      "N_Z0": 0.3,
+      "N_X1": 0.8,
+      "N_X0": 0.2,
+      "N_Y11": 0.5,
+      "N_Y10": 0.8,
+      "N_Y01": 0.2,
+      "N_Y00": 0.6
+    }
+  }
+}

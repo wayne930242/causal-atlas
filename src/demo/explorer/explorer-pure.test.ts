@@ -27,7 +27,7 @@ describe('registry', () => {
   it('covers every Interactions item', () => {
     const src = readFileSync(new URL('../Interactions.tsx', import.meta.url), 'utf8')
     const items = [...src.matchAll(/^ {2}'?([a-z-]+)'?: \(\) =>/gm)].map((m) => m[1])
-    expect(items.length).toBe(18)
+    expect(items.length).toBe(19)
     for (const item of items) expect(STORIES.some((s) => s.item === item), item).toBe(true)
   })
   it('has unique story ids', () => {

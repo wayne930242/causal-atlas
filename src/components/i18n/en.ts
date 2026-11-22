@@ -149,7 +149,7 @@ export const EN: Messages = {
     `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${seen === undefined ? '' : `, observed as ${seen}`}${before === undefined ? '' : `, was ${before}`}`,
   nodeHint: (toggle, movable) =>
     [
-      toggle === undefined ? '' : toggle === 'pick' ? 'click to add it to the known set or take it out' : toggle === 'switch' ? 'click to turn the switch: off, then each value in turn' : toggle === 'do' ? 'click to open a menu to intervene' : toggle === 'observe' ? 'click to open a menu to observe it' : 'click to open a menu to observe or intervene',
+      toggle === undefined ? '' : toggle === 'pick' ? 'click to add it to the known set or take it out' : toggle === 'switch' ? 'click to open the menu for the variable this switch controls' : toggle === 'do' ? 'click to open a menu to intervene' : toggle === 'observe' ? 'click to open a menu to observe it' : 'click to open a menu to observe or intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
@@ -281,8 +281,11 @@ export const EN: Messages = {
     notApplies: (rule) => `: ${rule} does not apply`,
     swap: ': the two sides can be swapped',
     noSwap: ': the two sides cannot be swapped',
-    equationMoved: (given) =>
-      `The known set has changed; this step's equation is written for its own known set${given.length === 0 ? ' (none)' : ` {${given.join(', ')}}`}. The step button restores it.`,
+    pairLocked: 'The variables being tested for separation cannot be observed or intervened on.',
+    observeLocked: 'An intervened variable is known: its value is in the equation. Release the intervention to change the observation.',
+    switchIntervention: (id) => `Intervene (switch ${id})`,
+    menuKnown: (assignment) => `Double ring: ${assignment} is known`,
+    menuSwitchSet: (id, action) => `Red clamp: switch ${id} sets ${action}`,
     mismatch: ', but the two sides of the equation differ: this graph does not license the swap',
     switchTag: (switches, vars) => `${switches.length === 1 ? 'Switch' : 'Switches'} ${and(switches)} added; arrows into ${and(vars)} kept`,
     graphTitle: (title, rule) => `${title}: the cut graph of ${rule}`,
@@ -298,8 +301,8 @@ export const EN: Messages = {
       open: 'Lit arrows: an open path',
       blocked: 'Faint dashes: a blocked path',
       switchSet: 'Clamp with a tag: the value a switch sets, arrows into it cut',
-      pick: 'Click a node to add it to the known set or take it out.',
-      pickSwitch: 'Click a switch: off → set to 0 → set to 1 → off.',
+      menu: 'Click a node to open its menu and observe or intervene on it.',
+      switchMenu: (id, variable) => `Click ${id} to open the menu for ${variable}.`,
     },
     role: {
       pair: 'checked pair',
@@ -312,19 +315,18 @@ export const EN: Messages = {
       none: 'no mark',
     },
     roles: (list) => list.join(' · '),
-    nodeTip: (roles, known) => `${roles.replace(/^./, (ch) => ch.toUpperCase())}. Click to ${known ? 'take it out of' : 'add it to'} the known set.`,
-    switchNodeTip: (roles, next) => `${roles.replace(/^./, (ch) => ch.toUpperCase())}. Click to ${next === undefined ? 'turn it off' : `set ${next}`}.`,
+    nodeTip: (roles) => `${roles.replace(/^./, (ch) => ch.toUpperCase())}. Click to open the menu.`,
     switchOff: (switches) => `${and(switches)} off: `,
     switchOn: (assignment) => `set ${assignment}: `,
     switchJoin: '; ',
     switchSame: 'the switch does not change the prediction',
     switchDiffer: 'the switch changes the prediction',
-    switchHint: (switches) => `Click ${and(switches)} to set the variable it switches and see whether the prediction moves`,
+    switchHint: (switches) => `Click ${and(switches)} to open its menu and use the intervention row to see whether the prediction changes`,
     switchSettingsSame: (vars) => ` (every value of ${and(vars)} gives the same prediction)`,
     noData: '— (the evidence has probability 0)',
-    tip: 'The cut graph is the one the lesson names: cut arrows are struck, and each variable whose arrows into it are cut is clamped; once arrows are cut it is no longer the model, so no probabilities are drawn. Click a node to add it to the known set or take it out; its value in the equation is written inside it (1 when the equation gives none); a step button restores that step\'s known set. Both sides of the equation are computed on the full model. Rule 3 cuts the arrows into Z(W), which the lesson also names.',
+    tip: 'Click a node to open its menu. Observing or intervening makes the variable known and shows its value inside the node. Intervening also cuts the arrows into it. Releasing it restores those arrows but keeps any cuts the lesson specifies for the test. The step button resets your changes. The graph shows no probabilities; both sides of the equation are computed on the full model. Rule 3 cuts the arrows into Z(W), which the lesson specifies.',
     switchTip:
-      'The switch graph is the expression\'s graph after its interventions: only the arrows into the variables both sides set by do are cut; then Z gets a switch F_Z with one arrow F_Z → Z, and no arrow into Z is cut. Given the variables both sides observe, the sides can be swapped when F_Z and Y are d-separated, and not when a path is open. Rule 2 also gives Z; rule 3 does not. No probabilities are drawn; click a node to add it to the known set or take it out. A known variable shows its value in the equation inside its node. Click the switch F_Z to set Z to each value in turn: Z shows the set value, and the equation\'s do() takes it; the row under the graph gives the prediction with the switch off and at each setting, on the full model, the current one highlighted, to compare with the verdict. A switch cannot join the known set. Both sides of the equation are computed on the full model.',
+      'The switch graph adds the arrow F_Z → Z. If F_Z and Y are d-separated the sides can be swapped; if a path is open they cannot. Rule 2 starts with Z observed; rule 3 does not. Click F_Z or Z to open the menu for Z. The intervention row sets the switch, updating the value inside Z and the do() in the equation. The switch setting changes neither the known set nor the separation test. To make Z known, use the observation row. Below the graph, the predictions with the switch off and at each setting highlight the current one. Those predictions and the equation are computed on the full model.',
   },
   normality: {
     kicker: 'Deviations',

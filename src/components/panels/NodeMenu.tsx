@@ -32,10 +32,12 @@ export interface NodeMenuProps {
   /** Under the actions: the node's own probability sliders. */
   readonly extra?: ReactNode
   readonly help?: string
+  /** Rules use the same controls, but treat ordinary do()s as known and lock the checked pair. */
+  readonly rule?: { readonly checked: boolean; readonly switchId?: string }
   readonly onObserve: (value: Value | undefined) => void
   readonly onDo: (value: Value | undefined) => void
   /** Probability mode, boolean node: P*(X=1), 0 and 1 meaning do(X=0) and do(X=1). */
-  readonly onDoProbability: (p: number | undefined) => void
+  readonly onDoProbability?: (p: number | undefined) => void
   readonly onClose: () => void
   readonly style: CSSProperties
   readonly menuRef: RefObject<HTMLDivElement | null>
@@ -59,6 +61,13 @@ export function NodeMenu(props: NodeMenuProps) {
   const soft = stochastic[id]
   const intervened = forced !== undefined || soft !== undefined
   const seen = observed[id]
+  const ruleSwitch = props.rule?.switchId
+  const checked = props.rule?.checked === true
+  const knownByDo = props.rule !== undefined && ruleSwitch === undefined && forced !== undefined
+  const observeLocked = checked || knownByDo
+  const read = knownByDo ? forced : seen
+  const actionNote = checked ? t.rules.pairLocked : knownByDo ? t.rules.observeLocked : undefined
+  const doLabel = ruleSwitch === undefined ? (counterfactual ? t.menu.suppose : t.menu.intervene) : t.rules.switchIntervention(ruleSwitch)
   const exo = variable.kind === 'exogenous'
   useEffect(() => {
     menuRef.current?.focus()
@@ -75,8 +84,11 @@ export function NodeMenu(props: NodeMenuProps) {
     const v = world.values?.[id]
     if (v !== undefined) notes.push(boolean ? t.menu.value(id, formatValue(v)) : t.menu.valueFinite(id, formatValue(v)))
   }
-  if (seen !== undefined) notes.push((counterfactual ? t.menu.ringEvidence : t.menu.ring)(`${id}=${formatValue(seen)}`))
-  if (forced !== undefined) notes.push(t.menu.clamp(`do(${id}=${formatValue(forced)})`))
+  if (read !== undefined) notes.push((props.rule !== undefined ? t.rules.menuKnown : counterfactual ? t.menu.ringEvidence : t.menu.ring)(`${id}=${formatValue(read)}`))
+  if (forced !== undefined) {
+    const action = `do(${id}=${formatValue(forced)})`
+    notes.push(ruleSwitch === undefined ? t.menu.clamp(action) : t.rules.menuSwitchSet(ruleSwitch, action))
+  }
   else if (soft !== undefined) notes.push(t.menu.clamp(`do(P(${id}=1)=${probText(soft, digits)})`))
   if (pair !== undefined && pair.length === 2 && pair.includes(id)) notes.push(t.menu.dsepEnd(pair[0], pair[1]))
 
@@ -121,14 +133,15 @@ export function NodeMenu(props: NodeMenuProps) {
                 key={formatValue(v)}
                 type="button"
                 className="ca-node-menu-btn ca-mono"
-                aria-pressed={seen !== undefined && valuesEqual(seen, v)}
+                aria-pressed={read !== undefined && valuesEqual(read, v)}
+                disabled={observeLocked}
                 data-observe={formatValue(v)}
                 onClick={() => props.onObserve(v)}
               >
                 {id}={formatValue(v)}
               </button>
             ))}
-            <button type="button" className="ca-node-menu-btn" disabled={seen === undefined} data-observe="" onClick={() => props.onObserve(undefined)}>
+            <button type="button" className="ca-node-menu-btn" disabled={observeLocked || seen === undefined} data-observe="" onClick={() => props.onObserve(undefined)}>
               {t.menu.unobserve}
             </button>
           </span>
@@ -136,12 +149,13 @@ export function NodeMenu(props: NodeMenuProps) {
       ) : (
         !prob && <p className="ca-node-menu-note">{t.menu.allKnown}</p>
       )}
+      {actionNote !== undefined && <p className="ca-node-menu-note ca-node-menu-action-note">{actionNote}</p>}
       {exo ? (
         <p className="ca-node-menu-note">{t.menu.exoOnly}</p>
       ) : (
         intervenes && (
-          <div className="ca-node-menu-row" role="group" aria-label={counterfactual ? t.menu.suppose : t.menu.intervene}>
-            <span className="ca-node-menu-kicker">{counterfactual ? t.menu.suppose : t.menu.intervene}</span>
+          <div className="ca-node-menu-row" role="group" aria-label={doLabel}>
+            <span className="ca-node-menu-kicker">{ruleSwitch === undefined ? doLabel : <Rich text={doLabel} ids={c.model.byId} />}</span>
             <span className="ca-node-menu-buttons">
               {values.map((v) => (
                 <button
@@ -149,17 +163,18 @@ export function NodeMenu(props: NodeMenuProps) {
                   type="button"
                   className="ca-node-menu-btn ca-mono"
                   aria-pressed={forced !== undefined && valuesEqual(forced, v)}
+                  disabled={checked}
                   data-do={formatValue(v)}
                   onClick={() => props.onDo(v)}
                 >
                   do({id}={formatValue(v)})
                 </button>
               ))}
-              <button type="button" className="ca-node-menu-btn" disabled={!intervened} data-do="" onClick={() => props.onDo(undefined)}>
+              <button type="button" className="ca-node-menu-btn" disabled={checked || !intervened} data-do="" onClick={() => props.onDo(undefined)}>
                 {t.menu.release}
               </button>
             </span>
-            {prob && boolean && (
+            {prob && boolean && props.onDoProbability !== undefined && (
               <label className="ca-node-menu-soft">
                 <span><Rich text={t.menu.doProb(id)} ids={c.model.byId} /></span>
                 <input
@@ -172,7 +187,7 @@ export function NodeMenu(props: NodeMenuProps) {
                   aria-label={t.doProbLabel(who)}
                   aria-valuetext={`P*(${id}=1)=${probText(softShown)}`}
                   data-do-slider={id}
-                  onChange={(e) => props.onDoProbability(Number(e.currentTarget.value))}
+                  onChange={(e) => props.onDoProbability?.(Number(e.currentTarget.value))}
                 />
                 <output className={`ca-mono${intervened ? '' : ' ca-muted'}`}>{probText(softShown)}</output>
               </label>

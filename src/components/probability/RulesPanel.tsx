@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
-import type { Assignment, Prior } from '../../engine/index.ts'
+import type { Assignment, Prior, Value } from '../../engine/index.ts'
 import { formatValue, switchId } from '../../engine/index.ts'
 import { tableNumber } from './adjust-view.ts'
 import { MAX_PATHS, pathReason, pathText } from '../model/dsep-view.ts'
@@ -11,7 +11,10 @@ import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
 import type { RuleMark, RuleStep, SwitchQuery } from './rules-view.ts'
-import { SIDE_TOLERANCE, clampSplit, nextSwitchValue, nodeRoles, nodeValues, presentMarks, ruleView, sideText, switchReading } from './rules-view.ts'
+import { SIDE_TOLERANCE, clampSplit, initialRuleState, nodeRoles, nodeValues, presentMarks, ruleView, sideText, switchReading } from './rules-view.ts'
+import { NodeMenu } from '../panels/NodeMenu.tsx'
+import { useNodeMenu } from '../panels/use-node-menu.ts'
+import { withValue } from '../model/model-state.ts'
 import { placeTip } from '../panels/menu-place.ts'
 import { useDigits } from '../shared/digits.ts'
 import { Segmented, Tag, Tip } from '../shared/parts.tsx'
@@ -74,12 +77,10 @@ function Query({ q, noData }: { readonly q: SwitchQuery; readonly noData: string
  * clamped, those cut only for the test with a dashed clamp; intervention switches `F_Z` as small
  * squares; the known set ringed; the pair's paths lit or dashed), a line with the d-separation
  * verdict (a switch test: 可換 or 不可換; a cut graph: the rule applies or not, never while the
- * equation's sides differ), and the step's equation on the full model. A click on a node adds it
- * to the known set or takes it out; a click on a switch `F_v` sets `v` to each value in turn and
- * then turns it off (a switch never joins the known set): the arrows into `v` are drawn cut, and a
- * row gives the prediction of the pair's other end with the switch off and at every setting, and the
- * equation's do() takes the set value. The step button
- * restores the step's known set and turns every switch off.
+ * equation's sides differ), and the current equation on the full model. A node or its switch `F_v`
+ * opens the node menu. Observations and ordinary do()s are known; only ordinary do()s cut arrows
+ * for the test. A switch changes the drawn cuts, value and equation without changing the test.
+ * The step button restores the original settings.
  */
 export function RulesPanel({
   c,
@@ -99,41 +100,39 @@ export function RulesPanel({
   if (steps.length === 0) throw new Error(`case ${c.data.id}: view="rules" needs at least one step`)
   const [at, setAt] = useState(0)
   const step = steps[Math.min(at, steps.length - 1)]
-  const [known, setKnown] = useState<readonly string[]>(step.given)
-  const [setting, setSetting] = useState<Assignment>({})
-  const view = useMemo(() => ruleView(c, prior, step, known, setting), [c, prior, step, known, setting])
-  const reading = useMemo(() => switchReading(c, prior, step, known, setting), [c, prior, step, known, setting])
-  const values = useMemo(() => nodeValues(c, step, known, setting), [c, step, known, setting])
+  const [state, setState] = useState(() => initialRuleState(c, step))
+  const { observed, interventions, setting } = state
+  const view = useMemo(() => ruleView(c, prior, step, state), [c, prior, step, state])
+  const reading = useMemo(() => switchReading(c, prior, step, state), [c, prior, step, state])
+  const values = nodeValues(state)
+  const { known } = view
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
-  const go = (i: number): void => {
-    setAt(i)
-    setKnown(steps[i].given)
-    setSetting({})
-  }
-  /** The variable the switch `id` points into, when `id` is one of the step's switches. */
+  // The step's switches are drawn first, beside the variables they point into.
+  const drawn = [...view.switchNodes, ...shown]
+  const menu = useNodeMenu(wrap, drawn, view, narrow)
   const switched = (id: string): string | undefined => (step.switches ?? []).find((v) => switchId(v) === id)
-  const nextOf = (v: string): string | undefined => {
-    const next = nextSwitchValue(c, v, setting[v])
-    return next === undefined ? undefined : `${v}=${formatValue(next)}`
+  const menuId = menu.anchor === undefined ? undefined : switched(menu.anchor) ?? menu.anchor
+  const menuSwitch = menuId !== undefined && (step.switches ?? []).includes(menuId)
+  const pairLocked = menuId !== undefined && step.pair.includes(menuId)
+  const go = (i: number): void => {
+    menu.dismiss()
+    setAt(i)
+    setState(initialRuleState(c, steps[i]))
   }
-  const pick = (id: string): void => {
-    const v = switched(id)
-    if (v !== undefined) {
-      setSetting((now) => {
-        const { [v]: current, ...rest } = now
-        const next = nextSwitchValue(c, v, current)
-        return next === undefined ? rest : { ...rest, [v]: next }
-      })
-      return
-    }
-    setKnown((now) => (now.includes(id) ? now.filter((k) => k !== id) : [...now, id]))
+  const observe = (id: string, value: Value | undefined): void => {
+    setState((now) => ({ ...now, observed: withValue(now.observed, id, value) }))
+  }
+  const intervene = (id: string, value: Value | undefined): void => {
+    setState((now) => menuSwitch
+      ? { ...now, setting: withValue(now.setting, id, value) }
+      : { ...now, interventions: withValue(now.interventions, id, value), observed: withValue(now.observed, id, undefined) })
   }
   const ruleName = t.rules.rule(step.rule)
   const r = t.rules
   /** The head's tags after the rule: the switches added, then what is cut (none said for a switch test that cuts nothing). */
   const headTags = (m: Messages): string[] => {
-    const cutIn = step.cutIn ?? []
+    const cutIn = [...new Set([...(step.cutIn ?? []), ...Object.keys(interventions)])].filter((id) => id in interventions || testClamps.includes(id))
     const cutOut = step.cutOut ?? []
     const out: string[] = []
     if (view.switchNodes.length > 0) out.push(m.rules.switchTag(view.switchNodes, step.switches ?? []))
@@ -141,17 +140,16 @@ export function RulesPanel({
     return out
   }
   const rolesText = (m: Messages, id: string): string => {
-    const roles = nodeRoles(step, known, id, setting).map((role) => m.rules.role[role])
+    const roles = nodeRoles(step, known, id, state).map((role) => m.rules.role[role])
     return roles.length === 0 ? m.rules.role.none : m.rules.roles(roles)
   }
-  // The step's switches are drawn first, beside the variables they point into.
-  const drawn = [...view.switchNodes, ...shown]
   const notes = Object.fromEntries(drawn.map((id) => [id, rolesText(t, id)]))
-  const marks = presentMarks(step, view, known, drawn, setting)
-  const clamps = clampSplit(step)
+  const marks = presentMarks(step, view, drawn, state)
+  const testClamps = clampSplit(step).test
+  const forced = { ...interventions, ...setting }
   // A node under the pointer (or keyboard focus) says what it is in this step, above the node.
   const [hover, setHover] = useState<string | undefined>(undefined)
-  const hovered = hover !== undefined && drawn.includes(hover) ? hover : undefined
+  const hovered = menu.anchor === undefined && hover !== undefined && drawn.includes(hover) ? hover : undefined
   const [tipStyle, setTipStyle] = useState<CSSProperties>({ visibility: 'hidden' })
   useLayoutEffect(() => {
     if (hovered === undefined) return
@@ -168,14 +166,15 @@ export function RulesPanel({
       c={view.graph}
       shown={drawn}
       values={values}
-      interventions={setting}
+      interventions={forced}
       removedEdges={view.removed}
-      clamped={clamps.set}
-      testClamped={clamps.test}
+      testClamped={testClamps}
       switches={view.switchNodes}
       observed={known}
       paths={view.marks}
-      onPick={interactive ? pick : undefined}
+      onOpen={interactive ? menu.toggle : undefined}
+      observable
+      open={interactive ? menu.anchor : undefined}
       onHover={interactive ? setHover : undefined}
       nodeNotes={interactive ? notes : undefined}
       title={(view.switchTest ? m.rules.switchTitle : m.rules.graphTitle)(c.data.title[m.locale], m.rules.rule(step.rule))}
@@ -195,8 +194,11 @@ export function RulesPanel({
   const d = t.dsep
   const ids = view.graph.model.byId
   const { result } = view
-  const sides = view.sides
-  const equal = sides !== undefined && Math.abs(sides[0] - sides[1]) < SIDE_TOLERANCE
+  const [left, right] = view.equation ?? []
+  const leftValue = left?.value
+  const rightValue = right?.value
+  const numeric = leftValue !== undefined && rightValue !== undefined
+  const equal = numeric && Math.abs(leftValue - rightValue) < SIDE_TOLERANCE
   const assignmentOf = (a: Assignment): string =>
     Object.entries(a)
       .map(([k, v]) => `${k}=${formatValue(v)}`)
@@ -230,11 +232,29 @@ export function RulesPanel({
             {graph(t, true)}
             {hovered !== undefined && (
               <div className="ca-edge-tip ca-node-tip" role="tooltip" data-node-tip={hovered} style={tipStyle}>
-                {(() => {
-                const v = switched(hovered)
-                return v === undefined ? r.nodeTip(rolesText(t, hovered), known.includes(hovered)) : r.switchNodeTip(rolesText(t, hovered), nextOf(v))
-              })()}
+                {r.nodeTip(rolesText(t, hovered))}
               </div>
+            )}
+            {menuId !== undefined && (
+              <NodeMenu
+                key={menu.anchor}
+                c={view.graph}
+                id={menuId}
+                world={{ shown: drawn, values, removedEdges: view.removed }}
+                interventions={forced}
+                stochastic={{}}
+                observed={observed}
+                observes
+                intervenes
+                counterfactual={false}
+                pair={step.pair}
+                rule={{ checked: pairLocked, switchId: menuSwitch ? switchId(menuId) : undefined }}
+                onObserve={(v) => observe(menuId, v)}
+                onDo={(v) => intervene(menuId, v)}
+                onClose={menu.close}
+                style={menu.style}
+                menuRef={menu.menuRef}
+              />
             )}
           </div>
           <aside className="ca-legend ca-rules-aside" aria-label={r.legend.label}>
@@ -246,8 +266,10 @@ export function RulesPanel({
                   <span>{r.legend[mark]}</span>
                 </li>
               ))}
-              <li data-mark="pick">{r.legend.pick}</li>
-              {view.switchNodes.length > 0 && <li data-mark="pickSwitch">{r.legend.pickSwitch}</li>}
+              <li data-mark="menu">{r.legend.menu}</li>
+              {(step.switches ?? []).map((id) => (
+                <li key={id} data-mark="switchMenu"><Rich text={r.legend.switchMenu(switchId(id), id)} ids={ids} /></li>
+              ))}
             </ul>
           </aside>
         </div>
@@ -299,19 +321,18 @@ export function RulesPanel({
             )}
           </p>
         )}
-        {step.equal !== undefined && sides !== undefined && !view.equationShown && (
-          <p className="ca-rules-equal" data-equal="moved">
-            <Rich text={r.equationMoved(step.given)} ids={ids} />
-          </p>
-        )}
-        {view.equation !== undefined && sides !== undefined && view.equationShown && (
-          <p className="ca-rules-equal" data-equal={equal ? 'true' : 'false'}>
-            <code className="ca-mono">
-              <Formula
-                text={`${sideText(view.equation[0])} = ${tableNumber(sides[0])} ${equal ? '=' : '≠'} ${sideText(view.equation[1])} = ${tableNumber(sides[1])}`}
-              />
-            </code>{' '}
-            <span className={equal ? 'ca-adj-ok' : 'ca-adj-no'}>{equal ? '✓' : '✗'}</span>
+        {left !== undefined && right !== undefined && (
+          <p className="ca-rules-equal" data-equal={numeric ? String(equal) : 'unavailable'}>
+            {numeric ? (
+              <>
+                <code className="ca-mono">
+                  <Formula text={`${sideText(left.side)} = ${tableNumber(leftValue)} ${equal ? '=' : '≠'} ${sideText(right.side)} = ${tableNumber(rightValue)}`} />
+                </code>{' '}
+                <span className={equal ? 'ca-adj-ok' : 'ca-adj-no'}>{equal ? '✓' : '✗'}</span>
+              </>
+            ) : (
+              <><Query q={left} noData={r.noData} />{r.switchJoin}<Query q={right} noData={r.noData} /></>
+            )}
           </p>
         )}
       </div>

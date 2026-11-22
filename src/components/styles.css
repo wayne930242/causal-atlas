@@ -870,6 +870,15 @@
   cursor: default;
 }
 
+.ca-node-menu-btn:disabled[aria-pressed="true"] {
+  background: var(--muted-foreground);
+  color: var(--background);
+}
+
+.ca-node-menu-action-note {
+  color: var(--foreground);
+}
+
 .ca-node-menu-soft {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) 40px;

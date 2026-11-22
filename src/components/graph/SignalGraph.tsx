@@ -68,9 +68,9 @@ export interface SignalGraphProps {
   readonly switches?: readonly string[]
   /** Words read after a node's state in its label, e.g. its roles in a do-calculus step; not drawn. */
   readonly nodeNotes?: Readonly<Record<string, string>>
-  /** A click (or Enter) on a node picks it, e.g. into or out of a known set; no observing or do(). */
+  /** A click (or Enter) on a variable picks it without opening a menu. */
   readonly onPick?: (id: string) => void
-  /** A click (or Enter, Space) on a node opens its menu (observe, intervene), drawn by the caller. */
+  /** A click (or Enter, Space) on a node or switch opens its menu, drawn by the caller. */
   readonly onOpen?: (id: string) => void
   /** The menu observes: an exogenous node, which do() cannot set, opens one only then. */
   readonly observable?: boolean
@@ -291,17 +291,18 @@ export function SignalGraph(props: SignalGraphProps) {
       return (
         <g
           key={id}
-          className={`ca-node ca-switch${onPick !== undefined ? ' is-interactive' : ''}`}
+          className={`ca-node ca-switch${onOpen !== undefined ? ' is-interactive' : ''}`}
           data-node={id}
           data-switch="true"
           data-block={block.side}
           transform={`translate(${p.x} ${p.y})`}
-          {...(onPick !== undefined
-            ? { role: 'button', tabIndex: 0, 'aria-label': t.withHint(aria, t.nodeHint('switch', false)), ...nodeHandlers(id, () => onPick(id)) }
+          {...(onOpen !== undefined
+            ? { role: 'button', tabIndex: 0, 'aria-haspopup': 'dialog', 'aria-expanded': open === id, 'aria-label': t.withHint(aria, t.nodeHint('switch', false)), ...nodeHandlers(id, () => onOpen(id)) }
             : { role: 'img', 'aria-label': aria })}
           {...hoverHandlers(id)}
         >
           <circle r={S + 12} className="ca-focus-ring" />
+          {open === id && <circle r={S + 12} className="ca-open-ring" />}
           {observed.includes(id) && <rect x={-S - 4} y={-S - 4} width={2 * S + 8} height={2 * S + 8} className="ca-ring" />}
           {paths?.ends.includes(id) === true && <circle r={S + 8 + (observed.includes(id) ? 4 : 0)} className="ca-dsep-ring" data-dsep-end={id} />}
           <rect x={-S} y={-S} width={2 * S} height={2 * S} className="ca-switch-box" />

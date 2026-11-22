@@ -248,7 +248,7 @@ export const ZH = {
     `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${seen === undefined ? '' : `，已觀察到 ${seen}`}${before === undefined ? '' : `，原本 ${before}`}`,
   nodeHint: (toggle: NodeToggle | undefined, movable: boolean): string =>
     [
-      toggle === undefined ? '' : toggle === 'pick' ? '按一下加進或移出已知集合' : toggle === 'switch' ? '按一下切換開關：不動，再依序設定成各個值' : toggle === 'do' ? '按一下打開選單，可以干預' : toggle === 'observe' ? '按一下打開選單，可以觀察' : '按一下打開選單，可以觀察或干預',
+      toggle === undefined ? '' : toggle === 'pick' ? '按一下加進或移出已知集合' : toggle === 'switch' ? '按一下打開它所控制的變數的選單' : toggle === 'do' ? '按一下打開選單，可以干預' : toggle === 'observe' ? '按一下打開選單，可以觀察' : '按一下打開選單，可以觀察或干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
@@ -382,8 +382,11 @@ export const ZH = {
     swap: '，可換',
     noSwap: '，不可換',
     mismatch: '，但等式兩邊的數字不等：這張圖不能用來換',
-    equationMoved: (given: readonly string[]): string =>
-      `已知集合改過了；這一步的等式照原本的已知集合${given.length === 0 ? '（無）' : ` {${given.join(', ')}}`}列出，按步驟鈕還原。`,
+    pairLocked: '要檢查是否分隔的變數，不能觀察或干預',
+    observeLocked: '干預中的變數一定已知（它的值寫在式子裡）。放開干預後才能改觀察。',
+    switchIntervention: (id: string): string => `干預（開關 ${id}）`,
+    menuKnown: (assignment: string): string => `雙圈：已知 ${assignment}`,
+    menuSwitchSet: (id: string, action: string): string => `紅色夾子：開關 ${id} 設定 ${action}`,
     switchTag: (switches: readonly string[], vars: readonly string[]): string => `加開關 ${switches.join('、')}，指向 ${vars.join('、')} 的箭頭不剪`,
     graphTitle: (title: string, rule: string): string => `${title}：${rule}的截斷圖`,
     switchTitle: (title: string, rule: string): string => `${title}：${rule}的開關圖`,
@@ -398,8 +401,8 @@ export const ZH = {
       open: '亮起的箭頭：暢通的路',
       blocked: '淡虛線：堵住的路',
       switchSet: '夾角加標籤：開關設定的值，指向它的箭頭剪掉',
-      pick: '點節點把它加進或移出已知集合。',
-      pickSwitch: '點開關：不動 → 設定 0 → 設定 1 → 不動。',
+      menu: '點節點打開選單：觀察或干預它。',
+      switchMenu: (id: string, variable: string): string => `點 ${id} 打開 ${variable} 的選單。`,
     },
     role: {
       pair: '要檢查的變數',
@@ -412,19 +415,18 @@ export const ZH = {
       none: '沒有標記',
     },
     roles: (list: readonly string[]): string => list.join('・'),
-    nodeTip: (roles: string, known: boolean): string => `${roles}。點一下${known ? '移出' : '加進'}已知集合`,
-    switchNodeTip: (roles: string, next: string | undefined): string => `${roles}。點一下${next === undefined ? '回到不動' : `設定 ${next}`}`,
+    nodeTip: (roles: string): string => `${roles}。點一下打開選單`,
     switchOff: (switches: readonly string[]): string => `${switches.join('、')} 不動：`,
     switchOn: (assignment: string): string => `設定 ${assignment}：`,
     switchJoin: '；',
     switchSame: '開關沒有改變預測',
     switchDiffer: '開關改變了預測',
-    switchHint: (switches: readonly string[]): string => `點 ${switches.join('、')} 設定它開關的變數，看預測變不變`,
+    switchHint: (switches: readonly string[]): string => `點 ${switches.join('、')} 打開選單，在干預列設定開關，看預測變不變`,
     switchSettingsSame: (vars: readonly string[]): string => `（${vars.join('、')} 設成哪個值，預測都一樣）`,
     noData: '—（證據的機率是 0）',
-    tip: '截斷圖照課文寫的剪法畫：被剪的箭頭畫成切斷，箭頭被剪掉的變數加上夾角；剪掉箭頭之後不再是原本的模型，圖上不寫機率。點節點把它加進或移出已知集合，圈內寫它在等式裡的值（等式沒寫就用 1）；按步驟鈕回到那一步原本的已知集合。等式的兩邊用完整模型算。規則三剪掉指向 Z(W) 的箭頭，Z(W) 也由課文寫明。',
+    tip: '點節點打開選單。觀察和干預都會讓變數已知，圈內寫它的值；干預還會剪掉指向它的箭頭。放開干預會恢復這些箭頭，但課文為了檢驗剪掉的箭頭不受影響。按步驟鈕回到原本的設定。圖上不寫機率，等式的兩邊用完整模型算。規則三剪掉指向 Z(W) 的箭頭，Z(W) 由課文寫明。',
     switchTip:
-      '開關圖是式子干預後的圖：只剪掉指向兩邊都已用 do 設定的變數的箭頭，再替 Z 加一個開關 F_Z 和一支箭頭 F_Z → Z，指向 Z 的箭頭不剪。給定兩邊共同看到的變數，F_Z 與 Y 被 d 分隔，兩邊就可換；有一條路暢通就不可換。規則二也給定 Z，規則三不給定。圖上不寫機率，點節點把它加進或移出已知集合；圈內寫已知變數在等式裡的值。點開關 F_Z 依序設定 Z 的值，Z 圈內寫設定的值，等式的 do() 跟著換成這個值；圖下的列用完整模型算出開關不動與每個設定的預測，目前的設定加底色，對照分隔與否。開關不能加進已知集合。等式的兩邊用完整模型算。',
+      '開關圖加上一支 F_Z → Z 的箭頭。F_Z 和 Y 被 d 分隔時，兩邊可換；有路暢通就不可換。規則二起初給定 Z，規則三不給定。點 F_Z 或 Z 打開 Z 的選單：干預列設定開關，Z 圈內的值和等式的 do() 跟著改。開關設定不改變已知集合，也不影響分隔檢驗；要讓 Z 已知，請用觀察列。圖下列出開關不動和每個設定的預測，目前的設定加底色。這些預測和等式都用完整模型算。',
   },
   normality: {
     kicker: '偏離預設值',

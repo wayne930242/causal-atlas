@@ -2,6 +2,14 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.15.0
+The do-calculus view (`view="rules"`) uses the probability view's node menu, with observation and intervention buttons but no probability controls.
+An intervened variable is known at its set value; releasing it restores the incoming arrows unless the lesson cut them for the test, and makes the variable unknown again.
+The equation and separation verdict follow the menu, while the term the rule compares stays on its written side.
+In rule 1's 「已知病情」, releasing `do(X=1)` opens `Z → X → Y` and changes the equation from `0.5 = 0.5` to `0.44 ≠ 0.404`.
+Clicking a switch `F_Z` opens the menu for `Z`: its intervention row sets the switch without changing the known set or the separation test.
+The step button restores the lesson's settings.
+
 ## 0.14.1
 The do-calculus view writes values inside its nodes: a variable a switch sets shows the set value (`Z` reads 0
 under 「設定 Z=0」), and each known variable shows the value it is read at, its value in the step's equation, else
@@ -542,13 +550,12 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   `<CausalModel id="m05-backdoor" as="probability" view="adjust" adjust={{ x: "X", y: "Y" }} />`
 - `<ProbabilityPanel view="rules" rules={[...]}>`: a step button per `RuleStep`
   `{ label, rule: 1|2|3, pair: [a, b], given, cutIn?, cutOut?, switches?, equal?: [side, side] }`, each side
-  `{ event, given?, do? }`. The graph draws no numbers: arrows into `cutIn` and out of `cutOut` are
-  struck (切斷), `cutIn` nodes carry the do() clamp without a value, the known set is ringed, the pair's
-  paths are lit or dashed; a latent arc loses the end whose arrow is cut. A line says
-  `X 與 Z 已知：無 → 分隔，規則二適用` with up to three paths and why, and the equation is computed on
-  the full model, `P(Z=1 | do(X=1)) = 0.9 = P(Z=1 | X=1) = 0.9 ✓` (✗ and ≠ when they differ). A click
-  on a node adds it to the known set or takes it out (no value); a step button restores its own. The
-  cut is the lesson's to give: the view does not derive it from the rule. Lesson 06's front-door
+  `{ event, given?, do? }`.
+  The graph shows values, not probabilities: observed and intervened nodes are ringed, arrows into interventions are cut, and lesson-written cuts made only for the test stay in place.
+  The pair's paths are lit or dashed; a latent arc loses the end whose arrow is cut.
+  A line says `X 與 Z 已知：無 → 分隔，規則二適用` with up to three paths and why, and the equation is computed on the full model, `P(Z=1 | do(X=1)) = 0.9 = P(Z=1 | X=1) = 0.9 ✓` (✗ and ≠ when they differ).
+  A node opens its menu to observe or intervene; the tested pair's actions are disabled, and a step button resets the menu changes.
+  Lesson 06's front-door
   derivation is `src/demo/front-door-steps.ts` (steps 2, 3, 4, 5a, 5b equal; 7 is open, 0.37 ≠ 0.4695);
   the model should carry `latent_as_arcs: ["U"]` so X←U→Y shows. With `switches: ["Z"]` the graph adds
   the intervention switch `F_Z → Z` (a small square), and `pair: ["F_Z", "Y"]` tests it with nothing cut

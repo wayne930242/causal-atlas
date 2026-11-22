@@ -1,4 +1,5 @@
 import { FRONT_DOOR_STEPS } from '../front-door-steps.ts'
+import { RULE_ONE_STEPS } from '../rule-one-steps.ts'
 import { SWITCH_RULE_THREE_EXCEPTION, SWITCH_RULE_TWO } from '../switch-steps.ts'
 import type { DocPatch, ModelSource } from './model-info.ts'
 import type { ComponentId } from './registry.ts'
@@ -85,6 +86,7 @@ const lessons: Story[] = [
     ],
   }),
   story('cut-graphs', 1, 'probability', L('m05-frontdoor'), { view: 'rules', rules: FRONT_DOOR_STEPS }, ARCS),
+  story('rule-one', 1, 'probability', L('m06-rule1'), { view: 'rules', rules: RULE_ONE_STEPS }),
   story('switch-graphs', 1, 'probability', L('m05-frontdoor'), { view: 'rules', rules: SWITCH_RULE_TWO }, ARCS),
   story('switch-graphs', 2, 'probability', L('m06-rule3-exception'), { view: 'rules', rules: SWITCH_RULE_THREE_EXCEPTION }),
   story('confound-slider', 1, 'playground', C('smoking-lesion'), { sliders: ['N_S1'], decision: true }),

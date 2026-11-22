@@ -19,8 +19,9 @@ import { Tag } from '../shared/parts.tsx'
 import type { EdgeTip } from '../graph/SignalGraph.tsx'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import type { Rect } from './menu-place.ts'
-import { placeMenu, placeTip } from './menu-place.ts'
+import { placeTip } from './menu-place.ts'
 import { NodeMenu } from './NodeMenu.tsx'
+import { useNodeMenu } from './use-node-menu.ts'
 import { Formula, Rich } from '../text/typeset.tsx'
 import { originCitations } from '../model/verdict-rows.ts'
 import type { Stochastic } from '../model/assignments.ts'
@@ -154,20 +155,9 @@ export function GraphBox({
   const narrow = useNarrow(wrap, 560)
   const observes = prob && onObserve !== undefined
   const editable = onDo !== undefined || onObserve !== undefined
-  const [menuAt, setMenu] = useState<string | undefined>(undefined)
-  const menu = menuAt !== undefined && world.shown.includes(menuAt) ? menuAt : undefined
-  // A menu whose node is no longer drawn is closed, so it does not come back when the node does
-  // (state adjusted while rendering, React's pattern for state derived from props).
-  if (menuAt !== undefined && menu === undefined) setMenu(undefined)
+  const { anchor: menu, menuRef, style: menuStyle, close: closeMenu, toggle: toggleMenu } = useNodeMenu(wrap, world.shown, world, narrow)
   const [tip, setTip] = useState<EdgeTip | undefined>(undefined)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const [menuStyle, setMenuStyle] = useState<CSSProperties>({ visibility: 'hidden' })
   const [tipStyle, setTipStyle] = useState<CSSProperties>({ visibility: 'hidden' })
-  const focusNode = (id: string): void => wrap.current?.querySelector<SVGGElement>(`[data-node="${id}"]`)?.focus()
-  const closeMenu = (): void => {
-    if (menu !== undefined) focusNode(menu)
-    setMenu(undefined)
-  }
   /** `el`'s box relative to the wrapper. */
   const relative = (el: Element | null | undefined): Rect | undefined => {
     const box = wrap.current?.getBoundingClientRect()
@@ -175,50 +165,28 @@ export function GraphBox({
     if (box === undefined || r === undefined) return undefined
     return { left: r.left - box.left, top: r.top - box.top, right: r.right - box.left, bottom: r.bottom - box.top }
   }
-  // The menu and the tip sit beside what they belong to, measured once drawn (and again on resize).
+  // The edge tip sits above its edge, measured once drawn (and again on resize).
   useLayoutEffect(() => {
+    if (tip === undefined) return
     const place = (): void => {
-      const width = wrap.current?.clientWidth ?? 0
-      if (menu !== undefined) {
-        const at = relative(wrap.current?.querySelector(`[data-node="${menu}"] .ca-focus-ring`))
-        setMenuStyle(at === undefined ? {} : (() => {
-          const p = placeMenu(at, width)
-          return { left: p.left, top: p.top, width: p.width }
-        })())
-      }
-      if (tip !== undefined) {
-        const at = relative(wrap.current?.querySelector(`[data-edge="${tip.key}"]`))
-        setTipStyle(at === undefined ? {} : (() => {
-          const p = placeTip(at, width)
-          return { left: p.left, top: p.top, width: p.width }
-        })())
-      }
+      const at = relative(wrap.current?.querySelector(`[data-edge="${tip.key}"]`))
+      setTipStyle(at === undefined ? {} : (() => {
+        const p = placeTip(at, wrap.current?.clientWidth ?? 0)
+        return { left: p.left, top: p.top, width: p.width }
+      })())
     }
     place()
     window.addEventListener('resize', place)
     return () => window.removeEventListener('resize', place)
   }, [menu, tip, world, narrow])
-  // A press outside the menu closes it (a press on a node is that node's own click); one outside
-  // the edges hides a tapped edge's explanation; Esc closes either.
   useEffect(() => {
-    if (menu === undefined && tip === undefined) return
+    if (tip === undefined) return
     const outside = (e: Event): void => {
       const target = e.target
-      if (!(target instanceof Element)) return
-      // Only this graph's own nodes and edges count as inside: another graph on the page is outside.
-      const own = wrap.current?.contains(target) === true
-      if (menu !== undefined && menuRef.current?.contains(target) !== true && !(own && target.closest('[data-node]') !== null)) setMenu(undefined)
-      if (tip !== undefined && !(own && target.closest('[data-edge]') !== null)) setTip(undefined)
+      if (target instanceof Element && !(wrap.current?.contains(target) === true && target.closest('[data-edge]') !== null)) setTip(undefined)
     }
     const escape = (e: globalThis.KeyboardEvent): void => {
-      if (e.key !== 'Escape') return
-      setTip(undefined)
-      if (menu !== undefined) {
-        // Focus goes back to the node only from inside this graph: Esc in another control keeps its focus.
-        const active = document.activeElement
-        if (active === null || active === document.body || wrap.current?.contains(active) === true) focusNode(menu)
-        setMenu(undefined)
-      }
+      if (e.key === 'Escape') setTip(undefined)
     }
     document.addEventListener('pointerdown', outside)
     document.addEventListener('keydown', escape)
@@ -226,7 +194,7 @@ export function GraphBox({
       document.removeEventListener('pointerdown', outside)
       document.removeEventListener('keydown', escape)
     }
-  }, [menu, tip])
+  }, [tip])
   const legendFor = (m: Messages): string => (world.probs !== undefined ? probLegend(m, c.model, world.shown) : m.valueLegend)
   const headTag = (m: Messages): string => (cf && hasDo ? m.cf.kicker : hasDo && hasObs ? m.afterDoObserve : hasObs ? m.afterObserve : m.afterDo)
   const chipText = (m: Messages): string => readingText(m, cf, interventions, stochastic, observed)
@@ -287,7 +255,7 @@ export function GraphBox({
       holdNotes={holdNotes}
       defaults={defaults}
       paths={paths}
-      onOpen={!interactive || !editable ? undefined : (id) => setMenu(menu === id ? undefined : id)}
+      onOpen={interactive && editable ? toggleMenu : undefined}
       observable={observes}
       open={interactive ? menu : undefined}
       lit={interactive ? lit : undefined}
