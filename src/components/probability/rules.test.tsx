@@ -10,6 +10,7 @@ import { RULE_ONE_STEPS } from '../../demo/rule-one-steps.ts'
 import { derivationSteps, equationUnder, initialRuleState, isCalculus, nodeValues, ruleView, switchReading } from './rules-view.ts'
 import { RulesPanel } from './RulesPanel.tsx'
 import { admgForPrior, derive } from '../../engine/index.ts'
+import type { DoExpr } from '../../engine/index.ts'
 import { ProbabilityPanel } from '../index.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 
@@ -516,5 +517,32 @@ describe('RulesPanel: a generated derivation', () => {
     expect(equal?.querySelector('[data-text]')?.getAttribute('data-text')).toBe('P(z|do(x)) = P(z|x)')
     expect(equal?.textContent).toContain('組取值上用完整模型比對')
     expect(container.querySelector('.ca-stroke-cut')).not.toBeNull()
+  })
+
+  it('does not offer observe/do menus on a generated symbolic step', () => {
+    const { container } = render(<RulesPanel c={fd} prior={prior} steps={steps.filter((s) => !isCalculus(s))} shown={fd.model.endogenous} />)
+    expect(container.querySelector('[data-node="Y"]')?.getAttribute('role')).toBe('img')
+    fireEvent.click(container.querySelector('[data-node="Y"]') as Element)
+    expect(container.querySelector('[role="dialog"]')).toBeNull()
+  })
+
+  it('reports an unavailable numerical check when no assignment has both sides defined', () => {
+    const a: DoExpr = { kind: 'sum', over: ['X'], body: { kind: 'p', vars: ['Z'], given: ['X'] } }
+    const deterministic = docToCase({ ...doc, priors: undefined, context: Object.fromEntries(fd.model.exogenous.map((v) => [v, false])) })
+    if (deterministic.prior === undefined) throw new Error('no prior')
+    const { container, getByRole } = render(<RulesPanel c={deterministic} prior={deterministic.prior} steps={[
+      { label: '1', calculus: 'expand', symbolic: [a, a] },
+      { ...FRONT_DOOR_STEPS[0], label: '2', equal: undefined, symbolic: [a, a] },
+    ]} shown={fd.model.endogenous} />)
+    const unavailable = () => {
+      const line = container.querySelector('.ca-rules-equal')
+      expect(line?.getAttribute('data-verdict')).toBe('unavailable')
+      expect(line?.getAttribute('data-equal')).toBe('unavailable')
+      expect(line?.textContent).toContain('沒有可比對的取值')
+      expect(line?.textContent).not.toContain('✓')
+    }
+    unavailable()
+    fireEvent.click(getByRole('button', { name: '2' }))
+    unavailable()
   })
 })

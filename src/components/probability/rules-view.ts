@@ -123,14 +123,21 @@ export function symbolicCheck(model: CausalModel, prior: Prior, sides: readonly 
 }
 
 /** A calculus step's check: `holds` when the sides agree at every assignment where both are defined. */
-export interface CalculusView {
-  readonly check: SymbolicCheck
-  readonly verdict: 'holds' | 'mismatch'
+export type ComparisonVerdict = 'holds' | 'mismatch' | 'unavailable'
+
+export function comparisonVerdict(check: SymbolicCheck | undefined): ComparisonVerdict {
+  if (check === undefined || check.comparison.rows === 0) return 'unavailable'
+  return check.comparison.differsAt === undefined ? 'holds' : 'mismatch'
 }
 
-export function calculusView(c: LoadedCase, prior: Prior, step: CalculusStep): CalculusView {
-  const check = symbolicCheck(c.model, prior, step.symbolic)
-  return { check, verdict: check.comparison.differsAt === undefined ? 'holds' : 'mismatch' }
+export interface CalculusView {
+  readonly check: SymbolicCheck | undefined
+  readonly verdict: ComparisonVerdict
+}
+
+export function calculusView(c: LoadedCase, prior: Prior | undefined, step: CalculusStep, comparisonModel = c.model): CalculusView {
+  const check = prior === undefined ? undefined : symbolicCheck(comparisonModel, prior, step.symbolic)
+  return { check, verdict: comparisonVerdict(check) }
 }
 
 /** d-separation of two sets: separated when every pair is, with every pair's paths. */
@@ -188,7 +195,7 @@ export function setInExpression(step: RuleStep): readonly string[] | undefined {
  * The cut edges, d-separation test and equation under the reader's settings. Switch settings cut
  * the drawn arrows into their nodes (except the switch's own), not the edges used for the test.
  */
-export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, state: RuleState): RuleView {
+export function ruleView(c: LoadedCase, prior: Prior | undefined, step: RuleStep, state: RuleState, comparisonModel = c.model): RuleView {
   const { observed, interventions, setting } = state
   const [x, y] = step.pair
   const [xs, ys] = pairSets(step)
@@ -228,10 +235,10 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, state: Rul
   const open = new Set(result.paths.filter((p) => p.open).flatMap((p) => p.edges.map(key)))
   const blocked = new Set(result.paths.filter((p) => !p.open).flatMap((p) => p.edges.map(key)).filter((k) => !open.has(k)))
   const sides = equationUnder(step, state)
-  const equation = sides === undefined ? undefined : ([readQuery(c, prior, sides[0]), readQuery(c, prior, sides[1])] as const)
+  const equation = sides === undefined || prior === undefined ? undefined : ([readQuery(c, prior, sides[0]), readQuery(c, prior, sides[1])] as const)
   const [left, right] = equation ?? []
-  const reading = switchReading(c, prior, step, state)
-  const symbolic = step.symbolic === undefined ? undefined : symbolicCheck(c.model, prior, step.symbolic)
+  const reading = prior === undefined ? undefined : switchReading(c, prior, step, state)
+  const symbolic = step.symbolic === undefined || prior === undefined ? undefined : symbolicCheck(comparisonModel, prior, step.symbolic)
   // A switch test compares setting with not setting at every value; a cut graph compares its two sides, a symbolic step at every assignment.
   const differ = reading !== undefined
     ? reading.differs

@@ -13,6 +13,7 @@ describe('public entries', () => {
           "CausalPlayground",
           "CiteBlock",
           "DEFAULT_LOCALE",
+          "IdentifyPanel",
           "LANGUAGE_NAMES",
           "LocaleProvider",
           "ModelEditor",

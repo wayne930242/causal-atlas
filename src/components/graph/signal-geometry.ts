@@ -1,5 +1,5 @@
 import type { LoadedCase } from '../../data/load.ts'
-import type { Assignment, Edge, Value } from '../../engine/index.ts'
+import type { Assignment, Edge, Hedge, Value } from '../../engine/index.ts'
 import { getVariable } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
 import type { Messages } from '../i18n/messages.ts'
@@ -35,6 +35,7 @@ import { BAR_LABEL, blockOptions, nodeReadout, readoutWidth, unit } from './sign
 export interface SignalGraphInput {
   readonly c: LoadedCase
   readonly shown: readonly string[]
+  readonly structural?: boolean
   readonly values?: Assignment
   readonly original?: Assignment
   readonly probs?: Readonly<Record<string, number>>
@@ -50,6 +51,7 @@ export interface SignalGraphInput {
   readonly stochastic: Stochastic
   readonly removedEdges: readonly Edge[]
   readonly witness?: Assignment
+  readonly hedge?: Hedge
   readonly holdNotes: boolean
   readonly defaults?: Assignment
   readonly paths?: PathMarks
@@ -243,7 +245,8 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     digits = 2,
   } = input
   const prob = probs !== undefined
-  const { r: R, col: COL, row: ROW } = graphSpacing(prob, compact)
+  const { r, col: COL, row: ROW } = graphSpacing(prob, compact)
+  const R = input.structural === true ? 19 : r
   const PAD_X = compact ? 60 : 96
   const PAD_Y = 72
   const grid = placeSwitches(c, shown, switches, gridLayout(c, shown.filter((id) => !switches.includes(id))), COL, ROW, R)
@@ -361,7 +364,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       }
       return n
     }
-    const [below, above] = blockOptions(isSwitch ? SWITCH_HALF : R, labelW, readout)
+    const [below, above] = blockOptions(isSwitch ? SWITCH_HALF : R + (input.hedge?.fPrime.includes(id) === true ? 16 : input.hedge?.f.includes(id) === true ? 9 : 0), labelW, readout)
     const hitsBelow = touches(below)
     const block = hitsBelow > 0 && touches(above) < hitsBelow ? above : below
     blocks.set(id, block)

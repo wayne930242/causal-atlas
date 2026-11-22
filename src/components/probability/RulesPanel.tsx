@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
-import type { Assignment, DoExpr, Prior, Value } from '../../engine/index.ts'
+import type { Assignment, CausalModel, DoExpr, Prior, Value } from '../../engine/index.ts'
 import { formatValue, probExprLatex, probExprText, switchId } from '../../engine/index.ts'
 import { tableNumber } from './adjust-view.ts'
 import { probText } from '../model/wording.ts'
@@ -11,8 +11,8 @@ import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { useMessages } from '../i18n/messages.ts'
-import type { CalculusStep, DerivationViewStep, RuleMark, RuleState, RuleStep, SwitchQuery } from './rules-view.ts'
-import { SIDE_TOLERANCE, calculusView, clampSplit, initialRuleState, isCalculus, nodeRoles, nodeValues, pairSets, presentMarks, ruleView, sideText } from './rules-view.ts'
+import type { CalculusStep, ComparisonVerdict, DerivationViewStep, RuleMark, RuleState, RuleStep, SwitchQuery, SymbolicCheck } from './rules-view.ts'
+import { SIDE_TOLERANCE, calculusView, clampSplit, comparisonVerdict, initialRuleState, isCalculus, nodeRoles, nodeValues, pairSets, presentMarks, ruleView, sideText } from './rules-view.ts'
 import { NodeMenu } from '../panels/NodeMenu.tsx'
 import { useNodeMenu } from '../panels/use-node-menu.ts'
 import { withValue } from '../model/model-state.ts'
@@ -105,15 +105,20 @@ export function RulesPanel({
   steps,
   shown,
   exportUrl,
+  comparisonModel = c.model,
+  startAt = 0,
 }: {
   readonly c: LoadedCase
-  readonly prior: Prior
+  readonly prior?: Prior
   readonly steps: readonly DerivationViewStep[]
   readonly shown: readonly string[]
   readonly exportUrl?: string
+  /** Original SCM when c is only a graph projection. Never queried without prior. */
+  readonly comparisonModel?: CausalModel
+  readonly startAt?: number
 }) {
   if (steps.length === 0) throw new Error(`case ${c.data.id}: view="rules" needs at least one step`)
-  const [at, setAt] = useState(0)
+  const [at, setAt] = useState(startAt)
   // Each press of a step button, even the current one, restores that step's settings.
   const [visit, setVisit] = useState(0)
   const index = Math.min(at, steps.length - 1)
@@ -122,8 +127,8 @@ export function RulesPanel({
     setAt(i)
     setVisit((n) => n + 1)
   }
-  if (isCalculus(step)) return <CalculusStepPanel c={c} prior={prior} step={step} steps={steps} index={index} go={go} />
-  return <RuleStepPanel c={c} prior={prior} step={step} steps={steps} index={index} go={go} visit={visit} shown={shown} exportUrl={exportUrl} />
+  if (isCalculus(step)) return <CalculusStepPanel c={c} prior={prior} comparisonModel={comparisonModel} step={step} steps={steps} index={index} go={go} />
+  return <RuleStepPanel c={c} prior={prior} comparisonModel={comparisonModel} step={step} steps={steps} index={index} go={go} visit={visit} shown={shown} exportUrl={exportUrl} />
 }
 
 /** The step buttons, one per step, the current one pressed. */
@@ -133,10 +138,21 @@ function StepButtons({ steps, index, go }: { readonly steps: readonly Derivation
 }
 
 /** A symbolic step's two sides typeset, with the model's lower-case variable names. */
-function SymbolicEquation({ c, left, right, equal }: { readonly c: LoadedCase; readonly left: DoExpr; readonly right: DoExpr; readonly equal: boolean }) {
+function SymbolicLine({ c, sides, check, verdict }: { readonly c: LoadedCase; readonly sides: readonly [DoExpr, DoExpr]; readonly check?: SymbolicCheck; readonly verdict: ComparisonVerdict }) {
+  const t = useMessages()
+  const [left, right] = sides
   const options = { names: c.model.endogenous }
-  const op = equal ? '=' : '\\neq'
-  return <Tex tex={`${probExprLatex(left, options)} ${op} ${probExprLatex(right, options)}`} text={`${probExprText(left, options)} ${equal ? '=' : '≠'} ${probExprText(right, options)}`} />
+  const mismatch = verdict === 'mismatch'
+  const status = check === undefined ? t.rules.symbolicNoModel : verdict === 'unavailable' ? t.rules.symbolicUnavailable : mismatch ? t.rules.calculusDiffers : t.rules.calculusHolds
+  return (
+    <p className="ca-rules-equal" data-equal={verdict === 'unavailable' ? verdict : String(!mismatch)} data-verdict={verdict}>
+      <code className="ca-mono">
+        <Tex tex={`${probExprLatex(left, options)} ${mismatch ? '\\neq' : '='} ${probExprLatex(right, options)}`} text={`${probExprText(left, options)} ${mismatch ? '≠' : '='} ${probExprText(right, options)}`} />
+      </code>{' '}
+      {verdict !== 'unavailable' && <span className={mismatch ? 'ca-adj-no' : 'ca-adj-ok'}>{mismatch ? '✗' : '✓'}</span>} {status}
+      {check !== undefined && verdict !== 'unavailable' && <>{t.rules.switchStates}{checkedText(t, check.comparison.rows, check.comparison.skipped)}</>}
+    </p>
+  )
 }
 
 /** One variable as itself, a set as `{X, Z}`. */
@@ -153,11 +169,9 @@ function checkedText(m: Messages, rows: number, skipped: number): string {
  * A probability-calculus step of a derivation: the identity it uses, and its two sides compared on
  * the full model at every assignment of their free variables. It tests no graph.
  */
-function CalculusStepPanel({ c, prior, step, steps, index, go }: { readonly c: LoadedCase; readonly prior: Prior; readonly step: CalculusStep; readonly steps: readonly DerivationViewStep[]; readonly index: number; readonly go: (i: number) => void }) {
+function CalculusStepPanel({ c, prior, comparisonModel, step, steps, index, go }: { readonly c: LoadedCase; readonly prior?: Prior; readonly comparisonModel: CausalModel; readonly step: CalculusStep; readonly steps: readonly DerivationViewStep[]; readonly index: number; readonly go: (i: number) => void }) {
   const t = useMessages()
-  const { check, verdict } = useMemo(() => calculusView(c, prior, step), [c, prior, step])
-  const { rows, skipped } = check.comparison
-  const holds = verdict === 'holds'
+  const { check, verdict } = useMemo(() => calculusView(c, prior, step, comparisonModel), [c, prior, step, comparisonModel])
   return (
     <div className="ca-root not-prose ca-panel ca-prob" data-case={c.data.id} data-view="rules" data-calculus={step.calculus} lang={t.locale}>
       <div className="ca-box ca-graph-box">
@@ -173,12 +187,7 @@ function CalculusStepPanel({ c, prior, step, steps, index, go }: { readonly c: L
           <p className="ca-dsep-head">
             <span className="ca-pg-now-kicker"><Rich text={t.rules.calculus[step.calculus]} ids={RULE_SYMBOLS} /></span>
           </p>
-          <p className="ca-rules-equal" data-equal={String(holds)} data-verdict={verdict}>
-            <code className="ca-mono">
-              <SymbolicEquation c={c} left={check.left} right={check.right} equal={holds} />
-            </code>{' '}
-            <span className={holds ? 'ca-adj-ok' : 'ca-adj-no'}>{holds ? '✓' : '✗'}</span> {holds ? t.rules.calculusHolds : t.rules.calculusDiffers}{t.rules.switchStates}{checkedText(t, rows, skipped)}
-          </p>
+          <SymbolicLine c={c} sides={step.symbolic} check={check} verdict={verdict} />
         </div>
       </div>
     </div>
@@ -188,6 +197,7 @@ function CalculusStepPanel({ c, prior, step, steps, index, go }: { readonly c: L
 function RuleStepPanel({
   c,
   prior,
+  comparisonModel,
   step,
   steps,
   index,
@@ -197,7 +207,8 @@ function RuleStepPanel({
   exportUrl,
 }: {
   readonly c: LoadedCase
-  readonly prior: Prior
+  readonly prior?: Prior
+  readonly comparisonModel: CausalModel
   readonly step: RuleStep
   readonly steps: readonly DerivationViewStep[]
   readonly index: number
@@ -216,7 +227,8 @@ function RuleStepPanel({
     setHeld((h) => ({ visit, state: next(h.visit === visit ? h.state : fresh) }))
   }
   const { observed, interventions, setting } = state
-  const view = useMemo(() => ruleView(c, prior, step, state), [c, prior, step, state])
+  const view = useMemo(() => ruleView(c, prior, step, state, comparisonModel), [c, prior, step, state, comparisonModel])
+  const symbolic = step.symbolic
   const values = nodeValues(state)
   const { known, reading } = view
   // A switch test writes the current prediction of the pair's other end under its node, when the event is its value 1.
@@ -282,15 +294,17 @@ function RuleStepPanel({
       compact={narrow}
       c={view.graph}
       shown={drawn}
-      values={values}
+      values={symbolic === undefined ? values : undefined}
       probe={probe}
-      interventions={forced}
+      interventions={symbolic === undefined ? forced : {}}
+      structural={symbolic !== undefined}
+      clamped={symbolic === undefined ? undefined : clampSplit(step).set}
       removedEdges={view.removed}
       testClamped={testClamps}
       switches={view.switchNodes}
       observed={known}
       paths={view.marks}
-      onOpen={interactive ? menu.toggle : undefined}
+      onOpen={interactive && symbolic === undefined ? menu.toggle : undefined}
       observable
       open={interactive ? menu.anchor : undefined}
       onHover={interactive ? setHover : undefined}
@@ -358,7 +372,7 @@ function RuleStepPanel({
                 {r.nodeTip(rolesText(t, hovered))}
               </div>
             )}
-            {menuId !== undefined && (
+            {menuId !== undefined && symbolic === undefined && (
               <NodeMenu
                 key={menu.anchor}
                 c={view.graph}
@@ -389,7 +403,7 @@ function RuleStepPanel({
                   <span>{r.legend[mark]}</span>
                 </li>
               ))}
-              <li data-mark="menu">{r.legend.menu}</li>
+              {symbolic === undefined && <li data-mark="menu">{r.legend.menu}</li>}
               {probeEvent !== undefined && <li data-mark="probe"><Rich text={r.legend.probe(probeEvent)} ids={ids} /></li>}
               {(step.switches ?? []).map((id) => (
                 <li key={id} data-mark="switchMenu"><Rich text={r.legend.switchMenu(switchId(id), id, reading?.target ?? '')} ids={ids} /></li>
@@ -431,14 +445,7 @@ function RuleStepPanel({
               )}
             </p>
           )}
-          {view.symbolic !== undefined && (
-            <p className="ca-rules-equal" data-equal={String(view.symbolic.comparison.differsAt === undefined)}>
-              <code className="ca-mono">
-                <SymbolicEquation c={c} left={view.symbolic.left} right={view.symbolic.right} equal={view.symbolic.comparison.differsAt === undefined} />
-              </code>{' '}
-              <span className={view.symbolic.comparison.differsAt === undefined ? 'ca-adj-ok' : 'ca-adj-no'}>{view.symbolic.comparison.differsAt === undefined ? '✓' : '✗'}</span> {checkedText(t, view.symbolic.comparison.rows, view.symbolic.comparison.skipped)}
-            </p>
-          )}
+          {symbolic !== undefined && <SymbolicLine c={c} sides={symbolic} check={view.symbolic} verdict={comparisonVerdict(view.symbolic)} />}
           {reading === undefined && left !== undefined && right !== undefined && (
             <p className="ca-rules-equal" data-equal={numeric ? String(equal) : 'unavailable'}>
               {numeric ? (

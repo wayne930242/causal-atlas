@@ -360,7 +360,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 | Import | Contents |
 | --- | --- |
-| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider` |
+| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `IdentifyPanel`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider` |
 | `causal-atlas/engine` | The causal-model engine |
 | `causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
 | `causal-atlas/style.css` | Styles for the components; import it once |
@@ -560,6 +560,27 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   with Gibbard and Harper's utilities and error 0.1, the bundled case's million-dollar numbers left as they are:
   `<CausalPlayground client:visible caseId="newcomb" sliders={["D"]} prior={{ D: 0.1, E: 0.1 }} decision={{ variable: "A", utility: { variables: ["A", "M"], rows: [["one", 1, 100], ["one", 0, 0], ["two", 1, 101], ["two", 0, 10]] } }} />`
   (the causal theory gains 8.38 / 5.5 / 2.62 at D = 0.1 / 0.5 / 0.9; the evidential row stays 90 / 19.1).
+
+### Identification experiment
+
+```tsx
+import { IdentifyPanel } from 'causal-atlas'
+import 'causal-atlas/style.css'
+
+<IdentifyPanel c={loadedCase} query={{ x: 'X', y: 'Y' }} />
+```
+
+Pass a `LoadedCase` as `c`, a model document as `doc`, or a bundled `caseId`.
+`query` chooses the initial intervention `x`, outcome `y`, and optional observed condition `w` by variable ID.
+The three IDs must be distinct endogenous variables; without `query`, the first two endogenous variables are used as `x` and `y`.
+`locale` defaults to the surrounding `LocaleProvider`, or `zh-TW`.
+
+The panel shows an observational formula and its derivation, or the hedge that prevents identification.
+When the original case has a prior, the panel compares the formula with `do()` at value 1 for Boolean variables and the first domain value for other variables.
+Edge edits change the graph, not the model's equations or prior, so numerical checks are unavailable until the original edges are restored.
+
+### Probability views
+
 - `<ProbabilityPanel view="adjust" adjust={{ x: 'X', y: 'Y', sets? }}>`: a switch in the head picks
   the grouping (`sets`, default every grouping of the other endogenous variables, at most three of
   them; more throw); the grouped variables are ringed with 分組 under them, and only the non-causal

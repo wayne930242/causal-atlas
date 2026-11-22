@@ -59,6 +59,8 @@ function story(item: string, n: number, component: ComponentId, source: ModelSou
 const basics: Story[] = [
   { id: 'playground-basic', component: 'playground', source: C('rock-throwing'), args: {} },
   { id: 'probability-basic', component: 'probability', source: L('m03-sprinkler'), args: {} },
+  { id: 'identify-basic', component: 'identify', source: L('m05-frontdoor'), args: { query: { x: 'X', y: 'Y' } } },
+  { id: 'identify-bow', component: 'identify', source: L('m06-bow-a'), args: { query: { x: 'X', y: 'Y' } } },
   { id: 'lanes-basic', component: 'lanes', source: C('rock-throwing'), args: { interventions: { SH: 0 }, actionLabel: '攔下小蘇的石頭' } },
   {
     id: 'lanes-witness',

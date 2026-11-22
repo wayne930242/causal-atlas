@@ -1,7 +1,7 @@
 import type { FocusEvent, PointerEvent } from 'react'
 import { useId, useRef } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
-import type { Assignment, Edge } from '../../engine/index.ts'
+import type { Assignment, Edge, Hedge } from '../../engine/index.ts'
 import { getVariable } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
 import type { NodeToggle } from '../i18n/messages.ts'
@@ -24,6 +24,10 @@ import { useNodeGestures } from './use-node-gestures.ts'
 export interface SignalGraphProps {
   readonly c: LoadedCase
   readonly shown: readonly string[]
+  /** Structural graph: show variable ids rather than readings and name arcs without a specific latent. */
+  readonly structural?: boolean
+  /** Identification failure: rings for F and F′, with the edges in F highlighted. */
+  readonly hedge?: Hedge
   /** Deterministic world to draw (after any do). Omit in probability mode. */
   readonly values?: Assignment
   /** The world before do(), to note changed values. */
@@ -104,6 +108,8 @@ export function SignalGraph(props: SignalGraphProps) {
   const {
     c,
     shown,
+    structural = false,
+    hedge,
     values,
     original,
     probs,
@@ -154,6 +160,7 @@ export function SignalGraph(props: SignalGraphProps) {
     {
       c,
       shown,
+      structural,
       values,
       original,
       probs,
@@ -167,6 +174,7 @@ export function SignalGraph(props: SignalGraphProps) {
       stochastic,
       removedEdges,
       witness,
+      hedge,
       holdNotes,
       defaults,
       paths,
@@ -210,6 +218,7 @@ export function SignalGraph(props: SignalGraphProps) {
   const hit = (key: string, x1: number, y1: number, x2: number, y2: number, text: string | undefined) =>
     text === undefined || onEdgeTip === undefined ? null : <line key={`${key}-hit`} x1={x1} y1={y1} x2={x2} y2={y2} className="ca-edge-hit" />
 
+  const inF = (id: string): boolean => hedge?.f.includes(id) === true
   const edgeEls = layout.edges.map((edge) => {
     if (edge.kind === 'cut') {
       const { key, x1, y1, x2, y2, mx, my, ux, uy, label: cutLabel } = edge
@@ -243,8 +252,9 @@ export function SignalGraph(props: SignalGraphProps) {
       )
     }
     const tip = pathTip(key, onPath)
+    const marked = key.split('>').every(inF)
     return (
-      <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath} {...tipProps(key, tip)}>
+      <g key={key} className="ca-edge" data-edge={key} data-state={live ? 'live' : 'idle'} data-path={onPath} data-hedge-edge={marked ? '' : undefined} {...tipProps(key, tip)}>
         {hit(key, x1, y1, x2, y2, tip)}
         <line
           x1={x1}
@@ -252,7 +262,7 @@ export function SignalGraph(props: SignalGraphProps) {
           x2={x2}
           y2={y2}
           className={cls}
-          markerEnd={`url(#${uid}-${onPath === 'open' ? 'open' : live ? 'live' : 'idle'})`}
+          markerEnd={`url(#${uid}-${marked ? 'hedge' : onPath === 'open' ? 'open' : live ? 'live' : 'idle'})`}
         />
       </g>
     )
@@ -269,7 +279,7 @@ export function SignalGraph(props: SignalGraphProps) {
     const cls = `ca-stroke-arc${onPath === undefined ? '' : ` ca-path-${onPath}`}`
     const box = label.box
     return (
-      <g key={key} className="ca-arc" data-arc={key} data-path={onPath}>
+      <g key={key} className="ca-arc" data-arc={key} data-path={onPath} data-hedge-edge={inF(plan.a) && inF(plan.b) ? '' : undefined}>
         <path d={`M${plan.start.x} ${plan.start.y}Q${plan.control.x} ${plan.control.y} ${plan.end.x} ${plan.end.y}`} className={cls} />
         <path d={arrowHead(plan.start, plan.start.x - plan.control.x, plan.start.y - plan.control.y)} className="ca-arc-head ca-fill-fg" />
         <path d={arrowHead(plan.end, plan.end.x - plan.control.x, plan.end.y - plan.control.y)} className="ca-arc-head ca-fill-fg" />
@@ -277,7 +287,7 @@ export function SignalGraph(props: SignalGraphProps) {
           {t.arc.label}
         </text>
         <foreignObject className="ca-arc-tip-box" x={box.x0} y={box.y0} width={box.x1 - box.x0} height={box.y1 - box.y0}>
-          <Tip tip={<Rich text={t.arc.tip(plan.via, plan.a, plan.b)} ids={c.model.byId} />} className="ca-arc-tip">
+          <Tip tip={structural ? t.identify.arc : <Rich text={t.arc.tip(plan.via, plan.a, plan.b)} ids={c.model.byId} />} className="ca-arc-tip">
             <span className="ca-arc-hit">{t.arc.label}</span>
           </Tip>
         </foreignObject>
@@ -387,6 +397,8 @@ export function SignalGraph(props: SignalGraphProps) {
           : { role: 'img', 'aria-label': aria })}
         {...hoverHandlers(id)}
       >
+        {inF(id) && <circle r={R + 9} className="ca-hedge-ring" data-hedge="f" data-member={id} />}
+        {hedge?.fPrime.includes(id) === true && <circle r={R + 16} className="ca-hedge-inner" data-hedge="f-prime" data-member={id} />}
         {lit.includes(id) && <circle r={R + 14} className="ca-lit-ring" data-lit={id} />}
         <circle r={R + 12} className="ca-focus-ring" />
         {open === id && <circle r={R + 12} className="ca-open-ring" />}
@@ -425,9 +437,9 @@ export function SignalGraph(props: SignalGraphProps) {
               y={boolean ? 7.5 : 5}
               textAnchor="middle"
               className={`ca-mono ca-svg-bold ${filled ? 'ca-fill-bg-text' : ''}`}
-              fontSize={boolean || text.length <= 2 ? 21 : 13}
+              fontSize={structural ? 14 : boolean || text.length <= 2 ? 21 : 13}
             >
-              {text}
+              {structural ? sub(id) : text}
             </text>
           </>
         )}
@@ -484,8 +496,8 @@ export function SignalGraph(props: SignalGraphProps) {
           </g>
         )}
         <text y={block.labelY} textAnchor="middle" className="ca-svg-label">
-          <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
-          {name === '' ? null : ` ${name}`}
+          {!structural && <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>}
+          {name === '' ? null : structural ? name : ` ${name}`}
         </text>
         {bars !== undefined
           ? <BarChart id={id} labels={bars.map(formatValue)} dist={dist} block={block} barText={barText} />
@@ -527,6 +539,9 @@ export function SignalGraph(props: SignalGraphProps) {
         <marker id={`${uid}-open`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
           <path d="M0 0.5L10 5L0 9.5z" className="ca-fill-accent" />
         </marker>
+        {hedge !== undefined && <marker id={`${uid}-hedge`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+          <path d="M0 0.5L10 5L0 9.5z" className="ca-hedge-arrow" />
+        </marker>}
         <marker id={`${uid}-idle`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
           <path d="M0 0.5L10 5L0 9.5z" className="ca-fill-idle" />
         </marker>

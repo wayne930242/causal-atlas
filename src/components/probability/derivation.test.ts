@@ -14,7 +14,8 @@ import { SIDE_TOLERANCE, calculusView, derivationSteps, initialRuleState, isCalc
 /**
  * The anchor of the generated derivations: every step derive() writes, put through the rules
  * view's own check on the full model, is licensed (a rule step's pair is separated on its cut graph
- * and its two sides agree at every assignment; a calculus step's sides agree), the steps chain from
+ * and its two sides agree wherever they can be compared; a calculus step's sides agree wherever both
+ * are defined), the steps chain from
  * P(y | do(x), w) to the last expression, and that expression equals identify()'s formula.
  */
 
@@ -29,9 +30,20 @@ interface Checked {
 
 function checkDerivation(c: LoadedCase, prior: Prior, d: DeriveResult & { identifiable: true }, formula: DoExpr): Checked {
   const steps = derivationSteps(d.steps)
-  const verdicts = steps.map((s) => (isCalculus(s) ? calculusView(c, prior, s).verdict : ruleView(c, prior, s, initialRuleState(c, s)).verdict))
   const where = `${c.data.id}: ${probExprText(d.query, { names: c.model.endogenous })}`
-  verdicts.forEach((v, i) => expect(['applies', 'swap', 'holds'], `${where} step ${i + 1} (${stepText(steps[i])})`).toContain(v))
+  const verdicts = steps.map((step, i) => {
+    const label = `${where} step ${i + 1} (${stepText(step)})`
+    if (isCalculus(step)) {
+      const { check, verdict } = calculusView(c, prior, step)
+      expect(check, label).toBeDefined()
+      // Some lesson models have structural zeros at every assignment of an intermediate identity.
+      expect(verdict, label).toBe(check?.comparison.rows === 0 ? 'unavailable' : 'holds')
+      return verdict
+    }
+    const view = ruleView(c, prior, step, initialRuleState(c, step))
+    expect(['applies', 'swap'], label).toContain(view.verdict)
+    return view.verdict
+  })
   // The chain: from the query, each step continuing the last, to the formula.
   expect(d.steps[0]?.from ?? d.query).toEqual(d.query)
   for (let i = 1; i < d.steps.length; i++) expect(d.steps[i].from, `${where} step ${i + 1}`).toBe(d.steps[i - 1].to)

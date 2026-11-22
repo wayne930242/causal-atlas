@@ -27,6 +27,14 @@ afterEach(() => {
 })
 
 describe('Explorer', () => {
+  it('opens the identification stories with their own model and query', () => {
+    open('#/explorer?c=identify&s=identify-basic')
+    expect(document.querySelector('[data-identification]')?.getAttribute('data-identification')).toBe('identified')
+    fireEvent.click(screen.getByRole('button', { name: 'identify-bow' }))
+    expect(document.querySelector('[data-identification]')?.getAttribute('data-identification')).toBe('hedge')
+    expect(snippet(parseHash(window.location.hash).state).jsx).toContain('IdentifyPanel')
+  })
+
   it('opens the mediation story at step 1 and remounts at step 3 without a history entry', async () => {
     open('#/explorer?c=probability&s=mediation')
     await waitFor(() => expect(med()?.dataset.step).toBe('1'))

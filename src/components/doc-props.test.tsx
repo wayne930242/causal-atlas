@@ -6,7 +6,7 @@ import { getCase } from '../data/index.ts'
 import { caseToDoc } from '../data/model-doc.ts'
 import type { ModelDoc } from '../data/schema.ts'
 import { modelDocSchema } from '../data/schema.ts'
-import { CasePage, CausalPlayground, ModelEditor, ProbabilityPanel, WorldLanes } from './index.ts'
+import { CasePage, CausalPlayground, IdentifyPanel, ModelEditor, ProbabilityPanel, WorldLanes } from './index.ts'
 import { docOrigin } from './model/doc-case.ts'
 
 const valueDoc: ModelDoc = modelDocSchema.parse({
@@ -121,6 +121,19 @@ describe('ProbabilityPanel and WorldLanes with a doc', () => {
   it('an invalid doc shows its code in both', () => {
     expect(renderToString(createElement(ProbabilityPanel, { doc: bad }))).toMatch(/data-code="parse-/)
     expect(renderToString(createElement(WorldLanes, { doc: bad, interventions: {} }))).toMatch(/data-code="parse-/)
+  })
+})
+
+describe('IdentifyPanel with a doc', () => {
+  it('server-renders the query, identification and formula without a DOM', () => {
+    const html = renderToString(createElement(IdentifyPanel, { doc: probDoc, query: { x: 'R', y: 'W' }, locale: 'en' }))
+    expect(html).toContain('data-identification="identified"')
+    expect(html).toContain('Formula using only the observational distribution')
+    expect(html).toContain('class="katex"')
+  })
+
+  it('displays doc validation problems', () => {
+    expect(renderToString(createElement(IdentifyPanel, { doc: bad }))).toMatch(/data-code="parse-/)
   })
 })
 

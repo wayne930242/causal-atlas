@@ -1,6 +1,6 @@
 import { Component, useMemo } from 'react'
 import type { ComponentType, ReactNode } from 'react'
-import { CasePage, CausalPlayground, CiteBlock, ModelEditor, ProbabilityPanel, WorldLanes } from '../../components/index.ts'
+import { CasePage, CausalPlayground, CiteBlock, IdentifyPanel, ModelEditor, ProbabilityPanel, WorldLanes } from '../../components/index.ts'
 import { problemOf } from '../../engine/index.ts'
 import { sourceDoc, sourceProps } from './model-info.ts'
 import type { ExplorerState } from './url-state.ts'
@@ -8,6 +8,7 @@ import type { ExplorerState } from './url-state.ts'
 type Loose = ComponentType<Record<string, unknown>>
 const Playground = CausalPlayground as unknown as Loose
 const Probability = ProbabilityPanel as unknown as Loose
+const Identify = IdentifyPanel as unknown as Loose
 const Lanes = WorldLanes as unknown as Loose
 const Case = CasePage as unknown as Loose
 const Editor = ModelEditor as unknown as Loose
@@ -38,6 +39,9 @@ export function Figure({ state }: { readonly state: ExplorerState }) {
     case 'probability':
       if (props === undefined) throw new Error('Pick a model.')
       return <Probability {...props} {...a} />
+    case 'identify':
+      if (props === undefined) throw new Error('Pick a model.')
+      return <Identify {...props} {...a} />
     case 'lanes':
       if (props === undefined) throw new Error('Pick a model.')
       return <Lanes {...props} {...a} />

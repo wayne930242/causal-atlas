@@ -166,6 +166,8 @@ export function controlsFor(id: ComponentId, info: ModelInfo | undefined, args: 
           ],
         },
       ]
+    case 'identify':
+      return [{ key: 'query', label: label('query'), kind: 'json' }]
     case 'probability': {
       const view = typeof args.view === 'string' ? args.view : 'sliders'
       const only = (v: string): string | undefined => (view === v ? undefined : reason('view').replace('{view}', v))

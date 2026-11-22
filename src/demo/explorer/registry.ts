@@ -1,6 +1,6 @@
 import { DEFAULT_URL } from '../../components/export/cite.ts'
 
-export type ComponentId = 'playground' | 'probability' | 'lanes' | 'case' | 'editor' | 'cite'
+export type ComponentId = 'playground' | 'probability' | 'identify' | 'lanes' | 'case' | 'editor' | 'cite'
 
 /** How a prop travels in the hash: raw text, a number, a boolean, or JSON. */
 export type PropKind = 'string' | 'number' | 'boolean' | 'json'
@@ -71,6 +71,13 @@ export const COMPONENTS: readonly ComponentDef[] = [
       NOTATION,
       DIGITS,
     ],
+  },
+  {
+    id: 'identify',
+    jsx: 'IdentifyPanel',
+    sources: ['lesson', 'case'],
+    blog: 'none',
+    props: [{ name: 'query', kind: 'json' }],
   },
   {
     id: 'lanes',
