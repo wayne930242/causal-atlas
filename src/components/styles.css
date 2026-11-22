@@ -2873,20 +2873,60 @@
   padding-top: 8px;
 }
 
-/* The cut graph's legend: only the marks the step draws, each with a swatch drawn like it. */
-.ca-rules-legend {
+/*
+ * The cut graph's legend: a side panel beside the graph when both fit at the graph's own width, else
+ * a full-width block under it, so the panel never shrinks the graph. The graph keeps its natural
+ * width (flex-shrink 0, capped at the line) and takes nearly all the spare room on a shared line
+ * (grow 1000 against 1); a wrapped legend alone on its line fills it. Only the marks the step
+ * draws, each with a swatch drawn like it.
+ */
+.ca-rules-stage {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 14px;
-  margin: 6px 0 0;
+  align-items: flex-start;
+  gap: 8px 16px;
+}
+
+.ca-rules-stage > .ca-graph-wrap {
+  flex: 1000 0 auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.ca-rules-aside {
+  flex: 1 0 12.5rem;
+  min-width: 0;
+  padding: 2px 0 2px 12px;
+  border-left: 1px solid var(--border);
+}
+
+.ca-rules-aside > .ca-rules-aside-head {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.ca-rules-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .ca-rules-legend li {
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  align-items: flex-start;
   gap: 5px;
+  line-height: 1.45;
+}
+
+.ca-rules-legend .ca-rules-swatch {
+  margin-top: 1px;
+}
+
+.ca-rules-legend li[data-mark='pick'] {
+  margin-top: 2px;
 }
 
 .ca-node-tip {
@@ -2906,6 +2946,13 @@
 .ca-rules-equal {
   margin: 0;
   padding: 8px 0 4px;
+  font-size: 13px;
+}
+
+/* The switch row: the prediction with the switch off and, once a click set it, on. */
+.ca-rules-switch {
+  margin: 0;
+  padding: 6px 0 2px;
   font-size: 13px;
 }
 

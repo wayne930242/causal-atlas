@@ -149,7 +149,7 @@ export const EN: Messages = {
     `${who}, ${state}${forced === undefined ? '' : `, set by intervention to ${forced}`}${seen === undefined ? '' : `, observed as ${seen}`}${before === undefined ? '' : `, was ${before}`}`,
   nodeHint: (toggle, movable) =>
     [
-      toggle === undefined ? '' : toggle === 'pick' ? 'click to add it to the known set or take it out' : toggle === 'do' ? 'click to open a menu to intervene' : toggle === 'observe' ? 'click to open a menu to observe it' : 'click to open a menu to observe or intervene',
+      toggle === undefined ? '' : toggle === 'pick' ? 'click to add it to the known set or take it out' : toggle === 'switch' ? 'click to turn the switch: off, then each value in turn' : toggle === 'do' ? 'click to open a menu to intervene' : toggle === 'observe' ? 'click to open a menu to observe it' : 'click to open a menu to observe or intervene',
       movable ? 'drag or use the arrow keys to move' : '',
     ]
       .filter((h) => h !== '')
@@ -297,7 +297,9 @@ export const EN: Messages = {
       cut: 'Dashed with “cut”: a cut arrow',
       open: 'Lit arrows: an open path',
       blocked: 'Faint dashes: a blocked path',
+      switchSet: 'Clamp with a tag: the value a switch sets, arrows into it cut',
       pick: 'Click a node to add it to the known set or take it out.',
+      pickSwitch: 'Click a switch: off → set to 0 → set to 1 → off.',
     },
     role: {
       pair: 'checked pair',
@@ -306,13 +308,22 @@ export const EN: Messages = {
       set: 'set by do',
       testCut: 'arrows in cut for the test only',
       cutOut: 'arrows out cut for the test only',
+      switchSet: 'set by its switch',
       none: 'no mark',
     },
     roles: (list) => list.join(' · '),
     nodeTip: (roles, known) => `${roles.replace(/^./, (ch) => ch.toUpperCase())}. Click to ${known ? 'take it out of' : 'add it to'} the known set.`,
+    switchNodeTip: (roles, next) => `${roles.replace(/^./, (ch) => ch.toUpperCase())}. Click to ${next === undefined ? 'turn it off' : `set ${next}`}.`,
+    switchOff: (switches) => `${and(switches)} off: `,
+    switchOn: (assignment) => `set ${assignment}: `,
+    switchJoin: '; ',
+    switchSame: 'the switch does not change the prediction',
+    switchDiffer: 'the switch changes the prediction',
+    switchHint: (switches) => `Click ${and(switches)} to set the variable it switches and see whether the prediction moves`,
+    noData: '— (the evidence has probability 0)',
     tip: 'The cut graph is the one the lesson names: cut arrows are struck, and each variable whose arrows into it are cut is clamped; once arrows are cut it is no longer the model, so no probabilities are drawn. Click a node to add it to the known set or take it out (no value); a step button restores that step\'s known set. Both sides of the equation are computed on the full model. Rule 3 cuts the arrows into Z(W), which the lesson also names.',
     switchTip:
-      'The switch graph is the expression\'s graph after its interventions: only the arrows into the variables both sides set by do are cut; then Z gets a switch F_Z with one arrow F_Z → Z, and no arrow into Z is cut. Given the variables both sides observe, the sides can be swapped when F_Z and Y are d-separated, and not when a path is open. Rule 2 also gives Z; rule 3 does not. No probabilities are drawn; click a node to add it to the known set or take it out; both sides of the equation are computed on the full model.',
+      'The switch graph is the expression\'s graph after its interventions: only the arrows into the variables both sides set by do are cut; then Z gets a switch F_Z with one arrow F_Z → Z, and no arrow into Z is cut. Given the variables both sides observe, the sides can be swapped when F_Z and Y are d-separated, and not when a path is open. Rule 2 also gives Z; rule 3 does not. No probabilities are drawn; click a node to add it to the known set or take it out. Click the switch F_Z to set Z to each value in turn: the row under the graph gives the prediction with the switch off and on, on the full model, to compare with the verdict. A switch cannot join the known set. Both sides of the equation are computed on the full model.',
   },
   normality: {
     kicker: 'Deviations',

@@ -1,6 +1,6 @@
 import type { LoadedCase } from '../../data/load.ts'
-import type { DSeparationResult, Edge, Interventions, Prior } from '../../engine/index.ts'
-import { dSeparation, getVariable, probability, switchId, withSwitches } from '../../engine/index.ts'
+import type { Assignment, DSeparationResult, Edge, Interventions, Prior, Value } from '../../engine/index.ts'
+import { ModelError, dSeparation, domainValues, formatValue, getVariable, probability, switchId, valuesEqual, withSwitches } from '../../engine/index.ts'
 import type { PathMarks } from '../model/dsep-view.ts'
 import { doText } from '../model/wording.ts'
 import { latentArcs } from '../graph/graph-layout.ts'
@@ -61,6 +61,7 @@ export interface RuleView {
   /** The step tests a switch (its pair names one): no arrow is cut for the test. */
   readonly switchTest: boolean
   readonly result: DSeparationResult
+  /** The arrows drawn cut: the step's, then those into a variable its switch sets (not the switch's own arrow). */
   readonly removed: readonly Edge[]
   readonly marks: PathMarks
   /** Both sides' values on the full model, when the step has an equation. */
@@ -80,8 +81,13 @@ export function setInExpression(step: RuleStep): readonly string[] | undefined {
   return Object.keys(a.do ?? {}).filter((id) => right.includes(id))
 }
 
-/** The step's graph with `known` as the known set: d-separation of the pair, the cut edges, the marks, both sides, the verdict. */
-export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: readonly string[]): RuleView {
+/**
+ * The step's graph with `known` as the known set: d-separation of the pair, the cut edges, the
+ * marks, both sides, the verdict. `setting` holds the switched variables a click set (`{ Z: 1 }`,
+ * the switch on): their incoming arrows are drawn cut, except the switch's own; the test and the
+ * verdict stay those of the switch graph, which holds both regimes.
+ */
+export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: readonly string[], setting: Assignment = {}): RuleView {
   const [x, y] = step.pair
   const cutIn = step.cutIn ?? []
   const cutOut = step.cutOut ?? []
@@ -91,6 +97,12 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: rea
   const switchNodes = switches.map(switchId)
   const switchTest = step.pair.some((id) => switchNodes.includes(id))
   for (const id of [x, y, ...known, ...cutIn, ...cutOut]) getVariable(model, id)
+  for (const id of known) {
+    if (switchNodes.includes(id)) throw new Error(`${where}: switch ${id} cannot be in the known set`)
+  }
+  for (const id of Object.keys(setting)) {
+    if (!switches.includes(id)) throw new Error(`${where}: ${id} has no switch to set it`)
+  }
   for (const id of switches) {
     if (cutIn.includes(id)) throw new Error(`${where}: ${id} has a switch, so the arrows into it are not cut (drop it from cutIn)`)
   }
@@ -102,7 +114,9 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: rea
   }
   const graph: LoadedCase = switches.length === 0 ? c : { ...c, model }
   const result = dSeparation(model, x, y, known, cutIn, cutOut)
-  const removed = model.edges.filter((e) => cutIn.includes(e.to) || cutOut.includes(e.from))
+  const removed = model.edges.filter(
+    (e) => cutIn.includes(e.to) || cutOut.includes(e.from) || (e.to in setting && e.from !== switchId(e.to)),
+  )
   const key = (e: { from: string; to: string }): string => `${e.from}>${e.to}`
   const open = new Set(result.paths.filter((p) => p.open).flatMap((p) => p.edges.map(key)))
   const blocked = new Set(result.paths.filter((p) => !p.open).flatMap((p) => p.edges.map(key)).filter((k) => !open.has(k)))
@@ -115,14 +129,14 @@ export function ruleView(c: LoadedCase, prior: Prior, step: RuleStep, known: rea
 }
 
 /** A mark the step's graph can draw, in the legend's order. */
-export type RuleMark = 'pair' | 'switch' | 'known' | 'clamp' | 'testClamp' | 'cut' | 'open' | 'blocked'
+export type RuleMark = 'pair' | 'switch' | 'known' | 'clamp' | 'testClamp' | 'switchSet' | 'cut' | 'open' | 'blocked'
 
 /**
  * What a node is in a step, by its part in the test: one of the pair, a switch, given (known), set
  * by the expression's do() (arrows into it cut), its arrows in cut for the test only (the
- * expression does not set it), its arrows out cut for the test.
+ * expression does not set it), its arrows out cut for the test, set by its switch (a click).
  */
-export type RuleRole = 'pair' | 'switch' | 'known' | 'set' | 'testCut' | 'cutOut'
+export type RuleRole = 'pair' | 'switch' | 'known' | 'set' | 'testCut' | 'cutOut' | 'switchSet'
 
 /**
  * The variables of `cutIn` the expression sets by do() on both sides (drawn with the do() clamp),
@@ -135,8 +149,8 @@ export function clampSplit(step: RuleStep): { readonly set: readonly string[]; r
   return { set: cutIn.filter((id) => inExpr.includes(id)), test: cutIn.filter((id) => !inExpr.includes(id)) }
 }
 
-/** The roles of `id` at `step` with `known` as the known set, in a fixed order; empty when it has none. */
-export function nodeRoles(step: RuleStep, known: readonly string[], id: string): readonly RuleRole[] {
+/** The roles of `id` at `step` with `known` as the known set and `setting` the switched variables set, in a fixed order; empty when it has none. */
+export function nodeRoles(step: RuleStep, known: readonly string[], id: string, setting: Assignment = {}): readonly RuleRole[] {
   const roles: RuleRole[] = []
   const { set, test } = clampSplit(step)
   if (step.pair.includes(id)) roles.push('pair')
@@ -145,11 +159,12 @@ export function nodeRoles(step: RuleStep, known: readonly string[], id: string):
   if (set.includes(id)) roles.push('set')
   if (test.includes(id)) roles.push('testCut')
   if ((step.cutOut ?? []).includes(id)) roles.push('cutOut')
+  if (id in setting) roles.push('switchSet')
   return roles
 }
 
 /** The marks drawn on the graph of `shown` nodes (switches included): only those present, so the legend names nothing that is not there. */
-export function presentMarks(step: RuleStep, view: RuleView, known: readonly string[], shown: readonly string[]): readonly RuleMark[] {
+export function presentMarks(step: RuleStep, view: RuleView, known: readonly string[], shown: readonly string[], setting: Assignment = {}): readonly RuleMark[] {
   const c = view.graph
   const drawn = (id: string): boolean => shown.includes(id)
   const { open, blocked } = view.marks
@@ -172,6 +187,7 @@ export function presentMarks(step: RuleStep, view: RuleView, known: readonly str
   if (known.some(drawn)) marks.push('known')
   if (set.some(drawn)) marks.push('clamp')
   if (test.some(drawn)) marks.push('testClamp')
+  if (Object.keys(setting).some(drawn)) marks.push('switchSet')
   if (view.removed.some((e) => drawn(e.from) && drawn(e.to))) marks.push('cut')
   if (edgeKeys(open) || arcs.some((ks) => ks.every((k) => open.has(k)))) marks.push('open')
   if (edgeKeys(blocked) || arcs.some((ks) => ks.every(onPath) && !ks.every((k) => open.has(k)))) marks.push('blocked')
@@ -182,4 +198,68 @@ export function presentMarks(step: RuleStep, view: RuleView, known: readonly str
 export function sideText(s: RuleSide): string {
   const parts = [(s.given ?? '').replace(/\s+and\s+/g, ', '), s.do === undefined || Object.keys(s.do).length === 0 ? '' : doText(s.do)].filter((p) => p !== '')
   return parts.length === 0 ? `P(${s.event})` : `P(${s.event} | ${parts.join(', ')})`
+}
+
+/** The next state of the switch on `id`: off, then each value of the variable's domain in turn (0, 1), then off again (undefined). */
+export function nextSwitchValue(c: LoadedCase, id: string, now: Value | undefined): Value | undefined {
+  const values = domainValues(getVariable(c.model, id).domain)
+  if (now === undefined) return values[0]
+  const i = values.findIndex((v) => valuesEqual(v, now))
+  return i < 0 || i === values.length - 1 ? undefined : values[i + 1]
+}
+
+/** One reading of the switch test's target: the query and its value on the full model (undefined when the evidence has probability 0). */
+export interface SwitchQuery {
+  readonly side: RuleSide
+  readonly value: number | undefined
+}
+
+/**
+ * What the switch does to the prediction of the pair's other end, on the full model: off (the
+ * known set observed, the switched variable at the value it is set to, else 1) and, once a click
+ * set it, on (the switched variable set by do(), the rest of the known set observed). `same` says
+ * whether the two agree; the d-separation verdict says whether they must.
+ */
+export interface SwitchReading {
+  readonly switches: readonly string[]
+  readonly off: SwitchQuery
+  readonly on?: SwitchQuery
+  readonly same?: boolean
+}
+
+/** A variable's value in the step's equation (`W=1` in a side's `given`), else undefined. */
+function equationValue(step: RuleStep, id: string): string | undefined {
+  for (const s of step.equal ?? []) {
+    for (const part of (s.given ?? '').split(/\s+and\s+/)) {
+      const [k, v] = part.split('=').map((x) => x.trim())
+      if (k === id && v !== undefined && v !== '') return v
+    }
+  }
+  return undefined
+}
+
+/** The switch test's reading under `setting`, or undefined when the step tests no switch. */
+export function switchReading(c: LoadedCase, prior: Prior, step: RuleStep, known: readonly string[], setting: Assignment): SwitchReading | undefined {
+  const switches = step.switches ?? []
+  const nodes = switches.map(switchId)
+  const target = step.pair.find((id) => !nodes.includes(id))
+  if (target === undefined || !step.pair.some((id) => nodes.includes(id))) return undefined
+  const first = step.equal?.[0].event
+  const event = first !== undefined && first.split('=')[0]?.trim() === target ? first : `${target}=1`
+  const valueOf = (id: string): string => (id in setting ? formatValue(setting[id]) : (equationValue(step, id) ?? '1'))
+  const given = (ids: readonly string[]): string | undefined => (ids.length === 0 ? undefined : ids.map((id) => `${id}=${valueOf(id)}`).join(' and '))
+  const read = (side: RuleSide): SwitchQuery => {
+    try {
+      return { side, value: probability(c.model, prior, side).value }
+    } catch (error) {
+      if (error instanceof ModelError && error.problem.code === 'zero-probability-evidence') return { side, value: undefined }
+      throw error
+    }
+  }
+  const off = read({ event, given: given(known) })
+  const set = Object.keys(setting)
+  if (set.length === 0) return { switches: nodes, off }
+  const on = read({ event, given: given(known.filter((id) => !set.includes(id))), do: setting })
+  const same = off.value !== undefined && on.value !== undefined ? Math.abs(off.value - on.value) < SIDE_TOLERANCE : undefined
+  return { switches: nodes, off, on, same }
 }

@@ -25,4 +25,4 @@ export type DraftIssue =
 export type DraftWording = { readonly [K in DraftIssue['code']]: (issue: Extract<DraftIssue, { code: K }>) => string }
 
 /** What a click on a node does: open its menu to observe or intervene, or to intervene only, or pick it into or out of a known set. */
-export type NodeToggle = 'observeOrDo' | 'observe' | 'do' | 'pick'
+export type NodeToggle = 'observeOrDo' | 'observe' | 'do' | 'pick' | 'switch'

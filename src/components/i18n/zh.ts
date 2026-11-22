@@ -248,7 +248,7 @@ export const ZH = {
     `${who}，${state}${forced === undefined ? '' : `，已干預成 ${forced}`}${seen === undefined ? '' : `，已觀察到 ${seen}`}${before === undefined ? '' : `，原本 ${before}`}`,
   nodeHint: (toggle: NodeToggle | undefined, movable: boolean): string =>
     [
-      toggle === undefined ? '' : toggle === 'pick' ? '按一下加進或移出已知集合' : toggle === 'do' ? '按一下打開選單，可以干預' : toggle === 'observe' ? '按一下打開選單，可以觀察' : '按一下打開選單，可以觀察或干預',
+      toggle === undefined ? '' : toggle === 'pick' ? '按一下加進或移出已知集合' : toggle === 'switch' ? '按一下切換開關：不動，再依序設定成各個值' : toggle === 'do' ? '按一下打開選單，可以干預' : toggle === 'observe' ? '按一下打開選單，可以觀察' : '按一下打開選單，可以觀察或干預',
       movable ? '拖曳或用方向鍵移動' : '',
     ]
       .filter((h) => h !== '')
@@ -397,7 +397,9 @@ export const ZH = {
       cut: '虛線加「切斷」：剪掉的箭頭',
       open: '亮起的箭頭：暢通的路',
       blocked: '淡虛線：堵住的路',
+      switchSet: '夾角加標籤：開關設定的值，指向它的箭頭剪掉',
       pick: '點節點把它加進或移出已知集合。',
+      pickSwitch: '點開關：不動 → 設定 0 → 設定 1 → 不動。',
     },
     role: {
       pair: '要檢查的變數',
@@ -406,13 +408,22 @@ export const ZH = {
       set: '已由 do 設定',
       testCut: '只為檢驗剪掉指向它的箭頭',
       cutOut: '只為檢驗剪掉出去的箭頭',
+      switchSet: '由開關設定',
       none: '沒有標記',
     },
     roles: (list: readonly string[]): string => list.join('・'),
     nodeTip: (roles: string, known: boolean): string => `${roles}。點一下${known ? '移出' : '加進'}已知集合`,
+    switchNodeTip: (roles: string, next: string | undefined): string => `${roles}。點一下${next === undefined ? '回到不動' : `設定 ${next}`}`,
+    switchOff: (switches: readonly string[]): string => `${switches.join('、')} 不動：`,
+    switchOn: (assignment: string): string => `設定 ${assignment}：`,
+    switchJoin: '；',
+    switchSame: '開關沒有改變預測',
+    switchDiffer: '開關改變了預測',
+    switchHint: (switches: readonly string[]): string => `點 ${switches.join('、')} 設定它開關的變數，看預測變不變`,
+    noData: '—（證據的機率是 0）',
     tip: '截斷圖照課文寫的剪法畫：被剪的箭頭畫成切斷，箭頭被剪掉的變數加上夾角；剪掉箭頭之後不再是原本的模型，圖上不寫機率。點節點把它加進或移出已知集合（不帶值）；按步驟鈕回到那一步原本的已知集合。等式的兩邊用完整模型算。規則三剪掉指向 Z(W) 的箭頭，Z(W) 也由課文寫明。',
     switchTip:
-      '開關圖是式子干預後的圖：只剪掉指向兩邊都已用 do 設定的變數的箭頭，再替 Z 加一個開關 F_Z 和一支箭頭 F_Z → Z，指向 Z 的箭頭不剪。給定兩邊共同看到的變數，F_Z 與 Y 被 d 分隔，兩邊就可換；有一條路暢通就不可換。規則二也給定 Z，規則三不給定。圖上不寫機率，點節點把它加進或移出已知集合；等式的兩邊用完整模型算。',
+      '開關圖是式子干預後的圖：只剪掉指向兩邊都已用 do 設定的變數的箭頭，再替 Z 加一個開關 F_Z 和一支箭頭 F_Z → Z，指向 Z 的箭頭不剪。給定兩邊共同看到的變數，F_Z 與 Y 被 d 分隔，兩邊就可換；有一條路暢通就不可換。規則二也給定 Z，規則三不給定。圖上不寫機率，點節點把它加進或移出已知集合；點開關 F_Z 依序設定 Z 的值，圖下的列用完整模型算出開關不動與設定時的預測，對照分隔與否。開關不能加進已知集合。等式的兩邊用完整模型算。',
   },
   normality: {
     kicker: '偏離預設值',

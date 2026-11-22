@@ -297,7 +297,7 @@ export function SignalGraph(props: SignalGraphProps) {
           data-block={block.side}
           transform={`translate(${p.x} ${p.y})`}
           {...(onPick !== undefined
-            ? { role: 'button', tabIndex: 0, 'aria-label': t.withHint(aria, t.nodeHint('pick', false)), ...nodeHandlers(id, () => onPick(id)) }
+            ? { role: 'button', tabIndex: 0, 'aria-label': t.withHint(aria, t.nodeHint('switch', false)), ...nodeHandlers(id, () => onPick(id)) }
             : { role: 'img', 'aria-label': aria })}
           {...hoverHandlers(id)}
         >

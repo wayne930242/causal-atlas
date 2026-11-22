@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { CausalPlayground, ModelEditor, ProbabilityPanel } from '../components/index.ts'
 import { FRONT_DOOR_STEPS } from './front-door-steps.ts'
 import { lessonModel } from './lesson-models.ts'
+import { SWITCH_RULE_THREE_EXCEPTION, SWITCH_RULE_TWO } from './switch-steps.ts'
 
 /** The doctor's priors (Halpern Ex. 6.2.4) with the probability S that the drug has the side effect. */
 const doctorBelieves = (s: number) => ({ independent: { S: s, H: 0.3, N: 0.05, U_T: 1 } })
@@ -33,6 +34,12 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
     />
   ),
   'cut-graphs': () => <ProbabilityPanel doc={{ ...lessonModel('m05-frontdoor'), latent_as_arcs: ['U'] }} view="rules" rules={FRONT_DOOR_STEPS} />,
+  'switch-graphs': () => (
+    <>
+      <ProbabilityPanel doc={{ ...lessonModel('m05-frontdoor'), latent_as_arcs: ['U'] }} view="rules" rules={SWITCH_RULE_TWO} />
+      <ProbabilityPanel doc={lessonModel('m06-rule3-exception')} view="rules" rules={SWITCH_RULE_THREE_EXCEPTION} />
+    </>
+  ),
   'confound-slider': () => <CausalPlayground caseId="smoking-lesion" sliders={['N_S1']} decision />,
   utilities: () => (
     <>

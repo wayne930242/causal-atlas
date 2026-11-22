@@ -1,0 +1,102 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "規則三：已知模擬考成績時，設定補習會改變收入的預測",
+  "model": {
+    "variables": [
+      {
+        "id": "U",
+        "label": {
+          "zh-TW": "看不到的家境",
+          "en": "Unobserved family background"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z1",
+        "label": { "zh-TW": "家境好時補習", "en": "Tutored, well-off family" },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Z0",
+        "label": { "zh-TW": "家境不好時補習", "en": "Tutored, poorer family" },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_W1",
+        "label": {
+          "zh-TW": "補習時模擬考高分",
+          "en": "High mock score, tutored"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_W0",
+        "label": {
+          "zh-TW": "沒補習時模擬考高分",
+          "en": "High mock score, not tutored"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y1",
+        "label": {
+          "zh-TW": "家境好時收入高",
+          "en": "High income, well-off family"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "N_Y0",
+        "label": {
+          "zh-TW": "家境不好時收入高",
+          "en": "High income, poorer family"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Z",
+        "label": { "zh-TW": "補習", "en": "Tutored" },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "W",
+        "label": { "zh-TW": "模擬考高分", "en": "High mock score" },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "Y",
+        "label": { "zh-TW": "收入高", "en": "High income" },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "Z": "if U then N_Z1 else N_Z0",
+      "W": "if Z then N_W1 else N_W0",
+      "Y": "if U then N_Y1 else N_Y0"
+    }
+  },
+  "priors": {
+    "independent": {
+      "U": 0.5,
+      "N_Z1": 0.9,
+      "N_Z0": 0.1,
+      "N_W1": 0.9,
+      "N_W0": 0.1,
+      "N_Y1": 0.8,
+      "N_Y0": 0.2
+    }
+  },
+  "latent_as_arcs": [],
+  "show_exogenous": ["U"]
+}
