@@ -144,7 +144,7 @@ export interface SignalLayout {
   readonly pos: ReadonlyMap<string, Point>
   readonly blocks: ReadonlyMap<string, Block>
   readonly tags: ReadonlyMap<string, DoTag>
-  /** 固定（實際 v） or 固定（實際值） per held variable, when `holdNotes`. */
+  /** 固定為 w（實際 v） or 固定（實際值） per held variable, when `holdNotes`. */
   readonly holdNotes: ReadonlyMap<string, string>
   /** 偏離（預設 v） per node off its default. */
   readonly deviantNotes: ReadonlyMap<string, string>
@@ -282,14 +282,14 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     return { text, left, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
   }
 
-  /** 固定（實際 v） or 固定（實際值） for a held variable, when `holdNotes`. */
+  /** 固定為 w（實際 v） or 固定（實際值） for a held variable, when `holdNotes`. */
   const holdNote = (id: string): string | undefined => {
     if (!holdNotes || witness === undefined || !(id in witness)) return undefined
     // A probability graph has no actual world to compare with.
     if (prob) return t.witness.heldPlain
     const before = original?.[id]
     const now = values?.[id] ?? witness[id]
-    return before === undefined || valuesEqual(before, now) ? t.witness.heldActual : t.witness.held(formatValue(before))
+    return before === undefined || valuesEqual(before, now) ? t.witness.heldActual : t.witness.held(formatValue(now), formatValue(before))
   }
 
   /** 偏離（預設 v） for a node of a graph with values off its default. */

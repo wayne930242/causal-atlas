@@ -156,7 +156,7 @@ export const ZH = {
 
   // verdicts
   theory: {
-    butfor: '簡單反事實',
+    butfor: 'but-for 檢驗',
     'hp-original': 'HP 原始定義',
     'hp-updated': 'HP 更新定義',
     'hp-modified': 'HP 修正定義',
@@ -506,7 +506,8 @@ export const ZH = {
       notSufficient: (cause: string, effect: string): string => `固定在這些值時，${cause} 不足以讓 ${effect} 成立`,
       lessNormal: '這個世界不比實際世界正常',
     },
-    held: (value: string): string => `固定（實際 ${value}）`,
+    marks: { clamp: '紅色框角：改成別的值（do）', hold: '琥珀色虛線框：固定住', was: '原本：實際世界的值' },
+    held: (value: string, actual: string): string => `固定為 ${value}（實際 ${actual}）`,
     heldActual: '固定（實際值）',
     heldPlain: '固定',
   },

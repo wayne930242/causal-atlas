@@ -132,7 +132,14 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
   ),
   witness: () => (
     <>
-      <CausalPlayground caseId="forest-fire-disjunctive" verdicts={[{ cause: 'L=1', effect: 'FF=1' }]} />
+      <CausalPlayground caseId="forest-fire-disjunctive" presets={[
+        { label: '拿掉閃電', interventions: { L: 0 } },
+        { label: '火柴固定成沒丟，再拿掉閃電', interventions: { L: 0 }, hold: { MD: 0 } },
+        { label: '閃電和火柴一起拿掉', interventions: { L: 0, MD: 0 } },
+      ]} verdicts={[
+        { cause: 'L=1', effect: 'FF=1' },
+        { cause: 'L=1 and MD=1', effect: 'FF=1', theories: ['hp-original', 'hp-updated', 'hp-modified'] },
+      ]} />
       <CausalPlayground
         doc={lessonModel('m09-loaded-gun')}
         verdicts={[

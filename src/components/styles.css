@@ -2609,6 +2609,11 @@
   font-size: 13px;
 }
 
+.ca-witness-help > summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
 .ca-pg-now-kicker {
   font-size: 12px;
   font-weight: 700;

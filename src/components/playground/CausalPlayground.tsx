@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } fro
 import type { LoadedCase } from '../../data/load.ts'
 import type { CaseDecision, ModelDoc } from '../../data/schema.ts'
 import type { Assignment } from '../../engine/index.ts'
-import { parseCause, valuesEqual } from '../../engine/index.ts'
+import { valuesEqual } from '../../engine/index.ts'
 import { DEFAULT_URL, watermarkLine } from '../export/cite.ts'
 import { DEFAULT_EMBED_BASE, embedCode, embedHome, embedSrc, fitEmbedState, readEmbedState } from '../export/embed.ts'
 import type { Locale } from '../i18n/messages.ts'
@@ -104,9 +104,8 @@ export interface CausalPlaygroundOptions {
   /**
    * Actual-cause questions for a graph with values: per query a row of verdicts (but-for, the three
    * HP definitions, HP with normality when the model has defaults; or `theories`), each with
-   * 在圖上看 for its witness, and a line saying whether the world on the graph is a witness. A do()
-   * on a variable other than the cause is drawn held (固定). With several queries, the line answers
-   * the first whose cause is set away from its actual value.
+   * 在圖上看 for its witness, and a line saying whether the world on the graph is a witness. Only a preset's hold or the shown witness's W is drawn held.
+   * The status follows the clicked witness or the most specific matching cause.
    */
   readonly verdicts?: readonly VerdictQuery[]
   /**
@@ -270,17 +269,16 @@ function PlaygroundFor({
   const groups = useMemo(() => (verdicts === undefined ? [] : actualGroups(t, c, verdicts)), [t, c, verdicts])
   const theories = useMemo(() => (verdicts ?? []).map((q) => q.theories ?? defaultTheories(c)), [c, verdicts])
   const blamed = useMemo(() => (blame === undefined ? undefined : blameView(c, blame, t.locale)), [c, blame, t.locale])
-  const active = verdicts === undefined ? -1 : activeQuery(c, verdicts, interventions)
-  const activeCause = active < 0 || verdicts === undefined ? NONE : parseCause(c.model, verdicts[active].cause)
-  // The hull shows what a step holds for as long as the reader leaves it at that value; with
-  // verdicts, every do() on a variable other than the cause is held.
+  const [shownQuery, setShownQuery] = useState<number>()
   const holding = Object.fromEntries(
-    Object.entries(interventions).filter(([id, v]) => (id in held && valuesEqual(held[id], v)) || (verdicts !== undefined && !(id in activeCause))),
+    Object.entries(interventions).filter(([id, v]) => id in held && valuesEqual(held[id], v)),
   )
+  const active = verdicts === undefined ? -1 : shownQuery ?? activeQuery(c, verdicts, Object.fromEntries(Object.entries(interventions).filter(([id]) => !(id in holding))))
   checkTrack(c, track)
   const setting = readingText(t, reading === 'counterfactual' && prob, interventions, stochastic, observed)
   const [trail, restartTrail] = useTrail(c, track, world, setting)
-  const applyPreset = (s: PresetButton): void => {
+  const applyPreset = (s: PresetButton, query?: number): void => {
+    setShownQuery(query)
     setDo({ interventions: s.interventions, stochastic: {} })
     setObserved(s.observed)
     setHeld(s.hold)
@@ -312,10 +310,9 @@ function PlaygroundFor({
           theories={theories}
           active={active}
           interventions={interventions}
-          onShow={(row) => {
+          onShow={(row, query) => {
             const hold = row.fixed ?? NONE
-            const xPrime = Object.fromEntries(Object.entries(row.show ?? NONE).filter(([id]) => !(id in hold)))
-            applyPreset({ text: '', interventions: { ...xPrime, ...hold }, observed: NONE, hold })
+            applyPreset({ text: '', interventions: row.show ?? NONE, observed: NONE, hold }, query)
           }}
         />
       ),
@@ -390,7 +387,11 @@ function PlaygroundFor({
           world={world}
           interventions={interventions}
           stochastic={stochastic}
-          onDo={setDo}
+          onDo={(next) => {
+            setShownQuery(undefined)
+            setHeld(Object.fromEntries(Object.entries(holding).filter(([id, v]) => valuesEqual(v, next.interventions[id]))))
+            setDo(next)
+          }}
           observed={observed}
           onObserve={setObserved}
           witness={Object.keys(holding).length > 0 ? holding : undefined}

@@ -15,7 +15,7 @@ export interface PlaygroundVerdictsProps {
   readonly active: number
   readonly interventions: Assignment
   /** 在圖上看: set the witness, the cause at x⃗′ and W⃗ held at w⃗. */
-  readonly onShow: (row: ActualRow) => void
+  readonly onShow: (row: ActualRow, query: number) => void
 }
 
 /**
@@ -42,7 +42,7 @@ export function PlaygroundVerdicts({ c, groups, queries, theories, active, inter
                   {r.verdict === 'cause' && r.show !== undefined && (
                     <>
                       {' · '}
-                      <button type="button" className="ca-link" onClick={() => onShow(r)}>
+                      <button type="button" className="ca-link" onClick={() => onShow(r, queries.findIndex((q) => q.cause === g.cause && q.effect === g.effect && (q.theories === undefined || q.theories.includes(r.theory))))}>
                         {t.showOnGraph}
                       </button>
                     </>
@@ -71,10 +71,14 @@ export function PlaygroundVerdicts({ c, groups, queries, theories, active, inter
         </section>
       ))}
       {query !== undefined && (
-        <p className="ca-pg-now" data-witness-now="">
+        <div className="ca-pg-now" data-witness-now="">
           <span className="ca-pg-now-kicker">{t.witness.now}</span>{' '}
-          <Rich text={witnessNow(t, c, query, theories[active] ?? [], interventions)} ids={ids} /> <Tip tip={<Rich text={t.witness.tip} ids={ids} narrative />} label={t.moreInfo} />
-        </p>
+          <Rich text={witnessNow(t, c, query, theories[active] ?? [], interventions)} ids={ids} />
+          <details className="ca-witness-help">
+            <summary className="ca-link">ⓘ {t.moreInfo}</summary>
+            <Rich text={t.witness.tip} ids={ids} narrative />
+          </details>
+        </div>
       )}
     </div>
   )

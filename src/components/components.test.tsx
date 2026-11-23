@@ -95,7 +95,7 @@ describe('CasePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /定義評判/ }))
     const verdicts = container.querySelector('[data-reveal="verdicts"]') as HTMLElement
     expect(verdicts).not.toBeNull()
-    expect(within(verdicts).getAllByText('簡單反事實').length).toBeGreaterThan(0)
+    expect(within(verdicts).getAllByText('but-for 檢驗').length).toBeGreaterThan(0)
     const more = within(verdicts).getByRole('button', { name: /HP 定義的三個條件/ })
     expect(more.getAttribute('aria-expanded')).toBe('false')
     expect(within(verdicts).queryByText('AC1')).toBeNull()
@@ -125,7 +125,7 @@ describe('CasePage display fields', () => {
     expect(rows[0].textContent).toContain('小蘇的石頭砸中了瓶子')
     const mismatched = rows.filter((r) => r.getAttribute('data-mismatch') === 'true').map((r) => r.getAttribute('data-theory'))
     expect(mismatched).toEqual(['butfor'])
-    expect(container.querySelector('[data-reveal="step-4"]')?.textContent).toContain('簡單反事實和直覺不一致')
+    expect(container.querySelector('[data-reveal="step-4"]')?.textContent).toContain('but-for 檢驗和直覺不一致')
   })
 
   it('draws a non-boolean node as one labelled bar per value, not a fill', () => {

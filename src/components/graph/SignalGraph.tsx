@@ -55,7 +55,7 @@ export interface SignalGraphProps {
   /** Variables a witness holds fixed: an amber hull. */
   readonly witness?: Assignment
   /**
-   * Each held variable says 固定（實際 v） beside it when held away from its actual value, else
+   * Each held variable says 固定為 w（實際 v） beside it when held away from its actual value, else
    * 固定（實際值）, instead of the hull's 見證 tag (the playground: what is held need not be a witness).
    */
   readonly holdNotes?: boolean

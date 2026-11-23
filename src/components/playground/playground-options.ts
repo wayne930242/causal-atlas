@@ -93,15 +93,20 @@ export function checkTrack(c: LoadedCase, track: readonly string[]): void {
   for (const id of track) getVariable(c.model, id)
 }
 
-/** The query whose cause is set, every cause variable, not all at actual values; else the first. */
+/** The most specific cause set by these non-held interventions, not all at actual values; else the first. */
 export function activeQuery(c: LoadedCase, queries: readonly VerdictQuery[], interventions: Assignment): number {
   const actual = c.context === undefined ? NONE : evaluate(c.model, c.context).values
-  const i = queries.findIndex((q) => {
+  let best = 0
+  let size = 0
+  queries.forEach((q, i) => {
     const cause = parseCause(c.model, q.cause)
     const ids = Object.keys(cause)
-    return ids.every((id) => id in interventions) && ids.some((id) => !valuesEqual(interventions[id], actual[id]))
+    if (ids.length > size && ids.every((id) => id in interventions) && ids.some((id) => !valuesEqual(interventions[id], actual[id]))) {
+      best = i
+      size = ids.length
+    }
   })
-  return i < 0 ? 0 : i
+  return best
 }
 
 /** The step buttons: a bundled case's own showcase for `true`, the given list, or none; held variables are set by do() too. */

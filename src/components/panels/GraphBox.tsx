@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { LoadedCase } from '../../data/load.ts'
 import type { Assignment, Value } from '../../engine/index.ts'
-import { formatValue, getVariable } from '../../engine/index.ts'
+import { formatValue, getVariable, valuesEqual } from '../../engine/index.ts'
 import { singleGraphSource } from '../export/export-render.tsx'
 import type { ExportSource, ExportTag } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
@@ -49,7 +49,7 @@ export interface GraphBoxProps {
   /** A node is hovered or keyboard-focused, or left (undefined). */
   readonly onHover?: (id: string | undefined) => void
   readonly witness?: Assignment
-  /** Held variables say 固定（實際 v） beside them instead of the hull's 見證 tag (see SignalGraph). */
+  /** Held variables show their held and actual values instead of the hull's 見證 tag (see SignalGraph). */
   readonly holdNotes?: boolean
   readonly legend?: boolean
   readonly menuHelp?: string
@@ -235,6 +235,15 @@ export function GraphBox({
     prior === undefined || world.probs === undefined
       ? undefined
       : { ...(cf ? cfNotes(t) : changeNotes(t, prior, world.probs, twoValued, undefined, digits)), ...notes }
+  const visible = world.shown
+  const marks = t.witness.marks
+  const markLegend = holdNotes ? [
+    visible.some((id) => (id in interventions || id in stochastic) && witness?.[id] === undefined) && marks.clamp,
+    visible.some((id) => witness?.[id] !== undefined) && marks.hold,
+    visible.some((id) => witness?.[id] === undefined && (prob
+      ? !cf && probNotes?.[id] !== undefined && !(id in interventions) && !(id in observed)
+      : world.original?.[id] !== undefined && world.values?.[id] !== undefined && !valuesEqual(world.original[id], world.values[id]))) && marks.was,
+  ].filter(Boolean).join(' · ') : ''
   const graph = (m: Messages, interactive: boolean) => (
     <SignalGraph
       compact={narrow}
@@ -358,6 +367,7 @@ export function GraphBox({
         </p>
       )}
       {legend === true && <p className="ca-legend">{legendFor(t)}</p>}
+      {markLegend && <p className="ca-legend" data-mark-legend="">{markLegend}</p>}
       {foot}
       {blocks !== undefined && <FigureTabs blocks={blocks} initial={initialBlock} />}
     </div>

@@ -39,25 +39,60 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
     expect(node(container, 'MD').getAttribute('data-value')).toBe('0')
     expect(node(container, 'FF').getAttribute('data-value')).toBe('0')
     expect(hull(container)).toBe('MD')
-    expect(heldNote(container, 'MD')).toBe('固定（實際 1）')
+    expect(heldNote(container, 'MD')).toBe('固定為 0（實際 1）')
     const now = live(container)
     expect(now).toContain('HP 原始定義、HP 更新定義：是 L 的見證')
     expect(now).toContain('HP 修正定義：不是，MD 沒有固定在實際值 1')
-    expect(now).toContain('簡單反事實：不是，只改 L')
+    expect(now).toContain('but-for 檢驗：不是，只改 L')
   })
 
-  it("the reader's own do() on a variable other than the cause is drawn held", () => {
+  it("the reader's own do() is never drawn held", () => {
     const { container } = render(<CausalPlayground caseId="forest-fire-disjunctive" verdicts={query} />)
     doNode(container, 'L', '0')
     expect(node(container, 'L').getAttribute('data-value')).toBe('0')
     expect(hull(container)).toBeNull()
     expect(live(container)).toContain('FF=1 還成立')
     doNode(container, 'MD', '1')
-    expect(hull(container)).toBe('MD')
-    expect(heldNote(container, 'MD')).toBe('固定（實際值）')
+    expect(hull(container)).toBeNull()
+    expect(heldNote(container, 'MD')).toBeNull()
     doNode(container, 'MD', '0')
-    expect(heldNote(container, 'MD')).toBe('固定（實際 1）')
+    expect(heldNote(container, 'MD')).toBeNull()
     expect(live(container)).toContain('HP 原始定義、HP 更新定義：是 L 的見證')
+  })
+
+  it.each(['zh-TW', 'en'] as const)('updates the marks, legend, explanation and active verdict after presets and witness clicks (%s)', (locale) => {
+    const en = locale === 'en'
+    const { container, getByText } = render(<CausalPlayground locale={locale} caseId="forest-fire-disjunctive" presets={[
+      { label: 'hold', interventions: { L: 0 }, hold: { MD: 0 } },
+      { label: 'both', interventions: { L: 0, MD: 0 } },
+    ]} verdicts={[...query, { cause: 'L=1 and MD=1', effect: 'FF=1', theories: ['hp-original', 'hp-updated', 'hp-modified'] }]} />)
+    const legend = () => container.querySelector('[data-mark-legend]')?.textContent
+    const clamp = en ? 'Red corners' : '紅色框角'
+    const hold = en ? 'held fixed' : '固定住'
+    expect(legend()).toBeUndefined()
+    expect(cell(container, 'butfor').textContent).toContain(en ? 'But-for test' : 'but-for 檢驗')
+    const checkHeld = () => {
+      expect(hull(container)).toBe('MD')
+      expect(heldNote(container, 'MD')).toBe(en ? 'held at 0 (actually 1)' : '固定為 0（實際 1）')
+      expect(legend()).toContain(hold)
+    }
+    const checkBoth = () => {
+      expect(hull(container)).toBeNull()
+      for (const id of ['L', 'MD']) expect(node(container, id).querySelector('.ca-stroke-clamp')).not.toBeNull()
+      expect(legend()).toContain(clamp)
+      expect(legend()).toContain(en ? 'actual world' : '實際世界的值')
+      expect(legend()).not.toContain(hold)
+      expect(live(container)).not.toContain(en ? 'But-for test' : 'but-for 檢驗')
+    }
+    fireEvent.click(getByText('hold')); checkHeld()
+    fireEvent.click(getByText('both')); checkBoth()
+    const show = (group: number, theory: string) => fireEvent.click(container.querySelectorAll('[data-query]')[group].querySelector(`[data-verdict-cell="${theory}"] button`)!)
+    show(0, 'hp-original'); checkHeld()
+    show(1, 'hp-modified'); checkBoth()
+    const summary = container.querySelector<HTMLDetailsElement>('[data-witness-now] details')!
+    expect(summary.open).toBe(false)
+    fireEvent.click(summary.querySelector('summary')!); expect(summary.open).toBe(true)
+    fireEvent.click(summary.querySelector('summary')!); expect(summary.open).toBe(false)
   })
 
   it('a model with normality gets the fifth cell', () => {
