@@ -82,7 +82,7 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
       expect(legend()).toContain(clamp)
       expect(legend()).toContain(en ? 'actual world' : '實際世界的值')
       expect(legend()).not.toContain(hold)
-      expect(live(container)).not.toContain(en ? 'But-for test' : 'but-for 檢驗')
+      expect(live(container)).not.toContain(en ? 'But-for test:' : 'but-for 檢驗：')
     }
     fireEvent.click(getByText('hold')); checkHeld()
     fireEvent.click(getByText('both')); checkBoth()

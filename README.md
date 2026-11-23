@@ -2,6 +2,10 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.21.0
+The playground's verdicts draw a variable held (amber hull) only for a step's `hold` or the shown witness's W⃗; a do() the reader sets, or a step without `hold`, is a clamp, so 在圖上看 on a witness with W⃗ = ∅ (the modified definition's 「L 且 MD」) shows both causes clamped.
+A held variable says 固定為 w（實際 v）, a line under the graph names the marks it shows, the but-for column reads 「but-for 檢驗」, and 目前的世界's ⓘ 說明 opens on click or keyboard.
+
 ## 0.20.0
 `IdentifyPanel`'s `query.x` and `query.w` take one ID or a set: `<IdentifyPanel c={loadedCase} query={{ x: ['X', 'Z'], y: 'Y' }} />` asks for the controlled direct effect `P(y | do(x, z))`.
 The verdict, formula, formula-beside-do() check (at value 1 or the first domain value of every treatment) and derivation all read the set; 「干預 X」 and 「條件 W」 are checkbox sets (X never empty, X, Y and W kept disjoint), and choosing as Y a variable in X swaps the old Y into X.
@@ -269,7 +273,7 @@ through the reader's settings; the compare panel takes several `pair`s with a va
 backgrounds; a probability playground can switch its reading to 反事實, where a click is evidence
 about the actual world and the intervention a supposed one. `verdicts` puts a row of verdicts under a
 graph with values, loads each witness onto it, and says whether the world on the graph is a witness
-(`witnessStatus` in the engine); held variables say 固定（實際 v）. A model's defaults show as
+(`witnessStatus` in the engine); held variables say 固定為 w（實際 v）. A model's defaults show as
 偏離（預設 v） and a line comparing deviations; `dsep` lights the paths between a pair and gives
 lesson 04's dependence δ (`dSeparation`, `dependence` in the engine). See the playground and
 probability panel notes under Package for each prop.
@@ -366,7 +370,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.20.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.21.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -502,11 +506,13 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   each 是／不是／原因的一部分, with 在圖上看 where the engine found a witness: it sets x⃗′ and holds W⃗ at
   w⃗. A last line, 目前的世界, says per standard whether the world on the graph is a witness and if
   not why (`HP 修正定義：不是，MD 沒有固定在實際值 1`), from `witnessStatus` in the engine, the same
-  check `actualCause` makes for each candidate; its ⓘ explains what holding means for each
-  standard. With verdicts, a do() on a variable other than the cause is drawn held: in the amber hull
-  with 固定（實際 v） under its label, or 固定（實際值） when held at its actual value (so are a step's
-  `hold`s). With several queries the line answers the first whose cause is set away from its actual
-  value. `actualGroups(t, c, queries)` takes the same queries.
+  check `actualCause` makes for each candidate; its ⓘ 說明 opens what holding means for each
+  standard. Only a step's `hold` and the shown witness's W⃗ are drawn held: in the amber hull with
+  固定為 w（實際 v） under its label, or 固定（實際值） when held at its actual value; every other do(),
+  the reader's own included, is a clamp. A line under the graph names the marks on it (紅色框角,
+  琥珀色虛線框, 原本). After 在圖上看 the line answers that witness's query; otherwise the query with
+  the most cause variables set, at least one away from its actual value.
+  `actualGroups(t, c, queries)` takes the same queries.
 - `verdicts={[{ cause: 'V1=1', effect: 'W=1', responsibility: true }]}`: each Halpern–Pearl cell (the
   original, updated and modified definitions, and HP with normality when the model has defaults)
   adds 責任 1/3 (en "responsibility 1/3"), the degree of responsibility of the single event
@@ -706,9 +712,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.20.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.21.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.20.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.21.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -717,7 +723,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.20.0},
+  version = {0.21.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
