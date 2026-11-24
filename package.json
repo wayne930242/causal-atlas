@@ -1,6 +1,6 @@
 {
   "name": "causal-atlas",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "Interactive structural causal models and a dataset of philosophical causation and decision cases.",
   "license": "MIT AND CC-BY-4.0",
   "author": "洪偉 (Wei Hung)",

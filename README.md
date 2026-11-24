@@ -2,6 +2,10 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.22.0
+The playground marks a do() back to the actual value apart from a change (grey corners, 「X＝v（實際值）」) and groups the header chip into changed, held and reset; the cut-edge mark joins the legend when shown.
+A step may name its `test` and `expect` outcomes; after the press a line reports the required and resulting values and whether the check passed. The status line under the verdicts speaks of 圖上這組設定 and says when a witness fails minimality (AC3), so it no longer reads against the verdict table.
+
 ## 0.21.0
 The playground's verdicts draw a variable held (amber hull) only for a step's `hold` or the shown witness's W⃗; a do() the reader sets, or a step without `hold`, is a clamp, so 在圖上看 on a witness with W⃗ = ∅ (the modified definition's 「L 且 MD」) shows both causes clamped.
 A held variable says 固定為 w（實際 v）, a line under the graph names the marks it shows, the but-for column reads 「but-for 檢驗」, and 目前的世界's ⓘ 說明 opens on click or keyboard.
@@ -370,7 +374,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.21.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.22.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -716,9 +720,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.21.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.22.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.21.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.22.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -727,7 +731,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.21.0},
+  version = {0.22.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
