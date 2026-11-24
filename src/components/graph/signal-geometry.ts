@@ -71,6 +71,7 @@ export interface DoTag {
   readonly box: Box
   readonly left: boolean
   readonly seen: boolean
+  readonly reset: boolean
 }
 
 /** An edge as drawn, from the rim of its source (`x1`, `y1`) to the end of its line (`x2`, `y2`). */
@@ -269,17 +270,19 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
 
   // The tag beside a set node: `X←1` for do(), `P(X=1)=0.30` for a stochastic do(), `X=1` observed.
-  const doTag = (id: string): { text: string; box: Box; left: boolean; seen: boolean } | undefined => {
+  const doTag = (id: string): DoTag | undefined => {
     const forced = interventions[id]
     const soft = stochastic[id]
     const seen = observedValues[id]
     if (forced === undefined && soft === undefined && (seen === undefined || evidence)) return undefined
     if (witness !== undefined && id in witness) return undefined
+    const before = original?.[id]
+    const reset = holdNotes && forced !== undefined && before !== undefined && valuesEqual(forced, before)
     const text =
-      forced !== undefined ? (tagText?.[id] ?? `${id}←${formatValue(forced)}`) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : `${id}=${formatValue(seen as Value)}`
+      forced !== undefined ? (tagText?.[id] ?? (reset ? t.witness.resetTag(id, formatValue(forced)) : `${id}←${formatValue(forced)}`)) : soft !== undefined ? `P(${id}=1)=${probText(soft, digits)}` : `${id}=${formatValue(seen as Value)}`
     const w = textWidth(text, 12) + 18
     const left = (grid.get(id)?.col ?? 0) === maxCol
-    return { text, left, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
+    return { text, left, reset, seen: forced === undefined && soft === undefined, box: rectBox(left ? -R - 12 - w : R + 12, -R - 10, w, 22) }
   }
 
   /** 固定為 w（實際 v） or 固定（實際值） for a held variable, when `holdNotes`. */
@@ -333,7 +336,10 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     if (p === undefined) continue
     const variable = getVariable(c.model, id)
     const settledRead = prob ? nodeReadout(t, digits, probs?.[id], interventions[id], evidence ? undefined : observedValues[id]) : undefined
-    const note = holdNote(id) ?? (settledRead?.settled === true && !evidence ? undefined : probNotes?.[id])
+    const before = original?.[id]
+    const now = values?.[id]
+    const was = holdNotes && !prob && before !== undefined && now !== undefined && !valuesEqual(before, now) ? t.was(formatValue(before)) : undefined
+    const note = holdNote(id) ?? was ?? (settledRead?.settled === true && !evidence ? undefined : probNotes?.[id])
     const noteW = note === undefined ? undefined : textWidth(note, 12)
     const deviant = deviantNote(id)
     let readout: Readout = { kind: 'none', noteW, note2W: deviant === undefined ? undefined : textWidth(deviant, 11) }
@@ -382,7 +388,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     if (tag !== undefined) local.push(tag.box)
     const before = original?.[id]
     const now = values?.[id]
-    if (holdNote(id) === undefined && !prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
+    if (!holdNotes && !prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
       local.push(textBox(R + 14, R + 14, 'start', textWidth(t.was(formatValue(before)), 12), 12))
     }
     for (const b of local) obstacles.push(shifted(b, p.x, p.y))
@@ -546,14 +552,18 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       .filter((p): p is Point => p !== undefined)
     if (pts.length > 0) {
       const pad = R + 14
-      const x = Math.min(...pts.map((p) => p.x)) - pad - 20
-      const y = Math.min(...pts.map((p) => p.y)) - pad
+      const boxes = holdNotes ? Object.keys(witness).flatMap((id) => {
+        const p = pos.get(id)
+        return p === undefined ? [] : (blocks.get(id)?.boxes ?? []).map((b) => shifted(b, p.x, p.y))
+      }) : []
+      const x = Math.min(...pts.map((p) => p.x - pad - 20), ...boxes.map((b) => b.x0 - 5))
+      const y = Math.min(...pts.map((p) => p.y - pad), ...boxes.map((b) => b.y0 - 5))
       hull = {
         x,
         y,
-        w: Math.max(...pts.map((p) => p.x)) + pad + 20 - x,
+        w: Math.max(...pts.map((p) => p.x + pad + 20), ...boxes.map((b) => b.x1 + 5)) - x,
         // Include the label under the node, and its 固定 note.
-        h: Math.max(...pts.map((p) => p.y)) + R + (holdNotes ? 50 : 34) + (Object.keys(witness).some((id) => deviantNote(id) !== undefined) ? 18 : 0) - y,
+        h: Math.max(...pts.map((p) => p.y + R + (holdNotes ? 10 : 34)), ...boxes.map((b) => b.y1 + 5)) - y,
         text: t.witnessHold(assignmentText(witness)),
       }
     }

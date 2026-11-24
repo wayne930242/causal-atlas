@@ -42,8 +42,8 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
     expect(heldNote(container, 'MD')).toBe('固定為 0（實際 1）')
     const now = live(container)
     expect(now).toContain('HP 原始定義、HP 更新定義：是 L 的見證')
-    expect(now).toContain('HP 修正定義：不是，MD 沒有固定在實際值 1')
-    expect(now).toContain('but-for 檢驗：不是，只改 L')
+    expect(now).toContain('HP 修正定義：不是見證，MD 沒有固定在實際值 1')
+    expect(now).toContain('but-for 檢驗：不是見證，只改 L')
   })
 
   it("the reader's own do() is never drawn held", () => {
@@ -70,6 +70,7 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
     const clamp = en ? 'Red corners' : '紅色框角'
     const hold = en ? 'held fixed' : '固定住'
     expect(legend()).toBeUndefined()
+    expect(live(container)).toContain(en ? 'No intervention yet' : '尚未介入')
     expect(cell(container, 'butfor').textContent).toContain(en ? 'But-for test' : 'but-for 檢驗')
     const checkHeld = () => {
       expect(hull(container)).toBe('MD')
@@ -82,6 +83,8 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
       expect(legend()).toContain(clamp)
       expect(legend()).toContain(en ? 'actual world' : '實際世界的值')
       expect(legend()).not.toContain(hold)
+      expect(live(container)).toContain(en ? 'fails minimality' : '不符合極小性')
+      expect(live(container)).toContain(en ? 'L=1 is already a cause' : 'L=1 已是原因')
       expect(live(container)).not.toContain(en ? 'But-for test:' : 'but-for 檢驗：')
     }
     fireEvent.click(getByText('hold')); checkHeld()
@@ -93,6 +96,24 @@ describe('playground verdicts: one row per query, a witness on the graph, and wh
     expect(summary.open).toBe(false)
     fireEvent.click(summary.querySelector('summary')!); expect(summary.open).toBe(true)
     fireEvent.click(summary.querySelector('summary')!); expect(summary.open).toBe(false)
+  })
+
+  it('distinguishes reset, changed, and held nodes and checks the selected step against the solved world', () => {
+    const { container, getByText } = render(<CausalPlayground caseId="rock-throwing" presets={[
+      { label: '必要性', interventions: { BT: 0 }, hold: { SH: 0 }, expect: { BS: 0 } },
+      { label: '放回', test: '充分性', interventions: { BT: 1, BH: 0 }, hold: { SH: 0 }, expect: { BS: 1 } },
+    ]} />)
+    fireEvent.click(getByText('必要性'))
+    expect(container.querySelector('[data-step-result]')?.textContent).toBe('檢驗：必要性；要求 BS=0；結果 BS=0 → 通過')
+    expect(container.querySelector('[data-mark-legend]')?.textContent).not.toContain('設回實際值')
+    fireEvent.click(getByText('放回'))
+    expect(node(container, 'BH').querySelector('.ca-stroke-reset')).not.toBeNull()
+    expect(node(container, 'BH').textContent).toContain('BH＝0（實際值）')
+    expect(container.querySelector('[data-mark-legend]')?.textContent).toMatch(/設回實際值.*斜槓/)
+    expect(container.querySelector('.ca-do-chip')?.getAttribute('data-text')).toBe('固定: SH=0 | 設回實際值: BT=1, BH=0')
+    expect(container.querySelector('[data-step-result]')?.textContent).toBe('檢驗：充分性；要求 BS=1；結果 BS=0 → 未通過')
+    doNode(container, 'BT', '0')
+    expect(container.querySelector('[data-step-result]')).toBeNull()
   })
 
   it('a model with normality gets the fifth cell', () => {

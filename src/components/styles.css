@@ -697,6 +697,15 @@
   fill: none;
 }
 
+.ca-stroke-reset {
+  stroke: var(--muted-foreground);
+  stroke-width: 2;
+  stroke-dasharray: 4 2;
+  fill: none;
+}
+.ca-fill-reset {
+  fill: var(--muted-foreground);
+}
 .ca-stroke-clamp {
   stroke: var(--accent);
   stroke-width: 2.5;

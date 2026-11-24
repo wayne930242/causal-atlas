@@ -20,7 +20,7 @@ import { priorWithSliders } from '../model/probability-view.ts'
 import { nodeSliders, sliderTargets } from '../model/slider-groups.ts'
 import type { VerdictQuery } from '../model/verdict-rows.ts'
 import { actualGroups, defaultTheories, originCitations, originSources } from '../model/verdict-rows.ts'
-import { readingText } from '../model/wording.ts'
+import { assignmentText, readingText } from '../model/wording.ts'
 import { EquationPanel } from '../panels/EquationBox.tsx'
 import { GraphBox } from '../panels/GraphBox.tsx'
 import { SliderList } from '../panels/SliderList.tsx'
@@ -277,7 +277,12 @@ function PlaygroundFor({
   checkTrack(c, track)
   const setting = readingText(t, reading === 'counterfactual' && prob, interventions, stochastic, observed)
   const [trail, restartTrail] = useTrail(c, track, world, setting)
+  const [stepIndex, setStepIndex] = useState<number>()
+  const step = stepIndex === undefined ? undefined : buttons[stepIndex]
+  const required = step?.expect
+  const result = required && world.values ? Object.fromEntries(Object.keys(required).map((id) => [id, world.values![id]])) : undefined
   const applyPreset = (s: PresetButton, query?: number): void => {
+    setStepIndex(buttons.indexOf(s))
     setShownQuery(query)
     setDo({ interventions: s.interventions, stochastic: {} })
     setObserved(s.observed)
@@ -388,6 +393,7 @@ function PlaygroundFor({
           interventions={interventions}
           stochastic={stochastic}
           onDo={(next) => {
+            setStepIndex(undefined)
             setShownQuery(undefined)
             setHeld(Object.fromEntries(Object.entries(holding).filter(([id, v]) => valuesEqual(v, next.interventions[id]))))
             setDo(next)
@@ -483,6 +489,11 @@ function PlaygroundFor({
                     )
                   })}
                 </ul>
+              )}
+              {step && (step.test !== undefined || required !== undefined) && !soft && sameAssignment(step.interventions, interventions) && sameAssignment(step.hold, holding) && sameAssignment(step.observed, observed) && (
+                <p role="status" data-step-result="">{required && result
+                  ? t.witness.step(step.test ?? step.text, assignmentText(required), assignmentText(result), sameAssignment(required, result))
+                  : t.witness.testName(step.test ?? step.text)}</p>
               )}
               {buttons.length > 0 && (
                 <div className="ca-presets" role="group" aria-label={t.presets}>

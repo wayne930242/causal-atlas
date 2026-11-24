@@ -150,7 +150,17 @@ export function GraphBox({
   const state: DoState = { interventions, stochastic }
   const prob = world.probs !== undefined
   const cf = reading === 'counterfactual' && prob
-  const setNow = readingText(t, cf, interventions, stochastic, observed)
+  const isReset = (id: string): boolean => world.original?.[id] !== undefined && id in interventions && valuesEqual(world.original[id], interventions[id]) && witness?.[id] === undefined
+  const grouped = holdNotes && !prob && Object.keys(interventions).some((id) => witness?.[id] !== undefined || isReset(id))
+  const chipText = (m: Messages): string => {
+    const entries = Object.entries(interventions)
+    if (!grouped) return readingText(m, cf, interventions, stochastic, observed)
+    return m.witness.groupLabels.flatMap((label, group) => {
+      const part = entries.filter(([id]) => (witness?.[id] !== undefined ? 1 : isReset(id) ? 2 : 0) === group)
+      return part.length ? [`${label}: ${assignmentText(Object.fromEntries(part))}`] : []
+    }).join(' | ')
+  }
+  const setNow = chipText(t)
   const wrap = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(wrap, 560)
   const observes = prob && onObserve !== undefined
@@ -197,7 +207,6 @@ export function GraphBox({
   }, [tip])
   const legendFor = (m: Messages): string => (world.probs !== undefined ? probLegend(m, c.model, world.shown) : m.valueLegend)
   const headTag = (m: Messages): string => (cf && hasDo ? m.cf.kicker : hasDo && hasObs ? m.afterDoObserve : hasObs ? m.afterObserve : m.afterDo)
-  const chipText = (m: Messages): string => readingText(m, cf, interventions, stochastic, observed)
   /** Commit do() and observations together, unless the observations cannot happen under that do(). */
   const commit = (next: DoState, nextObserved: Assignment): void => {
     if (Object.keys(nextObserved).length > 0 && prob) {
@@ -238,7 +247,9 @@ export function GraphBox({
   const visible = world.shown
   const marks = t.witness.marks
   const markLegend = holdNotes ? [
-    visible.some((id) => (id in interventions || id in stochastic) && witness?.[id] === undefined) && marks.clamp,
+    visible.some((id) => (id in interventions || id in stochastic) && witness?.[id] === undefined && !isReset(id)) && marks.clamp,
+    visible.some(isReset) && marks.reset,
+    world.removedEdges.some(({ from, to }) => visible.includes(from) && visible.includes(to)) && marks.cut,
     visible.some((id) => witness?.[id] !== undefined) && marks.hold,
     visible.some((id) => witness?.[id] === undefined && (prob
       ? !cf && probNotes?.[id] !== undefined && !(id in interventions) && !(id in observed)
@@ -309,7 +320,7 @@ export function GraphBox({
             <>
               <Tag tone="slate">{headTag(t)}</Tag>
               <span className="ca-do-chip ca-mono" data-text={setNow}>
-                {cf ? <Rich text={setNow} ids={c.model.byId} /> : <Formula text={setNow} />}
+                {grouped ? setNow : cf ? <Rich text={setNow} ids={c.model.byId} /> : <Formula text={setNow} />}
                 {editable && (
                   <button type="button" className="ca-do-clear" aria-label={hasObs ? t.clearSettings(setNow) : t.removeDo(setNow)} onClick={clearAll}>
                     ×
@@ -347,6 +358,7 @@ export function GraphBox({
             pair={paths?.ends}
             extra={menuExtra?.(menu)}
             help={menuHelp}
+            interventionNote={holdNotes && witness?.[menu] !== undefined ? marks.hold : holdNotes && isReset(menu) ? marks.reset : undefined}
             onObserve={(v) => observe(menu, v)}
             onDo={(v) => intervene(menu, v)}
             onDoProbability={(p) => doing(withProbability(state, menu, p), menu)}

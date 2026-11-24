@@ -73,7 +73,7 @@ export function PlaygroundVerdicts({ c, groups, queries, theories, active, inter
       {query !== undefined && (
         <div className="ca-pg-now" data-witness-now="">
           <span className="ca-pg-now-kicker">{t.witness.now}</span>{' '}
-          <Rich text={witnessNow(t, c, query, theories[active] ?? [], interventions)} ids={ids} />
+          <Rich text={Object.keys(interventions).length === 0 ? t.witness.untouched : witnessNow(t, c, query, theories[active] ?? [], interventions, groups.find((g) => g.cause === query.cause && g.effect === query.effect)?.rows ?? [])} ids={ids} />
           <details className="ca-witness-help">
             <summary className="ca-link">ⓘ {t.moreInfo}</summary>
             <Rich text={t.witness.tip} ids={ids} narrative />

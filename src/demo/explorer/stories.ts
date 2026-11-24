@@ -1,3 +1,4 @@
+import { GUN_STEPS, ROCK_STEPS } from '../witness-steps.ts'
 import { FRONT_DOOR_STEPS } from '../front-door-steps.ts'
 import { RULE_ONE_STEPS } from '../rule-one-steps.ts'
 import { SWITCH_RULE_THREE_EXCEPTION, SWITCH_RULE_TWO } from '../switch-steps.ts'
@@ -134,7 +135,9 @@ const lessons: Story[] = [
     presets: [{ label: '已知 D=1；若 A 沒開槍', observed: { D: 1 }, interventions: { A: 0 } }],
   }),
   story('witness', 1, 'playground', C('forest-fire-disjunctive'), { verdicts: [{ cause: 'L=1', effect: 'FF=1' }] }),
+  story('witness-rock', 1, 'playground', C('rock-throwing'), { presets: ROCK_STEPS }),
   story('witness', 2, 'playground', L('m09-loaded-gun'), {
+    presets: GUN_STEPS,
     verdicts: [
       { cause: 'A=1', effect: 'D=1' },
       { cause: 'C=1', effect: 'D=1' },

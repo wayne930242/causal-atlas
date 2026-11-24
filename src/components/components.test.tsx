@@ -31,7 +31,7 @@ describe('CausalPlayground', () => {
     expect(node(container, 'SH').getAttribute('data-value')).toBe('1')
     expect(edge(container, 'ST>SH').getAttribute('data-state')).toBe('cut')
     expect(node(container, 'BH').getAttribute('data-value')).toBe('0')
-    expect(container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text')).toBe('do(SH=1)')
+    expect(container.querySelector('.ca-do-chip')?.getAttribute('data-text')).toBe('設回實際值: SH=1')
 
     doNode(container, 'SH', '0')
     expect(node(container, 'SH').getAttribute('data-intervened')).toBe('true')

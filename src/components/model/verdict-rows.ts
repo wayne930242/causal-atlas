@@ -44,6 +44,7 @@ export interface ActualRow {
   /** The degree of responsibility, for a query that asked for it (`responsibility: true`) under a Halpern–Pearl standard. */
   readonly responsibility?: ResponsibilityCell
   readonly sentence: string
+  readonly smallerCause?: Assignment
   /** The witness statement, e.g. `[ST←0, BH←0](BS=0)`; it holds in the model. */
   readonly formula?: string
   /** Variables held fixed by the witness, with their values. */
@@ -63,9 +64,9 @@ const EVENT = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^\s]+)\s*$/
 
 /**
  * Whether the world `interventions` sets is a witness for `query`, per standard, standards with the
- * same answer joined: `HP 原始定義、HP 更新定義：是 L 的見證。HP 修正定義：不是，MD 沒有固定在實際值 1。`
+ * same answer joined: `HP 原始定義、HP 更新定義：是 L 的見證。HP 修正定義：不是見證，MD 沒有固定在實際值 1。`
  */
-export function witnessNow(t: Messages, c: LoadedCase, query: VerdictQuery, theories: readonly CausalTheory[], interventions: Assignment): string {
+export function witnessNow(t: Messages, c: LoadedCase, query: VerdictQuery, theories: readonly CausalTheory[], interventions: Assignment, rows: readonly ActualRow[]): string {
   const context = c.context
   if (context === undefined) return ''
   const causeIds = Object.keys(parseCause(c.model, query.cause))
@@ -74,8 +75,10 @@ export function witnessNow(t: Messages, c: LoadedCase, query: VerdictQuery, theo
   for (const theory of theories) {
     const s = witnessStatus(c.model, context, query, theory, interventions, c.normality)
     let sentence: string
-    if (s.witness) sentence = w.is(t.list(causeIds))
-    else {
+    if (s.witness) {
+      const smaller = rows.find((row) => row.theory === theory)?.smallerCause
+      sentence = smaller === undefined ? w.is(t.list(causeIds)) : w.nonminimal(t.list(causeIds), assignmentText(smaller, ' ∧ '))
+    } else {
       const f = s.failure ?? 'cause-not-changed'
       const reason =
         f === 'not-actual'
@@ -202,6 +205,7 @@ export function actualGroups(t: Messages, c: LoadedCase, queries?: readonly Verd
     group.rows.push({
       theory,
       verdict: result.verdict,
+      smallerCause: check.smallerCause?.cause,
       sentence,
       formula,
       fixed,

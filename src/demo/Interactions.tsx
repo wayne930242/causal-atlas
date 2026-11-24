@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { CausalPlayground, ModelEditor, ProbabilityPanel } from '../components/index.ts'
 import { FRONT_DOOR_STEPS } from './front-door-steps.ts'
 import { RULE_ONE_STEPS } from './rule-one-steps.ts'
+import { GUN_STEPS, ROCK_STEPS } from './witness-steps.ts'
 import { lessonModel } from './lesson-models.ts'
 import { SWITCH_RULE_THREE_EXCEPTION, SWITCH_RULE_TWO } from './switch-steps.ts'
 
@@ -142,12 +143,16 @@ const ITEMS: Readonly<Record<string, () => ReactNode>> = {
       ]} />
       <CausalPlayground
         doc={lessonModel('m09-loaded-gun')}
+        presets={GUN_STEPS}
         verdicts={[
           { cause: 'A=1', effect: 'D=1' },
           { cause: 'C=1', effect: 'D=1' },
         ]}
       />
     </>
+  ),
+  'witness-rock': () => (
+    <CausalPlayground caseId="rock-throwing" presets={ROCK_STEPS} />
   ),
   defaults: () => (
     <>

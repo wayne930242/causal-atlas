@@ -489,12 +489,16 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   right-click binding. No hint lines under the graph (see 0.10.0); the menu's ⓘ opens the
   observe-versus-intervene details in a tooltip (hover, keyboard focus or a tap; `aria-describedby`).
 - `presets` (step buttons) is `true` (a bundled case's own; a document has none), `false`, or a list of
-  `{ label: string | { 'zh-TW', en }, interventions?, observed?, hold? }`. One press sets exactly
+  `{ label: string | { 'zh-TW', en }, interventions?, observed?, hold?, test?, expect? }`. One press sets exactly
   those do()s and observations; `observed` needs a probability graph (on a graph with values it
   throws), `hold` sets do() too but draws the held variables in the amber witness hull (固定). The
   buttons sit inside the figure's frame under the graph; the one that matches what is set is
   `aria-pressed`. For a lesson step:
   `presets={[{ label: '第 1 步：看到 A 沒開槍', observed: { A: 0 } }, { label: '第 2 步：攔住 A', interventions: { A: 0 } }]}`.
+  On a graph with an actual context, `expect: { BS: 1 }` compares the solved value of `BS` with 1
+  after the reader presses the button. List several outcomes to require all of them. `test` names
+  the check (a string or `{ 'zh-TW', en }`; the button label if omitted). The line reports the
+  required and resulting values and whether they match. Changing the setting clears it.
 - Every probability graph writes 原本 v (grey) under each 0/1 node whose number moved by 0.005 or more
   from the prior, the same rule as the compare panel; a node that did not move gets nothing.
   `track={['Y']}` adds one line per tracked node under the graph with its reading after each change

@@ -446,10 +446,10 @@ export function SignalGraph(props: SignalGraphProps) {
         {!intervened && testClamped.includes(id) && <path d={clampPath(R)} className="ca-stroke-clamp ca-clamp-test" data-clamp="test" />}
         {((intervened && !held) || (!intervened && clamped.includes(id))) && (
           <>
-            <path d={clampPath(R)} className="ca-stroke-clamp" />
+            <path d={clampPath(R)} className={tag?.reset ? 'ca-stroke-reset' : 'ca-stroke-clamp'} />
             {intervened && tag !== undefined && (
               <g transform={`translate(${tag.box.x0} ${tag.box.y0})`}>
-                <rect width={tag.box.x1 - tag.box.x0} height={22} className="ca-fill-accent" />
+                <rect width={tag.box.x1 - tag.box.x0} height={22} className={tag.reset ? 'ca-fill-reset' : 'ca-fill-accent'} />
                 <text
                   x={(tag.box.x1 - tag.box.x0) / 2}
                   y={15.5}
@@ -476,7 +476,7 @@ export function SignalGraph(props: SignalGraphProps) {
           </text>
         ) : (
           changed && (
-            <text x={R + 14} y={R + 14} className="ca-svg-small ca-fill-muted">
+            <text x={holdNotes ? 0 : R + 14} y={holdNotes ? block.noteY : R + 14} textAnchor={holdNotes ? 'middle' : undefined} className="ca-svg-small ca-fill-muted">
               {t.was(formatValue(before))}
             </text>
           )

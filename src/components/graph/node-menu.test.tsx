@@ -35,7 +35,7 @@ const node = (container: HTMLElement, id: string): Element => {
   return el
 }
 const readout = (container: HTMLElement, id: string): string => node(container, id).querySelector(`[data-readout="${id}"]`)?.textContent ?? ''
-const chip = (container: HTMLElement): string | null => container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text') ?? null
+const chip = (container: HTMLElement): string | null => container.querySelector('.ca-do-chip')?.getAttribute('data-text') ?? null
 const observedAs = (container: HTMLElement, id: string): string | null => node(container, id).getAttribute('data-observed')
 
 describe('a click on a node opens its menu', () => {
@@ -199,7 +199,7 @@ describe('graph of one actual world: the menu intervenes', () => {
 
     doNode(container, 'X', '1')
     expect(node(container, 'X').getAttribute('data-intervened')).toBe('true')
-    expect(chip(container)).toBe('do(X=1)')
+    expect(chip(container)).toBe('設回實際值: X=1')
 
     doNode(container, 'X', '0')
     expect(node(container, 'X').getAttribute('data-value')).toBe('0')
@@ -229,7 +229,7 @@ describe('graph of one actual world: the menu intervenes', () => {
     doNode(container, 'B', '1')
     expect(chip(container)).toBe('do(C=0, B=1)')
     doNode(container, 'B', '0')
-    expect(chip(container)).toBe('do(C=0, B=0)')
+    expect(chip(container)).toBe('改變: C=0 | 設回實際值: B=0')
     expect(node(container, 'E').getAttribute('data-value')).toBe('0')
     doNode(container, 'B')
     expect(chip(container)).toBe('do(C=0)')

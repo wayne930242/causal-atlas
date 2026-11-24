@@ -32,6 +32,7 @@ export interface NodeMenuProps {
   /** Under the actions: the node's own probability sliders. */
   readonly extra?: ReactNode
   readonly help?: string
+  readonly interventionNote?: string
   /** Rules use the same controls, but treat ordinary do()s as known and lock the checked pair. */
   readonly rule?: { readonly checked: boolean; readonly switchId?: string }
   readonly onObserve: (value: Value | undefined) => void
@@ -87,7 +88,7 @@ export function NodeMenu(props: NodeMenuProps) {
   if (read !== undefined) notes.push((props.rule !== undefined ? t.rules.menuKnown : counterfactual ? t.menu.ringEvidence : t.menu.ring)(`${id}=${formatValue(read)}`))
   if (forced !== undefined) {
     const action = `do(${id}=${formatValue(forced)})`
-    notes.push(ruleSwitch === undefined ? t.menu.clamp(action) : t.rules.menuSwitchSet(ruleSwitch, action))
+    notes.push(props.interventionNote ?? (ruleSwitch === undefined ? t.menu.clamp(action) : t.rules.menuSwitchSet(ruleSwitch, action)))
   }
   else if (soft !== undefined) notes.push(t.menu.clamp(`do(P(${id}=1)=${probText(soft, digits)})`))
   if (pair !== undefined && pair.length === 2 && pair.includes(id)) notes.push(t.menu.dsepEnd(pair[0], pair[1]))

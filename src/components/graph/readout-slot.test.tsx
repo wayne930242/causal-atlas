@@ -79,7 +79,7 @@ const node = (container: HTMLElement, id: string): Element => {
 const labelOf = (container: HTMLElement, id: string): Element => node(container, id).querySelector('text.ca-svg-label') as Element
 const readout = (container: HTMLElement, id: string): Element => node(container, id).querySelector(`[data-readout="${id}"]`)?.closest('text') as Element
 const y = (el: Element): number => Number(el.getAttribute('y'))
-const chip = (container: HTMLElement): string | null => container.querySelector('.ca-do-chip .ca-tex')?.getAttribute('data-text') ?? null
+const chip = (container: HTMLElement): string | null => container.querySelector('.ca-do-chip')?.getAttribute('data-text') ?? null
 const level = (container: HTMLElement, id: string): number => Number(node(container, id).querySelector('[data-level]')?.getAttribute('data-level'))
 
 describe('label dedupe', () => {
@@ -243,7 +243,7 @@ describe('do() as a probability on a boolean node', () => {
     expect(z.getAttribute('aria-label')).toContain('按一下打開選單，可以干預')
     expect(openMenu(container, 'Z').querySelector('[data-do-slider]')).toBeNull()
     doNode(container, 'Z', '1')
-    expect(chip(container)).toBe('do(Z=1)')
+    expect(chip(container)).toBe('設回實際值: Z=1')
     expect(node(container, 'X').getAttribute('data-value')).toBe('1')
     doNode(container, 'Z', '0')
     expect(chip(container)).toBe('do(Z=0)')

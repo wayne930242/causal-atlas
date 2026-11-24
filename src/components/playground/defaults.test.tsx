@@ -54,6 +54,6 @@ describe('defaults: deviations from the model normality', () => {
     const { container } = render(<CausalPlayground caseId="gardener-queen" verdicts={[{ cause: 'QW=0', effect: 'D=1' }]} />)
     fireEvent.click(within(container).getByRole('button', { name: '女王澆了花' }))
     const now = textWithMath(container.querySelector('[data-witness-now]'))
-    expect(now).toContain('HP 加上常態：不是，這個世界 {GW, QW}；實際世界 {GW, D}，無法比較')
+    expect(now).toContain('HP 加上常態：不是見證，這個世界 {GW, QW}；實際世界 {GW, D}，無法比較')
   })
 })
