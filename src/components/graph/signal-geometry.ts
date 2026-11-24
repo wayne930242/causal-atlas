@@ -379,6 +379,14 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
 
   // What a floating edge label must stay clear of: every node, its label block, its do tag; and
   // the edge labels already placed.
+  const hitsNode = (box: Box): boolean => shown.some((id) => {
+    const p = pos.get(id)
+    if (!p) return false
+    if (switches.includes(id)) return intersects(box, around(p.x, p.y, SWITCH_HALF), 0)
+    const dx = Math.max(box.x0 - p.x, 0, p.x - box.x1)
+    const dy = Math.max(box.y0 - p.y, 0, p.y - box.y1)
+    return dx * dx + dy * dy <= R * R
+  })
   const obstacles: Box[] = [...placedBoxes]
   for (const id of shown) {
     const p = pos.get(id)
@@ -459,8 +467,6 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
   }
   top = Math.floor(top)
   left = Math.floor(left)
-  const height = Math.ceil(bottom - top)
-  const viewW = Math.ceil(right - left)
   const claim = (placed: Placed): Placed => {
     obstacles.push(placed.box)
     return placed
@@ -536,7 +542,32 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
           inhibitCandidates.push({ x, y, anchor: 'start', box: textBox(x, y, 'start', width, 12) })
         }
       }
-      const inhibitLabel = claim(firstClear(inhibitCandidates, obstacles))
+      // Never trade a collision with the stroke or a node for a clearer label block.
+      // Preserve candidate order on ties. If the entire neighbourhood is occupied,
+      // search successively wider bands until at least one position is admissible.
+      const admissible = (cand: Placed): boolean => !segmentHitsBox({ x: x1, y: y1 }, { x: x2, y: y2 }, cand.box) && !hitsNode(cand.box)
+      const previous = firstClear(inhibitCandidates, obstacles)
+      let best: Placed | undefined = admissible(previous) ? previous : undefined
+      let bestScore = Infinity
+      for (let band = 0; best === undefined; band++) {
+        for (const dy of band === 0 ? [0] : [-24 * band, 24 * band]) {
+          for (const base of inhibitCandidates) {
+            const cand = dy === 0 ? base : { ...base, y: base.y + dy, box: shifted(base.box, 0, dy) }
+            if (!admissible(cand)) continue
+            const score = obstacles.filter((o) => intersects(cand.box, o)).length
+            if (score < bestScore) { best = cand; bestScore = score }
+            if (score === 0) break
+          }
+          if (bestScore === 0) break
+        }
+      }
+      const inhibitLabel = claim(best)
+      if (best !== previous) {
+        left = Math.min(left, Math.floor(best.box.x0))
+        right = Math.max(right, best.box.x1)
+        top = Math.min(top, Math.floor(best.box.y0))
+        bottom = Math.max(bottom, best.box.y1)
+      }
       edgeMarks.push({ kind: 'inhibit', key, x1, y1, x2, y2, ux, uy, live, onPath, cls, text, label: inhibitLabel })
       continue
     }
@@ -595,7 +626,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     hull,
     left,
     top,
-    width: viewW,
-    height,
+    width: Math.ceil(right - left),
+    height: Math.ceil(bottom - top),
   }
 }

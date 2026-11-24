@@ -12,6 +12,8 @@ import { intersects, segmentHitsBox, shifted } from './graph-labels.ts'
 import type { SignalGraphInput, SignalLayout } from './signal-geometry.ts'
 import { layoutSignalGraph } from './signal-geometry.ts'
 
+import bogus from '../../fixtures/extension/m09-bogus-seq-2.json'
+
 const t = messagesFor('zh-TW')
 
 function layout(c: LoadedCase, interventions: Assignment = {}, extra: Partial<SignalGraphInput> = {}): SignalLayout {
@@ -86,6 +88,15 @@ describe('layoutSignalGraph', () => {
     expect(sides).toEqual({ ST: 'below', BT: 'below', SH: 'above', BH: 'below', BS: 'below' })
     const above = l.blocks.get('SH')
     expect(above?.boxes.every((b) => b.y1 < -l.r)).toBe(true)
+  })
+
+  it('keeps ¬A1 off the rising A1→PN1 edge in the lesson layout', () => {
+    const c = docToCase(modelDocSchema.parse({ ...bogus, layout: { A1: [0, 1], PN1: [1.7, 0], B: [0, 2.5], VS: [3, 2.5] } }))
+    const l = layout(c)
+    const edge = l.edges.find((e) => e.key === 'A1>PN1')
+    if (edge?.kind !== 'inhibit') throw new Error('missing A1 inhibit edge')
+    expect(segmentHitsBox({ x: edge.x1, y: edge.y1 }, { x: edge.x2, y: edge.y2 }, edge.label.box)).toBe(false)
+    for (const id of l.pos.keys()) expect(meetsNode(l, id, edge.label.box)).toBe(false)
   })
 
   it('puts an arc label off every edge and every node', () => {

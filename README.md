@@ -3,6 +3,7 @@
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
 ## 0.24.0
+Inhibit labels such as `¬A1` now stay clear of their own edge and the graph's nodes.
 A page that embeds one figure downloads that figure's code and its case, not the whole package. Each component has its own entry (`causal-atlas/playground`, `/probability`, `/identify`, `/lanes`, `/extension`, `/case`, `/editor`, `/cite`, `/supplement`, `/i18n`); `causal-atlas` still exports every name, and a bundler that tree-shakes keeps only what a page imports from it.
 A component given `caseId` loads that case alone, as its own chunk, and the image export loads when 「下載圖片」 opens. On the server under Node every case is ready before the first render, so the markup still holds the figure; in the browser the island keeps that markup until its case arrives, then hydrates (see [Package](#package)). `preloadCase(id)` loads a case ahead of time.
 Measured on the built `dist/` (an entry plus every file it imports statically; gzip at zlib's default level, per file; React, KaTeX and zod not counted):
