@@ -8,13 +8,14 @@ https://creativecommons.org/licenses/by/4.0/
 This covers, wherever it is bundled, compiled or copied:
 - the case data: the JSON case files in src/data/cases/ and the text they carry (titles,
   stories, explanations, intuitions, notes, sources), including the same content inside the
-  published package, such as dist/data.js and dist/index.js (the dist/*.js files);
+  published package, such as dist/cases/ (one file per case) and dist/chunks/ (the dist/*.js
+  files and the .js files in the folders under dist/);
 - the teaching text shown by the components (step notes, verdict sentences, labels), in
-  src/components and in the same dist/*.js files.
+  src/components and in the same published .js files.
 
 Source code (*.ts, *.tsx, *.css, *.mjs) anywhere in this repository, including the
 schema and loader in src/data, is licensed under the MIT License in LICENSE.
-In the published dist/*.js files the two are bundled together: the code in them is MIT, and
+In the published .js files under dist/ the two are bundled together: the code in them is MIT, and
 the case data and teaching text in them remain CC BY 4.0.
 
 Attribution: 洪偉（Wei Hung）, causal-atlas, https://wayneh.tw/causal/ (CC BY 4.0).

@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react'
-import { getCase } from '../../data/index.ts'
+import { requireCase } from '../../data/case-store.ts'
+import { CaseGate } from '../model/CaseGate.tsx'
+import { casesOf } from '../model/cases-of.ts'
 import type { Assignment } from '../../engine/index.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
@@ -62,7 +64,9 @@ export function CasePage({ locale, digits, ...props }: CasePageProps) {
   return (
     <LocaleScope locale={locale}>
       <DigitsScope digits={digits}>
-        <CasePageBody {...props} />
+        <CaseGate ids={casesOf(props.caseId)}>
+          <CasePageBody {...props} />
+        </CaseGate>
       </DigitsScope>
     </LocaleScope>
   )
@@ -70,7 +74,7 @@ export function CasePage({ locale, digits, ...props }: CasePageProps) {
 
 function CasePageBody({ caseId, heading = true, initialStep = 1, lessonHref, lessonLabel, next, exportUrl, defaultNotation }: Omit<CasePageProps, 'locale' | 'digits'>) {
   const t = useMessages()
-  const c = getCase(caseId)
+  const c = requireCase(caseId)
   const probabilistic = c.context === undefined
   const preset = c.data.showcase[0]
   const [step, setStep] = useState(Math.min(Math.max(initialStep, 1), TOTAL))

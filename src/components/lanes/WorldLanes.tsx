@@ -5,6 +5,8 @@ import type { ModelDoc } from '../../data/schema.ts'
 import type { Assignment, CausalTheory, Edge, Value } from '../../engine/index.ts'
 import { actualCause, evaluate } from '../../engine/index.ts'
 import { formatValue, valuesEqual } from '../../engine/values.ts'
+import { CaseGate } from '../model/CaseGate.tsx'
+import { casesOf } from '../model/cases-of.ts'
 import { useCaseOrDoc } from '../model/doc-case.ts'
 import { CopyLatex, Equations } from '../panels/Equations.tsx'
 import { renderDetached } from '../export/export-render.tsx'
@@ -86,16 +88,18 @@ function tagEl(x: number, y: number, text: string, tone: 'fg' | 'slate' | 'accen
 export function WorldLanes({ caseId, doc, interventions, actionLabel, witness, initialStep = 1, exportUrl, defaultNotation, locale }: WorldLanesProps) {
   return (
     <LocaleScope locale={locale}>
-      <WorldLanesResolved
-        caseId={caseId}
-        doc={doc}
-        interventions={interventions}
-        actionLabel={actionLabel}
-        witness={witness}
-        initialStep={initialStep}
-        exportUrl={exportUrl}
-        defaultNotation={defaultNotation}
-      />
+      <CaseGate ids={casesOf(caseId, [doc])}>
+        <WorldLanesResolved
+          caseId={caseId}
+          doc={doc}
+          interventions={interventions}
+          actionLabel={actionLabel}
+          witness={witness}
+          initialStep={initialStep}
+          exportUrl={exportUrl}
+          defaultNotation={defaultNotation}
+        />
+      </CaseGate>
     </LocaleScope>
   )
 }

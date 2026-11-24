@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { loadExportImage } from './export-loader.ts'
 import { authorYear, bibtex, watermarkLine } from './cite.ts'
 import { ACADEMIC_PALETTE, exportImage, inlineSvg } from './export-image.ts'
 import { saveFile } from './download.ts'
@@ -9,6 +10,9 @@ import { CasePage, CausalPlayground, ProbabilityPanel, WorldLanes } from '../ind
 vi.mock('./download.ts', () => ({ saveFile: vi.fn() }))
 
 const saved = vi.mocked(saveFile)
+
+// The image export is a lazy chunk; load it up front so a download saves within the click, as after the menu has been open a moment.
+beforeAll(() => loadExportImage())
 
 beforeEach(() => {
   saved.mockReset()

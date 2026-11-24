@@ -535,8 +535,4 @@ export async function exportImage(source: ExportSource, options: ExportOptions &
   saveFile(`${base}.png`, await rasterize(built, 2))
 }
 
-/** The page's theme around `el`: the nearest `data-theme`, else light. */
-export function pageTheme(el: Element | null): ExportTheme {
-  const holder = el?.closest('[data-theme]') ?? (typeof document === 'undefined' ? null : document.documentElement)
-  return holder?.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
-}
+export { pageTheme } from './page-theme.ts'

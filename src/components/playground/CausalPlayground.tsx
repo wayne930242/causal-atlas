@@ -9,6 +9,8 @@ import type { Locale } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
 import { DigitsScope } from '../shared/digits.ts'
 import { sameAssignment } from '../model/assignments.ts'
+import { CaseGate } from '../model/CaseGate.tsx'
+import { casesOf } from '../model/cases-of.ts'
 import { useCaseOrDoc } from '../model/doc-case.ts'
 import type { DsepPair } from '../model/dsep-view.ts'
 import { dsepView } from '../model/dsep-view.ts'
@@ -171,7 +173,9 @@ export function CausalPlayground({ locale, digits, ...props }: CausalPlaygroundP
   return (
     <LocaleScope locale={locale}>
       <DigitsScope digits={digits}>
-        <PlaygroundBody {...props} />
+        <CaseGate ids={casesOf(props.caseId, [props.doc])}>
+          <PlaygroundBody {...props} />
+        </CaseGate>
       </DigitsScope>
     </LocaleScope>
   )

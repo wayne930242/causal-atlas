@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { caseIds, getCase } from '../../data/index.ts'
+import { isBundledCase, requireCase } from '../../data/case-store.ts'
 import type { LoadedCase } from '../../data/load.ts'
 import { caseToDoc, docToCase, sameModel, schemaProblems } from '../../data/model-doc.ts'
 import type { CaseFile, ModelDoc } from '../../data/schema.ts'
@@ -12,13 +12,13 @@ import { problem, problemOf } from '../../engine/index.ts'
  * (`sameModel`). Anything else is the author's own and carries no case origin.
  */
 export function creditedFrom(doc: ModelDoc): string | undefined {
-  return doc.from !== undefined && caseIds.includes(doc.from) && sameModel(doc, caseToDoc(getCase(doc.from))) ? doc.from : undefined
+  return isBundledCase(doc.from) && sameModel(doc, caseToDoc(requireCase(doc.from))) ? doc.from : undefined
 }
 
 /** The sources an exported image credits for a document: the bundled case's, or none. */
 export function docOrigin(doc: ModelDoc): CaseFile['sources'] | undefined {
   const from = creditedFrom(doc)
-  return from === undefined ? undefined : getCase(from).data.sources
+  return from === undefined ? undefined : requireCase(from).data.sources
 }
 
 export type DocCase = { readonly ok: true; readonly c: LoadedCase } | { readonly ok: false; readonly problems: readonly Problem[] }
@@ -42,6 +42,6 @@ export function useCaseOrDoc(caseId: string | undefined, doc: ModelDoc | undefin
   return useMemo((): DocCase => {
     if (doc !== undefined) return resolveDoc(doc)
     if (caseId === undefined) throw new Error('pass a caseId or a doc')
-    return { ok: true, c: getCase(caseId) }
+    return { ok: true, c: requireCase(caseId) }
   }, [caseId, doc])
 }

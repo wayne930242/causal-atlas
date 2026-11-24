@@ -1,4 +1,4 @@
-import { getCase } from '../../data/index.ts'
+import { requireCase } from '../../data/case-store.ts'
 import type { LoadedCase } from '../../data/load.ts'
 import type { ModelDoc } from '../../data/schema.ts'
 import type { Assignment, CausalVerdict, ConservativeExtensionResult, Problem, Value } from '../../engine/index.ts'
@@ -23,7 +23,7 @@ export function resolveModels(models: readonly ExtensionModel[]): ResolvedModels
   const cases: LoadedCase[] = []
   const problems: Problem[] = []
   for (const m of models) {
-    const resolved = typeof m === 'string' ? { ok: true as const, c: getCase(m) } : resolveDoc(m)
+    const resolved = typeof m === 'string' ? { ok: true as const, c: requireCase(m) } : resolveDoc(m)
     if (resolved.ok) cases.push(resolved.c)
     else problems.push(...resolved.problems)
   }

@@ -1,0 +1,11 @@
+// `causal-atlas/probability`: the probability views (sliders, see vs do, counterfactual, mediation, adjustment, do-calculus).
+export type { ProbabilityPanelProps, ProbabilityView } from '../probability/ProbabilityPanel.tsx'
+export { ProbabilityPanel } from '../probability/ProbabilityPanel.tsx'
+export type { SeeDoPair } from '../model/verdict-rows.ts'
+export type { CounterfactualSpec } from '../probability/cf-steps.ts'
+export type { MediationSpec } from '../probability/mediation-steps.ts'
+export type { AdjustSpec } from '../probability/AdjustPanel.tsx'
+export type { RuleSide, RuleStep } from '../probability/rules-view.ts'
+export type { UiNotation } from '../model/notation.ts'
+export type { Locale } from '../i18n/messages.ts'
+export { preloadCase } from '../../data/case-store.ts'

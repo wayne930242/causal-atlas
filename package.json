@@ -1,6 +1,6 @@
 {
   "name": "causal-atlas",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "Interactive structural causal models and a dataset of philosophical causation and decision cases.",
   "license": "MIT AND CC-BY-4.0",
   "author": "洪偉 (Wei Hung)",
@@ -19,6 +19,46 @@
       "types": "./dist/types/components/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./playground": {
+      "types": "./dist/types/components/entries/playground.d.ts",
+      "import": "./dist/playground.js"
+    },
+    "./probability": {
+      "types": "./dist/types/components/entries/probability.d.ts",
+      "import": "./dist/probability.js"
+    },
+    "./identify": {
+      "types": "./dist/types/components/entries/identify.d.ts",
+      "import": "./dist/identify.js"
+    },
+    "./lanes": {
+      "types": "./dist/types/components/entries/lanes.d.ts",
+      "import": "./dist/lanes.js"
+    },
+    "./extension": {
+      "types": "./dist/types/components/entries/extension.d.ts",
+      "import": "./dist/extension.js"
+    },
+    "./case": {
+      "types": "./dist/types/components/entries/case.d.ts",
+      "import": "./dist/case.js"
+    },
+    "./editor": {
+      "types": "./dist/types/components/entries/editor.d.ts",
+      "import": "./dist/editor.js"
+    },
+    "./cite": {
+      "types": "./dist/types/components/entries/cite.d.ts",
+      "import": "./dist/cite.js"
+    },
+    "./supplement": {
+      "types": "./dist/types/components/entries/supplement.d.ts",
+      "import": "./dist/supplement.js"
+    },
+    "./i18n": {
+      "types": "./dist/types/components/entries/i18n.d.ts",
+      "import": "./dist/i18n.js"
+    },
     "./engine": {
       "types": "./dist/types/engine/index.d.ts",
       "import": "./dist/engine.js"
@@ -29,12 +69,19 @@
     },
     "./style.css": "./dist/style.css"
   },
+  "imports": {
+    "#case-preload": {
+      "node": "./dist/case-preload.node.js",
+      "default": "./dist/case-preload.browser.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "build": "tsc -b && vite build",
-    "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/fix-dts.mjs dist/types",
+    "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/fix-dts.mjs dist/types && pnpm check:dist",
+    "check:dist": "node scripts/check-size.mjs && node scripts/check-dist-ssr.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "prepack": "pnpm build:lib"

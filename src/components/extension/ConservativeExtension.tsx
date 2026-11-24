@@ -5,6 +5,8 @@ import { formatValue, valuesEqual } from '../../engine/index.ts'
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
+import { CaseGate } from '../model/CaseGate.tsx'
+import { casesOf } from '../model/cases-of.ts'
 import { shownVariables } from '../model/shown-variables.ts'
 import type { VerdictQuery } from '../model/verdict-rows.ts'
 import { assignmentText, doText } from '../model/wording.ts'
@@ -49,7 +51,9 @@ export interface ConservativeExtensionProps {
 export function ConservativeExtension({ locale, ...props }: ConservativeExtensionProps) {
   return (
     <LocaleScope locale={locale}>
-      <ExtensionBody {...props} />
+      <CaseGate ids={casesOf(undefined, props.models)}>
+        <ExtensionBody {...props} />
+      </CaseGate>
     </LocaleScope>
   )
 }

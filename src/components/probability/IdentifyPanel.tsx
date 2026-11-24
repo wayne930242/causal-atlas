@@ -5,6 +5,8 @@ import { DerivationError, admgForPrior, admgOf, derive, formatValue, identify, p
 import { SignalGraph } from '../graph/SignalGraph.tsx'
 import type { Locale, Messages } from '../i18n/messages.ts'
 import { LocaleScope, useMessages } from '../i18n/messages.ts'
+import { CaseGate } from '../model/CaseGate.tsx'
+import { casesOf } from '../model/cases-of.ts'
 import { useCaseOrDoc } from '../model/doc-case.ts'
 import { idWithName, shortLabel } from '../model/wording.ts'
 import { DocProblems } from '../shared/parts.tsx'
@@ -23,7 +25,17 @@ export type IdentifyPanelProps = (ProbabilitySource | { readonly c: LoadedCase; 
 
 /** Identify and derive an effect on an editable copy of the model's observed graph. */
 export function IdentifyPanel({ locale, ...props }: IdentifyPanelProps) {
-  return <LocaleScope locale={locale}>{'c' in props ? <IdentifyFor c={props.c} query={props.query} /> : <IdentifyFromSource {...props} />}</LocaleScope>
+  return (
+    <LocaleScope locale={locale}>
+      {'c' in props ? (
+        <IdentifyFor c={props.c} query={props.query} />
+      ) : (
+        <CaseGate ids={casesOf(props.caseId, [props.doc])}>
+          <IdentifyFromSource {...props} />
+        </CaseGate>
+      )}
+    </LocaleScope>
+  )
 }
 
 function IdentifyFromSource({ caseId, doc, query }: ProbabilitySource & { readonly query?: IdentifyQuery }) {

@@ -3,6 +3,8 @@ import type { LoadedCase } from '../../data/load.ts'
 import type { ModelDoc } from '../../data/schema.ts'
 import { evaluate } from '../../engine/index.ts'
 import { singleGraphSource } from '../export/export-render.tsx'
+import { CaseGate } from '../model/CaseGate.tsx'
+import { casesOf } from '../model/cases-of.ts'
 import { useCaseOrDoc } from '../model/doc-case.ts'
 import type { ExportSource } from '../export/export-image.ts'
 import { ExportMenu } from '../export/ExportMenu.tsx'
@@ -100,7 +102,9 @@ export function ProbabilityPanel({ locale, digits, ...props }: ProbabilityPanelP
   return (
     <LocaleScope locale={locale}>
       <DigitsScope digits={digits}>
-        <ProbabilityPanelResolved {...props} />
+        <CaseGate ids={casesOf(props.caseId, [props.doc])}>
+          <ProbabilityPanelResolved {...props} />
+        </CaseGate>
       </DigitsScope>
     </LocaleScope>
   )

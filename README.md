@@ -2,6 +2,18 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.24.0
+A page that embeds one figure downloads that figure's code and its case, not the whole package. Each component has its own entry (`causal-atlas/playground`, `/probability`, `/identify`, `/lanes`, `/extension`, `/case`, `/editor`, `/cite`, `/supplement`, `/i18n`); `causal-atlas` still exports every name, and a bundler that tree-shakes keeps only what a page imports from it.
+A component given `caseId` loads that case alone, as its own chunk, and the image export loads when 「下載圖片」 opens. On the server under Node every case is ready before the first render, so the markup still holds the figure; in the browser the island keeps that markup until its case arrives, then hydrates (see [Package](#package)). `preloadCase(id)` loads a case ahead of time.
+Measured on the built `dist/` (an entry plus every file it imports statically; gzip at zlib's default level, per file; React, KaTeX and zod not counted):
+
+| Entry | 0.23.0 | 0.24.0 |
+| --- | --- | --- |
+| `causal-atlas` | 929.6 kB, 244.2 kB gzip | 940.1 kB, 308.8 kB gzip (every component; the editor's case list brings every case, now one file each) |
+| `causal-atlas/playground` | (none) | 379.3 kB, 120.7 kB gzip |
+
+Bundled for a browser page that imports only `CausalPlayground` from `causal-atlas` (Vite, minified), the page loads 246.4 kB (86.7 kB gzip) plus its case, about 6 kB, against 525.6 kB (165.1 kB gzip) in 0.23.0, which carried all 45 cases. `pnpm check:dist`, which `pnpm build:lib` runs, fails when the playground entry passes 420 kB raw or 133 kB gzip, or statically imports any case, and server-renders a case through each component entry.
+
 ## 0.23.0
 Conservative extensions (Halpern 2016, Def. 4.2.1). The engine's `conservativeExtension(base, extension, { context? })` checks every context and every intervention on a subset of `base`'s endogenous variables, smallest interventions first, and returns `{ kind: 'extension', added, checked }`, a `counterexample` (`{ context, interventions, variable, base, extension }`), or a `precondition` failure (`exogenous-differ`, `variable-missing`, `domain-differ`); past `MAX_EXTENSION_CHECKS` pairs it throws `extension-budget`.
 `ConservativeExtension` draws a model beside its extension (`models={[coarseDoc, 'rock-throwing']}`): the extension's new variables in a green ring, do() on an old variable set from either graph, a table of the old variables' values on both sides, and the verdict with its counterexample and 「在圖上看這個反例」. With more models (`models={[m1, m2, m3, m4]}`) it steps through the pairs (上一步／下一步), and `verdicts` adds a table over all models, so Theorem 4.4.1's flip under the HP definitions shows across the sequence.
@@ -378,11 +390,19 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.23.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.24.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
-| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ConservativeExtension`, `IdentifyPanel`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider` |
+| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ConservativeExtension`, `IdentifyPanel`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider`; `preloadCase` |
+| `causal-atlas/playground` | `CausalPlayground`, `preloadCase` |
+| `causal-atlas/probability` | `ProbabilityPanel`, `preloadCase` |
+| `causal-atlas/identify` | `IdentifyPanel`, `preloadCase` |
+| `causal-atlas/lanes` | `WorldLanes`, `preloadCase` |
+| `causal-atlas/extension` | `ConservativeExtension`, `preloadCase` |
+| `causal-atlas/case` | `CasePage`, `preloadCase` |
+| `causal-atlas/editor` | `ModelEditor` (it lists every case, so it carries the whole dataset) |
+| `causal-atlas/cite`, `/supplement`, `/i18n` | `CiteBlock`; `Supplement`; `LocaleProvider`, `DEFAULT_LOCALE`, `LANGUAGE_NAMES` |
 | `causal-atlas/engine` | The causal-model engine |
 | `causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
 | `causal-atlas/style.css` | Styles for the components; import it once |
@@ -398,6 +418,29 @@ import 'causal-atlas/style.css'
 <WorldLanes client:visible caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />
 <CasePage client:visible caseId="rock-throwing" locale="en" />
 ```
+
+A component entry carries only its component's code; importing from `causal-atlas` gives the same
+result when the bundler tree-shakes, as Vite does. Every name of an entry is the same value as the
+root's, so the two can be mixed on one page.
+
+The bundled cases load one at a time. Each case file is its own chunk; a component given `caseId` (or
+a document whose `from` names a case) imports that chunk and nothing else. The package's own
+`#case-preload` import (package.json `imports`) decides what is ready before the first render:
+
+- Under Node (the `node` condition, as when Astro or a script renders on the server) it resolves to
+  every case, so the server renders the figure at once and its markup holds the graph.
+- Elsewhere (`default`: the browser) it resolves to nothing. A component whose case has not arrived
+  suspends, as `React.lazy` does, and adds no Suspense boundary of its own, so the markup does not
+  depend on whether the case was ready. Hydrating server markup (an Astro `client:visible` island),
+  React keeps that markup on screen until the case arrives, then hydrates it; the figure never blanks.
+  A client-only render (`client:only`, or a `createRoot` app) waits at the nearest `<Suspense>` the
+  host gives, or renders at once after `await preloadCase('rock-throwing')`. A synchronous render
+  (`flushSync`) of a case not yet loaded needs one of the two.
+- A server render outside Node with `renderToString` has no case preloaded; there, `await
+  preloadCase(id)` first, or render with a streaming API, which waits for the case.
+
+`causal-atlas/data` keeps its synchronous `getCase` and `listCases` and bundles every case; a case it
+returns is ready for the components too.
 
 Equations are typeset with [KaTeX](https://katex.org) on the server and in the browser. KaTeX is a
 dependency, but its stylesheet is not bundled into `style.css` (that would duplicate the copy most
@@ -745,7 +788,9 @@ also one whose parents are not drawn (`Y = U2`).
   switches language, or add `lang=en` to the route (`#/case/rock-throwing?lang=en`)
 - `pnpm typecheck`, `pnpm test`, `pnpm lint`
 - `pnpm build`: the demo site into `dist-demo/`
-- `pnpm build:lib`: the library into `dist/`
+- `pnpm build:lib`: the library into `dist/`, then `pnpm check:dist`
+- `pnpm check:dist`: the entries' download sizes against their budgets (`scripts/check-size.mjs`) and a
+  server render through each component entry of the built package (`scripts/check-dist-ssr.mjs`)
 
 ## 如何引用
 
@@ -753,9 +798,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.23.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.23.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.24.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -764,7 +809,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.23.0},
+  version = {0.24.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

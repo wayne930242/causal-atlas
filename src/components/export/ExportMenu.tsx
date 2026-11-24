@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import type { ExportFormat, ExportSource, ExportStyle, ExportTheme } from './export-image.ts'
-import { exportImage, pageTheme } from './export-image.ts'
+import { loadExportImage, withExportImage } from './export-loader.ts'
+import { pageTheme } from './page-theme.ts'
 import type { Locale } from '../i18n/messages.ts'
 import { LANGUAGE_NAMES, errorMessage, messagesFor, useMessages } from '../i18n/messages.ts'
 import { DEFAULT_URL, authorYear, authorYearEn, bibtex } from './cite.ts'
@@ -36,6 +37,8 @@ export function ExportMenu({ source, url, origins = [], embedCode }: ExportMenuP
 
   const toggle = (): void => {
     if (!open) {
+      // Fetch the image export while the reader picks the settings.
+      loadExportImage().catch(() => undefined)
       setTheme(pageTheme(root.current))
       setLocale(t.locale)
     }
@@ -56,7 +59,7 @@ export function ExportMenu({ source, url, origins = [], embedCode }: ExportMenuP
       return
     }
     const done = s.dispose
-    exportImage(s, { style, theme, format, url, locale })
+    withExportImage((m) => m.exportImage(s, { style, theme, format, url, locale }))
       .catch((e: unknown) => setError(t.export.failed(errorMessage(e, t))))
       .finally(() => done?.())
   }
