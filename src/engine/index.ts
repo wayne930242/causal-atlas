@@ -61,6 +61,13 @@ export type { DPath, DSeparationResult, OpenedCollider } from './dseparation.ts'
 export { dSeparation, dependence, descendants } from './dseparation.ts'
 export { switchId, withSwitches } from './switches.ts'
 export type {
+  ConservativeExtensionOptions,
+  ConservativeExtensionResult,
+  ExtensionCounterexample,
+  ExtensionFailure,
+} from './extension.ts'
+export { MAX_EXTENSION_CHECKS, conservativeExtension } from './extension.ts'
+export type {
   Admg,
   CalculusDerivationStep,
   CalculusKind,

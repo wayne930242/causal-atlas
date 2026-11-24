@@ -2,6 +2,8 @@ import './styles.css'
 
 export type { CasePageProps } from './case/CasePage.tsx'
 export { CasePage } from './case/CasePage.tsx'
+export type { ConservativeExtensionProps, ExtensionModel } from './extension/ConservativeExtension.tsx'
+export { ConservativeExtension } from './extension/ConservativeExtension.tsx'
 export type { CiteBlockProps } from './export/CiteBlock.tsx'
 export { CiteBlock } from './export/CiteBlock.tsx'
 export type { BlameSpec, BlameState, CausalPlaygroundProps, PlaygroundPanel, PlaygroundPreset } from './playground/CausalPlayground.tsx'

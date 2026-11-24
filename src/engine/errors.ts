@@ -88,6 +88,8 @@ export interface ProblemParams {
   readonly 'identify-overlap': { readonly id: string; readonly first: 'y' | 'x' | 'w'; readonly second: 'y' | 'x' | 'w' }
   readonly 'identify-empty': { readonly set: 'y' }
   readonly 'identify-budget': { readonly limit: number }
+  // conservative extensions
+  readonly 'extension-budget': { readonly count: number; readonly limit: number }
   // decisions and arithmetic
   readonly 'utility-row-length': Record<string, never>
   readonly 'utility-no-row': { readonly values: string }
@@ -198,6 +200,8 @@ export const PROBLEMS_EN: ProblemWording = {
     'identify-overlap': (p) => `${p.id} is in both ${p.first} and ${p.second}; the outcome, intervention and condition sets must be disjoint`,
     'identify-empty': () => 'name at least one outcome variable',
     'identify-budget': (p) => `identification needs more than ${p.limit.toLocaleString('en-US')} steps; the graph or the formula is too large`,
+    'extension-budget': (p) =>
+      `the conservative-extension check needs ${p.count.toLocaleString('en-US')} context and intervention pairs (limit ${p.limit.toLocaleString('en-US')}); the models have too many variables or values`,
     'utility-row-length': () => 'utility row has the wrong number of values',
     'utility-no-row': (p) => `utility table has no row for ${p.values}`,
     'prior-no-mass': () => 'prior has no mass',

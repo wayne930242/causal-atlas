@@ -2,6 +2,10 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.23.0
+Conservative extensions (Halpern 2016, Def. 4.2.1). The engine's `conservativeExtension(base, extension, { context? })` checks every context and every intervention on a subset of `base`'s endogenous variables, smallest interventions first, and returns `{ kind: 'extension', added, checked }`, a `counterexample` (`{ context, interventions, variable, base, extension }`), or a `precondition` failure (`exogenous-differ`, `variable-missing`, `domain-differ`); past `MAX_EXTENSION_CHECKS` pairs it throws `extension-budget`.
+`ConservativeExtension` draws a model beside its extension (`models={[coarseDoc, 'rock-throwing']}`): the extension's new variables in a green ring, do() on an old variable set from either graph, a table of the old variables' values on both sides, and the verdict with its counterexample and 「在圖上看這個反例」. With more models (`models={[m1, m2, m3, m4]}`) it steps through the pairs (上一步／下一步), and `verdicts` adds a table over all models, so Theorem 4.4.1's flip under the HP definitions shows across the sequence.
+
 ## 0.22.0
 The playground marks a do() back to the actual value apart from a change (grey corners, 「X＝v（實際值）」) and groups the header chip into changed, held and reset; the cut-edge mark joins the legend when shown.
 A step may name its `test` and `expect` outcomes; after the press a line reports the required and resulting values and whether the check passed. The status line under the verdicts speaks of 圖上這組設定 and says when a witness fails minimality (AC3), so it no longer reads against the verdict table.
@@ -374,11 +378,11 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.22.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.23.0) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
-| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `IdentifyPanel`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider` |
+| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ConservativeExtension`, `IdentifyPanel`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider` |
 | `causal-atlas/engine` | The causal-model engine |
 | `causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
 | `causal-atlas/style.css` | Styles for the components; import it once |
@@ -585,6 +589,35 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
   `<CausalPlayground client:visible caseId="newcomb" sliders={["D"]} prior={{ D: 0.1, E: 0.1 }} decision={{ variable: "A", utility: { variables: ["A", "M"], rows: [["one", 1, 100], ["one", 0, 0], ["two", 1, 101], ["two", 0, 10]] } }} />`
   (the causal theory gains 8.38 / 5.5 / 2.62 at D = 0.1 / 0.5 / 0.9; the evidential row stays 90 / 19.1).
 
+### Conservative extensions
+
+```tsx
+import { ConservativeExtension } from 'causal-atlas'
+import coarse from './m09-rock-coarse.json'
+import m1 from './m09-bogus-seq-1.json'
+// … m2, m3, m4
+
+<ConservativeExtension client:visible models={[coarse, 'rock-throwing']} />
+<ConservativeExtension client:visible models={[m1, m2, m3, m4]} verdicts={[{ cause: 'B=1', effect: 'VS=1' }]} />
+```
+
+`models` lists two or more models, each a bundled case id or a model document. Two are a pair: is the
+second a conservative extension of the first (Halpern 2016, Def. 4.2.1)? Both are drawn side by side,
+solved in the same context (`context`, default the first model's actual context); the extension's new
+variables carry a green ring, and pointing at a node lights its namesake on the other side. A click on an
+old endogenous variable, on either graph, sets do() on it in both (`initialInterventions` at the start);
+a table lists each old variable's value in both models and whether they agree. The verdict under it is
+the engine's `conservativeExtension` over every context and every intervention on old variables: yes,
+with the number of pairs checked; no, with a counterexample and a button that shows it on the graphs; or
+not comparable, with why (exogenous variables, a missing old variable, a range).
+
+More models are a sequence M1 … Mn: 上一步／下一步 and a step indicator move through the pairs
+(Mk, Mk+1), `initialStep` picks the first. A table over all models says whether each conservatively
+extends the one before, and, with `verdicts` (as `CausalPlayground`'s, e.g. `{ cause: 'B=1', effect:
+'VS=1' }`), each standard's verdict per model in its own actual context; the two columns of the current
+step are shaded, and a column head jumps to the step that ends there. `names` replaces M1, M2, …;
+`locale` as elsewhere.
+
 ### Identification experiment
 
 ```tsx
@@ -720,9 +753,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.22.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.23.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.22.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.23.0) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -731,7 +764,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.22.0},
+  version = {0.23.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

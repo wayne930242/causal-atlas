@@ -1,0 +1,53 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "假阻止的擴充序列：第 1 個模型（Halpern 2016 定理 4.4.1 的 M1）",
+  "model": {
+    "variables": [
+      {
+        "id": "U",
+        "label": {
+          "zh-TW": "受害者沒生病",
+          "en": "Victim not terminally ill"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "B",
+        "label": {
+          "zh-TW": "保鑣放解藥",
+          "en": "Bodyguard adds antidote"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "A1",
+        "label": {
+          "zh-TW": "刺客 1 沒下毒",
+          "en": "Assassin 1 does not poison"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "VS",
+        "label": {
+          "zh-TW": "受害者活著",
+          "en": "Victim survives"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "B": "U",
+      "A1": "U",
+      "VS": "U and (A1 or B)"
+    }
+  },
+  "context": {
+    "U": 1
+  }
+}

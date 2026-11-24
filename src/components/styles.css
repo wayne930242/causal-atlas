@@ -3197,3 +3197,125 @@
   .ca-id-select > span { font-size: 11px; }
   .ca-identify .ca-rules-stage { grid-template-columns: 1fr; }
 }
+
+/* ---- conservative extensions: a model beside its extension ---- */
+
+/* A variable only the extension has. */
+.ca-new-ring {
+  fill: none;
+  stroke: var(--ca-green);
+  stroke-width: 2.5;
+}
+
+.ca-ext {
+  container: ca-ext / inline-size;
+}
+
+.ca-ext-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.ca-ext-step-pair {
+  flex: 1;
+  font-weight: 600;
+}
+
+.ca-ext-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.ca-ext-stepper + .ca-ext-pair {
+  border-top: 1px solid var(--border);
+}
+
+.ca-ext-side {
+  min-width: 0;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ca-ext-side + .ca-ext-side {
+  border-left: 1px solid var(--border);
+}
+
+.ca-ext-side .ca-graph-wrap {
+  flex: 1;
+  align-items: center;
+}
+
+.ca-ext-side .ca-tags {
+  flex-wrap: wrap;
+}
+
+.ca-ext-pair + .ca-box {
+  border-top: 1px solid var(--border);
+}
+
+.ca-ext-legend p {
+  margin: 0;
+}
+
+.ca-ext-legend p + p {
+  margin-top: 4px;
+}
+
+.ca-ext-swatch {
+  display: inline-block;
+  vertical-align: -4px;
+}
+
+.ca-ext-setting {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.ca-ext-agree {
+  width: auto;
+  min-width: 60%;
+}
+
+.ca-ext-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ca-ext-verdict p {
+  flex: 1 1 20em;
+  margin: 0;
+}
+
+.ca-ext-verdict[data-verdict="extension"] {
+  box-shadow: inset 3px 0 0 var(--ca-green);
+}
+
+.ca-ext-verdict:is([data-verdict="counterexample"], [data-verdict="precondition"], [data-verdict="error"]) {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.ca-ext-overview :where(th, td)[data-current="true"] {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.ca-ext-overview td[data-extends="false"] {
+  color: var(--accent);
+}
+
+@container ca-ext (max-width: 620px) {
+  .ca-ext-pair {
+    grid-template-columns: 1fr;
+  }
+
+  .ca-ext-side + .ca-ext-side {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}

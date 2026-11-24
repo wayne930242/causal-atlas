@@ -1,0 +1,63 @@
+{
+  "format": "causal-atlas/model",
+  "version": 1,
+  "title": "丟石頭的粗模型：只有「丟」與「瓶子破」（Halpern 2016 的 M_RT）",
+  "model": {
+    "variables": [
+      {
+        "id": "U_ST",
+        "label": {
+          "zh-TW": "小蘇想丟",
+          "en": "Suzy's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "U_BT",
+        "label": {
+          "zh-TW": "小比想丟",
+          "en": "Billy's intention"
+        },
+        "kind": "exogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "ST",
+        "label": {
+          "zh-TW": "小蘇丟",
+          "en": "Suzy throws"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BT",
+        "label": {
+          "zh-TW": "小比丟",
+          "en": "Billy throws"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      },
+      {
+        "id": "BS",
+        "label": {
+          "zh-TW": "瓶子破",
+          "en": "Bottle shatters"
+        },
+        "kind": "endogenous",
+        "domain": "boolean"
+      }
+    ],
+    "equations": {
+      "ST": "U_ST",
+      "BT": "U_BT",
+      "BS": "ST or BT"
+    }
+  },
+  "context": {
+    "U_ST": 1,
+    "U_BT": 1
+  }
+}

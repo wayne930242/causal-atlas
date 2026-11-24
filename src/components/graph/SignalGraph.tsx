@@ -76,6 +76,12 @@ export interface SignalGraphProps {
   readonly nodeNotes?: Readonly<Record<string, string>>
   /** A click (or Enter) on a variable picks it without opening a menu. */
   readonly onPick?: (id: string) => void
+  /** With `onPick`, only these variables can be picked; the others are drawn as plain images. Default every variable. */
+  readonly pickable?: readonly string[]
+  /** With `onPick`, the hint a pickable node's label ends with, in place of the known-set one. */
+  readonly pickHint?: string
+  /** New variables (only in a conservative extension): a green ring around each. */
+  readonly fresh?: readonly string[]
   /** A click (or Enter, Space) on a node or switch opens its menu, drawn by the caller. */
   readonly onOpen?: (id: string) => void
   /** The menu observes: an exogenous node, which do() cannot set, opens one only then. */
@@ -133,6 +139,9 @@ export function SignalGraph(props: SignalGraphProps) {
     switches = [],
     nodeNotes = {},
     onPick,
+    pickable,
+    pickHint,
+    fresh = [],
     onOpen,
     observable = false,
     open,
@@ -360,13 +369,15 @@ export function SignalGraph(props: SignalGraphProps) {
     )
     // An exogenous node is the context: it can be observed, never set by do().
     const opens = onPick === undefined && onOpen !== undefined && (variable.kind === 'endogenous' || observable)
-    const interactive = opens || onMove !== undefined || onPick !== undefined
+    const picks = onPick !== undefined && (pickable === undefined || pickable.includes(id))
+    const interactive = opens || onMove !== undefined || picks
     const activate = (): void => {
-      if (onPick !== undefined) onPick(id)
-      else onOpen?.(id)
+      if (onPick !== undefined) {
+        if (picks) onPick(id)
+      } else onOpen?.(id)
     }
-    const toggle: NodeToggle | undefined = onPick !== undefined ? 'pick' : !opens ? undefined : observable ? (variable.kind === 'exogenous' ? 'observe' : 'observeOrDo') : 'do'
-    const hint = t.nodeHint(toggle, onMove !== undefined)
+    const toggle: NodeToggle | undefined = picks ? 'pick' : !opens ? undefined : observable ? (variable.kind === 'exogenous' ? 'observe' : 'observeOrDo') : 'do'
+    const hint = picks && pickHint !== undefined ? t.withHint(pickHint, onMove !== undefined ? t.nodeHint(undefined, true) : '') : t.nodeHint(toggle, onMove !== undefined)
     // An exogenous node is a dashed ring with its value or fill a little inside it.
     const exo = variable.kind === 'exogenous'
     const inner = exo ? R - EXO_INSET : R
@@ -400,6 +411,7 @@ export function SignalGraph(props: SignalGraphProps) {
         {inF(id) && <circle r={R + 9} className="ca-hedge-ring" data-hedge="f" data-member={id} />}
         {hedge?.fPrime.includes(id) === true && <circle r={R + 16} className="ca-hedge-inner" data-hedge="f-prime" data-member={id} />}
         {lit.includes(id) && <circle r={R + 14} className="ca-lit-ring" data-lit={id} />}
+        {fresh.includes(id) && <circle r={R + 7} className="ca-new-ring" data-new={id} />}
         <circle r={R + 12} className="ca-focus-ring" />
         {open === id && <circle r={R + 12} className="ca-open-ring" />}
         {observed.includes(id) && <circle r={R + 5} className="ca-ring" />}
