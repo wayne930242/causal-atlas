@@ -172,7 +172,7 @@ export const ZH = {
   notActual: (cause: string, effect: string): string => `${cause} 或 ${effect} 在實際世界不成立。`,
   witnessSentence: (fix: string | undefined, allActual: boolean, change: string, outcome: string): string =>
     fix === undefined ? `把 ${change}，${outcome}。` : `先把 ${fix}${allActual ? '（實際值）' : ''}，再把 ${change}，${outcome}。`,
-  partOfCause: (cause: string): string => `單獨不算；它是 ${cause} 這個原因的一部分。`,
+  partOfCause: (cause: string): string => `單獨不算；它是 ${cause} 這個原因的成分。`,
   smallerCause: (cause: string): string => `其中 ${cause} 單獨就夠了，多出來的部分不算。`,
   lessNormal: '能讓結果不發生的情況，沒有一個至少和實際世界一樣正常。',
   butForSentence: (change: string, outcome: string): string => `只問一件事：少了它，結果還會不會發生。把 ${change}，${outcome}。`,
@@ -491,7 +491,7 @@ export const ZH = {
   },
   witness: {
     question: (cause: string, effect: string): string => `${cause} 是 ${effect} 的原因嗎？`,
-    answer: { cause: '是', 'not-cause': '不是', 'part-of-cause': '原因的一部分' },
+    answer: { cause: '是', 'not-cause': '不是', 'part-of-cause': '原因成分' },
     now: '圖上這組設定',
     untouched: '尚未介入。',
     nonminimal: (ids: string, smaller: string): string => `是 ${ids} 的見證，但不符合極小性（${smaller} 已是原因），不判為原因`,
@@ -576,7 +576,7 @@ export const ZH = {
   },
   resp: {
     cell: (degree: string): string => `責任 ${degree}`,
-    tipZero: '責任程度（Halpern 2016，定義 6.1.1、6.1.6）：不是原因，也不是原因的一部分，所以是 0。',
+    tipZero: '責任程度（Halpern 2016，定義 6.1.1、6.1.6）：不是原因，也不是原因成分，所以是 0。',
     tip: (k: number, held: string, cause: string, normality: boolean): string =>
       `責任程度 1/k（Halpern 2016，定義 6.1.1、6.1.6）：k 是原因裡的變數，加上見證固定住的變數，取最小；被固定的變數不一定要改值（Halpern 例 6.1.4）。這裡 k = ${k}：${held === '' ? '見證不固定任何變數' : `見證固定 ${held}`}，原因是 ${cause}。${normality ? '只算不比實際世界更不正常的見證。' : ''}`,
   },

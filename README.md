@@ -2,6 +2,9 @@
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
+## 0.24.1
+The zh-TW text calls part of a cause 「原因成分」 (was 「原因的一部分」) in the verdict table, the witness line and the responsibility tip.
+
 ## 0.24.0
 Inhibit labels such as `¬A1` now stay clear of their own edge and the graph's nodes.
 A page that embeds one figure downloads that figure's code and its case, not the whole package. Each component has its own entry (`causal-atlas/playground`, `/probability`, `/identify`, `/lanes`, `/extension`, `/case`, `/editor`, `/cite`, `/supplement`, `/i18n`); `causal-atlas` still exports every name, and a bundler that tree-shakes keeps only what a page imports from it.
@@ -391,7 +394,7 @@ About 43 cases, a case panel, `caseLinks` and `extraModels` props, URL sync, and
 
 ## Package
 
-`causal-atlas` (0.24.0) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.24.1) ships ESM with type declarations and one CSS file:
 
 | Import | Contents |
 | --- | --- |
@@ -799,9 +802,9 @@ also one whose parents are not drawn (`Y = U2`).
 
 作者—年份：
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.1 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.24.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.24.1) [Software and dataset]. https://wayneh.tw/causal/
 
 BibTeX：
 
@@ -810,7 +813,7 @@ BibTeX：
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.24.0},
+  version = {0.24.1},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
