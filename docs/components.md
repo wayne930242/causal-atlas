@@ -7,7 +7,7 @@
 
 ## Package
 
-`causal-atlas` (0.24.1) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.24.2) ships ESM with type declarations and one CSS file:
 [see the package entries](../README.md#entries).
 
 React 19 is a peer dependency. Importing the components touches no browser globals, so they render on

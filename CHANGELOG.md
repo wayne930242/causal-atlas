@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.24.2
+The README is a short front page with the demo links; release notes moved to CHANGELOG.md and component details to docs/components.md.
+
 ## 0.24.1
 The zh-TW text calls part of a cause 「原因成分」 (was 「原因的一部分」) in the verdict table, the witness line and the responsibility tip.
 
