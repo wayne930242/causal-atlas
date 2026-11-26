@@ -43,3 +43,24 @@ unexpected disagreements. The exceptions are:
 To exercise the failure path, append `--break-truth`. This adds `0.01` to one
 backdoor truth row in memory; validation must exit nonzero before writing
 fixtures. Normal regeneration checks all cases before writing either file.
+
+# Modal logic oracle
+
+`modal.py` is an independent modal evaluator for `causal-atlas/modal`, written from the textbook truth
+clauses rather than ported from the TypeScript engine. It needs only the Python standard library:
+from the repository root run `python3 -I oracle/modal.py`; it writes `fixtures/modal.json` and records
+its seed (`20261126`) and Python version there.
+
+The fixture holds 40 random Kripke models (one to six worlds, atoms `p`, `q`, `r`) with twelve random
+formulas each and their truth sets; 60 random four-world frames (every fourth one left as drawn, the
+others closed under symmetry, reflexivity and transitivity so each condition holds often) with
+serial, reflexive, transitive, symmetric and euclidean, and whether D, M, 4, B and 5 are valid on
+them; and 30 random strongly centred systems of spheres around every world with nested Lewis
+counterfactuals and Stalnaker's verdicts on flat ones, `null` where the closest antecedent worlds are
+several. Formulas are written fully bracketed, so the engine's parser is tested too.
+
+Before writing, every truth set is computed a second way (bottom-up from sets, with Lewis's
+counterfactual by ranks instead of his clause over spheres), □ and ◇ are checked dual, and each frame
+condition must agree with its axiom's validity, which is found by trying every assignment. Append
+`--break-truth` to corrupt one stored truth set in memory: validation must exit nonzero without
+writing. `src/modal/engine/oracle.test.ts` compares the engine with the fixture.
