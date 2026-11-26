@@ -58,6 +58,11 @@ export function LocaleScope({ locale, children }: { readonly locale?: Locale; re
   return locale === undefined ? children : createElement(LocaleContext.Provider, { value: locale }, children)
 }
 
+/** The language in force. */
+export function useLocale(): Locale {
+  return useContext(LocaleContext)
+}
+
 export function useMessages(): Messages {
   return MESSAGES[useContext(LocaleContext)]
 }
