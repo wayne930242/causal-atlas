@@ -385,6 +385,7 @@ export function SignalGraph(props: SignalGraphProps) {
     const tag = layout.tags.get(id)
     const hold = layout.holdNotes.get(id)
     const deviant = layout.deviantNotes.get(id)
+    const was = layout.wasNotes.get(id)
     return (
       <g
         key={id}
@@ -487,9 +488,9 @@ export function SignalGraph(props: SignalGraphProps) {
             {hold}
           </text>
         ) : (
-          changed && (
-            <text x={holdNotes ? 0 : R + 14} y={holdNotes ? block.noteY : R + 14} textAnchor={holdNotes ? 'middle' : undefined} className="ca-svg-small ca-fill-muted">
-              {t.was(formatValue(before))}
+          was !== undefined && (
+            <text x={was.x} y={was.y} textAnchor={was.anchor} className="ca-svg-small ca-fill-muted">
+              {was.text}
             </text>
           )
         )}

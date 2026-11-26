@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.24.5
+The 「原本 1」 / "was 1" note under an intervened graph no longer covers node labels: it is placed after the labels, centred under (or over) its own label, else beside it or the disc, clear of every disc, do tag, label and other note, and the drawing grows to hold it.
+
 ## 0.24.4
 Credits name the case's originals everywhere a figure or citation leaves the package. The academic reminder's 「複製引用文字」 / "Copy citations" copies the project line and every case source; court decisions shorten to "Palsgraf v. Long Island Railroad Co. 1928" on images and the case page footer; four or more sources show the first two and 「等」 / "et al.".
 

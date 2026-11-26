@@ -21,7 +21,7 @@ import {
 import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { around, firstClear, intersects, rectBox, segmentHitsBox, shifted, textBox } from './graph-labels.ts'
 import type { Block, Point, Readout } from './signal-shapes.ts'
-import { BAR_LABEL, blockOptions, nodeReadout, readoutWidth, unit } from './signal-shapes.ts'
+import { BAR_LABEL, blockOptions, nodeReadout, noteSpots, readoutWidth, unit } from './signal-shapes.ts'
 
 /**
  * Where everything in a signal graph goes, computed apart from drawing it: node positions, each
@@ -149,6 +149,8 @@ export interface SignalLayout {
   readonly holdNotes: ReadonlyMap<string, string>
   /** 偏離（預設 v） per node off its default. */
   readonly deviantNotes: ReadonlyMap<string, string>
+  /** 原本 v per node whose value differs from the world before do(), placed from the node's centre. */
+  readonly wasNotes: ReadonlyMap<string, Placed & { readonly text: string }>
   readonly edges: readonly EdgeMark[]
   readonly arcs: readonly ArcMark[]
   readonly hull?: Hull
@@ -308,6 +310,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
   // block go above the node (when that touches less).
   const placedBoxes: Box[] = []
   const blocks = new Map<string, Block>()
+  const wasNotes = new Map<string, Placed & { readonly text: string }>()
   const fixed: Box[] = []
   const tagBoxes: Box[] = []
   for (const id of shown) {
@@ -338,6 +341,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     const settledRead = prob ? nodeReadout(t, digits, probs?.[id], interventions[id], evidence ? undefined : observedValues[id]) : undefined
     const before = original?.[id]
     const now = values?.[id]
+    // With hold notes, 原本 v is a line of the label block (where 固定 notes go); otherwise it is placed after every block.
     const was = holdNotes && !prob && before !== undefined && now !== undefined && !valuesEqual(before, now) ? t.was(formatValue(before)) : undefined
     const note = holdNote(id) ?? was ?? (settledRead?.settled === true && !evidence ? undefined : probNotes?.[id])
     const noteW = note === undefined ? undefined : textWidth(note, 12)
@@ -374,7 +378,46 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     const hitsBelow = touches(below)
     const block = hitsBelow > 0 && touches(above) < hitsBelow ? above : below
     blocks.set(id, block)
+    if (was !== undefined && noteW !== undefined && holdNote(id) === undefined) {
+      wasNotes.set(id, { text: was, x: 0, y: block.noteY, anchor: 'middle', box: textBox(0, block.noteY, 'middle', noteW, 12) })
+    }
     for (const b of block.boxes) placedBoxes.push(shifted(b, p.x, p.y))
+  }
+
+  // 原本 v (without hold notes) goes where it clears every disc, do tag, label block and earlier
+  // note: under or over its own block first, then on its label's line, then beside its disc;
+  // a spot off every edge and arc wins over one on them.
+  if (!holdNotes && !prob) {
+    const tagged = shown.flatMap((id) => {
+      const p = pos.get(id)
+      const tag = doTag(id)
+      return p === undefined || tag === undefined ? [] : [shifted(tag.box, p.x, p.y)]
+    })
+    const hard: Box[] = [...placedBoxes, ...tagged]
+    const discs = shown.flatMap((id) => {
+      const p = pos.get(id)
+      return p === undefined ? [] : [around(p.x, p.y, (switches.includes(id) ? SWITCH_HALF : R) + 3)]
+    })
+    const onLine = (box: Box): boolean =>
+      edges.some((e) => {
+        const a = pos.get(e.from)
+        const q = pos.get(e.to)
+        return a !== undefined && q !== undefined && segmentHitsBox(a, q, box)
+      }) || arcSegments.some((curve) => curve.some((pt, i) => i + 1 < curve.length && segmentHitsBox(pt, curve[i + 1], box)))
+    for (const id of shown) {
+      const p = pos.get(id)
+      const block = blocks.get(id)
+      const before = original?.[id]
+      const now = values?.[id]
+      if (p === undefined || block === undefined || before === undefined || now === undefined || valuesEqual(before, now)) continue
+      const text = t.was(formatValue(before))
+      const spots = noteSpots(block, R, textWidth(text, 12)).map((spot) => ({ ...spot, abs: shifted(spot.box, p.x, p.y) }))
+      const clear = spots.filter(({ abs }) => !hard.some((o) => intersects(abs, o)) && !discs.some((o) => intersects(abs, o, 0)))
+      const spot = clear.find(({ abs }) => !onLine(abs)) ?? clear[0] ?? spots[0]
+      wasNotes.set(id, { text, x: spot.x, y: spot.y, anchor: spot.anchor, box: spot.box })
+      hard.push(spot.abs)
+      placedBoxes.push(spot.abs)
+    }
   }
 
   // What a floating edge label must stay clear of: every node, its label block, its do tag; and
@@ -394,11 +437,6 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     const local: Box[] = [around(0, 0, (switches.includes(id) ? SWITCH_HALF : R) + 6)]
     const tag = doTag(id)
     if (tag !== undefined) local.push(tag.box)
-    const before = original?.[id]
-    const now = values?.[id]
-    if (!holdNotes && !prob && before !== undefined && now !== undefined && !valuesEqual(before, now)) {
-      local.push(textBox(R + 14, R + 14, 'start', textWidth(t.was(formatValue(before)), 12), 12))
-    }
     for (const b of local) obstacles.push(shifted(b, p.x, p.y))
   }
   // Each arc says what it is in one short label by its middle, off the nodes, their labels and the edges;
@@ -452,6 +490,14 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       left = Math.min(left, p.x + b.x0 - 8)
       right = Math.max(right, p.x + b.x1 + 8)
     }
+  }
+  for (const [id, note] of wasNotes) {
+    const p = pos.get(id)
+    if (p === undefined) continue
+    top = Math.min(top, p.y + note.box.y0 - 8)
+    bottom = Math.max(bottom, p.y + note.box.y1 + 12)
+    left = Math.min(left, p.x + note.box.x0 - 8)
+    right = Math.max(right, p.x + note.box.x1 + 8)
   }
   for (const { curve, label } of arcs) {
     for (const q of curve) {
@@ -621,6 +667,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     tags,
     holdNotes: held,
     deviantNotes: deviant,
+    wasNotes,
     edges: edgeMarks,
     arcs,
     hull,

@@ -1,4 +1,4 @@
-import type { Box } from './graph-labels.ts'
+import type { Anchor, Box, Placed } from './graph-labels.ts'
 import { rectBox, textBox } from './graph-labels.ts'
 import { textWidth } from '../text/text-measure.ts'
 import type { Value } from '../../engine/index.ts'
@@ -101,6 +101,28 @@ export function blockOptions(r: number, labelW: number, readout: Readout): reado
   const probe = blockAt(0, 'above', labelW, readout)
   const height = Math.max(...probe.boxes.map((b) => b.y1))
   return [below, blockAt(-r - 10 - height, 'above', labelW, readout)]
+}
+
+/**
+ * Where a small 12 px note of width `w` (原本 v) may go beside a node of radius `r` with label block
+ * `block`, best first, in offsets from the node's centre: right past the block's far edge from the
+ * disc, on the label's own line after or before it, beside the disc, then on the disc's other side.
+ */
+export function noteSpots(block: Block, r: number, w: number): readonly (Placed & { readonly box: Box })[] {
+  const top = Math.min(...block.boxes.map((b) => b.y0))
+  const bottom = Math.max(...block.boxes.map((b) => b.y1))
+  const label = block.boxes[0]
+  const spot = (x: number, y: number, anchor: Anchor) => ({ x, y, anchor, box: textBox(x, y, anchor, w, 12) })
+  const outer = block.side === 'below' ? spot(0, bottom + 13, 'middle') : spot(0, top - 5, 'middle')
+  const across = block.side === 'below' ? spot(0, -r - 8, 'middle') : spot(0, r + 17, 'middle')
+  return [
+    outer,
+    spot(label.x1 + 6, block.labelY, 'start'),
+    spot(label.x0 - 6, block.labelY, 'end'),
+    spot(r + 8, 4, 'start'),
+    spot(-r - 8, 4, 'end'),
+    across,
+  ]
 }
 
 export function snap(v: number): number {

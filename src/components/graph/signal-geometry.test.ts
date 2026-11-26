@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { getCase } from '../../data/index.ts'
+import { getCase, listCases } from '../../data/index.ts'
 import type { LoadedCase } from '../../data/load.ts'
 import { docToCase } from '../../data/model-doc.ts'
 import { modelDocSchema } from '../../data/schema.ts'
 import type { Assignment } from '../../engine/index.ts'
+import type { Locale, Messages } from '../i18n/messages.ts'
 import { messagesFor } from '../i18n/messages.ts'
 import { solve } from '../model/model-state.ts'
 import { shownVariables } from '../model/shown-variables.ts'
@@ -16,7 +17,7 @@ import bogus from '../../fixtures/extension/m09-bogus-seq-2.json'
 
 const t = messagesFor('zh-TW')
 
-function layout(c: LoadedCase, interventions: Assignment = {}, extra: Partial<SignalGraphInput> = {}): SignalLayout {
+function layout(c: LoadedCase, interventions: Assignment = {}, extra: Partial<SignalGraphInput> = {}, m: Messages = t): SignalLayout {
   const world = solve(c, interventions)
   return layoutSignalGraph(
     {
@@ -36,7 +37,7 @@ function layout(c: LoadedCase, interventions: Assignment = {}, extra: Partial<Si
       compact: false,
       ...extra,
     },
-    t,
+    m,
   )
 }
 
@@ -146,5 +147,74 @@ describe('layoutSignalGraph', () => {
     const moved = layout(c, {}, { drag: { id: 'ST', dx: 30, dy: -12 } })
     expect(moved.pos.get('ST')).toEqual({ x: (still.pos.get('ST')?.x ?? 0) + 30, y: (still.pos.get('ST')?.y ?? 0) - 12 })
     expect(moved.pos.get('BT')).toEqual(still.pos.get('BT'))
+  })
+
+  describe('原本 v notes', () => {
+    /** What a note must stay off: every node's disc and do tag, every label block, and the arrowhead at the end of each drawn edge. */
+    function noteClashes(l: SignalLayout, id: string, box: Box): string[] {
+      const out: string[] = []
+      for (const [other, p] of l.pos) {
+        if (intersects(box, { x0: p.x - l.r, y0: p.y - l.r, x1: p.x + l.r, y1: p.y + l.r }, 0)) out.push(`disc ${other}`)
+        const tag = l.tags.get(other)
+        if (tag !== undefined && intersects(box, shifted(tag.box, p.x, p.y), 0)) out.push(`tag ${other}`)
+        const blockBoxes = l.blocks.get(other)?.boxes ?? []
+        blockBoxes.forEach((b, i) => {
+          const abs = shifted(b, p.x, p.y)
+          // The note's own box sits in its block; every other box there (the label first) counts.
+          if (other === id && abs.x0 === box.x0 && abs.y0 === box.y0 && abs.x1 === box.x1 && abs.y1 === box.y1) return
+          if (intersects(box, abs, 0)) out.push(`${i === 0 ? 'label' : 'block'} ${other}`)
+        })
+        if (other !== id) for (const [nid, n] of l.wasNotes) {
+          const q = l.pos.get(nid)
+          if (nid === other && q !== undefined && intersects(box, shifted(n.box, q.x, q.y), 0)) out.push(`note ${nid}`)
+        }
+      }
+      for (const e of l.edges) {
+        if (e.kind === 'cut') continue
+        const len = Math.hypot(e.x2 - e.x1, e.y2 - e.y1) || 1
+        const head = { x: e.x2 - (12 * (e.x2 - e.x1)) / len, y: e.y2 - (12 * (e.y2 - e.y1)) / len }
+        if (segmentHitsBox(head, { x: e.x2, y: e.y2 }, box)) out.push(`arrowhead ${e.key}`)
+      }
+      return out
+    }
+
+    const subjects: readonly [string, Assignment][] = [
+      ...getCase('taroko-derailment-2021').data.showcase.map((s) => ['taroko-derailment-2021', s.interventions] as [string, Assignment]),
+      ...getCase('rock-throwing').data.showcase.map((s) => ['rock-throwing', s.interventions] as [string, Assignment]),
+    ]
+    const locales: readonly Locale[] = ['zh-TW', 'en']
+
+    for (const locale of locales) {
+      for (const [id, interventions] of subjects) {
+        it(`keeps every note off labels, discs, tags and arrowheads: ${id} do(${JSON.stringify(interventions)}) ${locale}`, () => {
+          const l = layout(getCase(id), interventions, {}, messagesFor(locale))
+          expect(l.wasNotes.size).toBeGreaterThan(0)
+          const clashes = [...l.wasNotes].flatMap(([node, note]) => {
+            const p = l.pos.get(node)
+            return p === undefined ? [] : noteClashes(l, node, shifted(note.box, p.x, p.y)).map((what) => `${node}: ${what}`)
+          })
+          expect(clashes).toEqual([])
+        })
+      }
+    }
+
+    it('keeps every note off every label, disc, tag and other note in each bundled case\'s showcase worlds', () => {
+      const clashes: string[] = []
+      for (const locale of locales) {
+        for (const c of listCases()) {
+          for (const s of c.data.showcase) {
+            if (Object.keys(s.interventions).length === 0) continue
+            const l = layout(c, s.interventions, {}, messagesFor(locale))
+            for (const [node, note] of l.wasNotes) {
+              const p = l.pos.get(node)
+              if (p === undefined) continue
+              const hits = noteClashes(l, node, shifted(note.box, p.x, p.y)).filter((what) => !what.startsWith('arrowhead'))
+              clashes.push(...hits.map((what) => `${c.data.id} ${JSON.stringify(s.interventions)} ${locale} ${node}: ${what}`))
+            }
+          }
+        }
+      }
+      expect(clashes).toEqual([])
+    })
   })
 })
