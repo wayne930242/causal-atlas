@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.25.0 (unreleased)
+Modal logic: a new entry, `causal-atlas/modal`, with the seven figures appendix D needs, each in zh-TW and en and rendered on the server. `IntensionTable` reads intensions as functions from worlds to truth values; `KripkeView` draws ⟨W, R, a⟩ as Garson's boxes and arrows and, for □ and ◇, marks the worlds the selected one sees with the counterexample or witness (`editable` adds atom and arrow toggles and a formula field); `FrameConditions` sets serial, reflexive, transitive, symmetric and euclidean, each failure with its worlds, beside D, M (also called T), 4, B and 5, each failure with its assignment and world; `StrictImplication` sets A ⊃ B beside □(A ⊃ B); `TcsCheck` shows transitivity, contraposition and strengthening the antecedent holding for strict implication and failing on spheres, until 「壓成一層」 presses the spheres into one; `SphereView` reads A > B by Lewis or by Stalnaker, who leaves several closest worlds undefined (`not-unique`); `SurgeryVsSimilarity` puts Lewis's closest worlds under adjustable weights beside Pearl's minimal surgery on boolean equations, for Fine's Nixon example. Figures take their documents (`kind: "kripke" | "frame" | "spheres"`) as props; the package ships no modal case data. See [Modal logic figures](docs/components.md#modal-logic-figures).
+The same entry exports the modal engine (formula parser and printer in the modern and Garson notations, Kripke truth with explanation trees, frame conditions and axiom validity by enumeration, Lewis and Stalnaker counterfactuals, similarity spheres, surgery) and `parseModalJson`. An independent Python evaluator, `oracle/modal.py`, checks it on random models, frames and sphere systems; every frame with up to three worlds is checked for "condition holds iff axiom valid" in each test run.
+The modal figures are built apart (`vite.lib.modal.config.ts`): they reuse the causal source (KaTeX formulas, label placement, arrowheads, the segmented control, the locale hooks) but bundle it into `dist/modal.js`, so no causal entry loads modal code and every causal entry and `style.css` keep their 0.24.6 size. Their styles are in `causal-atlas/modal.css`, loaded with `style.css`, and their `LocaleProvider` is the one exported by `causal-atlas/modal`.
+
+| Entry | 0.24.6 | 0.25.0 |
+| --- | --- | --- |
+| `causal-atlas` | 948.7 kB, 311.4 kB gzip | same |
+| `causal-atlas/playground` | 387.8 kB, 123.3 kB gzip | same |
+| every other causal entry, `style.css` | | same |
+| `causal-atlas/modal` | (none) | 102.7 kB, 27.8 kB gzip, one file |
+
+`pnpm check:dist` now also fails when `./modal` passes 113 kB raw or 30.6 kB gzip, or when any other entry imports the modal build, and server-renders each modal figure. The demo site has a 模態邏輯 / Modal logic page (`#/modal`). docs/modal-set-design.md is the design for the modal and (later) set-theory entries.
+
 ## 0.24.6
 Node labels keep off edges, arcs and arrowheads: a label tries below, above, right and left of its disc, each on one line and then wrapped on two (English only; Chinese names never wrap), and sits clearly nearer its own disc than any other, 10 px from other labels. Three or more nodes in a column put their labels on one side. In exported images the 「偏離預設」 / "deviant" tag is a dashed outline, as on the page, instead of a black box.
 

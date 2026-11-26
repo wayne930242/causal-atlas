@@ -4,10 +4,12 @@
 - [Conservative extensions](#conservative-extensions)
 - [Identification experiment](#identification-experiment)
 - [Probability views](#probability-views)
+- [Modal logic figures](#modal-logic-figures)
 
 ## Package
 
-`causal-atlas` (0.24.6) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.25.0) ships ESM with type declarations and two CSS files (`style.css`, and
+`modal.css` for the [modal logic figures](#modal-logic-figures)):
 [see the package entries](../README.md#entries).
 
 React 19 is a peer dependency. Importing the components touches no browser globals, so they render on
@@ -389,3 +391,106 @@ exogenous; a `layout` wins over it). `latent_as_arcs: ["U"]` draws an exogenous 
 more children as a dashed two-headed arc between them instead of a node (not allowed together with
 `show_exogenous` or a `layout` entry for the same variable). The equations panel lists every endogenous variable's equation,
 also one whose parents are not drawn (`Y = U2`).
+
+## Modal logic figures
+
+`causal-atlas/modal` (from 0.25.0) draws the figures of a modal-logic lesson: Kripke models, frame
+conditions, strict implication and counterfactuals on systems of spheres. It is built apart from the
+causal entries (`vite.lib.modal.config.ts`), so a causal page downloads none of it and a modal page
+none of the causal code; the shared source (KaTeX formulas, label placement, arrowheads, the segmented
+control, the locale hooks) is bundled into `dist/modal.js`. Load both stylesheets:
+
+```mdx
+import { KripkeView, SphereView } from 'causal-atlas/modal'
+import 'causal-atlas/style.css'
+import 'causal-atlas/modal.css'
+import rain from './md-rain-access.json'
+import programmer from './md-programmer.json'
+
+<KripkeView client:visible model={rain} />
+<SphereView client:visible model={programmer} semantics="stalnaker" locale="en" />
+```
+
+Every figure takes its model as a prop (`model`, or `frame` for `FrameConditions`): a document value
+or its JSON text. A figure checks it with `parseModalJson` and, when it cannot draw it, shows each
+problem with its code instead. Hosts that want a build to fail on a bad document call
+`parseModalJson(text)` themselves; it returns `{ ok: true, doc }` or `{ ok: false, errors }`, each
+error a `ModalProblem` `{ code, params, where? }` with `where` the path in the document
+(`access.0.1`). `modalProblemText(problem)` words it in English; the figures word the same codes in
+Chinese too. Every figure renders on the server with its picture in the markup.
+
+Common props: `locale` (`zh-TW`, the default, or `en`), `notation` (`modern`: ¬ ∧ ∨ ⊃ ≡ □ ◇ >, the
+default; `garson`: Garson's ~ and &) and `caption`. `LocaleProvider` from `causal-atlas/modal` sets the
+language of the modal figures inside it; the causal figures keep their own `LocaleProvider` (the two
+builds hold separate contexts), so a page mixing both sets each, or passes `locale` to each figure.
+
+### Documents
+
+Formulas are strings in the authoring syntax, ASCII or Unicode: `~p` `¬p`, `p & q` `p ∧ q`, `p | q`
+`p ∨ q`, `p -> q` `p ⊃ q`, `p <-> q` `p ≡ q`, `[]p` `□p`, `<>p` `◇p`, `p > q` `p □→ q`, `true` `⊤`,
+`false` `⊥`. Atoms start with a lowercase letter. ¬ □ ◇ bind tightest, then ∧, ∨, >, and ⊃ and ≡
+last; ∧ and ∨ group to the left, ⊃ and > to the right. `>` beside `⊃` or `≡`, and `≡` beside `⊃` or
+another `≡`, need brackets (`ambiguous-mix`).
+
+- `kind: "kripke"`: `atoms` (`{ id, label? }`), `worlds` (`{ id, true: [atoms], label?, pos? }`, at
+  most 12), `access` (pairs), `actual?`, `formulas?`, `layout` (`circle`, the default, `line`,
+  `layers` from `actual`, or `manual` with every world's `pos`).
+- `kind: "frame"`: the same without atoms, `true` and `formulas`.
+- `kind: "spheres"`: `atoms`, `worlds`, and one of `center` with `spheres` (innermost first, each
+  containing the one before), `center` with `similarity`, or `systems` (a system per world, for
+  nested counterfactuals). `centering` is `strong` (the innermost sphere is exactly the centre; the
+  default) or `weak`. `similarity` is `{ weights: { atom: n }, laws: [{ formula, cost, label? }] }`:
+  a world's distance is the weights of the atoms on which it differs from the centre plus the costs of
+  the laws false there, and equal distances share a sphere. `structural` is
+  `{ equations: { atom: formula } }`, truth-functional and acyclic, for `SurgeryVsSimilarity`. R at a
+  world with a system is its outermost sphere, so □ and strict implication range over it.
+
+Labels and titles are a string or `{ 'zh-TW', en }`.
+
+### Figures
+
+- `IntensionTable` (`model`, `formulas?`, `highlight?`): one row per sentence, one column per world,
+  each cell T or F; picking a world reads `a_w(A)` above the table, picking a sentence marks its truth
+  set `|A|`.
+- `KripkeView` (`model`, `formulas?`, `world?`, `explain?` true, `editable?` false,
+  `mergeSymmetric?` true, `showFalse?` false): Garson's world boxes listing their true atoms (and
+  false ones as ¬p), arrows for R (self-loops on the top edge, wRv and vRw as one double-headed
+  arrow). A world is a button: the list beside the picture gives each formula's value there. For the
+  focused □A or ◇A the accessible worlds are marked by A's value, with the counterexample (□ false) or
+  witness (◇ true) in amber or green, and a sentence says why. `editable` adds an atom table, an R
+  matrix and a field for more formulas.
+- `FrameConditions` (`frame`, `conditions?`, `axioms?` true, `systems?` true, `initial?`): serial,
+  reflexive, transitive, symmetric and euclidean, each with the worlds that break it, beside D, M (also
+  called T), 4, B and 5, each valid on the frame or falsified by a named assignment at a named world,
+  found by trying every assignment (at most 2^16). Picking a condition marks its counterexample in the
+  picture. A last line names the systems among K, D, M, S4, B and S5 whose frames include this one.
+- `StrictImplication` (`model`, `antecedent`, `consequent`, `world?`): A ⊃ B beside □(A ⊃ B) at the
+  selected world, a table of A, B and A ⊃ B at every world, and the accessible worlds where A is true
+  and B false marked.
+- `TcsCheck` (`items`, `showStrict?` true, `collapsed?` false): `items` are
+  `{ pattern: 'transitivity' | 'contraposition' | 'strengthening', model, a, b, c?, title? }`, each a
+  spheres document and the formulas of the inference (a→b, b→c ∴ a→c; a→b ∴ ¬b→¬a; a→b ∴ (a ∧ c)→b).
+  Each card shows the spheres, the premises and conclusion with their values at the centre for the
+  strict conditional and for `>`, and whether the centre is a counterexample. 「壓成一層」 presses the
+  spheres into one, and the counterexamples go.
+- `SphereView` (`model`, `formulas?`, `semantics?` `lewis`, `semanticsSwitch?` true, `world?`):
+  concentric spheres with each world in its ring. For the focused A > B the antecedent worlds, the
+  smallest sphere holding one, the selection `f(|A|, w)` and the verdict; under Stalnaker, several
+  closest worlds leave the selection undefined (`not-unique`) and the figure says so.
+- `SurgeryVsSimilarity` (`model`, `antecedent?`, `consequent?`, `weights?`): a spheres document
+  with `center`, `similarity` and `structural`. Left, the spheres the weights give, the closest
+  antecedent worlds and A > B, with sliders for every weight and law cost and the distance table;
+  right, the submodel after replacing the antecedent's atoms' equations by constants (atoms without an
+  equation keep the centre's values), its solution and B there; a last line says whether the two
+  agree. The antecedent must be a conjunction of atoms and negated atoms. Weighted distance is only a
+  numeric stand-in for Lewis's priorities of similarity, as the figure says.
+
+### Engine
+
+The same entry exports the engine, which needs no React: `parseFormula`, `formulaText` and
+`formulaLatex`; `kripkeModel`, `frameOf`, `sphereModel`, `collapseSpheres`; `ModalEvaluator` (with
+`holds`, `truthSet`, `explain` and `counterfactual`), and `holds`, `intension`, `truthSet`, `explain`;
+`checkCondition`, `validOnFrame`, `systemsOf`, `AXIOMS`; `tcsInference`, `checkInference`;
+`distances`, `similaritySpheres`; `surgery`, `literalsOf`, `equationOrder`; and the document functions
+`parseModalJson`, `modelOfDoc`, `frameOfDoc`. `oracle/modal.py`, an independent Python evaluator,
+checks it in the tests (see oracle/README.md).

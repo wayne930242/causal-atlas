@@ -5,7 +5,7 @@
 > 兩個子路徑直接沿用 `causal-atlas` 既有的繪圖、標籤避讓、面板、i18n 與樣式程式碼，不複製，也不另立共用套件。
 > 第一階段（0.25.0）只做附錄 D 需要的七張圖：內涵表、Kripke 模型、框架條件、實質與嚴格蘊涵、TCS 檢查、同心球（Lewis／Stalnaker）、Pearl 小手術與相似度的對照。
 > 每個顯示真值、性質或判定的圖都由引擎計算；只有無窮物件與後設定理用示意。
-> 因果講義用的各入口不得因此變大，由既有的大小檢查把關。
+> 模態另做一次 Vite 建置，把沿用的原始碼打包進 `dist/modal.js`；因果講義用的各入口與 `style.css` 因此與 0.24.6 相同，由既有的大小檢查把關。
 
 本文件原為 `~/projects/logic-atlas/docs/design.md`（獨立 monorepo 的草案）。
 決定改放進 `causal-atlas` 後，第 2、3、9、12 節依子路徑佈局重寫，其餘各節保留，只把已定案的記號、術語與名稱改成定案版本。
@@ -19,7 +19,7 @@
   - `causal-atlas/set`：從樸素集合論到 ZFC 公理化：集合運算、關係、函數、等勢與對角論證、序數與序數算術、累積階層、有限 ∈ 結構上的公理檢查。
   - 示範站頁面、測試 oracle、大小與伺服器渲染檢查。
 - 不納入：
-  - 改寫因果部分的元件或引擎；只做讓模態部分能直接引用的小幅拆檔（見第 3 節），行為不變。
+  - 改寫因果部分的元件或引擎；只在 `messages.ts` 多匯出一個 `useLocale`（見第 3 節），行為不變。
   - 機率反事實、雙胞胎網路、PN／PS：附錄 D 後半這些圖已由因果部分提供。
   - 自然演繹的完整證明編輯器；證明只做靜態排版，且不在第一階段（見第 12 節）。
   - 集合論中超出 ZFC 公理化的主題：基數算術、力迫法、大基數、連續統假設的獨立性（只在講義文字提及）。
@@ -31,10 +31,8 @@ causal-atlas/
   docs/
     modal-set-design.md {new} # 本文件
   src/
-    components/ # 因果元件，以及兩個子路徑共用的繪圖、排版、面板與 i18n
-      i18n/locale.ts {new} # LocaleProvider 與語言 context，從 messages.ts 拆出
-      graph/arrow-geometry.ts {new} # 箭頭與單位向量，從 signal-shapes.ts 拆出
-      shared/controls.tsx {new} # 分段按鈕與判定圖示，從 parts.tsx 拆出
+    components/ # 因果元件，以及模態沿用的繪圖、排版、面板與 i18n
+      i18n/messages.ts {changed} # 多匯出 useLocale
       styles.css # --ca-* 色彩與共用樣式
     engine/ # 因果引擎，不動
     data/ # 因果案例資料，不動
@@ -46,7 +44,7 @@ causal-atlas/
       data/ # zod schema 與 parseModalJson
       components/ # 七個元件與它們的版面計算
       i18n/ # 模態專用的 zh.ts、en.ts
-      modal.css # 併進 style.css
+      modal.css # 建成 dist/modal.css
     set/ # 之後的 causal-atlas/set，結構同 modal/
     demo/
       modal-models/ {new} # 示範站與測試用的範例模型，不隨套件發佈
@@ -55,54 +53,57 @@ causal-atlas/
     modal.py {new} # 獨立的 Python 模態求值器，只用於測試
     fixtures/modal.json {new}
   scripts/
-    check-size.mjs # 加上 ./modal 的預算
-    check-dist-ssr.mjs # 加上 ./modal 的伺服器渲染
+    check-size.mjs {changed} # 加上 ./modal 的預算，並擋下其他入口引用模態建置
+    check-dist-ssr.mjs {changed} # 每張模態圖在 Node 上伺服器渲染一次
+  vite.lib.config.ts # 因果入口，不動
+  vite.lib.modal.config.ts {new} # 模態入口的建置
 ```
 
 ```mermaid
 flowchart TD
-  shared["src/components 的共用模組<br/>locale、Tex、標籤避讓、箭頭、分段按鈕、樣式"]
-  causal["因果入口<br/>causal-atlas、/playground、/case …"]
-  modal["causal-atlas/modal"]
-  set["causal-atlas/set（之後）"]
+  shared["src/components 的共用原始碼<br/>Tex、標籤避讓、箭頭、分段按鈕、locale hook、樣式"]
   logic["src/logic/relations.ts"]
+  causalBuild["vite.lib.config.ts<br/>因果入口與 style.css"]
+  modalBuild["vite.lib.modal.config.ts<br/>dist/modal.js 與 modal.css"]
   blog["部落格 MDX"]
-  shared --> causal
-  shared --> modal
-  shared --> set
-  logic --> modal
-  logic --> set
-  causal --> blog
-  modal --> blog
-  set --> blog
+  shared --> causalBuild
+  shared --> modalBuild
+  logic --> modalBuild
+  causalBuild --> blog
+  modalBuild --> blog
 ```
 
 技術棧就是 `causal-atlas` 現有的：pnpm 12、Vite 8（函式庫模式、rolldown）、TypeScript 7、Vitest 5、oxlint、React 19 為 peer dependency、`katex` 與 `zod` 為一般相依。
-模態與集合論各自只是一個新的 Vite 入口，產生 `dist/modal.js`、`dist/set.js` 與 `dist/types/` 下的型別宣告；樣式併進同一個 `style.css`。
+`pnpm build:lib` 先跑原本的因果建置，再跑 `vite.lib.modal.config.ts`，把 `dist/modal.js` 與 `dist/modal.css` 加進同一個 `dist/`（不清空）；型別宣告照舊由 `tsc -p tsconfig.lib.json` 產生在 `dist/types/` 下。
+集合論之後照同樣方式加一個 `vite.lib.set.config.ts`。
 
-### 2.1 為什麼放進 causal-atlas
+### 2.1 為什麼放進 causal-atlas，又為什麼分開建置
 
-放進同一個套件，共用程式碼就是同一份原始碼，不必複製、不必另發共用套件，也不會分岔。
-讀者在同一頁同時用因果圖與模態圖時，兩者共用同一個 `LocaleProvider` context、同一份 `style.css`，共用模組也只載入一份。
+放進同一個套件，共用程式碼就是同一份原始碼，不必複製原始碼、不必另發共用套件，也不會分岔。
 
-代價與對策：
+分開建置是為了守住「因果講義的入口不變大」。
+起初試過把模態當成同一次建置的另一個入口：共用模組被 rolldown 拆成兩邊都載入的小 chunk，因果各入口因此多了約 1.6 kB（gzip 約 1.3 kB）的 import 與 chunk 開銷，`style.css` 也多了 7.4 kB。
+改成分開建置後，共用的原始碼在模態建置裡經 tree-shaking 打包進 `dist/modal.js`（`package.json` 宣告只有 CSS 有副作用，所以只取用到的匯出，不會帶進因果訊息表）；因果建置的輸出與 0.24.6 相同，每個因果入口與 `style.css` 的大小都不變。
 
-- 套件的安裝大小變大。瀏覽器只下載用到的入口，因此對頁面沒有影響；`check-size.mjs` 量的就是每個入口實際下載的檔案。
-- 因果講義的入口不能因為模態程式碼而變大。根入口 `causal-atlas` 不匯出任何模態元件；模態只從 `causal-atlas/modal` 進來。
-  共用模組若原本和因果專用的程式碼放在同一檔（例如 `messages.ts` 同時帶著整張因果訊息表），就先拆檔，讓模態入口只引用小模組；拆檔與功能分開提交，拆檔前後因果各入口的大小要相同。
+代價：
+
+- 共用模組的編譯結果在 `dist/` 裡有兩份，一份在因果的 chunk，一份在 `modal.js`。同一頁同時用兩種圖時，這幾 kB 會下載兩次。
+- 兩次建置各有自己的 React context，所以 `causal-atlas` 的 `LocaleProvider` 只設定因果圖，`causal-atlas/modal` 匯出的 `LocaleProvider` 只設定模態圖。部落格每個元件都直接傳 `locale`（見 `CausalModel.astro`），所以實際上沒有影響；同一頁要用 provider 的宿主，兩個各包一層即可。
+  若日後要讓一個 provider 同時管兩邊，可以把 context 掛在 `globalThis` 的 `Symbol.for` 鍵上，代價是因果入口多約 50 位元組。
+- 模態樣式是另一個檔案 `causal-atlas/modal.css`，宿主要與 `style.css` 一起載入。
 - 版本號共用：模態功能的新增照一般的 minor 版本發佈，寫在同一份 `CHANGELOG.md`。
 
 ### 2.2 子路徑入口
 
 | 入口 | 內容 |
 | --- | --- |
-| `causal-atlas/modal` | 七個元件（`IntensionTable`、`KripkeView`、`FrameConditions`、`StrictImplication`、`TcsCheck`、`SphereView`、`SurgeryVsSimilarity`）、`parseModalJson` 與 schema、模態引擎，以及與根入口同一個 `LocaleProvider` |
-| `causal-atlas/i18n` | `LocaleProvider`、`DEFAULT_LOCALE`、`LANGUAGE_NAMES`；因果與模態共用 |
-| `causal-atlas/style.css` | 所有元件的樣式，含模態 |
+| `causal-atlas/modal` | 七個元件（`IntensionTable`、`KripkeView`、`FrameConditions`、`StrictImplication`、`TcsCheck`、`SphereView`、`SurgeryVsSimilarity`）、`parseModalJson` 與 schema、模態引擎、模態圖用的 `LocaleProvider` |
+| `causal-atlas/modal.css` | 模態圖的樣式；與 `causal-atlas/style.css` 一起載入 |
 | `causal-atlas/set` | 之後的集合論元件與引擎 |
 
+根入口 `causal-atlas` 不匯出任何模態名稱，`check-size.mjs` 也會擋下任何其他入口引用模態建置的檔案。
 引擎不 import React，因此 `causal-atlas/modal` 在 Node 上也能只拿引擎與 `parseModalJson` 用（例如部落格建置時驗證模型）；React 仍是 peer dependency。
-第一階段的模態程式碼量小，所以只開一個入口；若之後某一張圖拖大了其他圖的下載量，再依 `check-size.mjs` 的量測拆成 `causal-atlas/modal/kripke` 這類子入口。
+第一階段的模態程式碼量小（102.7 kB，gzip 27.8 kB，一個檔案），所以只開一個入口；若之後某一張圖拖大了其他圖的下載量，再依 `check-size.mjs` 的量測拆成 `causal-atlas/modal/kripke` 這類子入口。
 
 模型文件一律由宿主以 prop 傳入（`model={doc}`），元件不在執行期依 id 載入資料，也不附講義用的案例資料集。
 因此不需要因果部分的 `#case-preload` 機制，伺服器渲染一次就畫出整張圖，也不會 suspend。
@@ -110,23 +111,23 @@ flowchart TD
 
 ## 3. 共用的程式碼
 
-模態部分直接 import 因果部分已有的模組。下表是第一階段用到的部分，以及為了不把因果程式碼帶進模態入口而做的拆檔。
+模態部分直接 import 因果部分已有的模組，不複製原始碼。下表是第一階段用到的部分。
 
 | 用途 | 模組 | 說明 |
 | --- | --- | --- |
-| 語言 | `components/i18n/locale.ts` | 從 `messages.ts` 拆出 `LocaleProvider`、`LocaleScope`、`useLocale`、`DEFAULT_LOCALE`、`LANGUAGE_NAMES`；`messages.ts` 照舊匯出它們，因果元件不必改 |
+| 語言 | `components/i18n/messages.ts` | `LocaleProvider`、`LocaleScope`、`DEFAULT_LOCALE`、`LANGUAGE_NAMES`，以及為此新增的 `useLocale`；模態建置只取這幾個，不帶因果訊息表 |
 | 排版 | `components/text/Tex.tsx`、`tex-html.ts` | KaTeX，伺服器與瀏覽器相同輸出，`aria-label` 與 `data-text` 保留純文字 |
 | SVG 文字 | `components/text/svg-text.tsx`、`text-measure.ts` | SVG 內的下標 tspan、文字寬度估算；版面在伺服器上就算完，不量 DOM |
-| 標籤避讓 | `components/graph/graph-labels.ts` | `textBox`、`rectBox`、`segmentHitsBox`、`firstClear`：世界名稱與同心球標籤避開箭頭與方框 |
-| 箭頭 | `components/graph/arrow-geometry.ts` | 從 `signal-shapes.ts` 拆出 `arrowHead`、`unit`；`signal-shapes.ts` 照舊匯出 |
-| 控制項 | `components/shared/controls.tsx` | 從 `parts.tsx` 拆出 `Segmented`、`OkIcon`、`NoIcon`；`parts.tsx` 照舊匯出 |
-| 樣式 | `components/styles.css` | `.ca-root` 定義的 `--ca-*` 色彩與暗色值、`ca-seg`、`ca-tex` 等共用 class；模態專用的 class 以 `ca-modal-` 為前綴，寫在 `modal/modal.css` |
+| 標籤避讓 | `components/graph/graph-labels.ts` | `textBox`、`rectBox`、`segmentHitsBox`、`firstClear`：世界名稱與同心球標籤避開箭頭、自環與方框 |
+| 箭頭 | `components/graph/signal-shapes.ts` | `arrowHead`、`unit` |
+| 控制項 | `components/shared/parts.tsx` | `Segmented`（Lewis／Stalnaker 切換）、`OkIcon`、`NoIcon` |
+| 樣式 | `components/styles.css` | `.ca-root` 定義的 `--ca-*` 色彩與暗色值、`ca-seg`、`ca-tex`、`ca-editor-errors` 等共用 class；模態專用的 class 以 `ca-modal-` 為前綴，寫在 `modal/modal.css` |
 | 有限關係 | `logic/relations.ts`（新） | 給定有限集合 $X$ 與 $R\subseteq X\times X$，檢查序列、自反、反自反、對稱、遞移、歐氏，每個失敗都回傳反例組（如遞移失敗回傳 $(w,v,u)$）；集合論之後在同一檔加上反對稱、非對稱、連通與閉包 |
 
 不共用、各自寫的部分：
 
 - **訊息表**：模態的介面字串在 `modal/i18n/zh.ts` 與 `en.ts`，不併進因果的 `Messages`；否則每個因果入口都要多帶模態字串。
-  兩邊由同一個 `useLocale()` 取得語言，因此 `LocaleProvider` 一次設定兩邊。
+  兩邊都由 `useLocale()` 取得語言。
 - **錯誤**：模態引擎有自己的 `ModalError` 與 `ModalProblem { code, params, where? }`，形式與因果的 `Problem` 相同，代碼另成一組，介面以兩種語言說明同一代碼。
 - **公式剖析**：模態公式的剖析器是專用的遞迴下降剖析器；集合論之後寫自己的。兩者共用的只有錯誤形式。
 
@@ -466,15 +467,15 @@ $>$ 與 $\supset$ 未加括號而並列時，剖析器回報 `ambiguous-mix` 並
 
 計量方式照 `causal-atlas` 的 `check-size.mjs`：入口加上它靜態引用的所有檔案，gzip 為 zlib 預設等級逐檔計算，不計 React、KaTeX、zod；動態載入的部分（圖片匯出）不計。
 
-暫定上限如下，是依程式量的估計。第一次 `build:lib` 後改成量測值加 10%，並寫進 CHANGELOG。
+模態的上限是 0.25.0 第一次 `build:lib` 的量測值加約 10%，已寫進 `check-size.mjs` 與 CHANGELOG；集合論仍是依程式量的估計。
 
 | 入口 | raw | gzip | 對照 |
 | --- | --- | --- | --- |
-| `causal-atlas/modal` | 量測值加 10%（見 CHANGELOG 0.25.0） | 同左 | `causal-atlas/playground` 為 420 kB／133 kB |
+| `causal-atlas/modal` | 113 kB | 30.6 kB | 0.25.0 量測 102.7 kB／27.8 kB 加約 10%；`causal-atlas/playground` 為 420 kB／133 kB |
 | `causal-atlas/set` | 90 kB | 30 kB | 估計 |
-| 既有的因果入口 | 不得變大 | 不得變大 | 加入模態前後各量一次 |
+| 既有的因果入口 | 不得變大 | 不得變大 | 0.25.0 與 0.24.6 逐一相同 |
 
-另外兩條硬性檢查：元件入口不得靜態引用範例模型；每個入口在 Node 上能伺服器渲染。
+另外三條硬性檢查：元件入口不得靜態引用範例模型；模態以外的入口不得引用模態建置的檔案；每個入口在 Node 上能伺服器渲染。
 
 ## 9. 發布與部落格接入
 
@@ -482,7 +483,7 @@ $>$ 與 $\supset$ 未加括號而並列時，剖析器回報 `ambiguous-mix` 並
   tag 照現行的 `v0.25.0`，`publish.yml` 不必改：它已經跑 typecheck、test、`build:lib`（含大小與伺服器渲染檢查），確認 tag 與 `package.json` 版本一致，再 `npm publish`。
 - `pages.yml` 照舊在 tag 推上時重建示範站；示範站多一個 `#/modal` 頁，列出七個元件與範例模型。
 - 授權照現行規定：程式碼 MIT，範例模型與教學文字 CC BY 4.0，`package.json` 宣告 `MIT AND CC-BY-4.0`，`CITATION.cff` 不必另附。
-- `package.json` 的 `exports` 加上 `./modal`（之後加 `./set`），各自有 `types` 與 `import`；`tsconfig.lib.json` 的 `include` 加上 `src/modal` 與 `src/logic`。
+- `package.json` 的 `exports` 加上 `./modal`（`types` 與 `import`）與 `./modal.css`，之後照樣加 `./set`；`build:lib` 多跑一次 `vite.lib.modal.config.ts`；`tsconfig.lib.json` 的 `include` 加上 `src/modal` 與 `src/logic`。
 - 部落格新增 `src/components/modal/ModalModel.astro`，照 `CausalModel.astro`：依檔名讀 `src/data/modal/models/*.json`，建置時以 `causal-atlas/modal` 的 `parseModalJson` 驗證，無效就讓建置失敗，再依 `as` 渲染對應元件並傳 `locale`。
   附錄 D 的 MDX 只寫 `<ModalModel id="md-programmer" as="spheres" />` 這類標籤。
   講義模型的 JSON 放在部落格，不隨套件發佈；改講義不必發套件新版。
@@ -493,7 +494,7 @@ $>$ 與 $\supset$ 未加括號而並列時，剖析器回報 `ambiguous-mix` 並
 items:
   - title: 階段 0：骨架
     status: todo
-    body: "從因果部分拆出共用的小模組（locale、箭頭、分段按鈕），加上 src/logic/relations.ts；不改行為。"
+    body: "messages.ts 多匯出 useLocale，加上 src/logic/relations.ts 與模態的獨立建置設定；因果入口不變。"
   - title: 階段 1：causal-atlas 0.25.0 的 /modal（附錄 D）
     status: todo
     body: "公式剖析、Kripke 求值與說明樹、框架條件與公理有效性、嚴格蘊涵與 TCS、Lewis／Stalnaker 同心球、相似度產生器、布林小手術；七個元件；示範站 #/modal 頁。部落格的 ModalModel.astro 與附錄 D 的七張圖另做。"
@@ -519,7 +520,7 @@ items:
 - **權重近似的誤導**：相似度產生器把 Lewis 的優先序簡化成加權和，讀者可能以為 Lewis 就是這樣算。介面與講義文字都要說明這是近似。
 - **窮舉成本**：公理有效性對 8 個世界、兩個原子要跑 $2^{16}$ 種指派乘 8 個世界，約五十萬次求值，瀏覽器上需在一百毫秒內完成；做不到就把雙原子公理的上限降到 6 個世界。
 - **記號衝突**：$>$ 同時是反事實與序數比較，但分屬兩個套件，不會在同一個剖析器裡出現；「選擇函數」一詞在兩個套件意義不同，見術語表。
-- **共用模組的修改會同時影響因果與模態的圖**：改標籤避讓或箭頭時，兩邊的金檔測試都要跑；拆檔時因果入口的大小要在提交前後各量一次。
+- **共用模組的修改會同時影響因果與模態的圖**：改標籤避讓、箭頭或分段按鈕時，兩邊的測試都要跑；因果入口的大小要在提交前後各量一次。
 - **Lean oracle 的建置成本**未知；已備退路（第 6 節）。
 
 ## 12. 已定案的決定與未決問題

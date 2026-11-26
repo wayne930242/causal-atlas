@@ -9,6 +9,7 @@ Interactive structural causal models and a dataset of philosophical causation an
 - A causal-model engine that solves structural equations, computes interventions and counterfactuals, and checks actual causation.
 - React components for embedding interactive causal graphs or building and editing models.
 - A bundled case dataset with stories, models, verdicts, and sources.
+- Modal-logic figures (Kripke models, frame conditions, spheres) for a modal-logic lesson series.
 - A Traditional Chinese (`zh-TW`) and English (`en`) interface and bilingual case text.
 
 ## Install
@@ -43,7 +44,9 @@ import 'causal-atlas/style.css'
 | `causal-atlas/cite`, `/supplement`, `/i18n` | `CiteBlock`; `Supplement`; `LocaleProvider`, `DEFAULT_LOCALE`, `LANGUAGE_NAMES` |
 | `causal-atlas/engine` | The causal-model engine |
 | `causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
+| `causal-atlas/modal` | Modal-logic figures: `IntensionTable`, `KripkeView`, `FrameConditions`, `StrictImplication`, `TcsCheck`, `SphereView`, `SurgeryVsSimilarity`; `parseModalJson`; the modal engine (see [Modal logic figures](docs/components.md#modal-logic-figures)) |
 | `causal-atlas/style.css` | Styles for the components; import it once |
+| `causal-atlas/modal.css` | Styles for the modal figures, loaded with `style.css` |
 
 ## Documentation
 
@@ -63,16 +66,16 @@ import 'causal-atlas/style.css'
 Please cite causal-atlas when using it for research or teaching.
 The citation is also available in [CITATION.cff](CITATION.cff) and the `CiteBlock` component.
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.6 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.25.0 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.24.6) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.25.0) [Software and dataset]. https://wayneh.tw/causal/
 
 ```bibtex
 @software{hung_causal_atlas_2026,
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.24.6},
+  version = {0.25.0},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
