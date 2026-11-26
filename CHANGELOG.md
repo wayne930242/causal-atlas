@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.24.3
+LICENSE-DATA and the README say that most cases are adapted from the works their `sources` list: those works stay their authors', CC BY 4.0 covers only the dataset's own wording, models and teaching text, and reuse credits the originals too.
+
 ## 0.24.2
 The README is a short front page with the demo links; release notes moved to CHANGELOG.md and component details to docs/components.md.
 

@@ -63,16 +63,16 @@ import 'causal-atlas/style.css'
 Please cite causal-atlas when using it for research or teaching.
 The citation is also available in [CITATION.cff](CITATION.cff) and the `CiteBlock` component.
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.2 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.3 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.24.2) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.24.3) [Software and dataset]. https://wayneh.tw/causal/
 
 ```bibtex
 @software{hung_causal_atlas_2026,
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.24.2},
+  version = {0.24.3},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
@@ -84,6 +84,9 @@ The citation is also available in [CITATION.cff](CITATION.cff) and the `CiteBloc
 - Case data (`src/data/cases/`) and teaching text: [CC BY 4.0](LICENSE-DATA), including when bundled in `dist/*.js`.
   When reusing either, credit 洪偉（Wei Hung） and cite the source.
 - `package.json` declares `MIT AND CC-BY-4.0`.
+- Most cases are adapted from published papers, books, court decisions and news reports, which each case lists in its `sources`.
+  Those works belong to their authors; CC BY 4.0 covers only this dataset's own wording, models and teaching text.
+  When reusing a case, credit its original sources as well.
 
 [demo]: https://wayne930242.github.io/causal-atlas/
 [explorer]: https://wayne930242.github.io/causal-atlas/#/explorer
