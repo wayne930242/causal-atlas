@@ -19,7 +19,7 @@ export interface EmbedState {
 }
 
 /** Where a bundled case's embed page lives by default: `<base>case/<id>/`. */
-export const DEFAULT_EMBED_BASE = `${DEFAULT_URL}embed/`
+export const DEFAULT_EMBED_BASE = 'https://wayneh.tw/causal/embed/'
 
 function param(hash: string, name: string): string | undefined {
   return new RegExp(`[#?&]${name}=([^&]*)`).exec(hash)?.[1]
@@ -75,7 +75,7 @@ export interface EmbedCodeOptions {
   readonly title: string
   readonly height: number
   readonly locale: Locale
-  /** Link in the citation. Default https://wayneh.tw/causal/. */
+  /** Link in the citation. Default: the project repository. */
   readonly url?: string
   /** Full citations of the case's origin sources, cited after the project. */
   readonly origins?: readonly string[]
@@ -99,7 +99,7 @@ export function embedCode({ src, title, height, locale, url = DEFAULT_URL, origi
  * Where an embedded figure's credit links: `from` when it is a path on the embed page's own site
  * (the page the figure was copied from), else the project page.
  */
-export function embedHome(search: string, origin: string, fallback: string = DEFAULT_URL): string {
+export function embedHome(search: string, origin: string, fallback: string = 'https://wayneh.tw/causal/'): string {
   const from = new URLSearchParams(search).get('from')
   if (from === null || !from.startsWith('/') || from.startsWith('//')) return fallback
   return `${origin}${from}`

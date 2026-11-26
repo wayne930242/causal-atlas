@@ -73,7 +73,7 @@ export interface CausalPlaygroundOptions {
    * a document (it has none of its own); `false` hides them.
    */
   readonly presets?: boolean | readonly PlaygroundPreset[]
-  /** Link in exported images' watermark. Default https://wayneh.tw/causal/. */
+  /** Link in exported images' watermark. Default https://github.com/wayne930242/logic-atlas. */
   readonly exportUrl?: string
   /**
    * Decimals of the probability under each node (and a stochastic do()'s tag, a bar chart's top

@@ -296,7 +296,7 @@ export interface ExportOptions {
   /** Default `color`. `academic` ignores `theme` and draws no watermark or case-source strip. */
   readonly style?: ExportStyle
   readonly theme: ExportTheme
-  /** Link in the watermark. Default https://wayneh.tw/causal/. */
+  /** Link in the watermark. Default https://github.com/wayne930242/logic-atlas. */
   readonly url?: string
   /** Language of the watermark lines. Default zh-TW; the title, tags and legend come in the source. */
   readonly locale?: Locale

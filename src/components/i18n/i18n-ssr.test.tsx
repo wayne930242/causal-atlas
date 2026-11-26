@@ -44,8 +44,8 @@ describe('English server render', () => {
 
 describe('watermark', () => {
   it('names the author per locale', () => {
-    expect(watermarkLine('https://wayneh.tw/causal/', 'zh-TW')).toBe('洪偉（Wei Hung）· logic-atlas · CC BY 4.0 · https://wayneh.tw/causal/')
-    expect(watermarkLine('https://wayneh.tw/causal/', 'en')).toBe('Wei Hung (洪偉) · logic-atlas · CC BY 4.0 · https://wayneh.tw/causal/')
-    expect(watermarkLine()).toBe(watermarkLine('https://wayneh.tw/causal/', 'zh-TW'))
+    expect(watermarkLine('https://github.com/wayne930242/logic-atlas', 'zh-TW')).toBe('洪偉（Wei Hung）· logic-atlas · CC BY 4.0 · https://github.com/wayne930242/logic-atlas')
+    expect(watermarkLine('https://github.com/wayne930242/logic-atlas', 'en')).toBe('Wei Hung (洪偉) · logic-atlas · CC BY 4.0 · https://github.com/wayne930242/logic-atlas')
+    expect(watermarkLine()).toBe(watermarkLine('https://github.com/wayne930242/logic-atlas', 'zh-TW'))
   })
 })

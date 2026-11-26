@@ -5,7 +5,7 @@ import { LocaleScope, useMessages } from '../i18n/messages.ts'
 import { Disclosure } from '../shared/parts.tsx'
 
 export interface CiteBlockProps {
-  /** Where the project lives; goes into every citation form. Default https://wayneh.tw/causal/. */
+  /** Where the project lives; goes into every citation form. Default https://github.com/wayne930242/logic-atlas. */
   readonly url?: string
   /** Interface language. Default: the surrounding LocaleProvider's, else zh-TW. */
   readonly locale?: Locale

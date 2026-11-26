@@ -11,7 +11,7 @@ declare const __CA_YEAR__: number
 
 export const VERSION: string = __CA_VERSION__
 export const YEAR: number = __CA_YEAR__
-export const DEFAULT_URL = 'https://wayneh.tw/causal/'
+export const DEFAULT_URL = 'https://github.com/wayne930242/logic-atlas'
 export const DATA_LICENSE = 'CC BY 4.0'
 
 /** The Chinese author-year citation. */

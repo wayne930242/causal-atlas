@@ -366,7 +366,7 @@ current state (do(), witness hull, probabilities) with the blog's tokens resolve
 and bakes in a watermark strip: 「洪偉（Wei Hung）· logic-atlas · CC BY 4.0 · <url>」 plus
 「案例出處：…」 for a case, or in English "Wei Hung (洪偉) · logic-atlas · CC BY 4.0 · <url>" plus
 "Case source: …"; English files end in `-en`. `exportUrl` sets the url (default
-`https://wayneh.tw/causal/`). The case source names the case's `origin` sources in short form
+`https://github.com/wayne930242/logic-atlas`). The case source names the case's `origin` sources in short form
 (`Hall 2004`; a court decision as its name and year, `Palsgraf v. Long Island Railroad Co. 1928`); up
 to three are listed, more become the first two and 「等」 / "et al.". The academic style (black and
 white, no strip) shows the project's citation with the case's full origin citations, and

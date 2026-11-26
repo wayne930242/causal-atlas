@@ -32,7 +32,7 @@ export interface CasePageProps {
   readonly lessonLabel?: string
   /** Shown on the last step in place of the next button. */
   readonly next?: { readonly href: string; readonly label: string }
-  /** Link in exported images' watermark. Default https://wayneh.tw/causal/. */
+  /** Link in exported images' watermark. Default https://github.com/wayne930242/logic-atlas. */
   readonly exportUrl?: string
   /**
    * Decimals of the probability under each node (and a stochastic do()'s tag, a bar chart's top
