@@ -120,6 +120,8 @@ export const ZH = {
   /** Joins clauses of one line. */
   clauses: (items: readonly string[]): string => items.join('；'),
   sourceList: (items: readonly string[]): string => items.join('；'),
+  /** The first sources of a longer list, on an image: `Hall 2004；Lewis 1973 等`. */
+  sourceListMore: (items: readonly string[]): string => `${items.join('；')} 等`,
 
   // case page
   family: { actual: '實際因果', omission: '不作為與責任', norms: '規範與預設值', law: '法律', decision: '因果決策' },
@@ -670,8 +672,7 @@ export const ZH = {
     citeLead: '引用本圖請註明：',
     reminderHeading: '學術版沒有浮水印，請在圖說或參考文獻裡引用：',
     reminderOrigins: '這個案例的原始出處也請一併引用：',
-    copyAuthorYear: '複製作者年份',
-    copyOrigins: '複製案例出處',
+    copyCitations: '複製引用文字',
     copied: '已複製',
     embedLead: '嵌入到其他網頁：複製的程式碼含可操作的圖（目前的觀察與干預一併帶過去）與引用文字，請一併保留。',
     copyEmbed: '複製嵌入碼',

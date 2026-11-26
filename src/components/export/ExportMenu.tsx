@@ -101,7 +101,7 @@ export function ExportMenu({ source, url, origins = [], embedCode }: ExportMenuP
             />
           )}
           <Segmented label={t.export.language} options={LANGUAGES} value={locale} onChange={setLocale} />
-          {style === 'academic' && <CitationReminder locale={locale} url={url ?? DEFAULT_URL} origins={origins} />}
+          {style === 'academic' && <CitationReminder key={locale} locale={locale} url={url ?? DEFAULT_URL} origins={origins} />}
           <button type="button" className="ca-btn ca-btn-primary ca-export-go" onClick={download}>
             {t.export.download}
           </button>
@@ -138,7 +138,11 @@ function CopyButton({ text, label }: { readonly text: string | (() => string); r
   )
 }
 
-/** What to cite when using the academic image: this project (BibTeX, author-year) and the case's own sources. */
+/**
+ * What to cite when using the academic image: this project (author-year, BibTeX) and the case's own
+ * sources. 「複製引用文字」 copies the project's line with every case source, one per line, so the
+ * credit is never the project's alone.
+ */
 function CitationReminder({ locale, url, origins }: { readonly locale: Locale; readonly url: string; readonly origins: readonly string[] }) {
   const m = messagesFor(locale).export
   const line = locale === 'en' ? authorYearEn(url) : authorYear(url)
@@ -146,10 +150,6 @@ function CitationReminder({ locale, url, origins }: { readonly locale: Locale; r
     <div className="ca-export-cite" role="note" lang={locale}>
       <p className="ca-small">{m.reminderHeading}</p>
       <p className="ca-cite-entry ca-small">{line}</p>
-      <div className="ca-export-copy">
-        <CopyButton text={line} label={m.copyAuthorYear} />
-        <CopyButton text={bibtex(url)} label={messagesFor(locale).cite.copyBibtex} />
-      </div>
       {origins.length > 0 && (
         <>
           <p className="ca-small">{m.reminderOrigins}</p>
@@ -158,11 +158,12 @@ function CitationReminder({ locale, url, origins }: { readonly locale: Locale; r
               <li key={o}>{o}</li>
             ))}
           </ul>
-          <div className="ca-export-copy">
-            <CopyButton text={origins.join('\n')} label={m.copyOrigins} />
-          </div>
         </>
       )}
+      <div className="ca-export-copy">
+        <CopyButton text={[line, ...origins].join('\n')} label={m.copyCitations} />
+        <CopyButton text={bibtex(url)} label={messagesFor(locale).cite.copyBibtex} />
+      </div>
     </div>
   )
 }

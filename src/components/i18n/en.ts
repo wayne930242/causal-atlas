@@ -15,6 +15,7 @@ export const EN: Messages = {
   list: enList,
   clauses: (items) => items.join('; '),
   sourceList: (items) => items.join('; '),
+  sourceListMore: (items) => `${items.join('; ')} et al.`,
 
   family: { actual: 'Actual causation', omission: 'Omission and responsibility', norms: 'Norms and defaults', law: 'Law', decision: 'Causal decision theory' },
   stepOf: (step, total) => `Step ${step} of ${total}`,
@@ -569,8 +570,7 @@ export const EN: Messages = {
     citeLead: 'Please cite this figure as:',
     reminderHeading: 'The academic version has no watermark. Please cite it in the caption or the references:',
     reminderOrigins: 'Please also cite the case’s original sources:',
-    copyAuthorYear: 'Copy author-year',
-    copyOrigins: 'Copy case sources',
+    copyCitations: 'Copy citations',
     copied: 'Copied',
     embedLead:
       'Embed it in another page: the code holds the interactive figure (with what is observed and set now) and the citation; please keep both.',

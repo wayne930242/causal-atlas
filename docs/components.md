@@ -7,7 +7,7 @@
 
 ## Package
 
-`causal-atlas` (0.24.3) ships ESM with type declarations and one CSS file:
+`causal-atlas` (0.24.4) ships ESM with type declarations and one CSS file:
 [see the package entries](../README.md#entries).
 
 React 19 is a peer dependency. Importing the components touches no browser globals, so they render on
@@ -364,7 +364,12 @@ current state (do(), witness hull, probabilities) with the blog's tokens resolve
 and bakes in a watermark strip: 「洪偉（Wei Hung）· causal-atlas · CC BY 4.0 · <url>」 plus
 「案例出處：…」 for a case, or in English "Wei Hung (洪偉) · causal-atlas · CC BY 4.0 · <url>" plus
 "Case source: …"; English files end in `-en`. `exportUrl` sets the url (default
-`https://wayneh.tw/causal/`).
+`https://wayneh.tw/causal/`). The case source names the case's `origin` sources in short form
+(`Hall 2004`; a court decision as its name and year, `Palsgraf v. Long Island Railroad Co. 1928`); up
+to three are listed, more become the first two and 「等」 / "et al.". The academic style (black and
+white, no strip) shows the project's citation with the case's full origin citations, and
+「複製引用文字」 / "Copy citations" copies them together, one per line; the embed code and the
+embedded figure's footer carry the same credit.
 
 Every text in a case file comes in both languages, `{ "zh-TW": …, "en": … }`, and both are
 required: `title`, `story`, `explanation`, the optional `subtitle`, `intuition.text`, variable and

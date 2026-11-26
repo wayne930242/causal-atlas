@@ -339,7 +339,12 @@ export function intuitionSummary(t: Messages, c: LoadedCase): string | undefined
   return t.intuitionSummary(differ, agree)
 }
 
+/** `Palsgraf v. Long Island Railroad Co., 248 N.Y. 339 (N.Y. 1928).`: the case name and the year in the last parentheses. */
+const COURT_DECISION = /^(.+? v\. [^,]+),.*\((?:[^()]*\s)?(\d{4})\)/
+
 function shortCitation(citation: string): string {
+  const decision = COURT_DECISION.exec(citation)
+  if (decision !== null) return `${decision[1]} ${decision[2]}`
   const year = /\((\d{4}[a-z]?)\)/.exec(citation)?.[1] ?? ''
   const head = citation.split(/\(\d{4}/)[0] ?? ''
   const names = [...head.matchAll(/([A-Z][A-Za-z'’-]+), (?:[A-Z]\.\s?)+/g)].map((m) => m[1])
@@ -356,12 +361,22 @@ export function shortSources(t: Messages, c: LoadedCase): string {
   return t.sourceList(sorted)
 }
 
-/** Where the case comes from, short form: `Hall 2004`. */
+/** An image's case-source line lists at most this many sources; a longer list shows the first two and 等 / et al. */
+const MAX_SHORT_ORIGINS = 3
+
+/**
+ * Where the case comes from, short form for an image's credit line: `Hall 2004`. Up to three
+ * sources; more become the first two and 等 / et al. ({@link originCitations} lists them all).
+ */
 export function originSources(t: Messages, c: LoadedCase): string {
-  return t.sourceList(c.data.sources.filter((s) => s.role === 'origin').map((s) => shortCitation(s.citation)))
+  const short = originCitations(c).map(shortCitation)
+  return short.length > MAX_SHORT_ORIGINS ? t.sourceListMore(short.slice(0, 2)) : t.sourceList(short)
 }
 
-/** Full citations of the case's origin sources, for the academic export's citation reminder. */
+/**
+ * Full citations of the case's origin sources: what an export credits beside this project (the
+ * academic reminder, the embed code, the academic SVG's description). Every bundled case has one.
+ */
 export function originCitations(c: LoadedCase): string[] {
   return c.data.sources.filter((s) => s.role === 'origin').map((s) => s.citation)
 }

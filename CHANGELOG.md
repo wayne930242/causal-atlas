@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.24.4
+Credits name the case's originals everywhere a figure or citation leaves the package. The academic reminder's 「複製引用文字」 / "Copy citations" copies the project line and every case source; court decisions shorten to "Palsgraf v. Long Island Railroad Co. 1928" on images and the case page footer; four or more sources show the first two and 「等」 / "et al.".
+
 ## 0.24.3
 LICENSE-DATA and the README say that most cases are adapted from the works their `sources` list: those works stay their authors', CC BY 4.0 covers only the dataset's own wording, models and teaching text, and reuse credits the originals too.
 

@@ -176,9 +176,10 @@ describe('academic export', () => {
     expect(note.textContent).toContain('Hall, N. (2004)')
     fireEvent.click(within(note).getByRole('button', { name: '複製 BibTeX' }))
     expect(write).toHaveBeenCalledWith(bibtex())
-    fireEvent.click(within(note).getByRole('button', { name: '複製作者年份' }))
-    expect(write).toHaveBeenCalledWith(authorYear())
-    expect(within(note).getByRole('button', { name: '複製案例出處' })).toBeTruthy()
+    fireEvent.click(within(note).getByRole('button', { name: '複製引用文字' }))
+    const [line, origin] = String(write.mock.lastCall?.[0]).split('\n')
+    expect(line).toBe(authorYear())
+    expect(origin).toMatch(/^Hall, N\. \(2004\)/)
     expect(within(menu).queryByRole('button', { name: '淺色' })).toBeNull()
   })
 
@@ -190,7 +191,7 @@ describe('academic export', () => {
     fireEvent.click(within(menu).getByRole('button', { name: '學術版（黑白線條）' }))
     const note = within(menu).getByRole('note')
     expect(note.textContent).toContain('Hung, W.')
-    expect(within(note).getByRole('button', { name: 'Copy author-year' })).toBeTruthy()
+    expect(within(note).getByRole('button', { name: 'Copy citations' })).toBeTruthy()
   })
 
   it('keeps the colour export watermarked', () => {

@@ -63,16 +63,16 @@ import 'causal-atlas/style.css'
 Please cite causal-atlas when using it for research or teaching.
 The citation is also available in [CITATION.cff](CITATION.cff) and the `CiteBlock` component.
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.3 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。causal-atlas（0.24.4 版）。https://wayneh.tw/causal/
 
-> Hung, W. (2026). causal-atlas (Version 0.24.3) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). causal-atlas (Version 0.24.4) [Software and dataset]. https://wayneh.tw/causal/
 
 ```bibtex
 @software{hung_causal_atlas_2026,
   author  = {Hung, Wei},
   title   = {causal-atlas},
   year    = {2026},
-  version = {0.24.3},
+  version = {0.24.4},
   url     = {https://wayneh.tw/causal/},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
