@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.24.6
+Node labels keep off edges, arcs and arrowheads: a label tries below, above, right and left of its disc, each on one line and then wrapped on two (English only; Chinese names never wrap), and sits clearly nearer its own disc than any other, 10 px from other labels. Three or more nodes in a column put their labels on one side. In exported images the 「偏離預設」 / "deviant" tag is a dashed outline, as on the page, instead of a black box.
+
 ## 0.24.5
 The 「原本 1」 / "was 1" note under an intervened graph no longer covers node labels: it is placed after the labels, centred under (or over) its own label, else beside it or the disc, clear of every disc, do tag, label and other note, and the drawing grows to hold it.
 

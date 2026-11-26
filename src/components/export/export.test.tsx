@@ -231,3 +231,36 @@ describe('subscripts in exported text', () => {
     expect(subs[0].getAttribute('dy')).toBe('0.25em')
   })
 })
+
+describe('the 偏離 tag in exported images', () => {
+  /** Each 偏離（預設 v） tag in an exported SVG: its box's paint and its text's fill. */
+  function deviantTags(svg: string): { box: Record<string, string | null>; text: string | null }[] {
+    const doc = new DOMParser().parseFromString(svg, 'image/svg+xml')
+    return [...doc.querySelectorAll('text')]
+      .filter((t) => (t.textContent ?? '').startsWith('偏離'))
+      .map((t) => {
+        const box = t.previousElementSibling
+        return {
+          box: { tag: box?.tagName ?? null, fill: box?.getAttribute('fill') ?? null, stroke: box?.getAttribute('stroke') ?? null, dash: box?.getAttribute('stroke-dasharray') ?? null },
+          text: t.getAttribute('fill'),
+        }
+      })
+  }
+
+  it.each([
+    ['淺色', '#111111'],
+    ['深色', '#f2f2ed'],
+  ] as const)('draws it as on the page, a dashed outline in the text colour, in the %s colour export', (theme, fg) => {
+    const { container } = render(<CausalPlayground caseId="rock-throwing" />)
+    const tags = deviantTags(exportSvg(container, theme).svg)
+    expect(tags.length).toBeGreaterThan(0)
+    for (const tag of tags) expect(tag).toEqual({ box: { tag: 'rect', fill: 'none', stroke: fg, dash: '2 2' }, text: fg })
+  })
+
+  it('draws it as a dashed black outline with black text in the academic export', () => {
+    const { container } = render(<CausalPlayground caseId="rock-throwing" />)
+    const tags = deviantTags(exportAcademic(container).svg)
+    expect(tags.length).toBeGreaterThan(0)
+    for (const tag of tags) expect(tag).toEqual({ box: { tag: 'rect', fill: 'none', stroke: '#000000', dash: '2 2' }, text: '#000000' })
+  })
+})

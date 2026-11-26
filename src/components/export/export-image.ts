@@ -186,6 +186,8 @@ const RULES: readonly Rule[] = [
     decl: (p) => ({ fill: 'none', stroke: p.amber, 'stroke-width': '1.75', 'stroke-dasharray': '5 4' }),
   },
   { cls: ['ca-amber-tag'], decl: (p) => ({ ...translucent(p.amberFill), stroke: p.amber }) },
+  // The 偏離 tag's box: no fill, a dashed outline in the text colour (`currentColor` on the page).
+  { cls: ['ca-deviant-box'], decl: (p) => ({ fill: 'none', stroke: p.foreground, 'stroke-width': '1', 'stroke-dasharray': '2 2' }) },
   { cls: ['ca-hair'], decl: (p) => ({ stroke: p.border, 'stroke-width': '1' }) },
   {
     cls: ['ca-guide'],

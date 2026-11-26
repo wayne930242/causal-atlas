@@ -25,7 +25,7 @@ import { BAR_LABEL, blockOptions, nodeReadout, noteSpots, readoutWidth, unit } f
 
 /**
  * Where everything in a signal graph goes, computed apart from drawing it: node positions, each
- * node's label block (below it, or above when that touches less), the do() tags, the latent arcs
+ * node's label block (below it, or round it where that crosses less), the do() tags, the latent arcs
  * and their labels, every edge with its cut or inhibit label, the witness hull and the view box.
  * Labels claim space in one shared obstacle list, in this order: node blocks, arc labels, then
  * cut and inhibit labels edge by edge.
@@ -144,6 +144,10 @@ export interface SignalLayout {
   readonly row: number
   readonly pos: ReadonlyMap<string, Point>
   readonly blocks: ReadonlyMap<string, Block>
+  /** Every spot each node's block was weighed at, best first; `blocks` holds the one taken. */
+  readonly labelOptions: ReadonlyMap<string, readonly Block[]>
+  /** A wrapped label's name in its two parts (the id goes before the first), per node whose block wraps it. */
+  readonly labelLines: ReadonlyMap<string, readonly [string, string]>
   readonly tags: ReadonlyMap<string, DoTag>
   /** 固定為 w（實際 v） or 固定（實際值） per held variable, when `holdNotes`. */
   readonly holdNotes: ReadonlyMap<string, string>
@@ -160,6 +164,35 @@ export interface SignalLayout {
   readonly width: number
   readonly height: number
 }
+
+/**
+ * A name in two parts for a label on two lines: split at the space that makes the id with the
+ * first part and the rest nearest in width, never right after an abbreviation (`Mr.`, `St.`), which
+ * stays with the word it belongs to. A Chinese name stays whole: its spaces only set off a digit or
+ * a letter inside a phrase (第 1 位投給 B 先生), and splitting there would break the phrase.
+ */
+export function wrapName(id: string, name: string): readonly [string, string] | undefined {
+  if ([...name].some((ch) => (ch.codePointAt(0) ?? 0) > 0x2e7f)) return undefined
+  const words = name.split(' ').filter((w) => w !== '')
+  let best: readonly [string, string] | undefined
+  let bestW = Infinity
+  for (let i = 1; i < words.length; i++) {
+    if (/^[A-Za-z]{1,3}\.$/.test(words[i - 1])) continue
+    const first = words.slice(0, i).join(' ')
+    const second = words.slice(i).join(' ')
+    const w = Math.max(textWidth(idWithName(id, first), 14), textWidth(second, 14))
+    if (w < bestW) {
+      best = [first, second]
+      bestW = w
+    }
+  }
+  return best
+}
+
+/** How much nearer (edge to edge) a label block must be to its own disc than to any other, in px. */
+export const LABEL_MARGIN = 12
+/** The least gap between two nodes' label blocks, in px, so they never read as one stack. */
+export const BLOCK_GAP = 10
 
 /** Half the side of a switch node's square, in px. */
 export const SWITCH_HALF = 9
@@ -270,6 +303,19 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
   const cut = new Set(removedEdges.map((e) => `${e.from}>${e.to}`))
   const edges = shownEdges(c.model.edges, shown)
   const nameOf = (id: string): string => shortLabel(c.model, id, t.locale)
+  /** An edge's line as drawn: from its source's rim (a switch's side) to the start of its head. */
+  const edgeLine = (e: Edge) => {
+    const a = pos.get(e.from)
+    const b = pos.get(e.to)
+    if (a === undefined || b === undefined) return undefined
+    const { ux, uy } = unit(a, b)
+    // A switch's square: the arrow leaves its side, not a circle's rim.
+    const from = switches.includes(e.from) ? SWITCH_HALF / Math.max(Math.abs(ux), Math.abs(uy)) : R
+    const key = `${e.from}>${e.to}`
+    const kind: EdgeMark['kind'] = cut.has(key) ? 'cut' : edgePolarity(c.model, e.from, e.to) === 'inhibit' ? 'inhibit' : 'plain'
+    const end = kind === 'inhibit' ? R + 7 : R + 2
+    return { kind, key, a, b, ux, uy, x1: a.x + from * ux, y1: a.y + from * uy, x2: b.x - end * ux, y2: b.y - end * uy }
+  }
 
   // The tag beside a set node: `X←1` for do(), `P(X=1)=0.30` for a stochastic do(), `X=1` observed.
   const doTag = (id: string): DoTag | undefined => {
@@ -305,11 +351,13 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     return t.normality.deviant(formatValue(normal))
   }
 
-  // Each node's label and readout form one block right under it; only when that block touches an
-  // edge, another node, a do tag or an earlier block, or leaves the graph's sides, does the whole
-  // block go above the node (when that touches less).
+  // Each node's label and readout form one block right under it; only when that block meets a disc,
+  // a do tag or an earlier block, or crosses a drawn line (edge, arc or head), does the whole block
+  // move: above the node, beside it, or off a corner, to the spot that crosses least.
   const placedBoxes: Box[] = []
   const blocks = new Map<string, Block>()
+  const labelOptions = new Map<string, readonly Block[]>()
+  const labelLines = new Map<string, readonly [string, string]>()
   const wasNotes = new Map<string, Placed & { readonly text: string }>()
   const fixed: Box[] = []
   const tagBoxes: Box[] = []
@@ -334,6 +382,86 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     tagBoxes,
   )
   const arcSegments = arcPlans.map((a) => arcCurve(a.start, a.control, a.end, 12))
+  // The lines as drawn, which a node's label must not cross: each edge from rim to tip (a cut one
+  // in its two halves), each arc's curve, and every head (arrow or ¬ circle) widened to its width.
+  const strokes: [Point, Point][] = []
+  const heads: Box[] = []
+  const head = (tip: Point, ux: number, uy: number, past: number): void => {
+    const end = { x: tip.x + past * ux, y: tip.y + past * uy }
+    const base = { x: tip.x - 10 * ux, y: tip.y - 10 * uy }
+    heads.push({ x0: Math.min(end.x, base.x) - 5, y0: Math.min(end.y, base.y) - 5, x1: Math.max(end.x, base.x) + 5, y1: Math.max(end.y, base.y) + 5 })
+  }
+  for (const e of edges) {
+    const line = edgeLine(e)
+    if (line === undefined) continue
+    const { x1, y1, x2, y2, ux, uy } = line
+    if (line.kind === 'cut') {
+      const mx = (x1 + x2) / 2
+      const my = (y1 + y2) / 2
+      strokes.push([{ x: x1, y: y1 }, { x: mx - 10 * ux, y: my - 10 * uy }], [{ x: mx + 10 * ux, y: my + 10 * uy }, { x: x2, y: y2 }])
+      continue
+    }
+    strokes.push([{ x: x1, y: y1 }, { x: x2, y: y2 }])
+    head({ x: x2, y: y2 }, ux, uy, line.kind === 'inhibit' ? 10 : 0)
+  }
+  for (const plan of arcPlans) {
+    const curve = arcCurve(plan.start, plan.control, plan.end, 40)
+    for (let i = 0; i + 1 < curve.length; i++) strokes.push([curve[i], curve[i + 1]])
+    for (const [tip, from] of [[plan.start, plan.control], [plan.end, plan.control]] as const) {
+      const { ux, uy } = unit(from, tip)
+      head(tip, ux, uy, 0)
+    }
+  }
+  /** How many drawn lines and heads `box` crosses. */
+  const crossings = (box: Box): number => {
+    const padded = { x0: box.x0 - 1, y0: box.y0 - 1, x1: box.x1 + 1, y1: box.y1 + 1 }
+    return strokes.filter(([a, b]) => segmentHitsBox(a, b, padded)).length + heads.filter((h) => intersects(padded, h, 0)).length
+  }
+  /** A disc's radius: a switch's half side, else the node radius. */
+  const radius = (id: string): number => (switches.includes(id) ? SWITCH_HALF : R)
+  /**
+   * Whether boxes placed for `id`'s block would read as another node's: some other disc is not at
+   * least LABEL_MARGIN farther from them (edge to edge) than `id`'s own.
+   */
+  const ambiguous = (id: string, boxes: readonly Box[]): boolean => {
+    const hull = { x0: Math.min(...boxes.map((b) => b.x0)), y0: Math.min(...boxes.map((b) => b.y0)), x1: Math.max(...boxes.map((b) => b.x1)), y1: Math.max(...boxes.map((b) => b.y1)) }
+    const away = (q: Point, r: number): number => Math.hypot(Math.max(hull.x0 - q.x, 0, q.x - hull.x1), Math.max(hull.y0 - q.y, 0, q.y - hull.y1)) - r
+    const own = away(pos.get(id) ?? { x: 0, y: 0 }, radius(id))
+    return shown.some((other) => {
+      const q = pos.get(other)
+      return other !== id && q !== undefined && away(q, radius(other)) < own + LABEL_MARGIN
+    })
+  }
+  // What a spot costs `id`, compared in turn: the discs and do tags it meets, the other blocks
+  // (`placed`) it comes within BLOCK_GAP of, and whether it reads as another node's (see
+  // `ambiguous`); the lines its label crosses, the lines the rest of the block crosses, and how far
+  // it reaches past the graph's margins (in steps of 48 px, so a little overhang does not outweigh
+  // the order), a corner counting one step more, since a block there sits farther from its node.
+  const cost = (id: string, b: Block, placed: readonly Box[]): readonly number[] => {
+    const p = pos.get(id) ?? { x: 0, y: 0 }
+    let hard = 0
+    let label = 0
+    let rest = 0
+    b.boxes.forEach((local, i) => {
+      const box = shifted(local, p.x, p.y)
+      const crossed = crossings(box)
+      if (i === 0) label += crossed
+      else rest += crossed
+      for (const o of fixed) if (intersects(box, o, 0)) hard += 1
+      for (const o of placed) if (intersects(box, o, BLOCK_GAP)) hard += 1
+    })
+    const all = b.boxes.map((local) => shifted(local, p.x, p.y))
+    if (ambiguous(id, all)) hard += 1
+    const past =
+      Math.max(0, -Math.min(...all.map((x) => x.x0))) +
+      Math.max(0, Math.max(...all.map((x) => x.x1)) - width) +
+      Math.max(0, -Math.min(...all.map((x) => x.y0))) +
+      Math.max(0, Math.max(...all.map((x) => x.y1)) - layoutHeight)
+    return [hard, label, rest, Math.floor(past / 48) + (b.side.includes('-') ? 1 : 0)]
+  }
+  const clear = (k: readonly number[]): boolean => k[0] === 0 && k[1] === 0 && k[2] === 0
+  const splits = new Map<string, readonly [string, string]>()
+  const heldWas = new Map<string, { readonly text: string; readonly w: number }>()
   for (const id of shown) {
     const p = pos.get(id)
     if (p === undefined) continue
@@ -356,32 +484,73 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     // A switch is labelled by its id alone (F_Z), right by its square.
     const isSwitch = switches.includes(id)
     const labelW = textWidth(isSwitch ? id : idWithName(id, nameOf(id)), 14)
-    const touches = (b: Block): number => {
-      let n = 0
-      for (const local of b.boxes) {
-        const box = shifted(local, p.x, p.y)
-        if (box.x0 < 0 || box.x1 > width) n += 1
-        for (const e of edges) {
-          const a = pos.get(e.from)
-          const q = pos.get(e.to)
-          if (a !== undefined && q !== undefined && segmentHitsBox(a, q, box)) n += 1
-        }
-        for (const curve of arcSegments) {
-          for (let i = 0; i + 1 < curve.length; i++) if (segmentHitsBox(curve[i], curve[i + 1], box)) n += 1
-        }
-        // The node's own circle and do tag never meet its block, above or below.
-        for (const o of [...fixed, ...placedBoxes]) if (intersects(box, o, 0)) n += 1
+    // A long name may go on two lines, split at the space that makes them nearest in width.
+    const split = isSwitch ? undefined : wrapName(id, nameOf(id))
+    const lines = split === undefined ? undefined : ([textWidth(idWithName(id, split[0]), 14), textWidth(split[1], 14)] as const)
+    const options = blockOptions(isSwitch ? SWITCH_HALF : R + (input.hedge?.fPrime.includes(id) === true ? 16 : input.hedge?.f.includes(id) === true ? 9 : 0), { width: labelW, lines }, readout)
+    labelOptions.set(id, options)
+    // Under the node unless something is there; then the spot that costs least, earlier ones on a tie.
+    const costs = options.map((o) => cost(id, o, placedBoxes))
+    let best = 0
+    if (!clear(costs[0])) {
+      for (let i = 1; i < options.length; i++) {
+        const diff = costs[i].map((v, j) => v - costs[best][j]).find((v) => v !== 0) ?? 0
+        if (diff < 0) best = i
       }
-      return n
     }
-    const [below, above] = blockOptions(isSwitch ? SWITCH_HALF : R + (input.hedge?.fPrime.includes(id) === true ? 16 : input.hedge?.f.includes(id) === true ? 9 : 0), labelW, readout)
-    const hitsBelow = touches(below)
-    const block = hitsBelow > 0 && touches(above) < hitsBelow ? above : below
+    const block = options[best]
     blocks.set(id, block)
-    if (was !== undefined && noteW !== undefined && holdNote(id) === undefined) {
-      wasNotes.set(id, { text: was, x: 0, y: block.noteY, anchor: 'middle', box: textBox(0, block.noteY, 'middle', noteW, 12) })
-    }
+    if (split !== undefined) splits.set(id, split)
+    if (was !== undefined && noteW !== undefined && holdNote(id) === undefined) heldWas.set(id, { text: was, w: noteW })
     for (const b of block.boxes) placedBoxes.push(shifted(b, p.x, p.y))
+  }
+  // A column of three or more nodes reads best with every label on the same side of its disc. When
+  // a column's labels went to different sides, they all move to one side (below, above, right or
+  // left), all on one line or all on two (a name that cannot wrap stays on one), where each of them
+  // is clear: off every disc, tag, line and other block, and its own. Of such ways, the one reaching
+  // least past the margins wins, the earlier on a tie; with none, the labels stay where they went.
+  const columns = new Map<number, string[]>()
+  for (const id of shown) {
+    const p = pos.get(id)
+    if (p === undefined || switches.includes(id)) continue
+    columns.set(Math.round(p.x), [...(columns.get(Math.round(p.x)) ?? []), id])
+  }
+  for (const group of columns.values()) {
+    if (group.length < 3 || new Set(group.map((id) => blocks.get(id)?.side)).size === 1) continue
+    const others = shown
+      .filter((id) => !group.includes(id))
+      .flatMap((id) => {
+        const q = pos.get(id)
+        return q === undefined ? [] : (blocks.get(id)?.boxes ?? []).map((b) => shifted(b, q.x, q.y))
+      })
+    let best: { readonly chosen: Map<string, Block>; readonly past: number } | undefined
+    for (const [side, wrap] of (['below', 'above', 'right', 'left'] as const).flatMap((side) => [[side, false], [side, true]] as const)) {
+      const taken = [...others]
+      const chosen = new Map<string, Block>()
+      let past = 0
+      for (const id of group) {
+        const q = pos.get(id) ?? { x: 0, y: 0 }
+        const own = (labelOptions.get(id) ?? []).filter((o) => o.side === side)
+        const fit = own.find((o) => o.wrapped === wrap) ?? own[0]
+        if (fit === undefined || !clear(cost(id, fit, taken))) break
+        chosen.set(id, fit)
+        past += cost(id, fit, taken)[3]
+        taken.push(...fit.boxes.map((b) => shifted(b, q.x, q.y)))
+      }
+      if (chosen.size === group.length && (best === undefined || past < best.past)) best = { chosen, past }
+    }
+    for (const [id, b] of best?.chosen ?? []) blocks.set(id, b)
+  }
+  placedBoxes.length = 0
+  for (const id of shown) {
+    const p = pos.get(id)
+    const block = blocks.get(id)
+    if (p === undefined || block === undefined) continue
+    for (const b of block.boxes) placedBoxes.push(shifted(b, p.x, p.y))
+    const split = splits.get(id)
+    if (block.wrapped && split !== undefined) labelLines.set(id, split)
+    const was = heldWas.get(id)
+    if (was !== undefined) wasNotes.set(id, { text: was.text, x: block.cx, y: block.noteY, anchor: 'middle', box: textBox(block.cx, block.noteY, 'middle', was.w, 12) })
   }
 
   // 原本 v (without hold notes) goes where it clears every disc, do tag, label block and earlier
@@ -520,19 +689,10 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
 
   const edgeMarks: EdgeMark[] = []
   for (const e of edges) {
-    const a = pos.get(e.from)
-    const b = pos.get(e.to)
-    if (a === undefined || b === undefined) continue
-    const { ux, uy } = unit(a, b)
-    // A switch's square: the arrow leaves its side, not a circle's rim.
-    const from = switches.includes(e.from) ? SWITCH_HALF / Math.max(Math.abs(ux), Math.abs(uy)) : R
-    const x1 = a.x + from * ux
-    const y1 = a.y + from * uy
-    const polarity = edgePolarity(c.model, e.from, e.to)
-    const key = `${e.from}>${e.to}`
-    if (cut.has(key)) {
-      const x2 = b.x - (R + 2) * ux
-      const y2 = b.y - (R + 2) * uy
+    const line = edgeLine(e)
+    if (line === undefined) continue
+    const { a, b, ux, uy, x1, y1, x2, y2, key } = line
+    if (line.kind === 'cut') {
       const mx = (x1 + x2) / 2
       const my = (y1 + y2) / 2
       const nx = -uy
@@ -564,9 +724,7 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     const live = edgeLive(values, e.from)
     const onPath = paths?.open.has(key) === true ? 'open' : paths?.blocked.has(key) === true ? 'blocked' : undefined
     const cls = `${live ? 'ca-stroke-live' : 'ca-stroke-idle'}${onPath === undefined ? '' : ` ca-path-${onPath}`}`
-    if (polarity === 'inhibit') {
-      const x2 = b.x - (R + 7) * ux
-      const y2 = b.y - (R + 7) * uy
+    if (line.kind === 'inhibit') {
       // ¬X sits by the line; when that spot is taken it slides along the edge or switches sides.
       const text = `¬${e.from}`
       const width = textWidth(text, 12)
@@ -617,8 +775,6 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
       edgeMarks.push({ kind: 'inhibit', key, x1, y1, x2, y2, ux, uy, live, onPath, cls, text, label: inhibitLabel })
       continue
     }
-    const x2 = b.x - (R + 2) * ux
-    const y2 = b.y - (R + 2) * uy
     edgeMarks.push({ kind: 'plain', key, x1, y1, x2, y2, live, onPath, cls })
   }
 
@@ -664,6 +820,8 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     row: ROW,
     pos,
     blocks,
+    labelOptions,
+    labelLines,
     tags,
     holdNotes: held,
     deviantNotes: deviant,

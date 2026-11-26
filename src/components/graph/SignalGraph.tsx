@@ -19,6 +19,7 @@ import { Rich } from '../text/typeset.tsx'
 import { BarChart } from './BarChart.tsx'
 import { SWITCH_HALF, layoutSignalGraph } from './signal-geometry.ts'
 import { EXO_INSET, arrowHead, clampPath, exoDash, nodeReadout } from './signal-shapes.ts'
+import type { Block } from './signal-shapes.ts'
 import { useNodeGestures } from './use-node-gestures.ts'
 
 export interface SignalGraphProps {
@@ -228,6 +229,8 @@ export function SignalGraph(props: SignalGraphProps) {
     text === undefined || onEdgeTip === undefined ? null : <line key={`${key}-hit`} x1={x1} y1={y1} x2={x2} y2={y2} className="ca-edge-hit" />
 
   const inF = (id: string): boolean => hedge?.f.includes(id) === true
+  /** A block's texts sit on its middle line; one under or over its node writes no x. */
+  const blockX = (block: Block): number | undefined => (block.cx === 0 ? undefined : block.cx)
   const edgeEls = layout.edges.map((edge) => {
     if (edge.kind === 'cut') {
       const { key, x1, y1, x2, y2, mx, my, ux, uy, label: cutLabel } = edge
@@ -329,7 +332,7 @@ export function SignalGraph(props: SignalGraphProps) {
           {observed.includes(id) && <rect x={-S - 4} y={-S - 4} width={2 * S + 8} height={2 * S + 8} className="ca-ring" />}
           {paths?.ends.includes(id) === true && <circle r={S + 8 + (observed.includes(id) ? 4 : 0)} className="ca-dsep-ring" data-dsep-end={id} />}
           <rect x={-S} y={-S} width={2 * S} height={2 * S} className="ca-switch-box" />
-          <text y={block.labelY} textAnchor="middle" className="ca-svg-label">
+          <text x={blockX(block)} y={block.labelY} textAnchor="middle" className="ca-svg-label">
             <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>
           </text>
         </g>
@@ -384,6 +387,8 @@ export function SignalGraph(props: SignalGraphProps) {
     const level = prob && pv !== undefined && !Number.isNaN(pv) ? 2 * inner * pv : 0
     const tag = layout.tags.get(id)
     const hold = layout.holdNotes.get(id)
+    // A long name the layout wrapped: its first part beside the id, the rest on a second line.
+    const lines = layout.labelLines.get(id)
     const deviant = layout.deviantNotes.get(id)
     const was = layout.wasNotes.get(id)
     return (
@@ -484,7 +489,7 @@ export function SignalGraph(props: SignalGraphProps) {
           </g>
         )}
         {hold !== undefined ? (
-          <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-svg-bold ca-fill-amber" data-held={id}>
+          <text x={blockX(block)} y={block.noteY} textAnchor="middle" className="ca-svg-small ca-svg-bold ca-fill-amber" data-held={id}>
             {hold}
           </text>
         ) : (
@@ -497,25 +502,32 @@ export function SignalGraph(props: SignalGraphProps) {
         {deviant !== undefined && (
           <g className="ca-deviant" data-deviant={id}>
             <rect
-              x={-(textWidth(deviant ?? '', 11) + 8) / 2}
+              x={block.cx - (textWidth(deviant ?? '', 11) + 8) / 2}
               y={block.note2Y - 11}
               width={textWidth(deviant ?? '', 11) + 8}
               height={15}
               className="ca-deviant-box"
             />
-            <text y={block.note2Y} textAnchor="middle" className="ca-svg-tiny ca-svg-bold">
+            <text x={blockX(block)} y={block.note2Y} textAnchor="middle" className="ca-svg-tiny ca-svg-bold">
               {deviant}
             </text>
           </g>
         )}
-        <text y={block.labelY} textAnchor="middle" className="ca-svg-label">
+        <text x={blockX(block)} y={block.labelY} textAnchor="middle" className="ca-svg-label">
           {!structural && <tspan className="ca-mono ca-svg-bold">{sub(id)}</tspan>}
-          {name === '' ? null : structural ? name : ` ${name}`}
+          {lines !== undefined ? (
+            <>
+              {structural ? lines[0] : ` ${lines[0]}`}
+              <tspan x={block.cx} y={block.label2Y}>
+                {lines[1]}
+              </tspan>
+            </>
+          ) : name === '' ? null : structural ? name : ` ${name}`}
         </text>
         {bars !== undefined
           ? <BarChart id={id} labels={bars.map(formatValue)} dist={dist} block={block} barText={barText} />
           : (prob || id in probe) && (
-              <text y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num">
+              <text x={blockX(block)} y={block.numberY} textAnchor="middle" className="ca-mono ca-svg-num">
                 {readout.prefix !== '' && <tspan className="ca-svg-small ca-fill-muted">{readout.prefix}</tspan>}
                 <tspan data-readout={id} fontSize={readout.settled ? 14 : undefined}>
                   {readout.text}
@@ -523,7 +535,7 @@ export function SignalGraph(props: SignalGraphProps) {
               </text>
             )}
         {prob && (!readout.settled || evidence) && probNotes?.[id] !== undefined && hold === undefined && (
-          <text y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted" data-note={id}>
+          <text x={blockX(block)} y={block.noteY} textAnchor="middle" className="ca-svg-small ca-fill-muted" data-note={id}>
             {probNotes[id]}
           </text>
         )}
