@@ -1,0 +1,15 @@
+{
+  "kind": "kripke",
+  "id": "md-rain-access",
+  "title": { "zh-TW": "下雨與晴天", "en": "Rain and sun" },
+  "atoms": [{ "id": "rain", "label": { "zh-TW": "當時有下雨", "en": "It was raining" } }],
+  "worlds": [
+    { "id": "w", "true": [], "pos": { "x": 0, "y": 1 } },
+    { "id": "v", "true": ["rain"], "pos": { "x": 2, "y": 0 } },
+    { "id": "u", "true": [], "pos": { "x": 2, "y": 2 } }
+  ],
+  "access": [["w", "v"], ["w", "u"]],
+  "actual": "w",
+  "formulas": ["[]rain", "<>rain"],
+  "layout": "manual"
+}

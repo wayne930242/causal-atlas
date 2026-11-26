@@ -1,0 +1,13 @@
+{
+  "kind": "frame",
+  "id": "md-time",
+  "title": { "zh-TW": "上午、中午、下午", "en": "Morning, noon, afternoon" },
+  "worlds": [
+    { "id": "morning", "label": { "zh-TW": "上午", "en": "morning" } },
+    { "id": "noon", "label": { "zh-TW": "中午", "en": "noon" } },
+    { "id": "afternoon", "label": { "zh-TW": "下午", "en": "afternoon" } }
+  ],
+  "access": [["morning", "noon"], ["morning", "afternoon"], ["noon", "afternoon"]],
+  "actual": "noon",
+  "layout": "line"
+}

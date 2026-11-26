@@ -1,0 +1,27 @@
+{
+  "kind": "spheres",
+  "id": "md-nixon",
+  "title": { "zh-TW": "尼克森的按鈕", "en": "Nixon's button" },
+  "atoms": [
+    { "id": "press", "label": { "zh-TW": "尼克森按下按鈕", "en": "Nixon presses the button" } },
+    { "id": "connected", "label": { "zh-TW": "線路接通", "en": "the wire is connected" } },
+    { "id": "war", "label": { "zh-TW": "核戰爆發", "en": "nuclear war" } }
+  ],
+  "worlds": [
+    { "id": "w", "true": ["connected"], "label": { "zh-TW": "實際", "en": "actual" } },
+    { "id": "pcw", "true": ["press", "connected", "war"] },
+    { "id": "p", "true": ["press"] },
+    { "id": "pc", "true": ["press", "connected"] },
+    { "id": "pw", "true": ["press", "war"] },
+    { "id": "n", "true": [] },
+    { "id": "cw", "true": ["connected", "war"] },
+    { "id": "nw", "true": ["war"] }
+  ],
+  "center": "w",
+  "similarity": {
+    "weights": { "press": 1, "connected": 1, "war": 10 },
+    "laws": [{ "formula": "war <-> press & connected", "cost": 3, "label": { "zh-TW": "按鈕接通就開戰", "en": "war iff pressed and connected" } }]
+  },
+  "structural": { "equations": { "war": "press & connected" } },
+  "formulas": ["press > war"]
+}

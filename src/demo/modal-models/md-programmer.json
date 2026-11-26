@@ -1,0 +1,19 @@
+{
+  "kind": "spheres",
+  "id": "md-programmer",
+  "title": { "zh-TW": "如果我當了程式設計師", "en": "If I were a programmer" },
+  "atoms": [
+    { "id": "prog", "label": { "zh-TW": "我當程式設計師", "en": "I am a programmer" } },
+    { "id": "unhappy", "label": { "zh-TW": "我對工作不滿", "en": "I am dissatisfied" } }
+  ],
+  "worlds": [
+    { "id": "w", "true": ["unhappy"] },
+    { "id": "v1", "true": ["prog", "unhappy"], "label": { "zh-TW": "主管不肯定", "en": "unpraised" } },
+    { "id": "v2", "true": ["prog"], "label": { "zh-TW": "受主管肯定", "en": "praised" } },
+    { "id": "v3", "true": [] }
+  ],
+  "center": "w",
+  "spheres": [["w"], ["w", "v1", "v2"], ["w", "v1", "v2", "v3"]],
+  "centering": "strong",
+  "formulas": ["prog > unhappy", "prog > ~unhappy"]
+}

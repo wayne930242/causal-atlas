@@ -1,0 +1,18 @@
+{
+  "kind": "kripke",
+  "id": "md-strict",
+  "title": { "zh-TW": "下雨與濕草坪", "en": "Rain and the wet lawn" },
+  "atoms": [
+    { "id": "rain", "label": { "zh-TW": "下雨", "en": "it rains" } },
+    { "id": "wet", "label": { "zh-TW": "草坪濕了", "en": "the lawn is wet" } }
+  ],
+  "worlds": [
+    { "id": "w", "true": [] },
+    { "id": "v", "true": ["rain", "wet"] },
+    { "id": "u", "true": ["rain"] }
+  ],
+  "access": [["w", "w"], ["w", "v"], ["w", "u"]],
+  "actual": "w",
+  "formulas": ["rain -> wet", "rain -> ~wet", "[](rain -> wet)"],
+  "layout": "circle"
+}

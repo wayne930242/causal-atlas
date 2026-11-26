@@ -1,0 +1,13 @@
+{
+  "kind": "kripke",
+  "id": "md-rain-intension",
+  "title": { "zh-TW": "晴天與雨天", "en": "Sun and rain" },
+  "atoms": [{ "id": "rain", "label": { "zh-TW": "當時有下雨", "en": "It was raining" } }],
+  "worlds": [
+    { "id": "w", "true": [], "label": { "zh-TW": "晴天", "en": "sunny" } },
+    { "id": "v", "true": ["rain"], "label": { "zh-TW": "雨天", "en": "rainy" } }
+  ],
+  "actual": "w",
+  "formulas": ["rain", "~rain"],
+  "layout": "line"
+}

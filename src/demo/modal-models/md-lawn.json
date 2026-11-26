@@ -1,0 +1,17 @@
+{
+  "kind": "spheres",
+  "id": "md-lawn",
+  "title": { "zh-TW": "下雨與澆草坪", "en": "Rain and watering the lawn" },
+  "atoms": [
+    { "id": "rain", "label": { "zh-TW": "下雨", "en": "it rained" } },
+    { "id": "water", "label": { "zh-TW": "我澆了草坪", "en": "I watered the lawn" } }
+  ],
+  "worlds": [
+    { "id": "w", "true": [] },
+    { "id": "v1", "true": ["rain"] },
+    { "id": "v2", "true": ["rain", "water"] }
+  ],
+  "center": "w",
+  "spheres": [["w"], ["w", "v1"], ["w", "v1", "v2"]],
+  "formulas": ["rain > ~water", "water > ~rain"]
+}
