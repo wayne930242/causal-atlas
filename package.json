@@ -59,6 +59,10 @@
       "types": "./dist/types/components/entries/i18n.d.ts",
       "import": "./dist/i18n.js"
     },
+    "./modal": {
+      "types": "./dist/types/modal/index.d.ts",
+      "import": "./dist/modal.js"
+    },
     "./engine": {
       "types": "./dist/types/engine/index.d.ts",
       "import": "./dist/engine.js"
@@ -67,7 +71,8 @@
       "types": "./dist/types/data/index.d.ts",
       "import": "./dist/data.js"
     },
-    "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./modal.css": "./dist/modal.css"
   },
   "imports": {
     "#case-preload": {
@@ -80,7 +85,7 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "build": "tsc -b && vite build",
-    "build:lib": "vite build -c vite.lib.config.ts && tsc -p tsconfig.lib.json && node scripts/fix-dts.mjs dist/types && pnpm check:dist",
+    "build:lib": "vite build -c vite.lib.config.ts && vite build -c vite.lib.modal.config.ts && tsc -p tsconfig.lib.json && node scripts/fix-dts.mjs dist/types && pnpm check:dist",
     "check:dist": "node scripts/check-size.mjs && node scripts/check-dist-ssr.mjs",
     "lint": "oxlint",
     "preview": "vite preview",

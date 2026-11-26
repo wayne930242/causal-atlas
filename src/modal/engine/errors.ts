@@ -36,9 +36,13 @@ export interface ModalProblemParams {
   readonly 'cyclic-equations': { readonly cycle: readonly string[] }
   readonly 'not-truth-functional': { readonly formula: string }
   readonly 'surgery-antecedent': { readonly formula: string }
+  /** The surgery figure's document lacks its centre, similarity or structural equations. */
+  readonly 'needs-similarity': Record<string, never>
   // documents
   readonly 'not-json': { readonly detail: string }
   readonly 'too-large': Record<string, never>
+  /** A component given a document of a kind it does not draw. */
+  readonly 'wrong-kind': { readonly kind: string; readonly expected: readonly string[] }
   /** Any other schema complaint, already worded per locale. */
   readonly schema: { readonly message: { readonly 'zh-TW': string; readonly en: string } }
 }
@@ -90,8 +94,10 @@ export const MODAL_PROBLEMS_EN: ModalProblemWording = {
     'cyclic-equations': (p) => `the equations form a cycle: ${p.cycle.join(' → ')}`,
     'not-truth-functional': (p) => `${p.formula} must be truth-functional (no □, ◇ or >)`,
     'surgery-antecedent': (p) => `${p.formula} is not a conjunction of atoms and negated atoms, which surgery needs`,
+    'needs-similarity': () => 'this figure needs a spheres document with center, similarity and structural equations',
     'not-json': (p) => `not JSON: ${p.detail}`,
     'too-large': () => 'the document is too large',
+    'wrong-kind': (p) => `this figure needs a ${p.expected.join(' or ')} document, not ${p.kind}`,
     schema: (p) => p.message.en,
   },
 }

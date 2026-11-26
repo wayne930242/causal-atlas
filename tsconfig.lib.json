@@ -9,6 +9,6 @@
     "rootDir": "./src",
     "outDir": "./dist/types"
   },
-  "include": ["src/components", "src/engine", "src/data"],
-  "exclude": ["src/data/node-shim.d.ts", "src/**/*.test.ts", "src/**/*.test.tsx", "src/engine/test-models.ts", "src/components/golden"]
+  "include": ["src/components", "src/engine", "src/data", "src/modal", "src/logic"],
+  "exclude": ["src/data/node-shim.d.ts", "src/**/*.test.ts", "src/**/*.test.tsx", "src/engine/test-models.ts", "src/modal/engine/test-random.ts", "src/components/golden"]
 }

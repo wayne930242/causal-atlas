@@ -4,9 +4,10 @@ import { CasePage, CausalPlayground, CiteBlock, LANGUAGE_NAMES, LocaleProvider, 
 import { caseIds, getCase } from '../data/index.ts'
 import { Explorer } from './explorer/Explorer.tsx'
 import { Interactions } from './Interactions.tsx'
+import { ModalDemo } from './ModalDemo.tsx'
 
 interface Route {
-  readonly page: 'index' | 'explorer' | 'playground' | 'case' | 'lesson' | 'editor' | 'interactions'
+  readonly page: 'index' | 'explorer' | 'playground' | 'case' | 'lesson' | 'editor' | 'interactions' | 'modal'
   readonly id: string
   readonly step: number
   /** `lang=en` in the route (`#/case/x?lang=en`) or in the page's query string; default zh-TW. */
@@ -27,6 +28,7 @@ function parse(hash: string, search: string): Route {
     return { page: 'explorer', id: 'rock-throwing', step, locale, theme: themeParam === 'dark' || themeParam === 'light' ? themeParam : undefined }
   }
   if (parts[0] === 'interactions') return { page: 'interactions', id: parts[1] ?? 'all', step, locale }
+  if (parts[0] === 'modal') return { page: 'modal', id: 'rock-throwing', step, locale }
   const id = parts[1] !== undefined && caseIds.includes(parts[1]) ? parts[1] : 'rock-throwing'
   if (parts[0] === 'playground') return { page: 'playground', id, step, locale }
   if (parts[0] === 'case') return { page: 'case', id, step, locale }
@@ -75,7 +77,7 @@ function switchHref(route: Route, locale: Locale): string {
     return `#${path}?${params.toString()}`
   }
   const path =
-    route.page === 'index' ? '/' : route.page === 'lesson' || route.page === 'editor' ? `/${route.page}` : `/${route.page}/${route.id}`
+    route.page === 'index' ? '/' : route.page === 'lesson' || route.page === 'editor' || route.page === 'modal' ? `/${route.page}` : `/${route.page}/${route.id}`
   return href(path, locale, route.page === 'case' && route.step > 1 ? `step=${route.step}` : '')
 }
 
@@ -88,6 +90,7 @@ const DEMO = {
     lesson: '講義',
     lessonLink: '講義示範：世界分道',
     editor: '自己建模型',
+    modal: '模態邏輯',
     editorLink: '自己建一個因果模型',
     explorer: '元件瀏覽器',
     explorerLink: '元件瀏覽器：挑元件、調設定、複製寫法',
@@ -108,6 +111,7 @@ const DEMO = {
     lesson: 'Lesson',
     lessonLink: 'Lesson demo: world lanes',
     editor: 'Build a model',
+    modal: 'Modal logic',
     editorLink: 'Build a causal model yourself',
     explorer: 'Explorer',
     explorerLink: 'Explorer: pick a component, tune its props, copy the code',
@@ -261,6 +265,9 @@ export function App() {
             <a href={href('/editor', locale)} aria-current={route.page === 'editor' ? 'page' : undefined}>
               {d.editor}
             </a>
+            <a href={href('/modal', locale)} aria-current={route.page === 'modal' ? 'page' : undefined}>
+              {d.modal}
+            </a>
           </nav>
           <span className="demo-spacer" />
           <nav className="demo-site" aria-label={d.site}>
@@ -297,6 +304,7 @@ export function App() {
           {route.page === 'case' && <CasePage key={`${route.id}-${route.step}-${locale}`} caseId={route.id} initialStep={route.step} digits={pageDigits()} />}
           {route.page === 'lesson' && (locale === 'en' ? <LessonEn /> : <LessonZh />)}
           {route.page === 'interactions' && <Interactions key={`${route.id}-${locale}`} item={route.id} />}
+          {route.page === 'modal' && <ModalDemo key={locale} locale={locale} />}
           {route.page === 'editor' && (
             <ModelEditor
               key={`${route.id}-${locale}`}

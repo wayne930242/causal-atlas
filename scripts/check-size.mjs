@@ -12,11 +12,13 @@ import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 
 /**
- * Budgets in bytes for an entry's static closure, set at 0.24.0 from the measured size plus about 10%
- * (`./playground` measured 379.3 kB raw, 120.7 kB gzip; 0.23.0's one entry was 929.6 kB, 244.2 kB).
+ * Budgets in bytes for an entry's static closure, set from the measured size plus about 10%
+ * (`./playground` at 0.24.0: 379.3 kB raw, 120.7 kB gzip; 0.23.0's one entry was 929.6 kB, 244.2 kB).
  */
 export const BUDGETS = {
   './playground': { raw: 420_000, gzip: 133_000 },
+  // Set at 0.25.0 from the measured size plus about 10% (102.7 kB raw, 27.8 kB gzip, one file).
+  './modal': { raw: 113_000, gzip: 30_600 },
 }
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -89,6 +91,10 @@ function main() {
     }
     if (r.raw > budget.raw) failures.push(`${key}: ${r.raw} bytes raw, budget ${budget.raw}`)
     if (r.gzip > budget.gzip) failures.push(`${key}: ${r.gzip} bytes gzip, budget ${budget.gzip}`)
+  }
+  // The modal figures are built apart (vite.lib.modal.config.ts): no other entry may load their code.
+  for (const [key, r] of Object.entries(report)) {
+    if (key !== './modal' && r.files.some((f) => /(^|[/\\])modal(-chunks[/\\]|\.js$)/.test(f))) failures.push(`${key} statically imports the modal build`)
   }
   const playground = report['./playground']
   const caseChunks = playground?.files.filter((f) => /[/\\]cases[/\\]/.test(f)) ?? []

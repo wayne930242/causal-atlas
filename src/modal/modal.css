@@ -1,0 +1,559 @@
+/*
+ * causal-atlas/modal figures. Built on the shared .ca-root tokens (styles.css): colours come only from
+ * the host's tokens and the --ca-* set; every class here starts with ca-modal-.
+ */
+
+.ca-modal {
+  margin: 0;
+  container-type: inline-size;
+  display: grid;
+  gap: 14px;
+}
+
+.ca-modal-caption {
+  font-size: 13px;
+}
+
+.ca-modal-split {
+  display: grid;
+  gap: 16px;
+}
+
+@container (min-width: 640px) {
+  .ca-modal-split {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+
+  .ca-modal-split > .ca-modal-edit {
+    grid-column: 1 / -1;
+  }
+
+}
+
+.ca-modal-figure {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.ca-modal-side {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.ca-modal-scroll {
+  overflow-x: auto;
+}
+
+/* ---- pictures ---- */
+
+.ca-modal-graph,
+.ca-modal-spheres {
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: inherit;
+}
+
+.ca-modal-edge path {
+  stroke: var(--ca-guide);
+  stroke-width: 1.5;
+}
+
+.ca-modal-edge .ca-modal-head {
+  fill: var(--ca-guide);
+  stroke: none;
+}
+
+.ca-modal-edge[data-active="true"] path {
+  stroke: var(--foreground);
+  stroke-width: 1.75;
+}
+
+.ca-modal-edge[data-active="true"] .ca-modal-head {
+  fill: var(--foreground);
+  stroke: none;
+}
+
+.ca-modal-world,
+.ca-modal-dot {
+  outline: none;
+}
+
+.ca-modal-world[role="button"],
+.ca-modal-dot[role="button"] {
+  cursor: pointer;
+}
+
+.ca-modal-box {
+  fill: var(--background);
+  stroke: var(--foreground);
+  stroke-width: 1.25;
+}
+
+.ca-modal-world[data-selected="true"] .ca-modal-box {
+  stroke-width: 2.75;
+}
+
+.ca-modal-world[data-mark="true"] .ca-modal-box {
+  fill: color-mix(in srgb, var(--ca-green) 14%, var(--background));
+}
+
+.ca-modal-world[data-mark="false"] .ca-modal-box {
+  fill: var(--ca-soft);
+  stroke-dasharray: 4 3;
+}
+
+.ca-modal-world[data-mark="witness"] .ca-modal-box {
+  fill: color-mix(in srgb, var(--ca-green) 24%, var(--background));
+  stroke: var(--ca-green);
+  stroke-width: 2.5;
+}
+
+.ca-modal-world[data-mark="counter"] .ca-modal-box {
+  fill: var(--ca-amber-fill);
+  stroke: var(--ca-amber);
+  stroke-width: 2.5;
+}
+
+.ca-modal-world:focus-visible .ca-modal-box,
+.ca-modal-dot:focus-visible circle {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.ca-modal-atom {
+  font-size: 13px;
+  fill: var(--foreground);
+}
+
+.ca-modal-atom[data-negated="true"] {
+  fill: var(--muted-foreground);
+}
+
+.ca-modal-name {
+  font-size: 13px;
+  font-weight: 700;
+  fill: var(--foreground);
+}
+
+.ca-modal-detail {
+  font-size: 11px;
+  fill: var(--muted-foreground);
+}
+
+.ca-modal-sphere {
+  fill: none;
+  stroke: var(--ca-guide);
+  stroke-width: 1.25;
+}
+
+.ca-modal-sphere[data-active="true"] {
+  stroke: var(--foreground);
+  stroke-width: 2.25;
+}
+
+.ca-modal-sphere-name {
+  font-size: 12px;
+  fill: var(--muted-foreground);
+}
+
+.ca-modal-sphere-name[data-active="true"] {
+  fill: var(--foreground);
+  font-weight: 700;
+}
+
+.ca-modal-dot circle {
+  fill: var(--background);
+  stroke: var(--foreground);
+  stroke-width: 1.5;
+}
+
+.ca-modal-dot[data-center="true"] circle {
+  fill: var(--foreground);
+}
+
+.ca-modal-dot[data-mark="antecedent"] circle {
+  fill: var(--ca-amber-fill);
+  stroke: var(--ca-amber);
+}
+
+.ca-modal-dot[data-mark="selected"] circle {
+  fill: var(--ca-amber);
+  stroke: var(--ca-amber);
+}
+
+.ca-modal-dot[data-mark="counter"] circle {
+  fill: var(--ca-amber);
+  stroke: var(--foreground);
+  stroke-width: 3;
+}
+
+.ca-modal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.ca-modal-legend li::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  border-radius: 50%;
+  vertical-align: -1px;
+  border: 1.5px solid var(--ca-amber);
+}
+
+.ca-modal-legend li[data-mark="antecedent"]::before {
+  background: var(--ca-amber-fill);
+}
+
+.ca-modal-legend li[data-mark="selected"]::before {
+  background: var(--ca-amber);
+}
+
+/* ---- truth values, formulas, verdicts ---- */
+
+.ca-modal-truth {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  font-family: var(--ca-mono);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ca-modal-truth[data-value="T"] {
+  color: var(--ca-green);
+}
+
+.ca-modal-truth[data-value="F"] {
+  color: var(--ca-slate-text);
+}
+
+.ca-modal-truth[data-value="error"] {
+  color: var(--muted-foreground);
+  border-style: dashed;
+}
+
+.ca-modal-formulas {
+  display: grid;
+  gap: 4px;
+}
+
+.ca-modal-formula {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ca-modal-formula[aria-pressed="true"] {
+  border-color: var(--foreground);
+  box-shadow: inset 3px 0 0 var(--foreground);
+}
+
+.ca-modal-explain,
+.ca-modal-reading {
+  font-size: 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.ca-modal-reading {
+  min-height: 1.75em;
+}
+
+.ca-modal-problem {
+  color: var(--ca-amber-text);
+  font-size: 13px;
+}
+
+.ca-modal-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ca-modal-add {
+  display: flex;
+  gap: 6px;
+}
+
+.ca-modal-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.ca-modal-button,
+.ca-modal-pick {
+  font: inherit;
+  color: var(--foreground);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ca-modal-button {
+  padding: 4px 12px;
+  border: 1px solid var(--foreground);
+}
+
+.ca-modal-pick {
+  border: 0;
+  padding: 0;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.ca-modal-pick[aria-pressed="true"] {
+  font-weight: 700;
+  text-decoration: underline solid;
+}
+
+.ca-modal-table {
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ca-modal-table caption {
+  text-align: left;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  padding-bottom: 4px;
+}
+
+.ca-modal-table :where(th, td) {
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ca-modal-table th[scope="row"] {
+  text-align: left;
+}
+
+.ca-modal-table :where([data-selected="true"]) {
+  background: var(--ca-soft);
+}
+
+.ca-modal-table td[data-in-set="true"] {
+  background: color-mix(in srgb, var(--ca-green) 16%, var(--background));
+}
+
+.ca-modal-table tr[data-seen="true"] th {
+  font-weight: 700;
+}
+
+.ca-modal-rule {
+  display: block;
+  font-weight: 400;
+}
+
+.ca-modal-conditions td {
+  text-align: left;
+}
+
+.ca-modal-verdict {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.ca-modal-axiom {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ca-modal-systems {
+  font-size: 14px;
+}
+
+.ca-modal-atoms {
+  display: grid;
+  gap: 2px;
+}
+
+.ca-modal-atoms div {
+  display: flex;
+  gap: 8px;
+}
+
+.ca-modal-pair {
+  display: grid;
+  gap: 10px;
+}
+
+.ca-modal-pair dt {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+
+.ca-modal-pair dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.ca-modal-pair dd p {
+  flex-basis: 100%;
+}
+
+/* ---- columns: TCS, surgery ---- */
+
+.ca-modal-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.ca-modal-card {
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+  display: grid;
+  gap: 10px;
+  justify-items: stretch;
+}
+
+.ca-modal-card > .ca-modal-spheres {
+  justify-self: center;
+}
+
+.ca-modal-columns {
+  display: grid;
+  gap: 14px;
+}
+
+@container (min-width: 560px) {
+  .ca-modal-columns {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  }
+}
+
+.ca-modal-column {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  min-width: 0;
+}
+
+.ca-modal-column[data-counterexample="true"] {
+  border-color: var(--ca-amber);
+  background: var(--ca-amber-fill);
+}
+
+.ca-modal-column-head {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ca-modal :where(h4) {
+  margin: 0;
+}
+
+.ca-modal-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.ca-modal-inference {
+  display: grid;
+  gap: 6px;
+}
+
+.ca-modal-inference li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ca-modal-inference li[data-conclusion="true"] {
+  border-top: 1px solid var(--foreground);
+  padding-top: 6px;
+}
+
+.ca-modal-equations,
+.ca-modal-solution {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 14px;
+}
+
+.ca-modal-solution li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ca-modal-solution li[data-set="true"] .ca-mono {
+  text-decoration: underline;
+}
+
+.ca-modal-weights {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.ca-modal-slider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 36px;
+  align-items: center;
+  gap: 8px;
+}
+
+.ca-modal-agree {
+  font-weight: 700;
+}
+
+.ca-modal-agree[data-agree="false"] {
+  color: var(--ca-amber-text);
+}
+
+.ca-modal-edit summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ca-modal-edit-tables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+}

@@ -19,5 +19,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "vite.lib.config.ts", "vite.define.ts"]
+  "include": ["vite.config.ts", "vite.lib.config.ts", "vite.lib.modal.config.ts", "vite.define.ts"]
 }

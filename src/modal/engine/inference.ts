@@ -22,9 +22,15 @@ export interface Inference {
   readonly conclusion: Formula
 }
 
+/** ¬f, writing ¬¬g as g (equivalent, and how the contrapositive is read aloud). */
+function negate(f: Formula): Formula {
+  return f.kind === 'not' ? f.arg : F.not(f)
+}
+
 /**
  * The inference `pattern` with the conditional `kind`, on formulas a, b and c:
- * transitivity a→b, b→c ∴ a→c; contraposition a→b ∴ ¬b→¬a; strengthening a→b ∴ (a ∧ c)→b.
+ * transitivity a→b, b→c ∴ a→c; contraposition a→b ∴ ¬b→¬a (a negated formula loses its ¬ instead
+ * of gaining a second); strengthening a→b ∴ (a ∧ c)→b.
  * `c` is needed for transitivity and strengthening.
  */
 export function tcsInference(pattern: TcsPattern, kind: ConditionalKind, a: Formula, b: Formula, c?: Formula): Inference {
@@ -34,7 +40,7 @@ export function tcsInference(pattern: TcsPattern, kind: ConditionalKind, a: Form
     case 'transitivity':
       return { premises: [to(a, b), to(b, third)], conclusion: to(a, third) }
     case 'contraposition':
-      return { premises: [to(a, b)], conclusion: to(F.not(b), F.not(a)) }
+      return { premises: [to(a, b)], conclusion: to(negate(b), negate(a)) }
     case 'strengthening':
       return { premises: [to(a, b)], conclusion: to(F.and(a, third), b) }
   }
