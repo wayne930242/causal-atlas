@@ -1,4 +1,4 @@
-# causal-atlas
+# logic-atlas
 
 Interactive structural causal models and a dataset of philosophical causation and decision cases.
 
@@ -15,7 +15,7 @@ Interactive structural causal models and a dataset of philosophical causation an
 ## Install
 
 ```sh
-pnpm add causal-atlas react react-dom
+pnpm add logic-atlas react react-dom
 ```
 
 For equations, add `katex` to the app and load `katex/dist/katex.min.css` once if the site does not already load it.
@@ -23,30 +23,32 @@ For equations, add `katex` to the app and load `katex/dist/katex.min.css` once i
 With React configured in Astro, embed a bundled case in MDX:
 
 ```mdx
-import { CasePage } from 'causal-atlas'
-import 'causal-atlas/style.css'
+import { CasePage } from 'logic-atlas/causal'
+import 'logic-atlas/causal/style.css'
 
 <CasePage client:visible caseId="rock-throwing" locale="en" />
 ```
 
 ## Entries
 
+There is no root export: choose `logic-atlas/causal` or `logic-atlas/modal` explicitly. `logic-atlas/set` is reserved, not published.
+
 | Import | Contents |
 | --- | --- |
-| `causal-atlas` | React components: `CasePage`, `CausalPlayground`, `ConservativeExtension`, `IdentifyPanel`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider`; `preloadCase` |
-| `causal-atlas/playground` | `CausalPlayground`, `preloadCase` |
-| `causal-atlas/probability` | `ProbabilityPanel`, `preloadCase` |
-| `causal-atlas/identify` | `IdentifyPanel`, `preloadCase` |
-| `causal-atlas/lanes` | `WorldLanes`, `preloadCase` |
-| `causal-atlas/extension` | `ConservativeExtension`, `preloadCase` |
-| `causal-atlas/case` | `CasePage`, `preloadCase` |
-| `causal-atlas/editor` | `ModelEditor` (it lists every case, so it carries the whole dataset) |
-| `causal-atlas/cite`, `/supplement`, `/i18n` | `CiteBlock`; `Supplement`; `LocaleProvider`, `DEFAULT_LOCALE`, `LANGUAGE_NAMES` |
-| `causal-atlas/engine` | The causal-model engine |
-| `causal-atlas/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
-| `causal-atlas/modal` | Modal-logic figures: `IntensionTable`, `KripkeView`, `FrameConditions`, `StrictImplication`, `TcsCheck`, `SphereView`, `SurgeryVsSimilarity`; `parseModalJson`; the modal engine (see [Modal logic figures](docs/components.md#modal-logic-figures)) |
-| `causal-atlas/style.css` | Styles for the components; import it once |
-| `causal-atlas/modal.css` | Styles for the modal figures, loaded with `style.css` |
+| `logic-atlas/causal` | React components: `CasePage`, `CausalPlayground`, `ConservativeExtension`, `IdentifyPanel`, `ModelEditor`, `ProbabilityPanel`, `WorldLanes`, `Supplement`, `CiteBlock`; `LocaleProvider`; `preloadCase` |
+| `logic-atlas/causal/playground` | `CausalPlayground`, `preloadCase` |
+| `logic-atlas/causal/probability` | `ProbabilityPanel`, `preloadCase` |
+| `logic-atlas/causal/identify` | `IdentifyPanel`, `preloadCase` |
+| `logic-atlas/causal/lanes` | `WorldLanes`, `preloadCase` |
+| `logic-atlas/causal/extension` | `ConservativeExtension`, `preloadCase` |
+| `logic-atlas/causal/case` | `CasePage`, `preloadCase` |
+| `logic-atlas/causal/editor` | `ModelEditor` (it lists every case, so it carries the whole dataset) |
+| `logic-atlas/causal/cite`, `logic-atlas/causal/supplement`, `logic-atlas/causal/i18n` | `CiteBlock`; `Supplement`; `LocaleProvider`, `DEFAULT_LOCALE`, `LANGUAGE_NAMES` |
+| `logic-atlas/causal/engine` | The causal-model engine |
+| `logic-atlas/causal/data` | The bundled cases: `listCases`, `getCase`, `caseIds`, `loadCase`, the schemas; model documents: `caseToDoc`, `docToCase`, `parseModelJson`, `encodeShare`, `decodeShare`, `sameModel` |
+| `logic-atlas/modal` | Modal-logic figures: `IntensionTable`, `KripkeView`, `FrameConditions`, `StrictImplication`, `TcsCheck`, `SphereView`, `SurgeryVsSimilarity`; `parseModalJson`; the modal engine (see [Modal logic figures](docs/components.md#modal-logic-figures)) |
+| `logic-atlas/causal/style.css` | Styles for the components; import it once |
+| `logic-atlas/modal/style.css` | Styles for the modal figures, loaded with `style.css` |
 
 ## Documentation
 
@@ -63,20 +65,20 @@ import 'causal-atlas/style.css'
 
 ## Citation
 
-Please cite causal-atlas when using it for research or teaching.
+Please cite logic-atlas when using it for research or teaching.
 The citation is also available in [CITATION.cff](CITATION.cff) and the `CiteBlock` component.
 
-> 洪偉（Wei Hung）（2026）。causal-atlas（0.25.0 版）。https://wayneh.tw/causal/
+> 洪偉（Wei Hung）（2026）。logic-atlas（0.25.0 版）。https://github.com/wayne930242/logic-atlas
 
-> Hung, W. (2026). causal-atlas (Version 0.25.0) [Software and dataset]. https://wayneh.tw/causal/
+> Hung, W. (2026). logic-atlas (Version 0.25.0) [Software and dataset]. https://github.com/wayne930242/logic-atlas
 
 ```bibtex
 @software{hung_causal_atlas_2026,
   author  = {Hung, Wei},
-  title   = {causal-atlas},
+  title   = {logic-atlas},
   year    = {2026},
   version = {0.25.0},
-  url     = {https://wayneh.tw/causal/},
+  url     = {https://github.com/wayne930242/logic-atlas},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }
 ```
@@ -91,6 +93,6 @@ The citation is also available in [CITATION.cff](CITATION.cff) and the `CiteBloc
   Those works belong to their authors; CC BY 4.0 covers only this dataset's own wording, models and teaching text.
   When reusing a case, credit its original sources as well.
 
-[demo]: https://wayne930242.github.io/causal-atlas/
-[explorer]: https://wayne930242.github.io/causal-atlas/#/explorer
-[npm]: https://www.npmjs.com/package/causal-atlas
+[demo]: https://wayne930242.github.io/logic-atlas/
+[explorer]: https://wayne930242.github.io/logic-atlas/#/explorer
+[npm]: https://www.npmjs.com/package/logic-atlas

@@ -4,7 +4,7 @@ From `oracle/`, run `uv run --locked python regenerate.py` with Docker running.
 The first run builds the R image; a cached run takes about six seconds. The
 Python lockfile selects y0 0.2.11; the R 4.5.2 image installs dosearch 1.0.12
 and causaleffect 1.3.15. These are test-only dependencies. The harness calls
-public APIs; neither GPL R package is a runtime dependency of causal-atlas.
+public APIs; neither GPL R package is a runtime dependency of logic-atlas.
 
 `fixtures/cases.json` contains four named cases and 48 random ADMGs selected
 before querying any oracle (seed `240618`). The date marks the fixture
@@ -46,7 +46,7 @@ fixtures. Normal regeneration checks all cases before writing either file.
 
 # Modal logic oracle
 
-`modal.py` is an independent modal evaluator for `causal-atlas/modal`, written from the textbook truth
+`modal.py` is an independent modal evaluator for `logic-atlas/modal`, written from the textbook truth
 clauses rather than ported from the TypeScript engine. It needs only the Python standard library:
 from the repository root run `python3 -I oracle/modal.py`; it writes `fixtures/modal.json` and records
 its seed (`20261126`) and Python version there.

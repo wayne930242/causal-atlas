@@ -8,25 +8,25 @@
 
 ## Package
 
-`causal-atlas` (0.25.0) ships ESM with type declarations and two CSS files (`style.css`, and
-`modal.css` for the [modal logic figures](#modal-logic-figures)):
+`logic-atlas` (0.25.0) ships ESM with type declarations and two CSS files (`./causal/style.css`, and
+`./modal/style.css` for the [modal logic figures](#modal-logic-figures)):
 [see the package entries](../README.md#entries).
 
 React 19 is a peer dependency. Importing the components touches no browser globals, so they render on
 the server; interaction needs a client island, e.g. in Astro MDX:
 
 ```mdx
-import { CasePage, WorldLanes } from 'causal-atlas'
-import 'causal-atlas/style.css'
+import { CasePage, WorldLanes } from 'logic-atlas/causal'
+import 'logic-atlas/causal/style.css'
 
 <CasePage client:visible caseId="rock-throwing" heading={false} />
 <WorldLanes client:visible caseId="rock-throwing" interventions={{ SH: 0 }} actionLabel="攔下小蘇的石頭" />
 <CasePage client:visible caseId="rock-throwing" locale="en" />
 ```
 
-A component entry carries only its component's code; importing from `causal-atlas` gives the same
+A component entry carries only its component's code; importing from `logic-atlas/causal` gives the same
 result when the bundler tree-shakes, as Vite does. Every name of an entry is the same value as the
-root's, so the two can be mixed on one page.
+causal entry's, so the two can be mixed on one page.
 
 The bundled cases load one at a time. Each case file is its own chunk; a component given `caseId` (or
 a document whose `from` names a case) imports that chunk and nothing else. The package's own
@@ -44,7 +44,7 @@ a document whose `from` names a case) imports that chunk and nothing else. The p
 - A server render outside Node with `renderToString` has no case preloaded; there, `await
   preloadCase(id)` first, or render with a streaming API, which waits for the case.
 
-`causal-atlas/data` keeps its synchronous `getCase` and `listCases` and bundles every case; a case it
+`logic-atlas/causal/data` keeps its synchronous `getCase` and `listCases` and bundles every case; a case it
 returns is ready for the components too.
 
 Equations are typeset with [KaTeX](https://katex.org) on the server and in the browser. KaTeX is a
@@ -132,7 +132,7 @@ take `doc` (a `modelDocSchema` value, e.g. one exported from the editor) instead
 
 ```mdx
 import doc from './my-model.json'
-import { CausalPlayground, ModelEditor } from 'causal-atlas'
+import { CausalPlayground, ModelEditor } from 'logic-atlas/causal'
 
 <CausalPlayground client:visible doc={doc} />
 <CausalPlayground client:visible doc={doc} presets={[{ label: '關掉下雨', interventions: { R: false } }]} />
@@ -240,7 +240,7 @@ import { CausalPlayground, ModelEditor } from 'causal-atlas'
 ### Conservative extensions
 
 ```tsx
-import { ConservativeExtension } from 'causal-atlas'
+import { ConservativeExtension } from 'logic-atlas/causal'
 import coarse from './m09-rock-coarse.json'
 import m1 from './m09-bogus-seq-1.json'
 // … m2, m3, m4
@@ -269,8 +269,8 @@ step are shaded, and a column head jumps to the step that ends there. `names` re
 ### Identification experiment
 
 ```tsx
-import { IdentifyPanel } from 'causal-atlas'
-import 'causal-atlas/style.css'
+import { IdentifyPanel } from 'logic-atlas/causal'
+import 'logic-atlas/causal/style.css'
 
 <IdentifyPanel c={loadedCase} query={{ x: 'X', y: 'Y' }} />
 ```
@@ -363,8 +363,8 @@ Every graph (case page, playground, editor, probability panel, world lanes) has 
 or SVG, light or dark (default: the page's theme, read from the nearest `data-theme`), 中文 or English
 (default: the component's language; the other one redraws the graph off-screen). The export draws the
 current state (do(), witness hull, probabilities) with the blog's tokens resolved to literal colours,
-and bakes in a watermark strip: 「洪偉（Wei Hung）· causal-atlas · CC BY 4.0 · <url>」 plus
-「案例出處：…」 for a case, or in English "Wei Hung (洪偉) · causal-atlas · CC BY 4.0 · <url>" plus
+and bakes in a watermark strip: 「洪偉（Wei Hung）· logic-atlas · CC BY 4.0 · <url>」 plus
+「案例出處：…」 for a case, or in English "Wei Hung (洪偉) · logic-atlas · CC BY 4.0 · <url>" plus
 "Case source: …"; English files end in `-en`. `exportUrl` sets the url (default
 `https://wayneh.tw/causal/`). The case source names the case's `origin` sources in short form
 (`Hall 2004`; a court decision as its name and year, `Palsgraf v. Long Island Railroad Co. 1928`); up
@@ -394,16 +394,16 @@ also one whose parents are not drawn (`Y = U2`).
 
 ## Modal logic figures
 
-`causal-atlas/modal` (from 0.25.0) draws the figures of a modal-logic lesson: Kripke models, frame
+`logic-atlas/modal` (from 0.25.0) draws the figures of a modal-logic lesson: Kripke models, frame
 conditions, strict implication and counterfactuals on systems of spheres. It is built apart from the
 causal entries (`vite.lib.modal.config.ts`), so a causal page downloads none of it and a modal page
 none of the causal code; the shared source (KaTeX formulas, label placement, arrowheads, the segmented
 control, the locale hooks) is bundled into `dist/modal.js`. Load both stylesheets:
 
 ```mdx
-import { KripkeView, SphereView } from 'causal-atlas/modal'
-import 'causal-atlas/style.css'
-import 'causal-atlas/modal.css'
+import { KripkeView, SphereView } from 'logic-atlas/modal'
+import 'logic-atlas/causal/style.css'
+import 'logic-atlas/modal/style.css'
 import rain from './md-rain-access.json'
 import programmer from './md-programmer.json'
 
@@ -420,7 +420,7 @@ error a `ModalProblem` `{ code, params, where? }` with `where` the path in the d
 Chinese too. Every figure renders on the server with its picture in the markup.
 
 Common props: `locale` (`zh-TW`, the default, or `en`), `notation` (`modern`: ¬ ∧ ∨ ⊃ ≡ □ ◇ >, the
-default; `garson`: Garson's ~ and &) and `caption`. `LocaleProvider` from `causal-atlas/modal` sets the
+default; `garson`: Garson's ~ and &) and `caption`. `LocaleProvider` from `logic-atlas/modal` sets the
 language of the modal figures inside it; the causal figures keep their own `LocaleProvider` (the two
 builds hold separate contexts), so a page mixing both sets each, or passes `locale` to each figure.
 

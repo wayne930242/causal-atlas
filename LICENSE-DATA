@@ -1,4 +1,4 @@
-causal-atlas data and teaching text
+logic-atlas data and teaching text
 Copyright (c) 2026 洪偉 Wei Hung
 
 The case data and the teaching text are licensed under the Creative Commons Attribution 4.0
@@ -25,7 +25,7 @@ schema and loader in src/data, is licensed under the MIT License in LICENSE.
 In the published .js files under dist/ the two are bundled together: the code in them is MIT, and
 the case data and teaching text in them remain CC BY 4.0.
 
-Attribution: 洪偉（Wei Hung）, causal-atlas, https://wayneh.tw/causal/ (CC BY 4.0).
+Attribution: 洪偉（Wei Hung）, logic-atlas, https://github.com/wayne930242/logic-atlas (CC BY 4.0).
 For academic or teaching use, please cite the project as described in CITATION.cff
 and the README section "Citation".
 

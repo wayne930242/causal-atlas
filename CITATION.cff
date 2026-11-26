@@ -1,6 +1,6 @@
 cff-version: 1.2.0
-message: "學術或教學使用請引用 / If you use causal-atlas in research or teaching, please cite it as below."
-title: causal-atlas
+message: "學術或教學使用請引用 / If you use logic-atlas in research or teaching, please cite it as below."
+title: logic-atlas
 abstract: "Interactive structural causal models and a dataset of philosophical causation and decision cases."
 type: software
 authors:
@@ -9,7 +9,7 @@ authors:
     alias: 洪偉
 version: 0.25.0
 date-released: "2026-11-25"
-url: "https://wayneh.tw/causal/"
+url: "https://github.com/wayne930242/logic-atlas"
 license:
   - MIT
   - CC-BY-4.0
