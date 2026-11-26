@@ -25,4 +25,13 @@ jobs:
       - run: pnpm build:lib
       - name: Tag matches package version
         run: test "logic-atlas-v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
-      - run: npm publish --access public
+      # The first release of a new package name is published by hand (trusted
+      # publishing needs the package to exist); skip a version already on npm.
+      - name: Publish unless this version is already on npm
+        run: |
+          v="$(node -p 'require("./package.json").version')"
+          if npm view "logic-atlas@$v" version >/dev/null 2>&1; then
+            echo "logic-atlas@$v is already on npm; nothing to publish"
+          else
+            npm publish --access public
+          fi
