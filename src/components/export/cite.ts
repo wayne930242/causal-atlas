@@ -4,7 +4,7 @@ import { DEFAULT_LOCALE, messagesFor } from '../i18n/messages.ts'
 /** Author, licence and citation strings shared by CiteBlock, the image watermark and the README. */
 
 export { AUTHOR_EN, AUTHOR_ZH } from '../i18n/messages.ts'
-const PROJECT = 'causal-atlas'
+const PROJECT = 'logic-atlas'
 /** Replaced at build time (vite `define`, see vite.define.ts) from package.json and CITATION.cff. */
 declare const __CA_VERSION__: string
 declare const __CA_YEAR__: number

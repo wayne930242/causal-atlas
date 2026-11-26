@@ -1,4 +1,4 @@
-// `causal-atlas/probability`: the probability views (sliders, see vs do, counterfactual, mediation, adjustment, do-calculus).
+// `logic-atlas/causal/probability`: the probability views (sliders, see vs do, counterfactual, mediation, adjustment, do-calculus).
 export type { ProbabilityPanelProps, ProbabilityView } from '../probability/ProbabilityPanel.tsx'
 export { ProbabilityPanel } from '../probability/ProbabilityPanel.tsx'
 export type { SeeDoPair } from '../model/verdict-rows.ts'

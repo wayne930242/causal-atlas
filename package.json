@@ -1,5 +1,5 @@
 {
-  "name": "causal-atlas",
+  "name": "logic-atlas",
   "version": "0.25.0",
   "description": "Interactive structural causal models and a dataset of philosophical causation and decision cases.",
   "license": "MIT AND CC-BY-4.0",
@@ -15,47 +15,47 @@
     "**/*.css"
   ],
   "exports": {
-    ".": {
+    "./causal": {
       "types": "./dist/types/components/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./playground": {
+    "./causal/playground": {
       "types": "./dist/types/components/entries/playground.d.ts",
       "import": "./dist/playground.js"
     },
-    "./probability": {
+    "./causal/probability": {
       "types": "./dist/types/components/entries/probability.d.ts",
       "import": "./dist/probability.js"
     },
-    "./identify": {
+    "./causal/identify": {
       "types": "./dist/types/components/entries/identify.d.ts",
       "import": "./dist/identify.js"
     },
-    "./lanes": {
+    "./causal/lanes": {
       "types": "./dist/types/components/entries/lanes.d.ts",
       "import": "./dist/lanes.js"
     },
-    "./extension": {
+    "./causal/extension": {
       "types": "./dist/types/components/entries/extension.d.ts",
       "import": "./dist/extension.js"
     },
-    "./case": {
+    "./causal/case": {
       "types": "./dist/types/components/entries/case.d.ts",
       "import": "./dist/case.js"
     },
-    "./editor": {
+    "./causal/editor": {
       "types": "./dist/types/components/entries/editor.d.ts",
       "import": "./dist/editor.js"
     },
-    "./cite": {
+    "./causal/cite": {
       "types": "./dist/types/components/entries/cite.d.ts",
       "import": "./dist/cite.js"
     },
-    "./supplement": {
+    "./causal/supplement": {
       "types": "./dist/types/components/entries/supplement.d.ts",
       "import": "./dist/supplement.js"
     },
-    "./i18n": {
+    "./causal/i18n": {
       "types": "./dist/types/components/entries/i18n.d.ts",
       "import": "./dist/i18n.js"
     },
@@ -63,16 +63,16 @@
       "types": "./dist/types/modal/index.d.ts",
       "import": "./dist/modal.js"
     },
-    "./engine": {
+    "./causal/engine": {
       "types": "./dist/types/engine/index.d.ts",
       "import": "./dist/engine.js"
     },
-    "./data": {
+    "./causal/data": {
       "types": "./dist/types/data/index.d.ts",
       "import": "./dist/data.js"
     },
-    "./style.css": "./dist/style.css",
-    "./modal.css": "./dist/modal.css"
+    "./causal/style.css": "./dist/style.css",
+    "./modal/style.css": "./dist/modal.css"
   },
   "imports": {
     "#case-preload": {
@@ -118,7 +118,7 @@
   "packageManager": "pnpm@12.21.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wayne930242/causal-atlas.git"
+    "url": "git+https://github.com/wayne930242/logic-atlas.git"
   },
-  "homepage": "https://wayneh.tw/causal/"
+  "homepage": "https://github.com/wayne930242/logic-atlas"
 }

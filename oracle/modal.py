@@ -1,4 +1,4 @@
-"""An independent modal-logic evaluator: the test oracle for causal-atlas/modal.
+"""An independent modal-logic evaluator: the test oracle for logic-atlas/modal.
 
 Written from the textbook truth conditions, not ported from the TypeScript engine. Standard library
 only. It draws random Kripke models, frames and systems of spheres (seed SEED), evaluates random

@@ -1,4 +1,4 @@
-// `causal-atlas/identify`: the identification experiment.
+// `logic-atlas/causal/identify`: the identification experiment.
 export { IdentifyPanel } from '../probability/IdentifyPanel.tsx'
 export type { IdentifyPanelProps } from '../probability/IdentifyPanel.tsx'
 export type { IdentifyQuery } from '../probability/identify-view.ts'

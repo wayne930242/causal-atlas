@@ -110,7 +110,7 @@ def check(case, tools):
 
 def generate(break_truth):
     inputs = cases(SEED)
-    image = "causal-atlas-ident-oracles:r4.5.2"
+    image = "logic-atlas-ident-oracles:r4.5.2"
     subprocess.run(["docker", "build", "-t", image, str(ROOT)], check=True)
     raw = json.loads(subprocess.run([
         "docker", "run", "--rm", "-i", "-v", f"{ROOT / 'run-oracles.R'}:/oracle/run-oracles.R:ro", image,

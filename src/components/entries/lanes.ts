@@ -1,4 +1,4 @@
-// `causal-atlas/lanes`: world lanes.
+// `logic-atlas/causal/lanes`: world lanes.
 export type { WorldLanesProps } from '../lanes/WorldLanes.tsx'
 export { WorldLanes } from '../lanes/WorldLanes.tsx'
 export type { UiNotation } from '../model/notation.ts'

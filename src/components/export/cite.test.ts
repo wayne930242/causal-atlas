@@ -16,7 +16,7 @@ describe('citation', () => {
   })
 
   it('watermark names author, project, licence and url', () => {
-    expect(watermarkLine('https://x.test/')).toBe('洪偉（Wei Hung）· causal-atlas · CC BY 4.0 · https://x.test/')
+    expect(watermarkLine('https://x.test/')).toBe('洪偉（Wei Hung）· logic-atlas · CC BY 4.0 · https://x.test/')
   })
 
   it('REV-F008: VERSION and YEAR come from package.json and CITATION.cff, not from a copy', () => {

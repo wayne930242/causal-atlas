@@ -85,8 +85,8 @@ describe('embed code in the export menu', () => {
     const [iframe, cite] = copied[0].split('\n')
     expect(iframe).toMatch(/^<iframe src="https:\/\/wayneh\.tw\/causal\/embed\/case\/rock-throwing\/\?from=%2Fposts%2Fcausal%2Flessons%2F00%2F#do=SH:1" /)
     expect(iframe).toContain('title="')
-    expect(cite).toMatch(/^<p>洪偉（Wei Hung）（\d{4}）。causal-atlas（[\d.]+ 版）。https:\/\/wayneh\.tw\/causal\/ 資料與教學文字以 CC BY 4\.0 授權。 案例出處：/)
-    expect(iframe).toContain('｜causal-atlas"')
+    expect(cite).toMatch(/^<p>洪偉（Wei Hung）（\d{4}）。logic-atlas（[\d.]+ 版）。https:\/\/wayneh\.tw\/causal\/ 資料與教學文字以 CC BY 4\.0 授權。 案例出處：/)
+    expect(iframe).toContain('｜logic-atlas"')
   })
 
   it('offers no embed code for a document without an embed page, and one with it', () => {

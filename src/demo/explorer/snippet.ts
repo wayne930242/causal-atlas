@@ -93,7 +93,7 @@ export function snippet(input: SnippetInput): Snippet {
   const { source } = input
   const patched = hasPatch(input.patch)
   const lesson = source.kind === 'lesson'
-  const imports = [`import { ${def.jsx} } from 'causal-atlas'`]
+  const imports = [`import { ${def.jsx} } from 'logic-atlas/causal'`]
   const sourceAttrs: string[] = []
   if (def.id === 'editor') {
     if (source.kind === 'blank') sourceAttrs.push(attr('initial', 'blank'))
@@ -124,7 +124,7 @@ export function snippet(input: SnippetInput): Snippet {
       ...(dropped.length === 0 ? {} : { mdxHeader: `{/* the blog wrapper takes only locale and tasks; left out: ${dropped.join(', ')} */}` }),
     }
   }
-  const header = `{/* import { ${def.jsx} } from 'causal-atlas' */}`
+  const header = `{/* import { ${def.jsx} } from 'logic-atlas/causal' */}`
   const sourceMdx = source.kind === 'case' && !patched ? [attr('caseId', source.id)] : []
   const note =
     patched || (lesson && def.blog !== 'model')

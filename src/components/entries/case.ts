@@ -1,4 +1,4 @@
-// `causal-atlas/case`: the step-by-step case page.
+// `logic-atlas/causal/case`: the step-by-step case page.
 export type { CasePageProps } from '../case/CasePage.tsx'
 export { CasePage } from '../case/CasePage.tsx'
 export type { UiNotation } from '../model/notation.ts'

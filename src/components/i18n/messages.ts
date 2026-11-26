@@ -48,7 +48,7 @@ export function draftIssueMessage(issue: DraftIssue, t: Messages): string {
 
 const LocaleContext = createContext<Locale>(DEFAULT_LOCALE)
 
-/** Sets the language for every causal-atlas component inside it; a component's own `locale` prop wins. */
+/** Sets the language for every logic-atlas component inside it; a component's own `locale` prop wins. */
 export function LocaleProvider({ locale, children }: { readonly locale: Locale; readonly children?: ReactNode }) {
   return createElement(LocaleContext.Provider, { value: locale }, children)
 }

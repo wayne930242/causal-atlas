@@ -232,7 +232,7 @@ function placeSwitches(
   for (const id of drawn) {
     const target = c.model.edges.find((e) => e.from === id)?.to
     const at = target === undefined ? undefined : grid.get(target)
-    if (target === undefined || at === undefined) throw new Error(`causal-atlas: ${c.data.id}: switch ${id} points into no drawn variable`)
+    if (target === undefined || at === undefined) throw new Error(`logic-atlas: ${c.data.id}: switch ${id} points into no drawn variable`)
     const tp = px(at)
     const clear = (spot: { col: number; row: number }): boolean => {
       const p = px(spot)

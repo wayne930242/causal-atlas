@@ -12,7 +12,7 @@ export interface CiteBlockProps {
 }
 
 /**
- * How to cite causal-atlas: author-year in both languages (the page's language first), BibTeX
+ * How to cite logic-atlas: author-year in both languages (the page's language first), BibTeX
  * behind a disclosure, licences.
  */
 export function CiteBlock({ url = DEFAULT_URL, locale }: CiteBlockProps) {

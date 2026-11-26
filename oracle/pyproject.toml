@@ -1,5 +1,5 @@
 [project]
-name = "causal-atlas-test-oracles"
+name = "logic-atlas-test-oracles"
 version = "0.0.0"
 requires-python = ">=3.12,<3.13"
 dependencies = ["y0==0.2.11"]

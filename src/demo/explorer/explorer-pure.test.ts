@@ -92,7 +92,7 @@ describe('snippet', () => {
     expect(s.mdx).toBe(
       '<CausalPlayground client:visible caseId="forest-fire-disjunctive" verdicts={[{ cause: "L=1", effect: "FF=1", responsibility: true }]} />',
     )
-    expect(mdxText(s)).toContain("import { CausalPlayground } from 'causal-atlas'")
+    expect(mdxText(s)).toContain("import { CausalPlayground } from 'logic-atlas/causal'")
   })
   it('(d) adds locale="en" for English only', () => {
     expect(snip('mediation', 'en').mdx).toMatch(/ locale="en" \/>$/)
@@ -100,7 +100,7 @@ describe('snippet', () => {
   })
   it('(e) writes both imports for a lesson document', () => {
     expect(snip('mediation').jsx).toBe(
-      `import { ProbabilityPanel } from 'causal-atlas'\nimport doc from './m08-pill.json'\n\n<ProbabilityPanel doc={doc} view="mediation" mediation={{ treatment: "X", mediators: ["Z"], outcome: "Y=1", from: 0, to: 1 }} digits={4} />`,
+      `import { ProbabilityPanel } from 'logic-atlas/causal'\nimport doc from './m08-pill.json'\n\n<ProbabilityPanel doc={doc} view="mediation" mediation={{ treatment: "X", mediators: ["Z"], outcome: "Y=1", from: 0, to: 1 }} digits={4} />`,
     )
   })
   it('leaves defaults out, collapses one-item pair lists and spreads a patch', () => {

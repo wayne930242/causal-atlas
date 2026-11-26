@@ -266,7 +266,7 @@ export function gridLayout(c: LoadedCase, shown: readonly string[]): Map<string,
   }
   // The step budget ran out with an edge (or an arc's way) still blocked: the graph is drawn anyway.
   if (!settled && firstBlocked(grid, edges, arcs) !== undefined) {
-    console.warn(`causal-atlas: ${c.data.id}: automatic layout left an edge or arc over a node; give the model a layout`)
+    console.warn(`logic-atlas: ${c.data.id}: automatic layout left an edge or arc over a node; give the model a layout`)
   }
   const top = Math.min(...[...grid.values()].map((p) => p.row))
   for (const [id, p] of grid) out.set(id, { col: p.col, row: p.row - top })

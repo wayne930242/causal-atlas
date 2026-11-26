@@ -1,4 +1,4 @@
-// `causal-atlas/playground`: one case's graph and equations, without the other components.
+// `logic-atlas/causal/playground`: one case's graph and equations, without the other components.
 export type { BlameSpec, BlameState, CausalPlaygroundProps, PlaygroundPanel, PlaygroundPreset } from '../playground/CausalPlayground.tsx'
 export { CausalPlayground } from '../playground/CausalPlayground.tsx'
 export type { SeeDoPair, VerdictQuery } from '../model/verdict-rows.ts'

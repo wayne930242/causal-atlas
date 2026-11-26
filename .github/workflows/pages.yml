@@ -4,7 +4,7 @@ name: Pages
 # One-time setup, done by the owner: Settings > Pages > Source: GitHub Actions.
 on:
   push:
-    tags: ["v*"]
+    tags: ["logic-atlas-v*"]
   workflow_dispatch:
 
 permissions:

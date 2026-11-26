@@ -576,7 +576,7 @@ export const EN: Messages = {
       'Embed it in another page: the code holds the interactive figure (with what is observed and set now) and the citation; please keep both.',
     copyEmbed: 'Copy embed code',
     embedOpen: 'Open the original page',
-    embedTitle: (title) => `${title} | causal-atlas`,
+    embedTitle: (title) => `${title} | logic-atlas`,
     embedLicence: (dataLicense) => `Data and teaching text: ${dataLicense}.`,
     embedSources: (origins) => `Case sources: ${origins.join('; ')}`,
   },

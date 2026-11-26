@@ -83,7 +83,7 @@ function switchHref(route: Route, locale: Locale): string {
 
 const DEMO = {
   'zh-TW': {
-    title: 'causal-atlas 示範',
+    title: 'logic-atlas 示範',
     intro: '元件示範。每個案例有一頁案例頁，也可以在遊樂場裡自己改。',
     playground: '遊樂場',
     casePage: '案例頁',
@@ -104,7 +104,7 @@ const DEMO = {
     site: '作者網站',
   },
   en: {
-    title: 'causal-atlas demo',
+    title: 'logic-atlas demo',
     intro: 'Component demo. Every case has a case page, and you can change it yourself in the playground.',
     playground: 'Playground',
     casePage: 'Case page',
@@ -130,7 +130,7 @@ function Index({ locale }: { readonly locale: Locale }) {
   const d = DEMO[locale]
   return (
     <div className="demo-index">
-      <h1>causal-atlas</h1>
+      <h1>logic-atlas</h1>
       <p className="demo-muted">{d.intro}</p>
       <ul>
         {caseIds.map((id) => {
@@ -247,7 +247,7 @@ export function App() {
       <div className="demo-shell">
         <header className="demo-bar">
           <a className="demo-brand" href={href('/', locale)}>
-            causal-atlas
+            logic-atlas
           </a>
           <nav aria-label={d.pages}>
             <a href={href('/explorer', locale)} aria-current={route.page === 'explorer' ? 'page' : undefined}>

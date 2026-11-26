@@ -1,5 +1,5 @@
 /*
- * causal-atlas components. Colours come only from the host's tokens (--background, --foreground,
+ * logic-atlas components. Colours come only from the host's tokens (--background, --foreground,
  * --accent, --accent-foreground, --muted, --muted-foreground, --border) plus the --ca-* set below.
  * Fonts inherit; numerals use the host's --font-mono when it has one.
  */

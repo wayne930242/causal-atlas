@@ -2,11 +2,11 @@ import type { Locale } from '../components/index.ts'
 import { FrameConditions, IntensionTable, KripkeView, SphereView, StrictImplication, SurgeryVsSimilarity, TcsCheck } from '../modal/index.ts'
 import { modalModel } from './modal-models.ts'
 
-/** The `#/modal` demo page: the seven `causal-atlas/modal` figures on the example models. */
+/** The `#/modal` demo page: the seven `logic-atlas/modal` figures on the example models. */
 
 const TEXT = {
   'zh-TW': {
-    heading: '模態邏輯圖（causal-atlas/modal）',
+    heading: '模態邏輯圖（logic-atlas/modal）',
     intro: '附錄 D 用到的七張圖。模型都是 src/demo/modal-models/ 下的範例，部落格會用自己的模型 JSON。',
     intension: '內涵表（IntensionTable）',
     kripke: 'Kripke 模型（KripkeView，可編輯）',
@@ -17,7 +17,7 @@ const TEXT = {
     surgery: '小手術與相似度（SurgeryVsSimilarity）',
   },
   en: {
-    heading: 'Modal logic figures (causal-atlas/modal)',
+    heading: 'Modal logic figures (logic-atlas/modal)',
     intro: 'The seven figures appendix D uses, on the example models in src/demo/modal-models/; the blog brings its own model JSON.',
     intension: 'Intension table (IntensionTable)',
     kripke: 'Kripke model (KripkeView, editable)',

@@ -677,7 +677,7 @@ export const ZH = {
     embedLead: '嵌入到其他網頁：複製的程式碼含可操作的圖（目前的觀察與干預一併帶過去）與引用文字，請一併保留。',
     copyEmbed: '複製嵌入碼',
     embedOpen: '在原文中開啟',
-    embedTitle: (title: string): string => `${title}｜causal-atlas`,
+    embedTitle: (title: string): string => `${title}｜logic-atlas`,
     embedLicence: (dataLicense: string): string => `資料與教學文字以 ${dataLicense} 授權。`,
     embedSources: (origins: readonly string[]): string => `案例出處：${origins.join('；')}`,
   },

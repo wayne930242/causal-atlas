@@ -6,7 +6,7 @@ import { buildDefines } from './vite.define.ts'
 /** A case file's module id. */
 const CASE_FILE = /[/\\]src[/\\]data[/\\]cases[/\\][^/\\]+\.json/
 
-/** Component entries: `causal-atlas/<name>` → `dist/<name>.js`, each pulling only its own code. */
+/** Component entries: `logic-atlas/causal/<name>` → `dist/<name>.js`, each pulling only its own code. */
 const COMPONENT_ENTRIES = ['playground', 'probability', 'identify', 'lanes', 'extension', 'case', 'editor', 'cite', 'supplement', 'i18n']
 
 /**
@@ -16,7 +16,7 @@ const COMPONENT_ENTRIES = ['playground', 'probability', 'identify', 'lanes', 'ex
  */
 function casePreloadImport(): Plugin {
   return {
-    name: 'causal-atlas:case-preload',
+    name: 'logic-atlas:case-preload',
     enforce: 'pre',
     resolveId(source, importer) {
       if (source === './case-preload.ts' && importer !== undefined && /[/\\]src[/\\]data[/\\]case-store\.ts$/.test(importer)) {

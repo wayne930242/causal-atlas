@@ -1,4 +1,4 @@
-// `causal-atlas/extension`: a model beside its conservative extension.
+// `logic-atlas/causal/extension`: a model beside its conservative extension.
 export type { ConservativeExtensionProps, ExtensionModel } from '../extension/ConservativeExtension.tsx'
 export { ConservativeExtension } from '../extension/ConservativeExtension.tsx'
 export type { VerdictQuery } from '../model/verdict-rows.ts'

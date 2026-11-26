@@ -1,4 +1,4 @@
-// `causal-atlas/modal`: modal-logic figures (Kripke models, frame conditions, strict implication,
+// `logic-atlas/modal`: modal-logic figures (Kripke models, frame conditions, strict implication,
 // spheres, surgery against similarity), their documents and the modal engine. The engine and the data
 // functions need no React; the components render on the server.
 import './modal.css'

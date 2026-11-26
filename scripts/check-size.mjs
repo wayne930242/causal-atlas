@@ -13,10 +13,10 @@ import { gzipSync } from 'node:zlib'
 
 /**
  * Budgets in bytes for an entry's static closure, set from the measured size plus about 10%
- * (`./playground` at 0.24.0: 379.3 kB raw, 120.7 kB gzip; 0.23.0's one entry was 929.6 kB, 244.2 kB).
+ * (`./causal/playground` at 0.24.0: 379.3 kB raw, 120.7 kB gzip; 0.23.0's one entry was 929.6 kB, 244.2 kB).
  */
 export const BUDGETS = {
-  './playground': { raw: 420_000, gzip: 133_000 },
+  './causal/playground': { raw: 420_000, gzip: 133_000 },
   // Set at 0.25.0 from the measured size plus about 10% (102.7 kB raw, 27.8 kB gzip, one file).
   './modal': { raw: 113_000, gzip: 30_600 },
 }
@@ -96,9 +96,9 @@ function main() {
   for (const [key, r] of Object.entries(report)) {
     if (key !== './modal' && r.files.some((f) => /(^|[/\\])modal(-chunks[/\\]|\.js$)/.test(f))) failures.push(`${key} statically imports the modal build`)
   }
-  const playground = report['./playground']
+  const playground = report['./causal/playground']
   const caseChunks = playground?.files.filter((f) => /[/\\]cases[/\\]/.test(f)) ?? []
-  if (caseChunks.length > 0) failures.push(`./playground statically imports case data: ${caseChunks.join(', ')}`)
+  if (caseChunks.length > 0) failures.push(`./causal/playground statically imports case data: ${caseChunks.join(', ')}`)
   if (failures.length > 0) {
     console.error(`size check failed:\n  ${failures.join('\n  ')}`)
     process.exit(1)

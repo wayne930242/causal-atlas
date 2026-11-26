@@ -33,7 +33,7 @@ describe('modal interface text', () => {
   })
 })
 
-describe('causal-atlas/modal', () => {
+describe('logic-atlas/modal', () => {
   it('exports these names', () => {
     expect(Object.keys(modal).sort()).toMatchInlineSnapshot(`
       [

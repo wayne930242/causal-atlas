@@ -12,26 +12,26 @@ if (preloadedCaseFiles === undefined || Object.keys(preloadedCaseFiles).length =
 }
 
 const checks = [
-  ['causal-atlas', 'CausalPlayground', { caseId: 'rock-throwing' }, 'ca-graph'],
-  ['causal-atlas/playground', 'CausalPlayground', { caseId: 'rock-throwing' }, 'ca-graph'],
-  ['causal-atlas/probability', 'ProbabilityPanel', { caseId: 'smoking-lesion', view: 'compare' }, 'data-level'],
-  ['causal-atlas/identify', 'IdentifyPanel', { caseId: 'smoking-lesion' }, 'ca-identify'],
-  ['causal-atlas/lanes', 'WorldLanes', { caseId: 'rock-throwing', interventions: { SH: 0 }, initialStep: 2 }, 'data-lane="cf"'],
-  ['causal-atlas/case', 'CasePage', { caseId: 'rock-throwing', initialStep: 3 }, 'ca-graph'],
-  ['causal-atlas/extension', 'ConservativeExtension', { models: ['rock-throwing', 'rock-throwing'] }, 'ca-graph'],
-  ['causal-atlas/editor', 'ModelEditor', { initial: 'rock-throwing' }, 'ca-editor'],
+  ['logic-atlas/causal', 'CausalPlayground', { caseId: 'rock-throwing' }, 'ca-graph'],
+  ['logic-atlas/causal/playground', 'CausalPlayground', { caseId: 'rock-throwing' }, 'ca-graph'],
+  ['logic-atlas/causal/probability', 'ProbabilityPanel', { caseId: 'smoking-lesion', view: 'compare' }, 'data-level'],
+  ['logic-atlas/causal/identify', 'IdentifyPanel', { caseId: 'smoking-lesion' }, 'ca-identify'],
+  ['logic-atlas/causal/lanes', 'WorldLanes', { caseId: 'rock-throwing', interventions: { SH: 0 }, initialStep: 2 }, 'data-lane="cf"'],
+  ['logic-atlas/causal/case', 'CasePage', { caseId: 'rock-throwing', initialStep: 3 }, 'ca-graph'],
+  ['logic-atlas/causal/extension', 'ConservativeExtension', { models: ['rock-throwing', 'rock-throwing'] }, 'ca-graph'],
+  ['logic-atlas/causal/editor', 'ModelEditor', { initial: 'rock-throwing' }, 'ca-editor'],
 ]
 
 // The modal figures take their documents as props: the example models from the demo.
 const md = (id) => JSON.parse(readFileSync(new URL(`../src/demo/modal-models/${id}.json`, import.meta.url), 'utf8'))
 checks.push(
-  ['causal-atlas/modal', 'IntensionTable', { model: md('md-rain-intension') }, 'ca-modal-intension'],
-  ['causal-atlas/modal', 'KripkeView', { model: md('md-rain-access') }, 'data-mark="counter"'],
-  ['causal-atlas/modal', 'FrameConditions', { frame: md('md-time') }, 'data-condition="transitive"'],
-  ['causal-atlas/modal', 'StrictImplication', { model: md('md-strict'), antecedent: 'rain', consequent: 'wet' }, 'data-kind="strict"'],
-  ['causal-atlas/modal', 'TcsCheck', { items: [{ pattern: 'strengthening', model: md('md-umbrella'), a: 'rain', b: 'umbrella', c: 'stolen' }] }, 'data-counterexample="true"'],
-  ['causal-atlas/modal', 'SphereView', { model: md('md-programmer'), locale: 'en' }, 'data-sphere="1"'],
-  ['causal-atlas/modal', 'SurgeryVsSimilarity', { model: md('md-nixon') }, 'data-agree="false"'],
+  ['logic-atlas/modal', 'IntensionTable', { model: md('md-rain-intension') }, 'ca-modal-intension'],
+  ['logic-atlas/modal', 'KripkeView', { model: md('md-rain-access') }, 'data-mark="counter"'],
+  ['logic-atlas/modal', 'FrameConditions', { frame: md('md-time') }, 'data-condition="transitive"'],
+  ['logic-atlas/modal', 'StrictImplication', { model: md('md-strict'), antecedent: 'rain', consequent: 'wet' }, 'data-kind="strict"'],
+  ['logic-atlas/modal', 'TcsCheck', { items: [{ pattern: 'strengthening', model: md('md-umbrella'), a: 'rain', b: 'umbrella', c: 'stolen' }] }, 'data-counterexample="true"'],
+  ['logic-atlas/modal', 'SphereView', { model: md('md-programmer'), locale: 'en' }, 'data-sphere="1"'],
+  ['logic-atlas/modal', 'SurgeryVsSimilarity', { model: md('md-nixon') }, 'data-agree="false"'],
 )
 
 const failures = []
@@ -41,9 +41,9 @@ for (const [entry, name, props, expected] of checks) {
   if (!html.includes(expected)) failures.push(`${entry} ${name}: markup lacks ${expected}`)
 }
 // The modal entry's own LocaleProvider sets its figures' language.
-const modal = await import('causal-atlas/modal')
+const modal = await import('logic-atlas/modal')
 const english = renderToString(createElement(modal.LocaleProvider, { locale: 'en' }, createElement(modal.KripkeView, { model: md('md-rain-access') })))
-if (!english.includes('a counterexample')) failures.push('causal-atlas/modal LocaleProvider: markup is not in English')
+if (!english.includes('a counterexample')) failures.push('logic-atlas/modal LocaleProvider: markup is not in English')
 if (failures.length > 0) {
   console.error(`server render check failed:\n  ${failures.join('\n  ')}`)
   process.exit(1)
