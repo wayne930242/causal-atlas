@@ -68,16 +68,16 @@ There is no root export: choose `logic-atlas/causal` or `logic-atlas/modal` expl
 Please cite logic-atlas when using it for research or teaching.
 The citation is also available in [CITATION.cff](CITATION.cff) and the `CiteBlock` component.
 
-> 洪偉（Wei Hung）（2026）。logic-atlas（0.25.0 版）。https://github.com/wayne930242/logic-atlas
+> 洪偉（Wei Hung）（2026）。logic-atlas（0.25.1 版）。https://github.com/wayne930242/logic-atlas
 
-> Hung, W. (2026). logic-atlas (Version 0.25.0) [Software and dataset]. https://github.com/wayne930242/logic-atlas
+> Hung, W. (2026). logic-atlas (Version 0.25.1) [Software and dataset]. https://github.com/wayne930242/logic-atlas
 
 ```bibtex
 @software{hung_causal_atlas_2026,
   author  = {Hung, Wei},
   title   = {logic-atlas},
   year    = {2026},
-  version = {0.25.0},
+  version = {0.25.1},
   url     = {https://github.com/wayne930242/logic-atlas},
   note    = {Code: MIT; data and teaching text: CC BY 4.0}
 }

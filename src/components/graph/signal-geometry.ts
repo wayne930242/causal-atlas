@@ -725,53 +725,37 @@ export function layoutSignalGraph(input: SignalGraphInput, t: Messages): SignalL
     const onPath = paths?.open.has(key) === true ? 'open' : paths?.blocked.has(key) === true ? 'blocked' : undefined
     const cls = `${live ? 'ca-stroke-live' : 'ca-stroke-idle'}${onPath === undefined ? '' : ` ca-path-${onPath}`}`
     if (line.kind === 'inhibit') {
-      // ¬X sits by the line; when that spot is taken it slides along the edge or switches sides.
+      // ¬X sits on its own line as a rounded chip, so it is read on the edge it labels. It slides
+      // along the edge to keep off nodes, other labels and the crossings of other edges.
       const text = `¬${e.from}`
-      const width = textWidth(text, 12)
-      const inhibitCandidates: Placed[] = []
-      {
-        const x = a.x + (b.x - a.x) * 0.55 + 14 * Math.abs(uy) + 4
-        const y = a.y + (b.y - a.y) * 0.55 - 12 * Math.abs(ux)
-        inhibitCandidates.push({ x, y, anchor: 'start', box: textBox(x, y, 'start', width, 12) })
-      }
-      for (const t of [0.55, 0.45, 0.65, 0.35, 0.72, 0.28]) {
-        for (const side of [1, -1]) {
-          const nx = -uy * side
-          const ny = ux * side
-          const away = 8 + Math.abs(nx) * (width / 2) + Math.abs(ny) * 7
-          const cx = a.x + (b.x - a.x) * t + nx * away
-          const cy = a.y + (b.y - a.y) * t + ny * away
-          const x = cx - width / 2
-          const y = cy + 4
-          inhibitCandidates.push({ x, y, anchor: 'start', box: textBox(x, y, 'start', width, 12) })
-        }
-      }
-      // Never trade a collision with the stroke or a node for a clearer label block.
-      // Preserve candidate order on ties. If the entire neighbourhood is occupied,
-      // search successively wider bands until at least one position is admissible.
-      const admissible = (cand: Placed): boolean => !segmentHitsBox({ x: x1, y: y1 }, { x: x2, y: y2 }, cand.box) && !hitsNode(cand.box)
-      const previous = firstClear(inhibitCandidates, obstacles)
-      let best: Placed | undefined = admissible(previous) ? previous : undefined
+      const chipW = textWidth(text, 12) + 12
+      const chipH = 18
+      const others = edges.filter((o) => `${o.from}>${o.to}` !== key)
+      const crossings = (box: Box): number => others.filter((o) => {
+        const p = pos.get(o.from)
+        const q = pos.get(o.to)
+        return p !== undefined && q !== undefined && segmentHitsBox(p, q, box)
+      }).length
+      let best: Placed | undefined
       let bestScore = Infinity
-      for (let band = 0; best === undefined; band++) {
-        for (const dy of band === 0 ? [0] : [-24 * band, 24 * band]) {
-          for (const base of inhibitCandidates) {
-            const cand = dy === 0 ? base : { ...base, y: base.y + dy, box: shifted(base.box, 0, dy) }
-            if (!admissible(cand)) continue
-            const score = obstacles.filter((o) => intersects(cand.box, o)).length
-            if (score < bestScore) { best = cand; bestScore = score }
-            if (score === 0) break
-          }
-          if (bestScore === 0) break
+      for (const t of [0.5, 0.42, 0.58, 0.35, 0.65, 0.28, 0.72, 0.22, 0.78]) {
+        const cx = a.x + (b.x - a.x) * t
+        const cy = a.y + (b.y - a.y) * t
+        const box: Box = { x0: cx - chipW / 2, y0: cy - chipH / 2, x1: cx + chipW / 2, y1: cy + chipH / 2 }
+        if (hitsNode(box)) continue
+        const score = obstacles.filter((o) => intersects(box, o)).length * 10 + crossings(box)
+        if (score < bestScore) {
+          best = { x: cx, y: cy + 4, anchor: 'middle', box }
+          bestScore = score
         }
+        if (score === 0) break
+      }
+      if (best === undefined) {
+        const cx = (a.x + b.x) / 2
+        const cy = (a.y + b.y) / 2
+        best = { x: cx, y: cy + 4, anchor: 'middle', box: { x0: cx - chipW / 2, y0: cy - chipH / 2, x1: cx + chipW / 2, y1: cy + chipH / 2 } }
       }
       const inhibitLabel = claim(best)
-      if (best !== previous) {
-        left = Math.min(left, Math.floor(best.box.x0))
-        right = Math.max(right, best.box.x1)
-        top = Math.min(top, Math.floor(best.box.y0))
-        bottom = Math.max(bottom, best.box.y1)
-      }
       edgeMarks.push({ kind: 'inhibit', key, x1, y1, x2, y2, ux, uy, live, onPath, cls, text, label: inhibitLabel })
       continue
     }

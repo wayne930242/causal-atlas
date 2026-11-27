@@ -257,7 +257,15 @@ export function SignalGraph(props: SignalGraphProps) {
           {hit(key, x1, y1, x2, y2, tip)}
           <line x1={x1} y1={y1} x2={x2} y2={y2} className={cls} />
           <circle cx={x2 + 5 * ux} cy={y2 + 5 * uy} r={5} className={`ca-inhibit ${live ? 'is-live' : ''}`} />
-          <text x={inhibitLabel.x} y={inhibitLabel.y} className={`ca-svg-small ca-svg-bold ca-mono ${live ? '' : 'ca-fill-muted'}`}>
+          <rect
+            x={inhibitLabel.box.x0}
+            y={inhibitLabel.box.y0}
+            width={inhibitLabel.box.x1 - inhibitLabel.box.x0}
+            height={inhibitLabel.box.y1 - inhibitLabel.box.y0}
+            rx={(inhibitLabel.box.y1 - inhibitLabel.box.y0) / 2}
+            className={`ca-inhibit-chip ${live ? 'is-live' : ''}`}
+          />
+          <text x={inhibitLabel.x} y={inhibitLabel.y} textAnchor="middle" className={`ca-svg-small ca-svg-bold ca-mono ${live ? '' : 'ca-fill-muted'}`}>
             {sub(text)}
           </text>
         </g>

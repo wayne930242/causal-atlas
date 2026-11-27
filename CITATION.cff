@@ -7,8 +7,8 @@ authors:
   - given-names: Wei
     family-names: Hung
     alias: 洪偉
-version: 0.25.0
-date-released: "2026-11-26"
+version: 0.25.1
+date-released: "2026-11-28"
 url: "https://github.com/wayne930242/logic-atlas"
 license:
   - MIT

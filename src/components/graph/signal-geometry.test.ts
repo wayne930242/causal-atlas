@@ -91,12 +91,12 @@ describe('layoutSignalGraph', () => {
     expect(above?.boxes.every((b) => b.y1 < -l.r)).toBe(true)
   })
 
-  it('keeps ¬A1 off the rising A1→PN1 edge in the lesson layout', () => {
+  it('puts the ¬A1 chip on its own A1→PN1 edge, clear of every node, in the lesson layout', () => {
     const c = docToCase(modelDocSchema.parse({ ...bogus, layout: { A1: [0, 1], PN1: [1.7, 0], B: [0, 2.5], VS: [3, 2.5] } }))
     const l = layout(c)
     const edge = l.edges.find((e) => e.key === 'A1>PN1')
     if (edge?.kind !== 'inhibit') throw new Error('missing A1 inhibit edge')
-    expect(segmentHitsBox({ x: edge.x1, y: edge.y1 }, { x: edge.x2, y: edge.y2 }, edge.label.box)).toBe(false)
+    expect(segmentHitsBox({ x: edge.x1, y: edge.y1 }, { x: edge.x2, y: edge.y2 }, edge.label.box)).toBe(true)
     for (const id of l.pos.keys()) expect(meetsNode(l, id, edge.label.box)).toBe(false)
   })
 

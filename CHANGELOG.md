@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.25.0 (unreleased)
+## 0.25.1
+An inhibiting edge now carries its ¬X label on the line itself, in a rounded chip that covers the stroke, instead of beside it. Beside the line, labels of edges that cross or run close (Halpern's blame example: ¬PRE, ¬PRE, ¬SH) could not be told apart. The chip slides along its edge to keep off nodes, other labels and the crossings of other edges.
+
+## 0.25.0
 The npm package moves to `logic-atlas`. No further releases will use the old name; the old package will carry an npm deprecation notice pointing here. Install `logic-atlas` and update imports as follows. There is no root export. The JSON document format `causal-atlas/model` is unchanged.
 
 | Previous import | New import |

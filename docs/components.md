@@ -8,7 +8,7 @@
 
 ## Package
 
-`logic-atlas` (0.25.0) ships ESM with type declarations and two CSS files (`./causal/style.css`, and
+`logic-atlas` (0.25.1) ships ESM with type declarations and two CSS files (`./causal/style.css`, and
 `./modal/style.css` for the [modal logic figures](#modal-logic-figures)):
 [see the package entries](../README.md#entries).
 
